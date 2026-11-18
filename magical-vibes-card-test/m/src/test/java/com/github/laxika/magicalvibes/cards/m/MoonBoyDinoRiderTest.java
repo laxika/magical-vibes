@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FrenziedRaptor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -50,8 +51,8 @@ class MoonBoyDinoRiderTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(moonBoy.getPowerModifier()).isEqualTo(1);
-        assertThat(moonBoy.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, moonBoy)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moonBoy)).isEqualTo(1);
     }
 
     @Test
@@ -62,8 +63,8 @@ class MoonBoyDinoRiderTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(moonBoy.getPowerModifier()).isZero();
-        assertThat(moonBoy.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, moonBoy)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moonBoy)).isZero();
     }
 
     @Test
@@ -75,8 +76,8 @@ class MoonBoyDinoRiderTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(moonBoy.getPowerModifier()).isZero();
-        assertThat(moonBoy.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, moonBoy)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moonBoy)).isZero();
     }
 
     @Test
@@ -92,8 +93,8 @@ class MoonBoyDinoRiderTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(moonBoy.getPowerModifier()).isZero();
-        assertThat(moonBoy.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, moonBoy)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moonBoy)).isZero();
     }
 
     @Test
@@ -109,8 +110,8 @@ class MoonBoyDinoRiderTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(dinosaur.getCard());
         resolveAllTriggers();
 
-        assertThat(moonBoy.getPowerModifier()).isEqualTo(1);
-        assertThat(moonBoy.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, moonBoy)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moonBoy)).isEqualTo(1);
     }
 
     @Test
@@ -124,8 +125,8 @@ class MoonBoyDinoRiderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FrenziedRaptor());
         resolveAllTriggers();
 
-        assertThat(moonBoy.getPowerModifier()).isZero();
-        assertThat(moonBoy.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, moonBoy)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moonBoy)).isZero();
     }
 
     @Test

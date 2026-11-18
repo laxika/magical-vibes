@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -25,8 +26,8 @@ class ButchersGleeTest extends BaseCardTest {
 
         castResolve(bear);
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isTrue();
         assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
     }
@@ -53,8 +54,8 @@ class ButchersGleeTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isFalse();
         assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
     }
@@ -105,7 +106,7 @@ class ButchersGleeTest extends BaseCardTest {
         assertThat(bear.isTapped()).isTrue();
         assertThat(bear.getMarkedDamage()).isZero();
         assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isTrue();
 
         harness.setHand(player1, List.of(new Shock()));
@@ -133,7 +134,7 @@ class ButchersGleeTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Butcher's Glee");
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isFalse();
         assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
     }

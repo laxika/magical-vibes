@@ -24,8 +24,8 @@ class OnduGreathornTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(greathorn.getEffectivePower()).isEqualTo(4);
-        assertThat(greathorn.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, greathorn)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, greathorn)).isEqualTo(5);
     }
 
     @Test
@@ -38,8 +38,8 @@ class OnduGreathornTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(greathorn.getEffectivePower()).isEqualTo(2);
-        assertThat(greathorn.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, greathorn)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, greathorn)).isEqualTo(3);
     }
 
     @Test
@@ -50,14 +50,14 @@ class OnduGreathornTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        assertThat(greathorn.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, greathorn)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(greathorn.getEffectivePower()).isEqualTo(2);
-        assertThat(greathorn.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, greathorn)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, greathorn)).isEqualTo(3);
     }
 
     @Test
@@ -66,18 +66,18 @@ class OnduGreathornTest extends BaseCardTest {
         Permanent greathorn = harness.addToBattlefieldAndReturn(player1, new OnduGreathorn());
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
-        assertThat(greathorn.getEffectivePower()).isEqualTo(2);
-        assertThat(greathorn.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, greathorn)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, greathorn)).isEqualTo(3);
         harness.passBothPriorities();
 
-        assertThat(greathorn.getEffectivePower()).isEqualTo(4);
-        assertThat(greathorn.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, greathorn)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, greathorn)).isEqualTo(5);
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.passBothPriorities();
 
-        assertThat(greathorn.getEffectivePower()).isEqualTo(6);
-        assertThat(greathorn.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, greathorn)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, greathorn)).isEqualTo(7);
     }
 
     @Test
@@ -91,11 +91,11 @@ class OnduGreathornTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(5);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(5);
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(3);
     }
 }

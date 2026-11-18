@@ -26,7 +26,7 @@ class VendettaTest extends BaseCardTest {
     @DisplayName("Destroys a nonblack creature and the spell controller loses life equal to its toughness")
     void destroysCreatureAndControllerLosesLifeEqualToToughness() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new LagacLizard());
-        target.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, target, 2);
 
         castVendetta(target);
 
@@ -136,7 +136,7 @@ class VendettaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castInstant(player1, 0, target.getId());
 
-        target.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, target, 2);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Lagac Lizard");

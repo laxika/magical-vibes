@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.cards.p.Peek;
@@ -38,8 +39,8 @@ class CollectiveBrutalityTest extends BaseCardTest {
         harness.castModalSorceryWithModes(player1, 0, 1, 3, new int[]{1}, List.of(bears.getId()), null);
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(-2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(-2);
     }
 
     @Test
@@ -90,7 +91,7 @@ class CollectiveBrutalityTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Shock");
         harness.assertInGraveyard(player1, "Collective Brutality");
-        assertThat(bears.getPowerModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-2);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }
@@ -209,13 +210,13 @@ class CollectiveBrutalityTest extends BaseCardTest {
 
         harness.castModalSorceryWithModes(player1, 0, 1, 3, new int[]{1}, List.of(bears.getId()), null);
         harness.passBothPriorities();
-        assertThat(bears.getPowerModifier()).isEqualTo(-2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(-2);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 

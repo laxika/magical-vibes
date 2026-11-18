@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.Bitterblossom;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.g.GameTrailChangeling;
@@ -39,10 +40,10 @@ class PacksDisdainTest extends BaseCardTest {
         castAt(player1, target);
         harness.handleListChoice(player1, "ELF");
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
-        assertThat(target.getEffectivePower()).isEqualTo(0);
-        assertThat(target.getEffectiveToughness()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
     }
 
     @Test
@@ -54,8 +55,8 @@ class PacksDisdainTest extends BaseCardTest {
         castAt(player1, target);
         harness.handleListChoice(player1, "GOBLIN");
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
     }
 
     @Test
@@ -67,8 +68,8 @@ class PacksDisdainTest extends BaseCardTest {
         castAt(player1, target);
         harness.handleListChoice(player1, "FAERIE");
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
     }
 
     @Test
@@ -79,8 +80,8 @@ class PacksDisdainTest extends BaseCardTest {
         castAt(player1, target);
         harness.handleListChoice(player1, "GOBLIN");
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -93,7 +94,7 @@ class PacksDisdainTest extends BaseCardTest {
         castAt(player1, target);
         harness.handleListChoice(player1, "ELF");
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
     }
 
     @Test
@@ -109,8 +110,8 @@ class PacksDisdainTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -135,8 +136,8 @@ class PacksDisdainTest extends BaseCardTest {
         castAt(player1, target);
         harness.handleListChoice(player1, "ELF");
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         harness.assertOnBattlefield(player1, "Elvish Warrior");
     }
 
@@ -171,8 +172,8 @@ class PacksDisdainTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "ELF");
 
-        assertThat(target.getEffectivePower()).isEqualTo(0);
-        assertThat(target.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
     }
 
     @Test
@@ -185,7 +186,7 @@ class PacksDisdainTest extends BaseCardTest {
         harness.handleListChoice(player1, "ELF");
         harness.addToBattlefield(player1, new ElvishWarrior());
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(9);
     }
 }

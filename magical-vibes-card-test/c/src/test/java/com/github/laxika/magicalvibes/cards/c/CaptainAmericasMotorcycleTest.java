@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DuskLegionDreadnought;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -24,8 +25,8 @@ class CaptainAmericasMotorcycleTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castMotorcycle(bears);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -33,8 +34,8 @@ class CaptainAmericasMotorcycleTest extends BaseCardTest {
         Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new DuskLegionDreadnought());
         castMotorcycle(vehicle);
 
-        assertThat(vehicle.getPowerModifier()).isEqualTo(2);
-        assertThat(vehicle.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, vehicle)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vehicle)).isZero();
     }
 
     @Test
@@ -44,7 +45,7 @@ class CaptainAmericasMotorcycleTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -92,8 +93,8 @@ class CaptainAmericasMotorcycleTest extends BaseCardTest {
 
         castMotorcycle(bears);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         harness.assertOnBattlefield(player1, "Captain America's Motorcycle");
     }
 
@@ -110,8 +111,8 @@ class CaptainAmericasMotorcycleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, motorcycle)).isFalse();
-        assertThat(motorcycle.getPowerModifier()).isEqualTo(2);
-        assertThat(motorcycle.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, motorcycle)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, motorcycle)).isZero();
     }
 
     @Test

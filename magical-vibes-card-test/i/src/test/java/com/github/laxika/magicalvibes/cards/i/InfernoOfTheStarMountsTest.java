@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.y.YouComeToARiver;
 import com.github.laxika.magicalvibes.cards.y.YouFindTheVillainsLair;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -35,7 +36,7 @@ class InfernoOfTheStarMountsTest extends BaseCardTest {
     @DisplayName("The linked ability triggers only when the boost makes power exactly 20")
     void linkedAbilityTriggersAtExactPowerThreshold() {
         Permanent inferno = addReadyInferno();
-        inferno.setPowerModifier(13);
+        PermanentGrants.setPowerBoost(gd, inferno, 13);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -54,7 +55,7 @@ class InfernoOfTheStarMountsTest extends BaseCardTest {
     @DisplayName("The linked ability does not trigger when power becomes greater than 20")
     void linkedAbilityDoesNotTriggerPastExactPowerThreshold() {
         Permanent inferno = addReadyInferno();
-        inferno.setPowerModifier(14);
+        PermanentGrants.setPowerBoost(gd, inferno, 14);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -88,7 +89,7 @@ class InfernoOfTheStarMountsTest extends BaseCardTest {
     @DisplayName("Reaching power 20 with a different spell does not trigger damage")
     void otherPumpDoesNotTriggerDamage() {
         Permanent inferno = addReadyInferno();
-        inferno.setPowerModifier(13);
+        PermanentGrants.setPowerBoost(gd, inferno, 13);
         harness.setHand(player1, List.of(new YouComeToARiver()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -106,7 +107,7 @@ class InfernoOfTheStarMountsTest extends BaseCardTest {
     void triggeredDamageCanTargetCreature() {
         Permanent inferno = addReadyInferno();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new InfernoOfTheStarMounts());
-        inferno.setPowerModifier(13);
+        PermanentGrants.setPowerBoost(gd, inferno, 13);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -123,7 +124,7 @@ class InfernoOfTheStarMountsTest extends BaseCardTest {
     @DisplayName("Triggered damage remains 20 if Inferno's power increases in response")
     void triggeredDamageDoesNotRecheckPower() {
         Permanent inferno = addReadyInferno();
-        inferno.setPowerModifier(13);
+        PermanentGrants.setPowerBoost(gd, inferno, 13);
         harness.setLife(player2, 40);
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -144,7 +145,7 @@ class InfernoOfTheStarMountsTest extends BaseCardTest {
     @DisplayName("Removing Inferno before its boost resolves prevents the damage trigger")
     void sourceRemovedBeforeBoostDoesNotTrigger() {
         Permanent inferno = addReadyInferno();
-        inferno.setPowerModifier(13);
+        PermanentGrants.setPowerBoost(gd, inferno, 13);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player2, List.of(new YouComeToARiver()));
         harness.addMana(player2, ManaColor.BLUE, 2);
@@ -166,7 +167,7 @@ class InfernoOfTheStarMountsTest extends BaseCardTest {
     @DisplayName("Removing Inferno after its damage ability triggers does not stop the damage")
     void triggeredDamageSurvivesSourceRemoval() {
         Permanent inferno = addReadyInferno();
-        inferno.setPowerModifier(13);
+        PermanentGrants.setPowerBoost(gd, inferno, 13);
         harness.setLife(player2, 40);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player2, List.of(new YouComeToARiver()));

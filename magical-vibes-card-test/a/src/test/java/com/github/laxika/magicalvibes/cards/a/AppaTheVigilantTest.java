@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MakindiPatrol;
@@ -27,13 +28,13 @@ class AppaTheVigilantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent appa = findPermanent(player1, "Appa, the Vigilant");
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.VIGILANCE)).isTrue();
-        assertThat(appa.getPowerModifier()).isEqualTo(1);
-        assertThat(appa.getToughnessModifier()).isEqualTo(1);
-        assertThat(opponentCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, appa)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, appa)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FLYING)).isFalse();
     }
 
@@ -47,8 +48,8 @@ class AppaTheVigilantTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(appa.getPowerModifier()).isEqualTo(1);
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, appa)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.VIGILANCE)).isTrue();
     }
@@ -60,7 +61,7 @@ class AppaTheVigilantTest extends BaseCardTest {
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
-        assertThat(appa.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, appa)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -76,8 +77,8 @@ class AppaTheVigilantTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.VIGILANCE)).isFalse();
     }
@@ -95,8 +96,8 @@ class AppaTheVigilantTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.VIGILANCE)).isTrue();
     }
@@ -110,8 +111,8 @@ class AppaTheVigilantTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(appa.getPowerModifier()).isZero();
-        assertThat(appa.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, appa)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, appa)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -126,8 +127,8 @@ class AppaTheVigilantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent laterCreature = findPermanent(player1, "Grizzly Bears");
-        assertThat(laterCreature.getPowerModifier()).isZero();
-        assertThat(laterCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, laterCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterCreature)).isZero();
         assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.VIGILANCE)).isFalse();
     }

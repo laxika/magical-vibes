@@ -32,8 +32,8 @@ class BondBeetleTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 
     @Test
@@ -81,8 +81,8 @@ class BondBeetleTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(beetle.getEffectivePower()).isEqualTo(1);
-        assertThat(beetle.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, beetle)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, beetle)).isEqualTo(2);
     }
 
     @Test

@@ -26,8 +26,8 @@ class PerilousShadowTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent shadow = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(shadow.getEffectivePower()).isEqualTo(2);
-        assertThat(shadow.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, shadow)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shadow)).isEqualTo(6);
     }
 
     @Test
@@ -42,8 +42,8 @@ class PerilousShadowTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent shadow = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(shadow.getEffectivePower()).isEqualTo(4);
-        assertThat(shadow.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, shadow)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, shadow)).isEqualTo(8);
     }
 
     @Test
@@ -60,8 +60,8 @@ class PerilousShadowTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent shadow = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(shadow.getEffectivePower()).isEqualTo(0);
-        assertThat(shadow.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, shadow)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, shadow)).isEqualTo(4);
     }
 
     @Test
@@ -111,8 +111,8 @@ class PerilousShadowTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shadow.getEffectivePower()).isEqualTo(2);
-        assertThat(shadow.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, shadow)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shadow)).isEqualTo(6);
         assertThat(shadow.isTapped()).isFalse();
     }
 
@@ -125,14 +125,14 @@ class PerilousShadowTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(source.getEffectivePower()).isEqualTo(0);
-        assertThat(source.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(4);
 
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(2);
-        assertThat(source.getEffectiveToughness()).isEqualTo(6);
-        assertThat(other.getEffectivePower()).isEqualTo(0);
-        assertThat(other.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -48,8 +49,8 @@ class ColorstormStallionTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(stallion.getPowerModifier()).isEqualTo(1);
-        assertThat(stallion.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, stallion)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, stallion)).isEqualTo(1);
         assertThat(countStallionTokens(player1)).isZero();
     }
 
@@ -64,8 +65,8 @@ class ColorstormStallionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 3);
         harness.passBothPriorities();
 
-        assertThat(stallion.getPowerModifier()).isEqualTo(1);
-        assertThat(stallion.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, stallion)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, stallion)).isEqualTo(1);
         assertThat(countStallionTokens(player1)).isZero();
     }
 
@@ -80,16 +81,16 @@ class ColorstormStallionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 4);
         harness.passBothPriorities();
 
-        assertThat(stallion.getPowerModifier()).isEqualTo(1);
-        assertThat(stallion.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, stallion)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, stallion)).isEqualTo(1);
         assertThat(countStallionTokens(player1)).isEqualTo(1);
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Colorstorm Stallion") && p.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getPowerModifier()).isZero();
-        assertThat(token.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, token)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, token)).isZero();
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new Shock()));
@@ -97,9 +98,9 @@ class ColorstormStallionTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(stallion.getPowerModifier()).isEqualTo(2);
-        assertThat(token.getPowerModifier()).isEqualTo(1);
-        assertThat(token.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, stallion)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, token)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, token)).isEqualTo(1);
         assertThat(countStallionTokens(player1)).isEqualTo(1);
     }
 
@@ -113,7 +114,7 @@ class ColorstormStallionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(stallion.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, stallion)).isEqualTo(1);
         assertThat(countStallionTokens(player1)).isZero();
 
         harness.passBothPriorities();
@@ -123,8 +124,8 @@ class ColorstormStallionTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 4);
         harness.passBothPriorities();
 
-        assertThat(stallion.getPowerModifier()).isEqualTo(2);
-        assertThat(stallion.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, stallion)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, stallion)).isEqualTo(2);
         assertThat(countStallionTokens(player1)).isEqualTo(1);
     }
 
@@ -139,8 +140,8 @@ class ColorstormStallionTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(stallion.getPowerModifier()).isEqualTo(0);
-        assertThat(stallion.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, stallion)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, stallion)).isEqualTo(0);
         assertThat(countStallionTokens(player1)).isZero();
     }
 
@@ -171,8 +172,8 @@ class ColorstormStallionTest extends BaseCardTest {
         harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(stallion.getPowerModifier()).isZero();
-        assertThat(stallion.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, stallion)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, stallion)).isZero();
         assertThat(countStallionTokens(player1)).isZero();
     }
 
@@ -185,12 +186,12 @@ class ColorstormStallionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(stallion.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, stallion)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(stallion.getPowerModifier()).isZero();
-        assertThat(stallion.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, stallion)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, stallion)).isZero();
     }
 
     @Test
@@ -227,7 +228,7 @@ class ColorstormStallionTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(stallion.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, stallion)).isEqualTo(2);
         assertThat(countStallionTokens(player1)).isEqualTo(3);
     }
 }

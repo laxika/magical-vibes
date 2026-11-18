@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -57,15 +58,15 @@ class PhyrexianWarhorseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(warhorse.getPowerModifier()).isEqualTo(2);
-        assertThat(warhorse.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, warhorse)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warhorse)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(warhorse.getPowerModifier()).isEqualTo(0);
-        assertThat(warhorse.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, warhorse)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warhorse)).isEqualTo(0);
     }
 
     @Test
@@ -97,14 +98,14 @@ class PhyrexianWarhorseTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(soldiers(player1)).isEmpty();
-        assertThat(warhorse.getPowerModifier()).isZero();
-        assertThat(warhorse.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warhorse)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warhorse)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(warhorse.getPowerModifier()).isEqualTo(2);
-        assertThat(warhorse.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, warhorse)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warhorse)).isEqualTo(1);
     }
 
     @Test
@@ -123,16 +124,16 @@ class PhyrexianWarhorseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Phyrexian Warhorse")).containsExactly(warhorse);
-        assertThat(warhorse.getPowerModifier()).isEqualTo(4);
-        assertThat(warhorse.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, warhorse)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warhorse)).isEqualTo(2);
         assertThat(warhorse.isTapped()).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(warhorse.getPowerModifier()).isZero();
-        assertThat(warhorse.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warhorse)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warhorse)).isZero();
     }
 
     @Test

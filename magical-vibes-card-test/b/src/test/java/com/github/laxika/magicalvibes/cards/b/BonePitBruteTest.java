@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -33,10 +34,10 @@ class BonePitBruteTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getPowerModifier()).isEqualTo(4);
-        assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.getEffectivePower()).isEqualTo(6);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -56,10 +57,10 @@ class BonePitBruteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -105,8 +106,8 @@ class BonePitBruteTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, brute.getId());
         resolveAllTriggers();
 
-        assertThat(brute.getEffectivePower()).isEqualTo(8);
-        assertThat(brute.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, brute)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, brute)).isEqualTo(5);
     }
 
     @Test
@@ -121,8 +122,8 @@ class BonePitBruteTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).removeIf(permanent -> permanent != target);
         resolveAllTriggers();
 
-        assertThat(target.getEffectivePower()).isEqualTo(8);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 
     @Test

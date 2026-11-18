@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RhysticCave;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,12 +25,12 @@ class TrenchingSteedTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Rhystic Cave");
         harness.assertInGraveyard(player1, "Rhystic Cave");
-        assertThat(steed.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, steed)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(steed.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, steed)).isEqualTo(3);
     }
 
     @Test
@@ -44,7 +45,7 @@ class TrenchingSteedTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(steed.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, steed)).isEqualTo(3);
         assertThat(steed.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Rhystic Cave");
     }
@@ -59,10 +60,10 @@ class TrenchingSteedTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isEqualTo(3);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -74,8 +75,8 @@ class TrenchingSteedTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(steed.getPowerModifier()).isEqualTo(0);
-        assertThat(steed.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, steed)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, steed)).isEqualTo(3);
         assertThat(countPermanents(player1, "Rhystic Cave")).isZero();
     }
 
@@ -128,8 +129,8 @@ class TrenchingSteedTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(steed.getPowerModifier()).isZero();
-        assertThat(steed.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, steed)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, steed)).isEqualTo(6);
         assertThat(countPermanents(player1, "Rhystic Cave")).isZero();
     }
 
@@ -141,13 +142,13 @@ class TrenchingSteedTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(steed.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, steed)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(steed.getPowerModifier()).isEqualTo(0);
-        assertThat(steed.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, steed)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, steed)).isEqualTo(0);
     }
 }

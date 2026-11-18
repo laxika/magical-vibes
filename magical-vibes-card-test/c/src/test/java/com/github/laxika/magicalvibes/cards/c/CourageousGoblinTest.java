@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -94,7 +95,7 @@ class CourageousGoblinTest extends BaseCardTest {
     @DisplayName("Counts its own modified power when checking the attack condition")
     void countsItsOwnPowerFour() {
         Permanent goblin = addCreatureReady(player1, new CourageousGoblin());
-        goblin.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, goblin, 2);
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
@@ -109,7 +110,7 @@ class CourageousGoblinTest extends BaseCardTest {
     void doesNotCountOpponentsCreature() {
         Permanent goblin = addCreatureReady(player1, new CourageousGoblin());
         Permanent opposingGoblin = addCreatureReady(player2, new CourageousGoblin());
-        opposingGoblin.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, opposingGoblin, 2);
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
@@ -122,7 +123,7 @@ class CourageousGoblinTest extends BaseCardTest {
     @DisplayName("Power three is below the attack condition's threshold")
     void doesNotBoostAtPowerThree() {
         Permanent goblin = addCreatureReady(player1, new CourageousGoblin());
-        goblin.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, goblin, 1);
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();

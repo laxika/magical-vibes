@@ -50,8 +50,8 @@ class EmrakulsEvangelTest extends BaseCardTest {
                     assertThat(token.getCard().getColor()).isNull();
                     assertThat(token.getCard().getSubtypes())
                             .containsExactlyInAnyOrder(CardSubtype.ELDRAZI, CardSubtype.HORROR);
-                    assertThat(token.getEffectivePower()).isEqualTo(3);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(2);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
                 });
         harness.assertInGraveyard(player1, "Emrakul's Evangel");
         harness.assertInGraveyard(player1, "Woodland Patrol");

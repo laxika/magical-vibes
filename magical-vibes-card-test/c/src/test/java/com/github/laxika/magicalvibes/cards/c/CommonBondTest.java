@@ -35,8 +35,8 @@ class CommonBondTest extends BaseCardTest {
 
         // Hill Giant (3/3) with two +1/+1 counters → 5/5.
         assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(giant.getEffectivePower()).isEqualTo(5);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(5);
     }
 
     @Test
@@ -53,9 +53,9 @@ class CommonBondTest extends BaseCardTest {
 
         // Each Hill Giant (3/3) with one +1/+1 counter → 4/4.
         assertThat(giant1.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(giant1.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, giant1)).isEqualTo(4);
         assertThat(giant2.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(giant2.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, giant2)).isEqualTo(4);
     }
 
     @Test

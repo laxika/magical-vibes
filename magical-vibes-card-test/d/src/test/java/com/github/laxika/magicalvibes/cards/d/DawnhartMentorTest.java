@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -31,8 +32,8 @@ class DawnhartMentorTest extends BaseCardTest {
 
         Permanent human = findPermanent(player1, "Human");
         assertThat(human.getCard().isToken()).isTrue();
-        assertThat(human.getEffectivePower()).isEqualTo(1);
-        assertThat(human.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(1);
         assertThat(human.getCard().getColor()).isEqualTo(CardColor.WHITE);
     }
 
@@ -48,8 +49,8 @@ class DawnhartMentorTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mentor), null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();

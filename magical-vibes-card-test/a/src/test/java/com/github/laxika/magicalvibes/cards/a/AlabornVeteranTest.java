@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -25,8 +26,8 @@ class AlabornVeteranTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent grenadier = findPermanent(player1, "Alaborn Grenadier");
-        assertThat(grenadier.getPowerModifier()).isEqualTo(2);
-        assertThat(grenadier.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, grenadier)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, grenadier)).isEqualTo(2);
     }
 
     @Test
@@ -38,8 +39,8 @@ class AlabornVeteranTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentGrenadier.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentGrenadier.getPowerModifier()).isEqualTo(2);
-        assertThat(opponentGrenadier.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentGrenadier)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentGrenadier)).isEqualTo(2);
     }
 
     @Test
@@ -69,8 +70,8 @@ class AlabornVeteranTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent grenadier = findPermanent(player1, "Alaborn Grenadier");
-        assertThat(grenadier.getPowerModifier()).isEqualTo(0);
-        assertThat(grenadier.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, grenadier)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, grenadier)).isEqualTo(0);
     }
 
     @Test
@@ -130,8 +131,8 @@ class AlabornVeteranTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, veteran.getId());
         harness.passBothPriorities();
 
-        assertThat(veteran.getPowerModifier()).isEqualTo(2);
-        assertThat(veteran.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, veteran)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, veteran)).isEqualTo(2);
     }
 
     @Test
@@ -144,8 +145,8 @@ class AlabornVeteranTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Alaborn Veteran"));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test

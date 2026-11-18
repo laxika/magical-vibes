@@ -43,7 +43,7 @@ class VizierOfRemediesTest extends BaseCardTest {
         // Skinrender would put three -1/-1 counters; Vizier reduces to two. 4/4 → 2/2.
         Permanent target = airElemental(player1);
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -81,7 +81,7 @@ class VizierOfRemediesTest extends BaseCardTest {
         // Contagion Clasp's single -1/-1 counter minus one = zero.
         Permanent target = airElemental(player1);
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test

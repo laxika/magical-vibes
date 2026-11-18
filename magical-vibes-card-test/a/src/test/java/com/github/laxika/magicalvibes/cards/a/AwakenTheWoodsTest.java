@@ -34,8 +34,8 @@ class AwakenTheWoodsTest extends BaseCardTest {
         assertThat(dryads).allSatisfy(dryad -> {
             assertThat(gqs.isCreature(gd, dryad)).isTrue();
             assertThat(gqs.isLand(gd, dryad)).isTrue();
-            assertThat(dryad.getEffectivePower()).isEqualTo(1);
-            assertThat(dryad.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, dryad)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, dryad)).isEqualTo(1);
             assertThat(dryad.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.FOREST, CardSubtype.DRYAD);
             assertThat(dryad.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(dryad.getCard().getAdditionalTypes()).containsExactly(CardType.LAND);

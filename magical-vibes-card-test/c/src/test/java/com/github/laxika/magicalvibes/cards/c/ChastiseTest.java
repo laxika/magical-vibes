@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OrcishOriflamme;
@@ -65,7 +66,7 @@ class ChastiseTest extends BaseCardTest {
     void lifeGainAccountsForPowerModifiers() {
         harness.setLife(player2, 10);
         Permanent attacker = addAttacker(player1);
-        attacker.setPowerModifier(3); // 2 + 3 = 5 effective power
+        PermanentGrants.setPowerBoost(gd, attacker, 3); // 2 + 3 = 5 effective power
 
         castAndResolveChastise(attacker.getId());
 
@@ -162,7 +163,7 @@ class ChastiseTest extends BaseCardTest {
         Permanent attacker = addAttacker(player1);
 
         castChastise(attacker.getId());
-        attacker.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, attacker, 3);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -174,7 +175,7 @@ class ChastiseTest extends BaseCardTest {
     void negativePowerDoesNotChangeLife() {
         harness.setLife(player2, 15);
         Permanent attacker = addAttacker(player1);
-        attacker.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, attacker, -3);
 
         castAndResolveChastise(attacker.getId());
 

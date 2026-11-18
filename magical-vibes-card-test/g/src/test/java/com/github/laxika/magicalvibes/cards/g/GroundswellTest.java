@@ -26,8 +26,8 @@ class GroundswellTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         castGroundswell(creature);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 
     @Test
@@ -40,8 +40,8 @@ class GroundswellTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(7);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
     }
 
     @Test
@@ -62,8 +62,8 @@ class GroundswellTest extends BaseCardTest {
 
         castGroundswell(creature);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 
     @Test
@@ -72,8 +72,8 @@ class GroundswellTest extends BaseCardTest {
 
         castGroundswell(creature);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 
     @Test
@@ -86,8 +86,8 @@ class GroundswellTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(7);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
     }
 
     @Test
@@ -97,8 +97,8 @@ class GroundswellTest extends BaseCardTest {
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 
     @Test
@@ -110,8 +110,8 @@ class GroundswellTest extends BaseCardTest {
 
         castGroundswell(creature);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(7);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
     }
 
     @Test
@@ -122,8 +122,8 @@ class GroundswellTest extends BaseCardTest {
 
         castGroundswell(creature);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(7);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
     }
 
     @ParameterizedTest
@@ -134,16 +134,16 @@ class GroundswellTest extends BaseCardTest {
             harness.enterBattlefieldAndReturn(player1, new Forest());
         }
         castGroundswell(creature);
-        assertThat(creature.getEffectivePower()).isEqualTo(landfall ? 7 : 5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(landfall ? 7 : 5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(landfall ? 7 : 5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(landfall ? 7 : 5);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         castGroundswell(creature);
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 
     private void castGroundswell(Permanent target) {

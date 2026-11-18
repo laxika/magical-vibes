@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.d.DrudgeBeetle;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -72,7 +73,7 @@ class CrosstownCourierTest extends BaseCardTest {
     @Test
     void zeroPowerDealsNoDamageAndDoesNotTrigger() {
         Permanent courier = addAttackingCourier(player1);
-        courier.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, courier, -2);
         setLibrary(player2, 5);
 
         resolveCombatAndTrigger();

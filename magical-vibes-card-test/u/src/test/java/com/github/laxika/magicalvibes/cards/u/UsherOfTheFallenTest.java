@@ -29,8 +29,8 @@ class UsherOfTheFallenTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Human Warrior")).isEqualTo(1);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(token.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.HUMAN, CardSubtype.WARRIOR);
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
     }
 
     @Test

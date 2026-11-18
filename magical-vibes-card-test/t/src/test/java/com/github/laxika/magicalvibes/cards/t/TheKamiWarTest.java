@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -131,7 +132,7 @@ class TheKamiWarTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(chosen);
-        assertThat(kami.getPowerModifier()).isEqualTo(chosen.getManaValue());
+        assertThat(PermanentGrants.powerBoostOf(gd, kami)).isEqualTo(chosen.getManaValue());
     }
 
     @Test
@@ -207,12 +208,12 @@ class TheKamiWarTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(returned);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(land);
-        assertThat(kami.getPowerModifier()).isEqualTo(4);
-        assertThat(kami.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kami)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kami)).isZero();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(kami.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kami)).isZero();
     }
 
     @Test
@@ -230,7 +231,7 @@ class TheKamiWarTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(land);
-        assertThat(kami.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kami)).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

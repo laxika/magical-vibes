@@ -161,36 +161,11 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
     }
 
     private void applyEffect(GameData gameData, StackEntry entry, SetBasePowerToughnessEffect e, Permanent target) {
-        // CR 613 layer engine: a one-shot base-P/T setter is a floating layer-7b effect with
-        // its own timestamp — of all applicable 7b setters (auras, animations, other one-shots)
-        // the latest timestamp wins in the layered pass. The legacy fields are still written
-        // for direct Permanent readers (views, last-known-information); the floating instance
-        // is what drives precedence.
-        // The legacy UEOT fields are an all-or-nothing pair, so a partial setter
-        // ("has base toughness 1") skips them entirely and rides on the floating 7b entry alone,
-        // which carries per-component nulls.
-        if (Duration.UNTIL_END_OF_TURN.equals(e.duration())
-                && e.power() != null && e.toughness() != null) {
-            target.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
-            target.setBasePowerOverride(e.power());
-            target.setBaseToughnessOverride(e.toughness());
-        }
-        FloatingContinuousEffect floating = gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+        // A one-shot base-P/T setter is a floating layer-7b effect on the permanent with its own timestamp
+        // (CR 613.4b, 613.7b): of all applicable 7b setters the latest timestamp wins in the layered pass.
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 e, target.getId(), null, null, e.duration(), 0));
-        if (Duration.PERMANENT.equals(e.duration())) {
-            long timestamp = floating.timestamp();
-            if (e.power() != null) {
-                target.setBasePowerOverriddenPermanently(true);
-                target.setPermanentBasePowerOverride(e.power());
-                target.setPermanentBasePowerOverrideTimestamp(timestamp);
-            }
-            if (e.toughness() != null) {
-                target.setBaseToughnessOverriddenPermanently(true);
-                target.setPermanentBaseToughnessOverride(e.toughness());
-                target.setPermanentBaseToughnessOverrideTimestamp(timestamp);
-            }
-        }
     }
 
     private String basePowerToughnessDescription(SetBasePowerToughnessEffect effect) {

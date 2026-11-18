@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EarnestFellowship;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -26,8 +27,8 @@ class PhantatogTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Earnest Fellowship");
-        assertThat(phantatog.getPowerModifier()).isEqualTo(1);
-        assertThat(phantatog.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, phantatog)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, phantatog)).isEqualTo(1);
     }
 
     @Test
@@ -41,8 +42,8 @@ class PhantatogTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Phantatog");
-        assertThat(phantatog.getPowerModifier()).isEqualTo(1);
-        assertThat(phantatog.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, phantatog)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, phantatog)).isEqualTo(1);
     }
 
     @Test
@@ -58,15 +59,15 @@ class PhantatogTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(phantatog.getPowerModifier()).isEqualTo(2);
-        assertThat(phantatog.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, phantatog)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, phantatog)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(phantatog.getPowerModifier()).isEqualTo(0);
-        assertThat(phantatog.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, phantatog)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, phantatog)).isEqualTo(0);
     }
 
     @Test
@@ -91,13 +92,13 @@ class PhantatogTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Earnest Fellowship");
         harness.assertInGraveyard(player1, "Earnest Fellowship");
-        assertThat(phantatog.getPowerModifier()).isZero();
-        assertThat(phantatog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, phantatog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, phantatog)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(phantatog.getPowerModifier()).isEqualTo(1);
-        assertThat(phantatog.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, phantatog)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, phantatog)).isEqualTo(1);
         assertThat(phantatog.isTapped()).isTrue();
     }
 
@@ -112,13 +113,13 @@ class PhantatogTest extends BaseCardTest {
 
         harness.assertNotInHand(player1, "Earnest Fellowship");
         harness.assertInGraveyard(player1, "Earnest Fellowship");
-        assertThat(phantatog.getPowerModifier()).isZero();
-        assertThat(phantatog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, phantatog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, phantatog)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(phantatog.getPowerModifier()).isEqualTo(1);
-        assertThat(phantatog.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, phantatog)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, phantatog)).isEqualTo(1);
     }
 
     @Test
@@ -136,8 +137,8 @@ class PhantatogTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Phantatog");
         harness.assertInGraveyard(player1, "Earnest Fellowship");
-        assertThat(phantatog.getPowerModifier()).isEqualTo(2);
-        assertThat(phantatog.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, phantatog)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, phantatog)).isEqualTo(2);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlpineGrizzly;
 import com.github.laxika.magicalvibes.cards.t.ThassaGodOfTheSea;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -43,7 +44,7 @@ class FeedTheClanTest extends BaseCardTest {
     void checksReducedPowerAtResolution() {
         var creature = harness.addToBattlefieldAndReturn(player1, new AlpineGrizzly());
         harness.castFromHand(player1, new FeedTheClan(), "{1}{G}");
-        creature.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, creature, -1);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 25);
@@ -52,9 +53,9 @@ class FeedTheClanTest extends BaseCardTest {
     @Test
     void checksIncreasedPowerAtResolution() {
         var creature = harness.addToBattlefieldAndReturn(player1, new AlpineGrizzly());
-        creature.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, creature, -1);
         harness.castFromHand(player1, new FeedTheClan(), "{1}{G}");
-        creature.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, creature, 0);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 30);

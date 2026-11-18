@@ -32,8 +32,8 @@ class CleaverSkaabTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .hasSize(2)
                 .allSatisfy(token -> {
-                    assertThat(token.getEffectivePower()).isEqualTo(2);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(2);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
                 });
         assertThat(skaab.isTapped()).isTrue();
     }
@@ -102,8 +102,8 @@ class CleaverSkaabTest extends BaseCardTest {
                     assertThat(copy.getCard().isToken()).isTrue();
                     assertThat(copy.getPlusOnePlusOneCounters()).isZero();
                     assertThat(copy.isTapped()).isFalse();
-                    assertThat(copy.getEffectivePower()).isEqualTo(2);
-                    assertThat(copy.getEffectiveToughness()).isEqualTo(2);
+                    assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(2);
+                    assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(2);
                 });
     }
 

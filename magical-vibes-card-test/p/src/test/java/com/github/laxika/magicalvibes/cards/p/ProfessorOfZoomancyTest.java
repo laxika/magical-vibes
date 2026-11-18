@@ -44,8 +44,8 @@ class ProfessorOfZoomancyTest extends BaseCardTest {
         assertThat(countPermanents(player2, "Pest")).isZero();
         Permanent pest = findPermanent(player1, "Pest");
         assertThat(pest.getCard().isToken()).isTrue();
-        assertThat(pest.getEffectivePower()).isEqualTo(1);
-        assertThat(pest.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, pest)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, pest)).isEqualTo(1);
         assertThat(pest.getEffectiveColors()).containsExactlyInAnyOrder(
                 com.github.laxika.magicalvibes.model.CardColor.BLACK,
                 com.github.laxika.magicalvibes.model.CardColor.GREEN);

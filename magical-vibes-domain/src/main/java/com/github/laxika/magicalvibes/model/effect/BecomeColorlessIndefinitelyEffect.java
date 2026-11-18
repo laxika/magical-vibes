@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * "Becomes colorless" with no stated duration (CR 611.2b), i.e. the layer-5 color-setting effect
+ * "Becomes colorless" with no stated duration (CR 611.2a), i.e. the layer-5 color-setting effect
  * lasts as long as the affected permanent exists. The indefinite sibling of
  * {@link BecomeColorlessUntilEndOfTurnEffect}: the handler floats that record with an
  * {@link Duration#PERMANENT} duration, exactly as

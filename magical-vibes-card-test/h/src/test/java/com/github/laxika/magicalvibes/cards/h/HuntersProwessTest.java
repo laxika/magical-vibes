@@ -28,8 +28,8 @@ class HuntersProwessTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
 
         harness.setLibrary(player1, List.of(
@@ -59,8 +59,8 @@ class HuntersProwessTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -73,8 +73,8 @@ class HuntersProwessTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
     }
 

@@ -64,8 +64,8 @@ class BasrisLieutenantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent knight = findPermanents(player1, "Knight").getFirst();
-        assertThat(knight.getEffectivePower()).isEqualTo(2);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
         assertThat(knight.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(knight.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(knight.getCard().getSubtypes()).containsExactly(CardSubtype.KNIGHT);

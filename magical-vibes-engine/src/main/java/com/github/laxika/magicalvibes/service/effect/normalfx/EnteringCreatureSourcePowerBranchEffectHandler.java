@@ -66,7 +66,7 @@ public class EnteringCreatureSourcePowerBranchEffectHandler implements NormalEff
         }
     }
 
-    private static int lastKnownPower(GameData gameData, UUID permanentId, Integer recorded, Permanent snapshot) {
+    private int lastKnownPower(GameData gameData, UUID permanentId, Integer recorded, Permanent snapshot) {
         if (permanentId != null) {
             for (Permanent departed : gameData.departedPermanentSnapshots.values()) {
                 if (departed.getId().equals(permanentId) && departed.getLastKnownPower() != null) {
@@ -77,6 +77,6 @@ public class EnteringCreatureSourcePowerBranchEffectHandler implements NormalEff
         if (recorded != null) {
             return recorded;
         }
-        return snapshot == null ? Integer.MIN_VALUE : snapshot.getEffectivePower();
+        return snapshot == null ? Integer.MIN_VALUE : gameQueryService.ownPower(gameData, snapshot);
     }
 }

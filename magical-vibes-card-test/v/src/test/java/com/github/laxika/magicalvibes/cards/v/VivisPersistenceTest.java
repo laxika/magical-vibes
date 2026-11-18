@@ -29,8 +29,8 @@ class VivisPersistenceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent wizard = findPermanent(player1, "Wizard");
-        assertThat(wizard.getEffectivePower()).isZero();
-        assertThat(wizard.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, wizard)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, wizard)).isEqualTo(1);
 
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();

@@ -65,15 +65,15 @@ class WitherbloomCommandTest extends BaseCardTest {
                 List.of(fountain.getId(), creature.getId()));
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(0);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test

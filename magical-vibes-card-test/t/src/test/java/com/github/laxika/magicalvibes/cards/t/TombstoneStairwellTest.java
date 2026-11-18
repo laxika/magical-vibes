@@ -58,8 +58,8 @@ class TombstoneStairwellTest extends BaseCardTest {
         advanceToOpponentUpkeep();
 
         Permanent tombspawn = findPermanents(player1, "Tombspawn").getFirst();
-        assertThat(tombspawn.getEffectivePower()).isEqualTo(2);
-        assertThat(tombspawn.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, tombspawn)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, tombspawn)).isEqualTo(2);
         assertThat(tombspawn.getCard().getColors()).containsExactly(CardColor.BLACK);
         assertThat(tombspawn.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
         assertThat(gqs.hasKeyword(gd, tombspawn, Keyword.HASTE)).isTrue();

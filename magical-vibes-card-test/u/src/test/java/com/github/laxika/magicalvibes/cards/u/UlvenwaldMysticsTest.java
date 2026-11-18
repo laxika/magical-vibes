@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -150,7 +151,7 @@ class UlvenwaldMysticsTest extends BaseCardTest {
         // Create a 6/3 attacker to deal lethal damage.
         Permanent attacker = addCreatureReady(player2, new UlvenwaldMystics());
         attacker.setAttacking(true);
-        attacker.setPowerModifier(3); // 3+3=6 power
+        PermanentGrants.setPowerBoost(gd, attacker, 3); // 3+3=6 power
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

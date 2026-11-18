@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -87,8 +88,8 @@ class CARDNAMETest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(POWER_BOOST);
-                assertThat(p.getToughnessModifier()).isEqualTo(TOUGHNESS_BOOST);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(POWER_BOOST);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(TOUGHNESS_BOOST);
             }
         }
     }
@@ -107,7 +108,7 @@ class CARDNAMETest extends BaseCardTest {
         List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
         for (Permanent p : p2Battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
             }
         }
     }
@@ -129,7 +130,7 @@ class CARDNAMETest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
             }
         }
     }

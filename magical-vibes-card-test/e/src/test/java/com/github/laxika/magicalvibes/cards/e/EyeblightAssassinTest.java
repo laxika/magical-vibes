@@ -29,8 +29,8 @@ class EyeblightAssassinTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(1);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
 
     @Test
@@ -62,8 +62,8 @@ class EyeblightAssassinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -98,8 +98,8 @@ class EyeblightAssassinTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -112,13 +112,13 @@ class EyeblightAssassinTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Eyeblight Assassin");
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
 
         resolveAllTriggers();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(1);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
 
     @Test
@@ -138,8 +138,8 @@ class EyeblightAssassinTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(1);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
 
     @Test
@@ -158,8 +158,8 @@ class EyeblightAssassinTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
         harness.assertOnBattlefield(player1, "Eyeblight Assassin");
     }
 }

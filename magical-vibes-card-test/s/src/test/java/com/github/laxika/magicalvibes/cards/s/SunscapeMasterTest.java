@@ -29,12 +29,12 @@ class SunscapeMasterTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(source), 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(4);
-        assertThat(source.getEffectiveToughness()).isEqualTo(4);
-        assertThat(ownGriffin.getEffectivePower()).isEqualTo(4);
-        assertThat(ownGriffin.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opposingGriffin.getEffectivePower()).isEqualTo(2);
-        assertThat(opposingGriffin.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownGriffin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownGriffin)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingGriffin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingGriffin)).isEqualTo(2);
         assertThat(source.isTapped()).isTrue();
     }
 
@@ -51,9 +51,9 @@ class SunscapeMasterTest extends BaseCardTest {
 
         Permanent laterGriffin = addCreatureReady(player1, new RazorfootGriffin());
 
-        assertThat(source.getEffectivePower()).isEqualTo(4);
-        assertThat(laterGriffin.getEffectivePower()).isEqualTo(2);
-        assertThat(laterGriffin.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, laterGriffin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterGriffin)).isEqualTo(2);
     }
 
     @Test
@@ -66,15 +66,15 @@ class SunscapeMasterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(source), 0, null, null);
         harness.passBothPriorities();
-        assertThat(source.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(4);
         assertThat(source.isTapped()).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(2);
-        assertThat(source.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(2);
     }
 
     @Test
@@ -146,8 +146,8 @@ class SunscapeMasterTest extends BaseCardTest {
         Permanent griffin = addCreatureReady(player1, new RazorfootGriffin());
         harness.passBothPriorities();
 
-        assertThat(griffin.getEffectivePower()).isEqualTo(4);
-        assertThat(griffin.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, griffin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, griffin)).isEqualTo(4);
     }
 
     @Test

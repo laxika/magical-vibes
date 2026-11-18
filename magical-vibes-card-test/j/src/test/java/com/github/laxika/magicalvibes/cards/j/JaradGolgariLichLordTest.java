@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.a.AugerSpree;
 import com.github.laxika.magicalvibes.cards.g.GoryosVengeance;
@@ -139,7 +140,7 @@ class JaradGolgariLichLordTest extends BaseCardTest {
         void negativePowerDoesNotCauseLifeGain() {
             addReadyJarad(player1);
             Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-            bears.setPowerModifier(-3);
+            PermanentGrants.setPowerBoost(gd, bears, -3);
             harness.setLife(player2, 20);
             harness.addMana(player1, ManaColor.BLACK, 1);
             harness.addMana(player1, ManaColor.GREEN, 1);

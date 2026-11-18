@@ -20,15 +20,15 @@ class GrasslandCrusaderTest extends BaseCardTest {
     void boostsTargetElf() {
         Permanent crusader = addCreatureReady(player1, new GrasslandCrusader());
         Permanent elf = addCreatureReady(player1, new ElvishPioneer());
-        int power = elf.getEffectivePower();
-        int toughness = elf.getEffectiveToughness();
+        int power = gqs.getEffectivePower(gd, elf);
+        int toughness = gqs.getEffectiveToughness(gd, elf);
 
         harness.activateAbility(player1, 0, null, elf.getId());
         harness.passBothPriorities();
 
         assertThat(crusader.isTapped()).isTrue();
-        assertThat(elf.getEffectivePower()).isEqualTo(power + 2);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(toughness + 2);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(power + 2);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(toughness + 2);
     }
 
     @Test
@@ -36,14 +36,14 @@ class GrasslandCrusaderTest extends BaseCardTest {
     void boostsOpponentSoldier() {
         addCreatureReady(player1, new GrasslandCrusader());
         Permanent soldier = addCreatureReady(player2, new GlorySeeker());
-        int power = soldier.getEffectivePower();
-        int toughness = soldier.getEffectiveToughness();
+        int power = gqs.getEffectivePower(gd, soldier);
+        int toughness = gqs.getEffectiveToughness(gd, soldier);
 
         harness.activateAbility(player1, 0, null, soldier.getId());
         harness.passBothPriorities();
 
-        assertThat(soldier.getEffectivePower()).isEqualTo(power + 2);
-        assertThat(soldier.getEffectiveToughness()).isEqualTo(toughness + 2);
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(power + 2);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(toughness + 2);
     }
 
     @Test
@@ -61,35 +61,35 @@ class GrasslandCrusaderTest extends BaseCardTest {
     void boostWearsOff() {
         addCreatureReady(player1, new GrasslandCrusader());
         Permanent elf = addCreatureReady(player1, new ElvishPioneer());
-        int power = elf.getEffectivePower();
-        int toughness = elf.getEffectiveToughness();
+        int power = gqs.getEffectivePower(gd, elf);
+        int toughness = gqs.getEffectiveToughness(gd, elf);
 
         harness.activateAbility(player1, 0, null, elf.getId());
         harness.passBothPriorities();
-        assertThat(elf.getEffectivePower()).isEqualTo(power + 2);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(toughness + 2);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(power + 2);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(toughness + 2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elf.getEffectivePower()).isEqualTo(power);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(toughness);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(toughness);
     }
 
     @Test
     @DisplayName("Crusader can target itself as a Soldier")
     void boostsItself() {
         Permanent crusader = addCreatureReady(player1, new GrasslandCrusader());
-        int power = crusader.getEffectivePower();
-        int toughness = crusader.getEffectiveToughness();
+        int power = gqs.getEffectivePower(gd, crusader);
+        int toughness = gqs.getEffectiveToughness(gd, crusader);
 
         harness.activateAbility(player1, 0, null, crusader.getId());
         harness.passBothPriorities();
 
         assertThat(crusader.isTapped()).isTrue();
-        assertThat(crusader.getEffectivePower()).isEqualTo(power + 2);
-        assertThat(crusader.getEffectiveToughness()).isEqualTo(toughness + 2);
+        assertThat(gqs.getEffectivePower(gd, crusader)).isEqualTo(power + 2);
+        assertThat(gqs.getEffectiveToughness(gd, crusader)).isEqualTo(toughness + 2);
     }
 
     @Test
@@ -112,8 +112,8 @@ class GrasslandCrusaderTest extends BaseCardTest {
     void cannotActivateAgainWithoutUntapping() {
         addCreatureReady(player1, new GrasslandCrusader());
         Permanent elf = addCreatureReady(player1, new ElvishPioneer());
-        int power = elf.getEffectivePower();
-        int toughness = elf.getEffectiveToughness();
+        int power = gqs.getEffectivePower(gd, elf);
+        int toughness = gqs.getEffectiveToughness(gd, elf);
 
         harness.activateAbility(player1, 0, null, elf.getId());
         harness.passBothPriorities();
@@ -121,8 +121,8 @@ class GrasslandCrusaderTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elf.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(elf.getEffectivePower()).isEqualTo(power + 2);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(toughness + 2);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(power + 2);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(toughness + 2);
     }
 
     @Test
@@ -130,8 +130,8 @@ class GrasslandCrusaderTest extends BaseCardTest {
     void resolvesAfterSourceLeaves() {
         Permanent crusader = addCreatureReady(player1, new GrasslandCrusader());
         Permanent elf = addCreatureReady(player1, new ElvishPioneer());
-        int power = elf.getEffectivePower();
-        int toughness = elf.getEffectiveToughness();
+        int power = gqs.getEffectivePower(gd, elf);
+        int toughness = gqs.getEffectiveToughness(gd, elf);
 
         harness.activateAbility(player1, 0, null, elf.getId());
         gd.playerBattlefields.get(player1.getId()).remove(crusader);
@@ -139,8 +139,8 @@ class GrasslandCrusaderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(elf.getEffectivePower()).isEqualTo(power + 2);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(toughness + 2);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(power + 2);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(toughness + 2);
     }
 
     @Test
@@ -149,8 +149,8 @@ class GrasslandCrusaderTest extends BaseCardTest {
         Permanent crusader = addCreatureReady(player1, new GrasslandCrusader());
         Permanent elf = addCreatureReady(player1, new ElvishPioneer());
         Permanent soldier = addCreatureReady(player1, new GlorySeeker());
-        int power = soldier.getEffectivePower();
-        int toughness = soldier.getEffectiveToughness();
+        int power = gqs.getEffectivePower(gd, soldier);
+        int toughness = gqs.getEffectiveToughness(gd, soldier);
 
         harness.activateAbility(player1, 0, null, elf.getId());
         gd.playerBattlefields.get(player1.getId()).remove(elf);
@@ -159,7 +159,7 @@ class GrasslandCrusaderTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(crusader.isTapped()).isTrue();
-        assertThat(soldier.getEffectivePower()).isEqualTo(power);
-        assertThat(soldier.getEffectiveToughness()).isEqualTo(toughness);
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(toughness);
     }
 }

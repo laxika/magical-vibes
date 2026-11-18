@@ -58,8 +58,8 @@ class MasterOfWindsTest extends BaseCardTest {
                 .containsExactly("4/1", "1/4");
         harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleListChoice(player1, "4/1"));
 
-        assertThat(master.getEffectivePower()).isEqualTo(4);
-        assertThat(master.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(1);
     }
 
     @Test
@@ -73,15 +73,15 @@ class MasterOfWindsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleListChoice(player1, "4/1"));
-        assertThat(master.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(4);
 
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(master.getEffectivePower()).isEqualTo(1);
-        assertThat(master.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(4);
     }
 
     @Test
@@ -99,8 +99,8 @@ class MasterOfWindsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "1/4");
 
-        assertThat(master.getEffectivePower()).isEqualTo(1);
-        assertThat(master.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(4);
     }
 
     @Test
@@ -113,8 +113,8 @@ class MasterOfWindsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(master.getEffectivePower()).isEqualTo(1);
-        assertThat(master.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(4);
     }
 
     @Test
@@ -130,8 +130,8 @@ class MasterOfWindsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleListChoice(player1, "4/1"));
 
-        assertThat(master.getEffectivePower()).isEqualTo(4);
-        assertThat(master.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(1);
     }
 
     @Test
@@ -145,8 +145,8 @@ class MasterOfWindsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(master.getEffectivePower()).isEqualTo(1);
-        assertThat(master.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(4);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -163,8 +163,8 @@ class MasterOfWindsTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertLife(player1, 18);
-        assertThat(master.getEffectivePower()).isEqualTo(1);
-        assertThat(master.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(4);
     }
 
     private Permanent addMasterOfWinds() {

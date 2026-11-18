@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlphaKavu;
 import com.github.laxika.magicalvibes.cards.m.MaggotCarrier;
 import com.github.laxika.magicalvibes.cards.m.MoggSentry;
@@ -81,8 +82,8 @@ class LavaZombieTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(lavaZombie.getPowerModifier()).isEqualTo(1);
-        assertThat(lavaZombie.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, lavaZombie)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lavaZombie)).isZero();
     }
 
     @Test
@@ -98,8 +99,8 @@ class LavaZombieTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(lavaZombie.getPowerModifier()).isZero();
-        assertThat(lavaZombie.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, lavaZombie)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lavaZombie)).isZero();
     }
 
     @Test
@@ -163,9 +164,9 @@ class LavaZombieTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(lavaZombie.getPowerModifier()).isEqualTo(2);
-        assertThat(lavaZombie.getToughnessModifier()).isZero();
-        assertThat(otherCreature.getPowerModifier()).isZero();
-        assertThat(otherCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, lavaZombie)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lavaZombie)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreature)).isZero();
     }
 }

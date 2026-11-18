@@ -79,8 +79,8 @@ class JabarisBannerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, attackerIndex)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(blocker.getEffectivePower()).isEqualTo(3);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
     }
 
     @Test
@@ -176,7 +176,7 @@ class JabarisBannerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, attackerIndex)));
         resolveAllTriggers();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
     }
 }

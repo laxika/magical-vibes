@@ -41,8 +41,8 @@ class FractalAnomalyTest extends BaseCardTest {
 
         Permanent fractal = findPermanent(player1, "Fractal");
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(fractal.getEffectivePower()).isEqualTo(3);
-        assertThat(fractal.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(3);
     }
 
     @Test
@@ -81,8 +81,8 @@ class FractalAnomalyTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Fractal")).hasSize(2).allSatisfy(fractal -> {
             assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
-            assertThat(fractal.getEffectivePower()).isEqualTo(6);
-            assertThat(fractal.getEffectiveToughness()).isEqualTo(6);
+            assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(6);
+            assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(6);
         });
     }
 

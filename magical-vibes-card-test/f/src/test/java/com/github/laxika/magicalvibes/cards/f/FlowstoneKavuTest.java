@@ -26,8 +26,8 @@ class FlowstoneKavuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(kavu.getEffectivePower()).isEqualTo(3);
-        assertThat(kavu.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
     }
 
     @Test
@@ -41,8 +41,8 @@ class FlowstoneKavuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(kavu.getEffectivePower()).isEqualTo(4);
-        assertThat(kavu.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(1);
     }
 
     @Test
@@ -56,8 +56,8 @@ class FlowstoneKavuTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
 
-        assertThat(kavu.getEffectivePower()).isEqualTo(2);
-        assertThat(kavu.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(3);
     }
 
     @Test
@@ -109,10 +109,10 @@ class FlowstoneKavuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(kavu.getEffectivePower()).isEqualTo(3);
-        assertThat(kavu.getEffectiveToughness()).isEqualTo(2);
-        assertThat(otherKavu.getEffectivePower()).isEqualTo(2);
-        assertThat(otherKavu.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherKavu)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherKavu)).isEqualTo(3);
         assertThat(kavu.isTapped()).isFalse();
     }
 

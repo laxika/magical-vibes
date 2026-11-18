@@ -75,8 +75,8 @@ class SliverQueenTest extends BaseCardTest {
         Permanent token = tokens.getFirst();
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.SLIVER);
         assertThat(token.getCard().getColors()).isEmpty();
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
     }
 
     @Test

@@ -32,13 +32,13 @@ class DevotedPaladinTest extends BaseCardTest {
         castPaladin();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
 
         Permanent paladin = findPermanent(player1, "Devoted Paladin");
-        assertThat(paladin.getEffectivePower()).isEqualTo(5);
-        assertThat(paladin.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, paladin)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, paladin)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, paladin, Keyword.VIGILANCE)).isTrue();
     }
 
@@ -50,8 +50,8 @@ class DevotedPaladinTest extends BaseCardTest {
         castPaladin();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -65,8 +65,8 @@ class DevotedPaladinTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -79,8 +79,8 @@ class DevotedPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent champion = findPermanent(player1, "Dwarfhold Champion");
-        assertThat(champion.getEffectivePower()).isEqualTo(3);
-        assertThat(champion.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, champion, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -100,8 +100,8 @@ class DevotedPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent champion = findPermanent(player1, "Dwarfhold Champion");
-        assertThat(champion.getEffectivePower()).isEqualTo(4);
-        assertThat(champion.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, champion, Keyword.VIGILANCE)).isTrue();
     }
 
@@ -113,8 +113,8 @@ class DevotedPaladinTest extends BaseCardTest {
         castPaladin();
 
         Permanent champion = findPermanent(player1, "Dwarfhold Champion");
-        assertThat(champion.getEffectivePower()).isEqualTo(5);
-        assertThat(champion.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, champion, Keyword.VIGILANCE)).isTrue();
     }
 }

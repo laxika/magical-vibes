@@ -2956,8 +2956,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             }
         }
         if (source != null) {
-            source.setPowerModifier(source.getPowerModifier() + ctx.power());
-            source.setToughnessModifier(source.getToughnessModifier() + ctx.toughness());
+            gameData.addPowerToughnessBoost(source, ctx.power(), ctx.toughness());
             if (!ctx.grantedKeywords().isEmpty()) {
                 gameData.addEffectOnPermanent(ctx.sourceCard().getName(), null, ctx.controllerId(),
                         new GrantKeywordEffect(Set.copyOf(ctx.grantedKeywords()), GrantScope.TARGET),

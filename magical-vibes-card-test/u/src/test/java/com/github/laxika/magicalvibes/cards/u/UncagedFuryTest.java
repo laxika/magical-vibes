@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
@@ -28,10 +29,10 @@ class UncagedFuryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
@@ -47,8 +48,8 @@ class UncagedFuryTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 

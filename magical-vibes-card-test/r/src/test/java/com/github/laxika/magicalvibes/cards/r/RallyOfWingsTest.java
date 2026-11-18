@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -31,12 +32,12 @@ class RallyOfWingsTest extends BaseCardTest {
         assertThat(ownFlyer.isTapped()).isFalse();
         assertThat(ownGroundCreature.isTapped()).isFalse();
         assertThat(opposingFlyer.isTapped()).isTrue();
-        assertThat(ownFlyer.getPowerModifier()).isEqualTo(2);
-        assertThat(ownFlyer.getToughnessModifier()).isEqualTo(2);
-        assertThat(ownGroundCreature.getPowerModifier()).isZero();
-        assertThat(ownGroundCreature.getToughnessModifier()).isZero();
-        assertThat(opposingFlyer.getPowerModifier()).isZero();
-        assertThat(opposingFlyer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownFlyer)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownFlyer)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownGroundCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownGroundCreature)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingFlyer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingFlyer)).isZero();
     }
 
     @Test
@@ -45,16 +46,16 @@ class RallyOfWingsTest extends BaseCardTest {
 
         castRallyOfWings();
 
-        assertThat(ownFlyer.getPowerModifier()).isEqualTo(2);
-        assertThat(ownFlyer.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownFlyer)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownFlyer)).isEqualTo(2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownFlyer.getPowerModifier()).isZero();
-        assertThat(ownFlyer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownFlyer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownFlyer)).isZero();
     }
 
     @Test
@@ -67,8 +68,8 @@ class RallyOfWingsTest extends BaseCardTest {
         castRallyOfWings();
 
         assertThat(land.isTapped()).isTrue();
-        assertThat(land.getPowerModifier()).isZero();
-        assertThat(land.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, land)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, land)).isZero();
         assertThat(creature.isTapped()).isFalse();
     }
 
@@ -88,10 +89,10 @@ class RallyOfWingsTest extends BaseCardTest {
 
         Permanent laterFlyer = harness.enterBattlefieldAndReturn(player1, new AirElemental());
 
-        assertThat(originalFlyer.getPowerModifier()).isEqualTo(2);
-        assertThat(originalFlyer.getToughnessModifier()).isEqualTo(2);
-        assertThat(laterFlyer.getPowerModifier()).isZero();
-        assertThat(laterFlyer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, originalFlyer)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, originalFlyer)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, laterFlyer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterFlyer)).isZero();
     }
 
     @Test
@@ -106,8 +107,8 @@ class RallyOfWingsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(flyer.isTapped()).isFalse();
-        assertThat(flyer.getPowerModifier()).isEqualTo(2);
-        assertThat(flyer.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, flyer)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, flyer)).isEqualTo(2);
     }
 
     private void castRallyOfWings() {

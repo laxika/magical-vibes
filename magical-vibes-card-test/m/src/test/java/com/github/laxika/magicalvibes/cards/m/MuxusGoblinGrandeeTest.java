@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
@@ -69,15 +70,15 @@ class MuxusGoblinGrandeeTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(muxus.getPowerModifier()).isEqualTo(2);
-        assertThat(muxus.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, muxus)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, muxus)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(muxus.getPowerModifier()).isZero();
-        assertThat(muxus.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, muxus)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, muxus)).isZero();
     }
 
     @Test
@@ -152,8 +153,8 @@ class MuxusGoblinGrandeeTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(goblin.getCard());
-        assertThat(muxus.getPowerModifier()).isEqualTo(1);
-        assertThat(muxus.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, muxus)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, muxus)).isEqualTo(1);
     }
 
     @Test
@@ -168,8 +169,8 @@ class MuxusGoblinGrandeeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, goblin.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(goblin.getCard());
-        assertThat(muxus.getPowerModifier()).isEqualTo(1);
-        assertThat(muxus.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, muxus)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, muxus)).isEqualTo(1);
     }
 
     private void castMuxusAndResolveTriggers() {

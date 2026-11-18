@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ElvishRanger;
 import com.github.laxika.magicalvibes.cards.i.IvoryGargoyle;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -59,8 +60,8 @@ class GorillaBerserkersTest extends BaseCardTest {
                 new BlockerAssignment(2, 0)));
         harness.passBothPriorities();
 
-        assertThat(berserkers.getPowerModifier()).isEqualTo(4);
-        assertThat(berserkers.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isEqualTo(4);
     }
 
     @Test
@@ -77,8 +78,8 @@ class GorillaBerserkersTest extends BaseCardTest {
                 new BlockerAssignment(3, 0)));
         harness.passBothPriorities();
 
-        assertThat(berserkers.getPowerModifier()).isEqualTo(6);
-        assertThat(berserkers.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isEqualTo(6);
     }
 
     @Test
@@ -98,8 +99,8 @@ class GorillaBerserkersTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(berserkers.getPowerModifier()).isEqualTo(2);
-        assertThat(berserkers.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isEqualTo(2);
     }
 
     @Test
@@ -120,8 +121,8 @@ class GorillaBerserkersTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(gargoyle);
-        assertThat(berserkers.getPowerModifier()).isEqualTo(4);
-        assertThat(berserkers.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isEqualTo(4);
     }
 
     @Test
@@ -158,7 +159,7 @@ class GorillaBerserkersTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(berserkers.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isZero();
     }
 
     @Test
@@ -170,8 +171,8 @@ class GorillaBerserkersTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(berserkers.getPowerModifier()).isZero();
-        assertThat(berserkers.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isZero();
     }
 
     @Test
@@ -186,8 +187,8 @@ class GorillaBerserkersTest extends BaseCardTest {
                 new BlockerAssignment(1, 0),
                 new BlockerAssignment(2, 0)));
         resolveAllTriggers();
-        assertThat(berserkers.getPowerModifier()).isEqualTo(4);
-        assertThat(berserkers.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isEqualTo(4);
         resolveCombat();
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
                 first.getId(), 2, second.getId(), 2, third.getId(), 2));
@@ -195,8 +196,8 @@ class GorillaBerserkersTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(berserkers);
-        assertThat(berserkers.getPowerModifier()).isZero();
-        assertThat(berserkers.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isZero();
     }
 
     private Permanent addAttackingBerserkers() {

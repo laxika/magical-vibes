@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import java.util.UUID;
 
 import com.github.laxika.magicalvibes.cards.a.ArgothianSprite;
@@ -24,7 +26,7 @@ class IronCrawCrusherTest extends BaseCardTest {
     void attackBoostsTargetAttackerBySourcePower() {
         Permanent crusher = addCreatureReady(player1, new IronCrawCrusher());
         Permanent sprite = addCreatureReady(player1, new ArgothianSprite());
-        crusher.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, crusher, 2);
 
         declareAttackers(List.of(0, 1));
         harness.handlePermanentChosen(player1, sprite.getId());
@@ -95,7 +97,7 @@ class IronCrawCrusherTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, crusher.getId());
-        crusher.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, crusher, 3);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, crusher)).isEqualTo(14);
@@ -105,7 +107,7 @@ class IronCrawCrusherTest extends BaseCardTest {
     @Test
     void negativeSourcePowerDoesNotReduceTargetsPower() {
         Permanent crusher = addCreatureReady(player1, new IronCrawCrusher());
-        crusher.setPowerModifier(-6);
+        PermanentGrants.setPowerBoost(gd, crusher, -6);
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, crusher.getId());

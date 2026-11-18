@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,10 +28,10 @@ class MutagenicGrowthTest extends BaseCardTest {
         harness.castInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -44,8 +45,8 @@ class MutagenicGrowthTest extends BaseCardTest {
 
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(18);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -62,10 +63,10 @@ class MutagenicGrowthTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -79,8 +80,8 @@ class MutagenicGrowthTest extends BaseCardTest {
         harness.castInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(6);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(6);
         harness.assertLife(player1, 20);
     }
 
@@ -96,8 +97,8 @@ class MutagenicGrowthTest extends BaseCardTest {
         harness.assertLife(player1, 1);
         harness.assertInHand(player1, "Mutagenic Growth");
         assertThat(gd.stack).isEmpty();
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -110,7 +111,7 @@ class MutagenicGrowthTest extends BaseCardTest {
         harness.castInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 }

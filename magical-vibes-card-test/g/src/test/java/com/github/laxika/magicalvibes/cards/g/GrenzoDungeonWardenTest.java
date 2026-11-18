@@ -58,7 +58,7 @@ class GrenzoDungeonWardenTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard().getId().equals(bottomCard.getId()));
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(bottomCard);
-        assertThat(grenzo.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, grenzo)).isEqualTo(4);
     }
 
     @Test

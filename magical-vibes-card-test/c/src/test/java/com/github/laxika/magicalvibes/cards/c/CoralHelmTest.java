@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -33,8 +34,8 @@ class CoralHelmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Forest");
@@ -50,12 +51,12 @@ class CoralHelmTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(player1, "Coral Helm"), null, bearId);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(findPermanent(player1, "Grizzly Bears").getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Grizzly Bears").getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(2);
         harness.passBothPriorities();
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -75,8 +76,8 @@ class CoralHelmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -113,8 +114,8 @@ class CoralHelmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.activateAbility(player1, battlefieldIndex(player1, "Coral Helm"), null, bear.getId());
         harness.passBothPriorities();
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
     @Test
     @DisplayName("A tapped Helm can activate repeatedly and its boosts add together")
@@ -130,8 +131,8 @@ class CoralHelmTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(player1, "Coral Helm"), null, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(6);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(6);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         assertThat(helm.isTapped()).isTrue();
@@ -152,8 +153,8 @@ class CoralHelmTest extends BaseCardTest {
         harness.assertInHand(player1, "Forest");
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     private int battlefieldIndex(com.github.laxika.magicalvibes.model.Player player, String cardName) {

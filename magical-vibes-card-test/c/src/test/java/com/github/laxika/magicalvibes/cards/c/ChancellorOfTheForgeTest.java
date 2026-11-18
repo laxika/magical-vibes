@@ -54,8 +54,8 @@ class ChancellorOfTheForgeTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Phyrexian Goblin"))
                 .findFirst()
                 .orElseThrow();
-        assertThat(goblinToken.getEffectivePower()).isEqualTo(1);
-        assertThat(goblinToken.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, goblinToken)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblinToken)).isEqualTo(1);
     }
 
     @Test
@@ -71,8 +71,8 @@ class ChancellorOfTheForgeTest extends BaseCardTest {
         assertThat(goblinToken.getCard().getSubtypes()).contains(CardSubtype.PHYREXIAN, CardSubtype.GOBLIN);
         assertThat(goblinToken.getCard().getKeywords()).contains(Keyword.HASTE);
         assertThat(goblinToken.getCard().isToken()).isTrue();
-        assertThat(goblinToken.getEffectivePower()).isEqualTo(1);
-        assertThat(goblinToken.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, goblinToken)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblinToken)).isEqualTo(1);
     }
 
     @Test

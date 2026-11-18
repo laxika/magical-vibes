@@ -97,8 +97,8 @@ class LingeringTormentorTest extends BaseCardTest {
 
         Permanent tormentor = findPermanent(player1, "Lingering Tormentor");
         assertThat(tormentor.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(tormentor.getEffectivePower()).isEqualTo(1);
-        assertThat(tormentor.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tormentor)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tormentor)).isEqualTo(1);
     }
 
     @Test

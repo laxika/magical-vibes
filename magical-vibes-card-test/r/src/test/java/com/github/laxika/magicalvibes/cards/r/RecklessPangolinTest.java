@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,8 +23,8 @@ class RecklessPangolinTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(pangolin.getPowerModifier()).isEqualTo(1);
-        assertThat(pangolin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, pangolin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pangolin)).isEqualTo(1);
     }
 
     @Test
@@ -31,8 +32,8 @@ class RecklessPangolinTest extends BaseCardTest {
     void noBoostWithoutAttacking() {
         Permanent pangolin = addCreatureReady(player1, new RecklessPangolin());
 
-        assertThat(pangolin.getPowerModifier()).isZero();
-        assertThat(pangolin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pangolin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pangolin)).isZero();
     }
 
     @Test
@@ -42,15 +43,15 @@ class RecklessPangolinTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
-        assertThat(pangolin.getPowerModifier()).isEqualTo(1);
-        assertThat(pangolin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, pangolin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pangolin)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(pangolin.getPowerModifier()).isZero();
-        assertThat(pangolin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pangolin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pangolin)).isZero();
     }
 
     @Test
@@ -62,13 +63,13 @@ class RecklessPangolinTest extends BaseCardTest {
                 () -> declareAttackers(player1, List.of(0)));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(pangolin.getPowerModifier()).isZero();
-        assertThat(pangolin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pangolin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pangolin)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(pangolin.getPowerModifier()).isEqualTo(1);
-        assertThat(pangolin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, pangolin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pangolin)).isEqualTo(1);
     }
 
     @Test
@@ -81,12 +82,12 @@ class RecklessPangolinTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
-        assertThat(nonattacker.getPowerModifier()).isZero();
-        assertThat(nonattacker.getToughnessModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonattacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isZero();
     }
 
 }

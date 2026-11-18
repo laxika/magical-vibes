@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlpineGrizzly;
 import com.github.laxika.magicalvibes.cards.a.AxebaneBeast;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -58,7 +59,7 @@ class NoxiousGroodionTest extends BaseCardTest {
     @DisplayName("Deathtouch does not destroy a creature when no damage is dealt")
     void zeroPowerDoesNotDestroyAttacker() {
         Permanent groodion = addCreatureReady(player2, new NoxiousGroodion());
-        groodion.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, groodion, -2);
         Permanent attacker = addCreatureReady(player1, new AxebaneBeast());
         attacker.setAttacking(true);
 

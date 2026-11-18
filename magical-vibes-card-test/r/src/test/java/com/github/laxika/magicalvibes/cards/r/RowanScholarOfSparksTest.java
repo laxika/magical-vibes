@@ -94,8 +94,8 @@ class RowanScholarOfSparksTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getCard().isToken()
                         && permanent.getCard().getName().equals("Elemental")
-                        && permanent.getEffectivePower() == 4
-                        && permanent.getEffectiveToughness() == 4);
+                        && gqs.getEffectivePower(gd, permanent) == 4
+                        && gqs.getEffectiveToughness(gd, permanent) == 4);
     }
 
     @Test

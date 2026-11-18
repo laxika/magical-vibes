@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -30,14 +31,14 @@ class NettleGuardTest extends BaseCardTest {
         harness.castInstant(player1, 0, nettleGuard.getId());
         resolveAllTriggers();
 
-        assertThat(nettleGuard.getPowerModifier()).isEqualTo(3);
-        assertThat(nettleGuard.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, nettleGuard)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nettleGuard)).isEqualTo(5);
 
         harness.castInstant(player1, 0, nettleGuard.getId());
         resolveAllTriggers();
 
-        assertThat(nettleGuard.getPowerModifier()).isEqualTo(6);
-        assertThat(nettleGuard.getToughnessModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, nettleGuard)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nettleGuard)).isEqualTo(8);
     }
 
     @Test
@@ -48,7 +49,7 @@ class NettleGuardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, nettleGuard.getId());
         resolveAllTriggers();
 
-        assertThat(nettleGuard.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nettleGuard)).isEqualTo(2);
         harness.assertOnBattlefield(player1, "Nettle Guard");
     }
 
@@ -61,8 +62,8 @@ class NettleGuardTest extends BaseCardTest {
         harness.castInstant(player2, 0, nettleGuard.getId());
         harness.passBothPriorities();
 
-        assertThat(nettleGuard.getPowerModifier()).isEqualTo(3);
-        assertThat(nettleGuard.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, nettleGuard)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nettleGuard)).isEqualTo(3);
     }
 
     @Test
@@ -113,8 +114,8 @@ class NettleGuardTest extends BaseCardTest {
         harness.castInstant(player1, 0, nettleGuard.getId());
         resolveAllTriggers();
 
-        assertThat(nettleGuard.getPowerModifier()).isEqualTo(6);
-        assertThat(nettleGuard.getToughnessModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, nettleGuard)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nettleGuard)).isEqualTo(8);
     }
 
     @Test
@@ -130,8 +131,8 @@ class NettleGuardTest extends BaseCardTest {
         harness.castInstant(player1, 0, nettleGuard.getId());
         resolveAllTriggers();
 
-        assertThat(nettleGuard.getPowerModifier()).isEqualTo(6);
-        assertThat(nettleGuard.getToughnessModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, nettleGuard)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nettleGuard)).isEqualTo(8);
     }
 
     @Test
@@ -146,8 +147,8 @@ class NettleGuardTest extends BaseCardTest {
         harness.castInstant(player1, 0, nettleGuard.getId());
         resolveAllTriggers();
 
-        assertThat(nettleGuard.getPowerModifier()).isEqualTo(3);
-        assertThat(nettleGuard.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, nettleGuard)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nettleGuard)).isEqualTo(5);
     }
 
     @Test
@@ -159,15 +160,15 @@ class NettleGuardTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(nettleGuard.getPowerModifier()).isZero();
-        assertThat(nettleGuard.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nettleGuard)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nettleGuard)).isZero();
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castInstant(player1, 0, nettleGuard.getId());
         resolveAllTriggers();
 
-        assertThat(nettleGuard.getPowerModifier()).isEqualTo(3);
-        assertThat(nettleGuard.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, nettleGuard)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nettleGuard)).isEqualTo(5);
     }
 
     @Test
@@ -209,9 +210,9 @@ class NettleGuardTest extends BaseCardTest {
         harness.castInstant(player1, 0, second.getId());
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(3);
-        assertThat(first.getToughnessModifier()).isEqualTo(5);
-        assertThat(second.getPowerModifier()).isEqualTo(3);
-        assertThat(second.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(5);
     }
 }

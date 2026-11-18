@@ -46,8 +46,8 @@ class SpawningPitTest extends BaseCardTest {
         assertThat(spawn.getCard().getSubtypes()).contains(CardSubtype.SPAWN);
         assertThat(spawn.getCard().hasType(CardType.ARTIFACT)).isTrue();
         assertThat(spawn.getCard().hasType(CardType.CREATURE)).isTrue();
-        assertThat(spawn.getEffectivePower()).isEqualTo(2);
-        assertThat(spawn.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spawn)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spawn)).isEqualTo(2);
     }
 
     @Test

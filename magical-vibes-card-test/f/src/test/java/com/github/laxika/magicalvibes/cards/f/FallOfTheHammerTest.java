@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -106,7 +107,7 @@ class FallOfTheHammerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
-        source.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, source, 2);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Air Elemental");

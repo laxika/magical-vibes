@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -28,8 +29,8 @@ class BattleMadRoninTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(ronin.getPowerModifier()).isEqualTo(2);
-        assertThat(ronin.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isEqualTo(2);
     }
 
     @Test
@@ -42,8 +43,8 @@ class BattleMadRoninTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(ronin.getPowerModifier()).isEqualTo(2);
-        assertThat(ronin.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isEqualTo(2);
     }
 
     @Test
@@ -54,8 +55,8 @@ class BattleMadRoninTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(ronin.getPowerModifier()).isZero();
-        assertThat(ronin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isZero();
     }
 
     @Test
@@ -70,8 +71,8 @@ class BattleMadRoninTest extends BaseCardTest {
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(ronin.getPowerModifier()).isEqualTo(2);
-        assertThat(ronin.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isEqualTo(2);
     }
 
     @Test
@@ -84,15 +85,15 @@ class BattleMadRoninTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(ronin.getPowerModifier()).isEqualTo(2);
-        assertThat(ronin.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ronin.getPowerModifier()).isZero();
-        assertThat(ronin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isZero();
     }
 
     @Test

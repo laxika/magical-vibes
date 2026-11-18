@@ -43,8 +43,8 @@ class SkemfarElderhallTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(countPermanents(player1, "Elf Warrior")).isEqualTo(2);
         harness.assertInGraveyard(player1, "Skemfar Elderhall");
     }
@@ -168,15 +168,15 @@ class SkemfarElderhallTest extends BaseCardTest {
         addManaForAbility();
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(countPermanents(player1, "Elf Warrior")).isEqualTo(2);
     }
 

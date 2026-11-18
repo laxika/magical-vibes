@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BroodhunterWurm;
 import com.github.laxika.magicalvibes.cards.h.HedronArchive;
 import com.github.laxika.magicalvibes.cards.k.KozileksChanneler;
@@ -108,7 +109,7 @@ class TitansPresenceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castInstantWithDiscard(player1, 0, target.getId(), 1);
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
@@ -122,7 +123,7 @@ class TitansPresenceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castInstantWithDiscard(player1, 0, target.getId(), 1);
-        target.setPowerModifier(-6);
+        PermanentGrants.setPowerBoost(gd, target, -6);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);

@@ -37,8 +37,8 @@ class MagmasaurTest extends BaseCardTest {
 
         Permanent magmasaur = findPermanent(player1, "Magmasaur");
         assertThat(magmasaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
-        assertThat(magmasaur.getEffectivePower()).isEqualTo(5);
-        assertThat(magmasaur.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, magmasaur)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, magmasaur)).isEqualTo(5);
     }
 
     @Test

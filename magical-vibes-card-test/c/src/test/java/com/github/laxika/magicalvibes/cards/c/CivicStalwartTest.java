@@ -31,12 +31,12 @@ class CivicStalwartTest extends BaseCardTest {
         castStalwart();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
 
         Permanent stalwart = findPermanent(player1, "Civic Stalwart");
-        assertThat(stalwart.getEffectivePower()).isEqualTo(4);
-        assertThat(stalwart.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, stalwart)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, stalwart)).isEqualTo(4);
     }
 
     @Test
@@ -47,8 +47,8 @@ class CivicStalwartTest extends BaseCardTest {
         castStalwart();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -62,9 +62,9 @@ class CivicStalwartTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Civic Stalwart").getEffectivePower()).isEqualTo(3);
-        assertThat(findPermanent(player1, "Civic Stalwart").getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Civic Stalwart"))).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Civic Stalwart"))).isEqualTo(3);
     }
 
     @Test
@@ -78,10 +78,10 @@ class CivicStalwartTest extends BaseCardTest {
         List<Permanent> stalwarts = findPermanents(player1, "Civic Stalwart");
         assertThat(stalwarts).hasSize(2);
         Permanent second = stalwarts.get(1);
-        assertThat(first.getEffectivePower()).isEqualTo(5);
-        assertThat(first.getEffectiveToughness()).isEqualTo(5);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
     }
 
     @Test
@@ -92,9 +92,9 @@ class CivicStalwartTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(5);
-        assertThat(first.getEffectiveToughness()).isEqualTo(5);
-        assertThat(second.getEffectivePower()).isEqualTo(5);
-        assertThat(second.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
     }
 }

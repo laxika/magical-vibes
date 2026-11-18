@@ -40,8 +40,8 @@ class FrontlineRushTest extends BaseCardTest {
         List<Permanent> goblins = findPermanents(player1, "Goblin");
         assertThat(goblins).hasSize(2);
         assertThat(goblins).allSatisfy(goblin -> {
-            assertThat(goblin.getEffectivePower()).isEqualTo(1);
-            assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
         });
     }
 
@@ -60,8 +60,8 @@ class FrontlineRushTest extends BaseCardTest {
         harness.castInstant(player1, 0, 1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -76,14 +76,14 @@ class FrontlineRushTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, 1, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -111,8 +111,8 @@ class FrontlineRushTest extends BaseCardTest {
         harness.castInstant(player1, 0, 1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(countPermanents(player1, "Goblin")).isZero();
     }
 
@@ -148,8 +148,8 @@ class FrontlineRushTest extends BaseCardTest {
         harness.castInstant(player1, 0, 1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -168,12 +168,12 @@ class FrontlineRushTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Goblin")).isEqualTo(2);
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
 
         harness.addToBattlefield(player1, new LlanowarElves());
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 }

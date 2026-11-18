@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.q.QuilledWolf;
 import com.github.laxika.magicalvibes.cards.v.VesselOfNascency;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -27,8 +28,8 @@ class AimHighTest extends BaseCardTest {
         castAimHigh(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
     }
 
@@ -38,16 +39,16 @@ class AimHighTest extends BaseCardTest {
         Permanent target = addTappedCreature(player2);
         castAimHigh(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
     }
 
@@ -70,8 +71,8 @@ class AimHighTest extends BaseCardTest {
         castAimHigh(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
     }
 
@@ -91,8 +92,8 @@ class AimHighTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Aim High");
         assertThat(other.isTapped()).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
     }
 
@@ -103,16 +104,16 @@ class AimHighTest extends BaseCardTest {
         castAimHigh(target);
         castAimHigh(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
     }
 

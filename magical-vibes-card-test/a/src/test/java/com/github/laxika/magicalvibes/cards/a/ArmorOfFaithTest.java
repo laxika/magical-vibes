@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -85,7 +86,7 @@ class ArmorOfFaithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Temporary boost gone, static +1/+1 still applies
-        assertThat(bearsPerm.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bearsPerm)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(3);
     }
 

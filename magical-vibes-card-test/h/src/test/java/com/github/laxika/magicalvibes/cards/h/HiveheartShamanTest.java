@@ -80,8 +80,8 @@ class HiveheartShamanTest extends BaseCardTest {
 
         Permanent insect = findPermanent(player1, "Insect");
         assertThat(insect.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(insect.getEffectivePower()).isEqualTo(4);
-        assertThat(insect.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, insect)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, insect)).isEqualTo(4);
     }
 
     @Test
@@ -162,8 +162,8 @@ class HiveheartShamanTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Insect")).isEqualTo(1);
         Permanent insect = findPermanent(player1, "Insect");
         assertThat(insect.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(insect.getEffectivePower()).isEqualTo(1);
-        assertThat(insect.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, insect)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, insect)).isEqualTo(1);
     }
 
     @Test
@@ -222,8 +222,8 @@ class HiveheartShamanTest extends BaseCardTest {
 
         Permanent insect = findPermanent(player1, "Insect");
         assertThat(insect.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(insect.getEffectivePower()).isEqualTo(2);
-        assertThat(insect.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, insect)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, insect)).isEqualTo(2);
     }
 
     @Test

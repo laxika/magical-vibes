@@ -27,8 +27,8 @@ class RoarOfEndlessSongTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent elephant = findElephants().getFirst();
-        assertThat(elephant.getEffectivePower()).isEqualTo(5);
-        assertThat(elephant.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elephant)).isEqualTo(5);
         assertThat(elephant.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(elephant.getCard().getSubtypes()).contains(CardSubtype.ELEPHANT);
     }
@@ -44,8 +44,8 @@ class RoarOfEndlessSongTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findElephants()).hasSize(1);
-        assertThat(findElephants().getFirst().getEffectivePower()).isEqualTo(5);
-        assertThat(findElephants().getFirst().getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, findElephants().getFirst())).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, findElephants().getFirst())).isEqualTo(5);
     }
 
     @Test

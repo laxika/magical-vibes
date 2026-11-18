@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.cards.g.Ghostfire;
 import com.github.laxika.magicalvibes.cards.h.HomingSliver;
@@ -29,8 +30,8 @@ class FrenzySliverTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
-        assertThat(frenzySliver.getPowerModifier()).isEqualTo(1);
-        assertThat(frenzySliver.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, frenzySliver)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, frenzySliver)).isZero();
     }
 
     @Test
@@ -43,8 +44,8 @@ class FrenzySliverTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(opposingSliver.getPowerModifier()).isEqualTo(1);
-        assertThat(opposingSliver.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingSliver)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingSliver)).isZero();
     }
 
     @Test
@@ -57,8 +58,8 @@ class FrenzySliverTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(frenzySliver.getPowerModifier()).isZero();
-        assertThat(frenzySliver.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, frenzySliver)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, frenzySliver)).isZero();
     }
 
     @Test
@@ -75,8 +76,8 @@ class FrenzySliverTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Frenzy Sliver");
-        assertThat(unblockedSliver.getPowerModifier()).isEqualTo(1);
-        assertThat(unblockedSliver.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, unblockedSliver)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, unblockedSliver)).isZero();
     }
 
     @Test
@@ -92,10 +93,10 @@ class FrenzySliverTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(2);
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.passBothPriorities());
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
         resolveAllTriggers();
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -115,8 +116,8 @@ class FrenzySliverTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Frenzy Sliver");
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -129,8 +130,8 @@ class FrenzySliverTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
-        assertThat(nonSliver.getPowerModifier()).isZero();
-        assertThat(nonSliver.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonSliver)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonSliver)).isZero();
     }
 
     @Test
@@ -141,13 +142,13 @@ class FrenzySliverTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
-        assertThat(frenzySliver.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, frenzySliver)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(frenzySliver.getPowerModifier()).isZero();
-        assertThat(frenzySliver.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, frenzySliver)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, frenzySliver)).isZero();
     }
 }

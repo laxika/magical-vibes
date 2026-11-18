@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PlatedSlagwurm;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -77,14 +78,14 @@ class DuskworkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(duskworker.getPowerModifier()).isEqualTo(1);
-        assertThat(duskworker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, duskworker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duskworker)).isEqualTo(0);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(duskworker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, duskworker)).isZero();
     }
 
     @Test
@@ -100,10 +101,10 @@ class DuskworkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(duskworker.getPowerModifier()).isEqualTo(2);
-        assertThat(duskworker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, duskworker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duskworker)).isZero();
         assertThat(duskworker.isTapped()).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
         assertThat(gd.regenerationShieldCount(other.getId())).isZero();
     }
 

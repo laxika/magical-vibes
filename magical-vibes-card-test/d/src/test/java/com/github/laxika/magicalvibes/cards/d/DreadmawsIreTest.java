@@ -29,8 +29,8 @@ class DreadmawsIreTest extends BaseCardTest {
 
         castDreadmawsIre(attacker);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
 
         resolveCombat();
@@ -57,8 +57,8 @@ class DreadmawsIreTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         attacker.setAttacking(true);
@@ -95,8 +95,8 @@ class DreadmawsIreTest extends BaseCardTest {
         attacker.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Dreadmaw's Ire");
     }

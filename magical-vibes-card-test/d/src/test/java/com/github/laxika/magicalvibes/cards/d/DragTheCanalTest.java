@@ -57,8 +57,8 @@ class DragTheCanalTest extends BaseCardTest {
         var detective = findPermanent(player1, "Detective");
         assertThat(detective.getCard().getColors()).containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLUE);
         assertThat(detective.getCard().getSubtypes()).contains(CardSubtype.DETECTIVE);
-        assertThat(detective.getEffectivePower()).isEqualTo(2);
-        assertThat(detective.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, detective)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, detective)).isEqualTo(2);
     }
 
     @Test

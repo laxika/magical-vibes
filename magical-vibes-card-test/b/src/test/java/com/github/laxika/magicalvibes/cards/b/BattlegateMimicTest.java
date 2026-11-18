@@ -63,8 +63,8 @@ class BattlegateMimicTest extends BaseCardTest {
         harness.castFromHand(player1, redWhiteSpell(), "{R}{W}");
         harness.passBothPriorities(); // resolve the triggered ability
 
-        assertThat(mimic.getEffectivePower()).isEqualTo(4);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, mimic, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -75,15 +75,15 @@ class BattlegateMimicTest extends BaseCardTest {
 
         harness.castFromHand(player1, redWhiteSpell(), "{R}{W}");
         harness.passBothPriorities();
-        assertThat(mimic.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(4);
 
         resolveAllTriggers();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mimic.getEffectivePower()).isEqualTo(2);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, mimic, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -95,8 +95,8 @@ class BattlegateMimicTest extends BaseCardTest {
         harness.castFromHand(player1, redSpell(), "{R}");
         harness.passBothPriorities();
 
-        assertThat(mimic.getEffectivePower()).isEqualTo(2);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, mimic, Keyword.FIRST_STRIKE)).isFalse();
     }
 

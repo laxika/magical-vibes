@@ -45,8 +45,8 @@ class RuthlessSniperTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player2, "Watchers of the Dead");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(bears.getEffectivePower()).isEqualTo(1);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
         // May-pay {1} spent (the cycling {U} was consumed by activating the ability)
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }

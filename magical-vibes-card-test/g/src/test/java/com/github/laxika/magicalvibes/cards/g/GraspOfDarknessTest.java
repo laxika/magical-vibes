@@ -33,16 +33,16 @@ class GraspOfDarknessTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
-        assertThat(other.getEffectivePower()).isEqualTo(6);
-        assertThat(other.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         harness.assertOnBattlefield(player2, "Alpha Tyrranax");
     }
 

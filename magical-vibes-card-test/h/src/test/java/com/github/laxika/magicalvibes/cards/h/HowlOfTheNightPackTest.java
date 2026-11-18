@@ -98,8 +98,8 @@ class HowlOfTheNightPackTest extends BaseCardTest {
         assertThat(wolf.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(wolf.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(wolf.getCard().getSubtypes()).containsExactly(CardSubtype.WOLF);
-        assertThat(wolf.getEffectivePower()).isEqualTo(2);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
     }
 
     @Test

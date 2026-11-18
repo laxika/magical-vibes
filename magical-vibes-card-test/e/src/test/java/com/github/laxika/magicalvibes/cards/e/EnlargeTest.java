@@ -30,8 +30,8 @@ class EnlargeTest extends BaseCardTest {
         castEnlargeOnBears();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getEffectivePower()).isEqualTo(9);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(9);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.TRAMPLE);
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
@@ -46,8 +46,8 @@ class EnlargeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.TRAMPLE);
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }

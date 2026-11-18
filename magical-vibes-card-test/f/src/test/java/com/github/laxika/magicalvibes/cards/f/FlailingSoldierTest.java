@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrenellatedWall;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,8 +25,8 @@ class FlailingSoldierTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(soldier.getPowerModifier()).isEqualTo(1);
-        assertThat(soldier.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(1);
     }
 
     @Test
@@ -37,8 +38,8 @@ class FlailingSoldierTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(soldier.getPowerModifier()).isEqualTo(-1);
-        assertThat(soldier.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(-1);
     }
 
     @Test
@@ -52,13 +53,13 @@ class FlailingSoldierTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(soldier.getPowerModifier()).isZero();
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(soldier.getPowerModifier()).isZero();
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
     }
 
     @Test
@@ -70,13 +71,13 @@ class FlailingSoldierTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(soldier.getPowerModifier()).isEqualTo(1);
-        assertThat(soldier.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(soldier.getPowerModifier()).isZero();
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
     }
 
     @Test
@@ -89,8 +90,8 @@ class FlailingSoldierTest extends BaseCardTest {
         harness.activateAbilityOfPermanent(player2, soldier, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(soldier.getPowerModifier()).isEqualTo(1);
-        assertThat(soldier.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(1);
         assertThat(wall.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
@@ -123,8 +124,8 @@ class FlailingSoldierTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(soldier.getPowerModifier()).isZero();
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
@@ -142,8 +143,8 @@ class FlailingSoldierTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(soldier.getPowerModifier()).isEqualTo(2);
-        assertThat(soldier.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(2);
         assertThat(soldier.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -158,13 +159,13 @@ class FlailingSoldierTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
-        assertThat(soldier.getPowerModifier()).isEqualTo(-1);
-        assertThat(soldier.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(-1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(soldier.getPowerModifier()).isZero();
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
         harness.assertOnBattlefield(player1, "Flailing Soldier");
     }
 
@@ -179,17 +180,17 @@ class FlailingSoldierTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 1, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(soldier.getPowerModifier()).isZero();
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
 
         harness.passBothPriorities();
-        assertThat(soldier.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(1);
         harness.passBothPriorities();
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
         harness.passBothPriorities();
 
-        assertThat(soldier.getPowerModifier()).isEqualTo(-1);
-        assertThat(soldier.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(-1);
         harness.assertOnBattlefield(player1, "Flailing Soldier");
         harness.assertNotInGraveyard(player1, "Flailing Soldier");
     }

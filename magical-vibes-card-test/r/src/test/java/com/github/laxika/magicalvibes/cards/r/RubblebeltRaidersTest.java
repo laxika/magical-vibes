@@ -26,7 +26,7 @@ class RubblebeltRaidersTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(raiders.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(raiders.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(4);
     }
 
     @Test

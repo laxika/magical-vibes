@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BehemothSledge;
 import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -33,8 +34,8 @@ class GloryscaleViashinoTest extends BaseCardTest {
         // Cast trigger sits on the stack above the creature spell.
         harness.passBothPriorities(); // resolve the cast trigger (pump)
 
-        assertThat(viashino.getPowerModifier()).isEqualTo(3);
-        assertThat(viashino.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, viashino)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, viashino)).isEqualTo(3);
     }
 
     @Test
@@ -49,8 +50,8 @@ class GloryscaleViashinoTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(viashino.getPowerModifier()).isEqualTo(0);
-        assertThat(viashino.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, viashino)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, viashino)).isEqualTo(0);
     }
 
     @Test
@@ -61,15 +62,15 @@ class GloryscaleViashinoTest extends BaseCardTest {
         harness.castFromHand(player1, new GloryscaleViashino(), "{1}{R}{G}{W}");
         harness.passBothPriorities(); // resolve the cast trigger (pump)
 
-        assertThat(viashino.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, viashino)).isEqualTo(3);
 
         resolveAllTriggers();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(viashino.getPowerModifier()).isEqualTo(0);
-        assertThat(viashino.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, viashino)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, viashino)).isEqualTo(0);
     }
 
     @Test
@@ -80,16 +81,16 @@ class GloryscaleViashinoTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent second = gd.playerBattlefields.get(player1.getId()).getLast();
 
-        assertThat(second.getPowerModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
 
         harness.castFromHand(player1, new GloryscaleViashino(), "{1}{R}{G}{W}");
         resolveAllTriggers();
 
-        assertThat(viashino.getPowerModifier()).isEqualTo(6);
-        assertThat(viashino.getToughnessModifier()).isEqualTo(6);
-        assertThat(second.getPowerModifier()).isEqualTo(3);
-        assertThat(second.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, viashino)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, viashino)).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(3);
     }
 
     @Test
@@ -103,8 +104,8 @@ class GloryscaleViashinoTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
 
-        assertThat(viashino.getPowerModifier()).isZero();
-        assertThat(viashino.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, viashino)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, viashino)).isZero();
     }
 
     @Test
@@ -119,8 +120,8 @@ class GloryscaleViashinoTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent viashino = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(viashino.getPowerModifier()).isZero();
-        assertThat(viashino.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, viashino)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, viashino)).isZero();
     }
 
     @Test
@@ -132,8 +133,8 @@ class GloryscaleViashinoTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
 
-        assertThat(viashino.getPowerModifier()).isEqualTo(3);
-        assertThat(viashino.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, viashino)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, viashino)).isEqualTo(3);
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -147,7 +148,7 @@ class GloryscaleViashinoTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
 
-        assertThat(viashino.getPowerModifier()).isZero();
-        assertThat(viashino.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, viashino)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, viashino)).isZero();
     }
 }

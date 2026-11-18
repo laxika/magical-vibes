@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Clue;
 import com.github.laxika.magicalvibes.cards.f.Food;
 import com.github.laxika.magicalvibes.cards.m.MadameVastra;
@@ -67,8 +68,8 @@ class JennyFlintTest extends BaseCardTest {
     void firstStrikeKillsBlockerBeforeItCanDamageJenny() {
         Permanent jenny = addCreatureReady(player1, new JennyFlint());
         Permanent blocker = addCreatureReady(player2, new MadameVastra());
-        blocker.setPowerModifier(-1);
-        blocker.setToughnessModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
+        PermanentGrants.setToughnessBoost(gd, blocker, -1);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -95,7 +96,7 @@ class JennyFlintTest extends BaseCardTest {
     void trainingDoesNotTriggerWithAnEqualPowerAttacker() {
         Permanent jenny = addCreatureReady(player1, new JennyFlint());
         Permanent vastra = addCreatureReady(player1, new MadameVastra());
-        vastra.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, vastra, -1);
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();

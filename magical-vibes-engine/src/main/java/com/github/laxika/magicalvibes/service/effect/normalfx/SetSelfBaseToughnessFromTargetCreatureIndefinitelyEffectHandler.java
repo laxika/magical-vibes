@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 @Component
 @RequiredArgsConstructor
@@ -32,9 +35,8 @@ public class SetSelfBaseToughnessFromTargetCreatureIndefinitelyEffectHandler imp
         }
 
         int toughness = gameQueryService.getEffectivePower(gameData, target) + 1;
-        source.setBaseToughnessOverriddenPermanently(true);
-        source.setPermanentBaseToughnessOverride(toughness);
-        source.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
+        gameData.addEffectOnPermanent(entry, new SetBasePowerToughnessEffect(
+                null, toughness, GrantScope.TARGET, Duration.PERMANENT), source.getId(), Duration.PERMANENT);
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(source.getCard())

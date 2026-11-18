@@ -38,8 +38,8 @@ class TurntimberRangerTest extends BaseCardTest {
         Permanent wolf = findPermanent(player1, "Wolf");
         assertThat(wolf.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(wolf.getCard().getSubtypes()).containsExactly(CardSubtype.WOLF);
-        assertThat(wolf.getEffectivePower()).isEqualTo(2);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
         assertThat(ranger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 

@@ -24,8 +24,8 @@ class PlatedGeopedeTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(geopede.getEffectivePower()).isEqualTo(3);
-        assertThat(geopede.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, geopede)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, geopede)).isEqualTo(3);
     }
 
     @Test
@@ -38,8 +38,8 @@ class PlatedGeopedeTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(geopede.getEffectivePower()).isEqualTo(1);
-        assertThat(geopede.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, geopede)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, geopede)).isEqualTo(1);
     }
 
     @Test
@@ -50,14 +50,14 @@ class PlatedGeopedeTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        assertThat(geopede.getEffectivePower()).isEqualTo(3);
-        assertThat(geopede.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, geopede)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, geopede)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(geopede.getEffectivePower()).isEqualTo(1);
-        assertThat(geopede.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, geopede)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, geopede)).isEqualTo(1);
     }
 
     @Test
@@ -68,13 +68,13 @@ class PlatedGeopedeTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(geopede.getEffectivePower()).isEqualTo(1);
-        assertThat(geopede.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, geopede)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, geopede)).isEqualTo(1);
 
         harness.passBothPriorities();
 
-        assertThat(geopede.getEffectivePower()).isEqualTo(3);
-        assertThat(geopede.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, geopede)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, geopede)).isEqualTo(3);
     }
 
     @Test
@@ -87,17 +87,17 @@ class PlatedGeopedeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
 
         harness.passBothPriorities();
-        assertThat(geopede.getEffectivePower()).isEqualTo(3);
-        assertThat(geopede.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, geopede)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, geopede)).isEqualTo(3);
         harness.passBothPriorities();
-        assertThat(geopede.getEffectivePower()).isEqualTo(5);
-        assertThat(geopede.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, geopede)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, geopede)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(geopede.getEffectivePower()).isEqualTo(1);
-        assertThat(geopede.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, geopede)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, geopede)).isEqualTo(1);
     }
 
     @Test
@@ -112,11 +112,11 @@ class PlatedGeopedeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(first.getEffectiveToughness()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponent.getEffectivePower()).isEqualTo(1);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(1);
     }
 }

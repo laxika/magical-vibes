@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.ManifoldKey;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,8 +24,8 @@ class GrowthCycleTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GreenwoodSentinel());
         castGrowthCycle(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -34,8 +35,8 @@ class GrowthCycleTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrowthCycle(), new GrowthCycle(), new ManifoldKey()));
         castGrowthCycle(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(7);
-        assertThat(target.getToughnessModifier()).isEqualTo(7);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(7);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(7);
     }
 
     @Test
@@ -45,8 +46,8 @@ class GrowthCycleTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new GrowthCycle(), new GrowthCycle()));
         castGrowthCycle(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -59,8 +60,8 @@ class GrowthCycleTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -85,13 +86,13 @@ class GrowthCycleTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrowthCycle()));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(5);
-        assertThat(target.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(5);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
 
         harness.setGraveyard(player1, List.of());
-        assertThat(target.getPowerModifier()).isEqualTo(5);
-        assertThat(target.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -107,8 +108,8 @@ class GrowthCycleTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Growth Cycle");
     }

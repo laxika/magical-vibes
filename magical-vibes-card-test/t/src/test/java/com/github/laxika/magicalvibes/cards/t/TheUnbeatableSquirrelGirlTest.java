@@ -25,8 +25,8 @@ class TheUnbeatableSquirrelGirlTest extends BaseCardTest {
         assertThat(squirrels).hasSize(1);
         assertThat(squirrels.getFirst().getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(squirrels.getFirst().getCard().getSubtypes()).contains(CardSubtype.SQUIRREL);
-        assertThat(squirrels.getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(squirrels.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, squirrels.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, squirrels.getFirst())).isEqualTo(1);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.b.BantSureblade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -114,7 +115,7 @@ class MycoidShepherdTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent shepherd = harness.addToBattlefieldAndReturn(player1, new MycoidShepherd());
-        shepherd.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, shepherd, -4);
 
         terminate(player1, shepherd.getId());
         resolveAllTriggers();

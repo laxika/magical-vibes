@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class FlamekinBrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(brawler.getPowerModifier()).isEqualTo(1);
-        assertThat(brawler.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, brawler)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, brawler)).isEqualTo(0);
     }
 
     @Test
@@ -38,8 +39,8 @@ class FlamekinBrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(brawler.getPowerModifier()).isEqualTo(2);
-        assertThat(brawler.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, brawler)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, brawler)).isEqualTo(0);
     }
 
     @Test
@@ -60,13 +61,13 @@ class FlamekinBrawlerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(brawler.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, brawler)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(brawler.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, brawler)).isEqualTo(0);
     }
 
     @Test
@@ -80,8 +81,8 @@ class FlamekinBrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(brawler.getPowerModifier()).isEqualTo(1);
-        assertThat(brawler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, brawler)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, brawler)).isZero();
         assertThat(brawler.isTapped()).isTrue();
     }
 
@@ -96,14 +97,14 @@ class FlamekinBrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(brawler.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, brawler)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(brawler.getPowerModifier()).isEqualTo(1);
-        assertThat(brawler.getToughnessModifier()).isZero();
-        assertThat(otherBrawler.getPowerModifier()).isZero();
-        assertThat(opposingBrawler.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, brawler)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, brawler)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherBrawler)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingBrawler)).isZero();
     }
 
     @Test

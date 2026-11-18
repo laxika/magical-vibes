@@ -32,8 +32,8 @@ class RushOfAdrenalineTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent(player1, "Quilled Wolf");
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -52,8 +52,8 @@ class RushOfAdrenalineTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Quilled Wolf");
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -80,11 +80,11 @@ class RushOfAdrenalineTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, opposingWolf.getId());
 
-        assertThat(opposingWolf.getEffectivePower()).isEqualTo(4);
-        assertThat(opposingWolf.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opposingWolf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingWolf)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, opposingWolf, Keyword.TRAMPLE)).isTrue();
-        assertThat(ownWolf.getEffectivePower()).isEqualTo(2);
-        assertThat(ownWolf.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownWolf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownWolf)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownWolf, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Rush of Adrenaline");
     }
@@ -99,16 +99,16 @@ class RushOfAdrenalineTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, wolf.getId());
         harness.castAndResolveInstant(player1, 0, wolf.getId());
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(6);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, wolf, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(2);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, wolf, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -131,8 +131,8 @@ class RushOfAdrenalineTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Quilled Wolf");
         harness.assertInGraveyard(player1, "Rush of Adrenaline");
         assertThat(gd.stack).isEmpty();
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
     }
 }

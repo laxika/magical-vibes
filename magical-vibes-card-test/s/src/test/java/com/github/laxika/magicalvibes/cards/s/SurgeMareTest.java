@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.cards.o.OnakkeOgre;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,8 +31,8 @@ class SurgeMareTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mare.getEffectivePower()).isEqualTo(2);
-        assertThat(mare.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mare)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mare)).isEqualTo(3);
     }
 
     @Test
@@ -47,8 +48,8 @@ class SurgeMareTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mare.getEffectivePower()).isEqualTo(0);
-        assertThat(mare.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, mare)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, mare)).isEqualTo(5);
     }
 
     @Test
@@ -103,8 +104,8 @@ class SurgeMareTest extends BaseCardTest {
     @DisplayName("Accepting the damage trigger draws then discards a card")
     void damageTriggerLoots() {
         Permanent mare = addMareReady();
-        mare.setPowerModifier(2);
-        mare.setToughnessModifier(-2);
+        PermanentGrants.setPowerBoost(gd, mare, 2);
+        PermanentGrants.setToughnessBoost(gd, mare, -2);
 
         declareAttackers(List.of(0));
         resolveCombat();
@@ -126,8 +127,8 @@ class SurgeMareTest extends BaseCardTest {
     @DisplayName("Declining the damage trigger neither draws nor discards")
     void damageTriggerDeclined() {
         Permanent mare = addMareReady();
-        mare.setPowerModifier(2);
-        mare.setToughnessModifier(-2);
+        PermanentGrants.setPowerBoost(gd, mare, 2);
+        PermanentGrants.setToughnessBoost(gd, mare, -2);
 
         declareAttackers(List.of(0));
         resolveCombat();
@@ -192,8 +193,8 @@ class SurgeMareTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).clear();
         gd.playerDecks.get(player1.getId()).add(drawnCard);
         Permanent mare = addMareReady();
-        mare.setPowerModifier(2);
-        mare.setToughnessModifier(-2);
+        PermanentGrants.setPowerBoost(gd, mare, 2);
+        PermanentGrants.setToughnessBoost(gd, mare, -2);
 
         declareAttackers(List.of(0));
         resolveCombat();

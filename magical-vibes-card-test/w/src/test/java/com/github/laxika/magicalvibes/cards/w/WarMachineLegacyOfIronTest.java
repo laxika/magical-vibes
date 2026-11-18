@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HydraulicHelper;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -83,7 +84,7 @@ class WarMachineLegacyOfIronTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, target.getId());
-        warMachine.setPowerModifier(4);
+        PermanentGrants.setPowerBoost(gd, warMachine, 4);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
@@ -95,12 +96,12 @@ class WarMachineLegacyOfIronTest extends BaseCardTest {
     void resolvedBoostStaysFixed() {
         Permanent warMachine = harness.addToBattlefieldAndReturn(player1, new WarMachineLegacyOfIron());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new HydraulicHelper());
-        warMachine.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, warMachine, 2);
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        warMachine.setPowerModifier(5);
+        PermanentGrants.setPowerBoost(gd, warMachine, 5);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
@@ -126,7 +127,7 @@ class WarMachineLegacyOfIronTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, target.getId());
-        warMachine.setPowerModifier(4);
+        PermanentGrants.setPowerBoost(gd, warMachine, 4);
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToHand(gd, warMachine));
         harness.passBothPriorities();

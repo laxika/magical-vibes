@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,8 +26,8 @@ class JadeAvengerTest extends BaseCardTest {
 
         declareBlockers(List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(avenger.getPowerModifier()).isEqualTo(2);
-        assertThat(avenger.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, avenger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, avenger)).isEqualTo(2);
     }
 
     @Test
@@ -37,8 +38,8 @@ class JadeAvengerTest extends BaseCardTest {
 
         declareBlockers(List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(avenger.getPowerModifier()).isEqualTo(2);
-        assertThat(avenger.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, avenger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, avenger)).isEqualTo(2);
     }
 
     @Test
@@ -54,8 +55,8 @@ class JadeAvengerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(avenger.getPowerModifier()).isZero();
-        assertThat(avenger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, avenger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, avenger)).isZero();
     }
 
     @Test
@@ -70,13 +71,13 @@ class JadeAvengerTest extends BaseCardTest {
                 new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(avenger.getPowerModifier()).isZero();
-        assertThat(avenger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, avenger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, avenger)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(avenger.getPowerModifier()).isEqualTo(2);
-        assertThat(avenger.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, avenger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, avenger)).isEqualTo(2);
     }
 
     @Test
@@ -89,8 +90,8 @@ class JadeAvengerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(avenger.getPowerModifier()).isZero();
-        assertThat(avenger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, avenger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, avenger)).isZero();
     }
 
     private void declareBlockers(List<BlockerAssignment> assignments) {

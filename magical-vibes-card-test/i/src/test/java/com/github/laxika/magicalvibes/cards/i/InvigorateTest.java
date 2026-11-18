@@ -29,8 +29,8 @@ class InvigorateTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
     }
 
     @Test
@@ -45,8 +45,8 @@ class InvigorateTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(0);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -60,8 +60,8 @@ class InvigorateTest extends BaseCardTest {
         harness.castInstantWithAlternateCost(player1, 0, creature.getId(), List.of());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife + 3);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -103,13 +103,13 @@ class InvigorateTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife + 3);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(casterLife);
-        assertThat(creature.getEffectivePower()).isZero();
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
 
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife + 3);
     }
 
@@ -125,8 +125,8 @@ class InvigorateTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DeathmaskNezumi;
 import com.github.laxika.magicalvibes.cards.g.GodosIrregulars;
 import com.github.laxika.magicalvibes.cards.k.KagemarosClutch;
@@ -34,8 +35,8 @@ class HandOfHonorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(hand.getPowerModifier()).isEqualTo(1);
-        assertThat(hand.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hand)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hand)).isEqualTo(1);
     }
 
     @Test
@@ -49,8 +50,8 @@ class HandOfHonorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(hand.getPowerModifier()).isEqualTo(1);
-        assertThat(hand.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hand)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hand)).isEqualTo(1);
     }
 
     @Test
@@ -62,8 +63,8 @@ class HandOfHonorTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(hand.getPowerModifier()).isZero();
-        assertThat(hand.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hand)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hand)).isZero();
     }
 
     @Test

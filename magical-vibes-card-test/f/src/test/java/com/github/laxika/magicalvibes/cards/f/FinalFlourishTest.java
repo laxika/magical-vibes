@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CopperHostCrusher;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -24,8 +25,8 @@ class FinalFlourishTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         castFinalFlourish(target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
         harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
@@ -65,17 +66,17 @@ class FinalFlourishTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrifice);
         harness.assertInGraveyard(player1, "Copper Host Crusher");
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
-        assertThat(target.getPowerModifier()).isEqualTo(-6);
-        assertThat(target.getToughnessModifier()).isEqualTo(-6);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-6);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -83,12 +84,12 @@ class FinalFlourishTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new CopperHostCrusher());
         castFinalFlourish(target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         harness.assertOnBattlefield(player1, "Copper Host Crusher");
     }
 

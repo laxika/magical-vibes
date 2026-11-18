@@ -46,8 +46,8 @@ class DayOfTheDragonsTest extends BaseCardTest {
         assertThat(dragons).allSatisfy(dragon -> {
             assertThat(dragon.getCard().getName()).isEqualTo("Dragon");
             assertThat(dragon.getCard().getSubtypes()).contains(CardSubtype.DRAGON);
-            assertThat(dragon.getEffectivePower()).isEqualTo(5);
-            assertThat(dragon.getEffectiveToughness()).isEqualTo(5);
+            assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(5);
+            assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(5);
             assertThat(dragon.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(dragon.getCard().getKeywords()).contains(Keyword.FLYING);
         });

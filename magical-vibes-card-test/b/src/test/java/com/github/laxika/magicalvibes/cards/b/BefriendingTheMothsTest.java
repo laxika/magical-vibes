@@ -33,10 +33,10 @@ class BefriendingTheMothsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ownCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, ownCreature)).contains(Keyword.FLYING);
-        assertThat(opposingCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isZero();
 
         Permanent saga = findSaga();
         saga.setCounterCount(CounterType.LORE, 1);
@@ -47,8 +47,8 @@ class BefriendingTheMothsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ownCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(2);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test
@@ -72,13 +72,13 @@ class BefriendingTheMothsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
 
@@ -99,8 +99,8 @@ class BefriendingTheMothsTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(creature);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
 
@@ -113,8 +113,8 @@ class BefriendingTheMothsTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
         harness.passBothPriorities();
 
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
         assertThat(gd.stack).isEmpty();
     }

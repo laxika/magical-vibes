@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -96,7 +97,7 @@ class SpearbreakerBehemothTest extends BaseCardTest {
     void canTargetExactlyFiveEffectivePower() {
         addReady(player1, new SpearbreakerBehemoth());
         Permanent avatar = addReady(player1, new AvatarOfMight());
-        avatar.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, avatar, -3);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, avatar.getId());
@@ -113,7 +114,7 @@ class SpearbreakerBehemothTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, avatar.getId());
-        avatar.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, avatar, -4);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, avatar, Keyword.INDESTRUCTIBLE)).isFalse();
@@ -129,7 +130,7 @@ class SpearbreakerBehemothTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, avatar.getId());
         harness.passBothPriorities();
-        avatar.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, avatar, -4);
         avatar.setMarkedDamage(20);
         harness.runStateBasedActions();
 

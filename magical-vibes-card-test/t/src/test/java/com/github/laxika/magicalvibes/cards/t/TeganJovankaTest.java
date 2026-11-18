@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -37,10 +38,10 @@ class TeganJovankaTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, historicAttacker.getId());
         harness.passBothPriorities();
 
-        assertThat(historicAttacker.getPowerModifier()).isEqualTo(1);
-        assertThat(historicAttacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, historicAttacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, historicAttacker)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, historicAttacker, Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(nonHistoricAttacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonHistoricAttacker)).isZero();
         assertThat(gqs.hasKeyword(gd, nonHistoricAttacker, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -54,13 +55,13 @@ class TeganJovankaTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, historicAttacker.getId());
         harness.passBothPriorities();
 
-        assertThat(historicAttacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, historicAttacker)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, historicAttacker, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(historicAttacker.getPowerModifier()).isZero();
-        assertThat(historicAttacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, historicAttacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, historicAttacker)).isZero();
         assertThat(gqs.hasKeyword(gd, historicAttacker, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -80,8 +81,8 @@ class TeganJovankaTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, tegan.getId());
         harness.passBothPriorities();
 
-        assertThat(tegan.getPowerModifier()).isEqualTo(1);
-        assertThat(tegan.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, tegan)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tegan)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, tegan, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
@@ -94,8 +95,8 @@ class TeganJovankaTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(tegan.getPowerModifier()).isZero();
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tegan)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
         assertThat(gqs.hasKeyword(gd, tegan, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isFalse();
     }
@@ -109,8 +110,8 @@ class TeganJovankaTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -122,7 +123,7 @@ class TeganJovankaTest extends BaseCardTest {
         declareAttackers(player1, List.of());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(tegan.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tegan)).isZero();
         assertThat(gqs.hasKeyword(gd, tegan, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 }

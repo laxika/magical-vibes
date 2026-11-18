@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -40,8 +41,8 @@ class PricklyPairTest extends BaseCardTest {
         harness.activateAbility(player1, mercenaryIndex(mercenary), 0, null, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(mercenary.isTapped()).isTrue();
     }
 
@@ -113,7 +114,7 @@ class PricklyPairTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
         assertThat(mercenary.isTapped()).isFalse();
-        assertThat(mercenary.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mercenary)).isZero();
     }
 
     @Test

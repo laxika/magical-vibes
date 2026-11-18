@@ -31,8 +31,8 @@ class BatWhispererTest extends BaseCardTest {
         castBatWhisperer();
 
         Permanent bat = findPermanent(player1, "Bat");
-        assertThat(bat.getEffectivePower()).isEqualTo(1);
-        assertThat(bat.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bat)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bat)).isEqualTo(1);
         assertThat(bat.getCard().getKeywords()).contains(Keyword.FLYING);
     }
 

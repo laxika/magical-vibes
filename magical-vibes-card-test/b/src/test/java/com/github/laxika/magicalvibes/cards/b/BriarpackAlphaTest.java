@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.d.DawntreaderElk;
@@ -106,10 +107,10 @@ class BriarpackAlphaTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         Permanent elk = findPermanent(player2, "Dawntreader Elk");
-        assertThat(elk.getPowerModifier()).isEqualTo(2);
-        assertThat(elk.getToughnessModifier()).isEqualTo(2);
-        assertThat(elk.getEffectivePower()).isEqualTo(4);
-        assertThat(elk.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, elk)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elk)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, elk)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elk)).isEqualTo(4);
     }
 
     @Test
@@ -126,17 +127,17 @@ class BriarpackAlphaTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve ETB
 
         Permanent elk = findPermanent(player2, "Dawntreader Elk");
-        assertThat(elk.getPowerModifier()).isEqualTo(2);
-        assertThat(elk.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, elk)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elk)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elk.getPowerModifier()).isEqualTo(0);
-        assertThat(elk.getToughnessModifier()).isEqualTo(0);
-        assertThat(elk.getEffectivePower()).isEqualTo(2);
-        assertThat(elk.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, elk)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elk)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, elk)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elk)).isEqualTo(2);
     }
 
     @Test
@@ -153,8 +154,8 @@ class BriarpackAlphaTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve ETB
 
         Permanent elk = findPermanent(player1, "Dawntreader Elk");
-        assertThat(elk.getEffectivePower()).isEqualTo(4);
-        assertThat(elk.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elk)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elk)).isEqualTo(4);
     }
 
     @Test
@@ -206,8 +207,8 @@ class BriarpackAlphaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent alpha = findPermanent(player1, "Briarpack Alpha");
-        assertThat(alpha.getEffectivePower()).isEqualTo(5);
-        assertThat(alpha.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, alpha)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, alpha)).isEqualTo(5);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -223,10 +224,10 @@ class BriarpackAlphaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent alpha = findPermanent(player1, "Briarpack Alpha");
-        assertThat(alpha.getEffectivePower()).isEqualTo(5);
-        assertThat(alpha.getEffectiveToughness()).isEqualTo(5);
-        assertThat(findPermanent(player2, "Dawntreader Elk").getPowerModifier()).isZero();
-        assertThat(findPermanent(player2, "Dawntreader Elk").getToughnessModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, alpha)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, alpha)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player2, "Dawntreader Elk"))).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player2, "Dawntreader Elk"))).isZero();
     }
 
     @Test
@@ -242,8 +243,8 @@ class BriarpackAlphaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent elk = findPermanent(player2, "Dawntreader Elk");
-        assertThat(elk.getEffectivePower()).isEqualTo(4);
-        assertThat(elk.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elk)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elk)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
     }
 }

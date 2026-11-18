@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -32,9 +33,9 @@ class BlueDragonTest extends BaseCardTest {
         assertThat((gqs.getEffectivePower(gd, first) - first.getCard().getPower())).isEqualTo(-3);
         assertThat((gqs.getEffectivePower(gd, second) - second.getCard().getPower())).isEqualTo(-2);
         assertThat((gqs.getEffectivePower(gd, third) - third.getCard().getPower())).isEqualTo(-1);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
-        assertThat(third.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, third)).isZero();
     }
 
     @Test

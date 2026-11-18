@@ -67,10 +67,10 @@ class RhonassMonumentTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, existing.getId());
         harness.passBothPriorities(); // resolve the trigger
 
-        assertThat(existing.getPowerModifier()).isEqualTo(2);
-        assertThat(existing.getToughnessModifier()).isEqualTo(2);
-        assertThat(existing.getEffectivePower()).isEqualTo(4);
-        assertThat(existing.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, existing)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, existing)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, existing)).contains(Keyword.TRAMPLE);
     }
 
@@ -87,7 +87,7 @@ class RhonassMonumentTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the trigger
         harness.passBothPriorities(); // resolve the creature spell
 
-        assertThat(existing.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, existing)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, existing)).contains(Keyword.TRAMPLE);
 
         // Advance to end step — modifiers and granted keywords reset
@@ -95,10 +95,10 @@ class RhonassMonumentTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(existing.getPowerModifier()).isEqualTo(0);
-        assertThat(existing.getToughnessModifier()).isEqualTo(0);
-        assertThat(existing.getEffectivePower()).isEqualTo(2);
-        assertThat(existing.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, existing)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, existing)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, existing)).doesNotContain(Keyword.TRAMPLE);
     }
 
@@ -117,7 +117,7 @@ class RhonassMonumentTest extends BaseCardTest {
         assertThat(gd.stack.stream()
                 .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
                 .count()).isZero();
-        assertThat(opponentCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
     }
 
     // ===== Non-creature spell does not trigger =====
@@ -134,7 +134,7 @@ class RhonassMonumentTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(existing.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, existing)).isZero();
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
     }
 
@@ -165,7 +165,7 @@ class RhonassMonumentTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(existing.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, existing)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, existing)).doesNotContain(Keyword.TRAMPLE);
     }
 
@@ -180,8 +180,8 @@ class RhonassMonumentTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, existing.getId());
         harness.passBothPriorities();
 
-        assertThat(existing.getEffectivePower()).isEqualTo(4);
-        assertThat(existing.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, existing)).contains(Keyword.TRAMPLE);
         harness.assertNotOnBattlefield(player1, "Hill Giant");
     }
@@ -198,8 +198,8 @@ class RhonassMonumentTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(monument);
         harness.passBothPriorities();
 
-        assertThat(existing.getEffectivePower()).isEqualTo(4);
-        assertThat(existing.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, existing)).contains(Keyword.TRAMPLE);
     }
 
@@ -219,8 +219,8 @@ class RhonassMonumentTest extends BaseCardTest {
         Permanent resolved = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(resolved.getEffectivePower()).isEqualTo(2);
-        assertThat(resolved.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, resolved)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, resolved)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, resolved)).doesNotContain(Keyword.TRAMPLE);
     }
 }

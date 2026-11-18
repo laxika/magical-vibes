@@ -39,8 +39,8 @@ class SurveyTheWreckageTest extends BaseCardTest {
 
         List<Permanent> goblins = findPermanents(player1, "Goblin");
         assertThat(goblins).hasSize(1);
-        assertThat(goblins.getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(goblins.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, goblins.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblins.getFirst())).isEqualTo(1);
         assertThat(findPermanents(player2, "Goblin")).isEmpty();
     }
 

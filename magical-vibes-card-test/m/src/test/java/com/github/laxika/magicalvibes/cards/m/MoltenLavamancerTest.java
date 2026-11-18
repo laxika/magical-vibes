@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class MoltenLavamancerTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent lavamancer = findPermanent(player1, "Molten Lavamancer");
-        assertThat(lavamancer.getPowerModifier()).isEqualTo(1);
-        assertThat(lavamancer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, lavamancer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lavamancer)).isEqualTo(1);
     }
 
     @Test
@@ -78,8 +79,8 @@ class MoltenLavamancerTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent lavamancer = findPermanent(player1, "Molten Lavamancer");
-        assertThat(lavamancer.getPowerModifier()).isEqualTo(2);
-        assertThat(lavamancer.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, lavamancer)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lavamancer)).isEqualTo(2);
     }
 
     @Test
@@ -93,8 +94,8 @@ class MoltenLavamancerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
                 .allSatisfy(permanent -> {
-                    assertThat(permanent.getPowerModifier()).isZero();
-                    assertThat(permanent.getToughnessModifier()).isZero();
+                    assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isZero();
+                    assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isZero();
                 });
     }
 
@@ -130,8 +131,8 @@ class MoltenLavamancerTest extends BaseCardTest {
                 .hasSize(1)
                 .allSatisfy(token -> {
                     assertThat(token.getCard().isToken()).isTrue();
-                    assertThat(token.getEffectivePower()).isEqualTo(1);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
                 });
     }
 

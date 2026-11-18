@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -44,10 +45,10 @@ class SlashingTigerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(tiger.getPowerModifier()).isEqualTo(2);
-        assertThat(tiger.getToughnessModifier()).isEqualTo(2);
-        assertThat(tiger.getEffectivePower()).isEqualTo(5);
-        assertThat(tiger.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, tiger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tiger)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, tiger)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, tiger)).isEqualTo(5);
     }
 
     @Test
@@ -65,8 +66,8 @@ class SlashingTigerTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(tiger.getPowerModifier()).isEqualTo(2);
-        assertThat(tiger.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, tiger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tiger)).isEqualTo(2);
     }
 
     @Test
@@ -79,8 +80,8 @@ class SlashingTigerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(tiger.getPowerModifier()).isZero();
-        assertThat(tiger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tiger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tiger)).isZero();
     }
 
     @Test
@@ -94,8 +95,8 @@ class SlashingTigerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(tiger.getPowerModifier()).isZero();
-        assertThat(tiger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tiger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tiger)).isZero();
     }
 
     @Test
@@ -111,16 +112,16 @@ class SlashingTigerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(blockedTiger.getPowerModifier()).isZero();
-        assertThat(blockedTiger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blockedTiger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blockedTiger)).isZero();
         resolveAllTriggers();
 
-        assertThat(blockedTiger.getPowerModifier()).isEqualTo(2);
-        assertThat(blockedTiger.getToughnessModifier()).isEqualTo(2);
-        assertThat(unblockedTiger.getPowerModifier()).isZero();
-        assertThat(unblockedTiger.getToughnessModifier()).isZero();
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blockedTiger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blockedTiger)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, unblockedTiger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, unblockedTiger)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
     }
 
     @Test
@@ -134,12 +135,12 @@ class SlashingTigerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(tiger.getPowerModifier()).isEqualTo(2);
-        assertThat(tiger.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, tiger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tiger)).isEqualTo(2);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(tiger.getPowerModifier()).isZero();
-        assertThat(tiger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tiger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tiger)).isZero();
     }
 }

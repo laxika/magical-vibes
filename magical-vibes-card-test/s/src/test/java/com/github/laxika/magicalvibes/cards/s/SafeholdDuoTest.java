@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -47,8 +48,8 @@ class SafeholdDuoTest extends BaseCardTest {
         castGreenSpell();
         harness.passBothPriorities(); // resolve the trigger
 
-        assertThat(duo().getPowerModifier()).isEqualTo(1);
-        assertThat(duo().getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo())).isEqualTo(1);
     }
 
     @Test
@@ -68,7 +69,7 @@ class SafeholdDuoTest extends BaseCardTest {
         harness.castFromHand(player1, new FugitiveWizard(), "{U}");
         harness.passBothPriorities();
 
-        assertThat(duo().getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isFalse();
     }
 
@@ -77,14 +78,14 @@ class SafeholdDuoTest extends BaseCardTest {
     void boostWearsOff() {
         castGreenSpell();
         harness.passBothPriorities();
-        assertThat(duo().getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(duo().getPowerModifier()).isEqualTo(0);
-        assertThat(duo().getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo())).isEqualTo(0);
     }
 
     @Test
@@ -117,15 +118,15 @@ class SafeholdDuoTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(3);
-        assertThat(duo().getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isZero();
         assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isFalse();
 
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(duo().getPowerModifier()).isEqualTo(1);
-        assertThat(duo().getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo())).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -133,8 +134,8 @@ class SafeholdDuoTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(duo().getPowerModifier()).isZero();
-        assertThat(duo().getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo())).isZero();
         assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isFalse();
     }
 
@@ -148,8 +149,8 @@ class SafeholdDuoTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(duo().getPowerModifier()).isZero();
-        assertThat(duo().getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo())).isZero();
         assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isFalse();
     }
 
@@ -162,8 +163,8 @@ class SafeholdDuoTest extends BaseCardTest {
         castGreenSpell();
         harness.passBothPriorities();
 
-        assertThat(duo().getPowerModifier()).isEqualTo(2);
-        assertThat(duo().getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo())).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isFalse();
     }
 }

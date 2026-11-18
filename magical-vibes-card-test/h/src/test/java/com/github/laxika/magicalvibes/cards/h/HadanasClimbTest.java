@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ExpelFromOrazca;
 import com.github.laxika.magicalvibes.cards.s.SwaggeringCorsair;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -227,7 +228,7 @@ class HadanasClimbTest extends BaseCardTest {
     void wingedTempleTreatsNegativePowerAsZeroBonus() {
         Permanent temple = addTransformedTemple(player1);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new SwaggeringCorsair());
-        creature.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, creature, -3);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);

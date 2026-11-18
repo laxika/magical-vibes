@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,9 +26,9 @@ class KraniocerosTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent kranioceros = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(kranioceros.getEffectivePower()).isEqualTo(5);
-        assertThat(kranioceros.getEffectiveToughness()).isEqualTo(5);
-        assertThat(kranioceros.getPowerModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, kranioceros)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, kranioceros)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, kranioceros)).isEqualTo(0);
     }
 
     @Test
@@ -42,7 +43,7 @@ class KraniocerosTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent kranioceros = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(kranioceros.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, kranioceros)).isEqualTo(8);
     }
 
     @Test
@@ -55,14 +56,14 @@ class KraniocerosTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent kranioceros = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(kranioceros.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, kranioceros)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances from END to CLEANUP
 
-        assertThat(kranioceros.getToughnessModifier()).isEqualTo(0);
-        assertThat(kranioceros.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kranioceros)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, kranioceros)).isEqualTo(2);
     }
 
     @Test
@@ -88,12 +89,12 @@ class KraniocerosTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(kranioceros.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kranioceros)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(kranioceros.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, kranioceros)).isEqualTo(5);
         assertThat(kranioceros.isTapped()).isTrue();
     }
 
@@ -108,7 +109,7 @@ class KraniocerosTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
-        assertThat(kranioceros.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kranioceros)).isEqualTo(2);
     }
 
     @Test
@@ -121,7 +122,7 @@ class KraniocerosTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectiveToughness()).isEqualTo(5);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
     }
 }

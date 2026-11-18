@@ -35,10 +35,10 @@ class TerisiaresDevastationTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife - 1);
         assertThat(countPermanents(player1, "Powerstone")).isEqualTo(1);
         assertThat(findPermanents(player1, "Powerstone").getFirst().isTapped()).isTrue();
-        assertThat(ownGiant.getEffectivePower()).isEqualTo(1);
-        assertThat(ownGiant.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opposingGiant.getEffectivePower()).isEqualTo(1);
-        assertThat(opposingGiant.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownGiant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownGiant)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingGiant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingGiant)).isEqualTo(1);
     }
 
     @Test
@@ -52,14 +52,14 @@ class TerisiaresDevastationTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(ownBear.getEffectivePower()).isEqualTo(1);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownBear.getEffectivePower()).isEqualTo(2);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(2);
     }
 }

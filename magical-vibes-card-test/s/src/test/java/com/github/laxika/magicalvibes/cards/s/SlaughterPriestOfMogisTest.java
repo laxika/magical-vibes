@@ -36,8 +36,8 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(priest.getEffectivePower()).isEqualTo(4);
-        assertThat(priest.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, priest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, priest)).isEqualTo(2);
     }
 
     @Test
@@ -53,7 +53,7 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         resolveAllTriggers();
 
-        assertThat(priest.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, priest)).isEqualTo(4);
     }
 
     @Test
@@ -66,7 +66,7 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(priest.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, priest)).isEqualTo(2);
     }
 
     @Test
@@ -108,7 +108,7 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(priest.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, priest)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, priest, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -137,8 +137,8 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Omen of the Forge");
-        assertThat(priest.getEffectivePower()).isEqualTo(4);
-        assertThat(priest.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, priest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, priest)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, priest, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(priest.isTapped()).isTrue();
     }
@@ -158,8 +158,8 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(priest), null, null);
         resolveAllTriggers();
 
-        assertThat(priest.getEffectivePower()).isEqualTo(6);
-        assertThat(priest.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, priest)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, priest)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, priest, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
@@ -177,8 +177,8 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, omen.getId());
         resolveAllTriggers();
 
-        assertThat(priest.getEffectivePower()).isEqualTo(4);
-        assertThat(otherPriest.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, priest)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, otherPriest)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, priest, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, otherPriest, Keyword.FIRST_STRIKE)).isFalse();
     }
@@ -195,7 +195,7 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertOnBattlefield(player1, "Omen of the Forge");
-        assertThat(priest.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, priest)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, priest, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -217,8 +217,8 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Omen of the Forge");
-        assertThat(priest.getEffectivePower()).isEqualTo(4);
-        assertThat(priest.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, priest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, priest)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, priest, Keyword.FIRST_STRIKE)).isFalse();
     }
 

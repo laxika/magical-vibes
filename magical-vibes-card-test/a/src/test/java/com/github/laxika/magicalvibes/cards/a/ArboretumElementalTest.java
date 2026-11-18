@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CollarTheCulprit;
 import com.github.laxika.magicalvibes.cards.i.IronshellBeetle;
 import com.github.laxika.magicalvibes.cards.s.SureStrike;
@@ -148,7 +149,7 @@ class ArboretumElementalTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, elemental.getId());
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(3);
         harness.assertOnBattlefield(player1, "Arboretum Elemental");
     }
 }

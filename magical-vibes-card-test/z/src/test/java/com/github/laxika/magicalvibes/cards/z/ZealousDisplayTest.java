@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,11 +31,11 @@ class ZealousDisplayTest extends BaseCardTest {
         castOnOpponentsTurn();
 
         assertThat(ownCreature.isTapped()).isFalse();
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(ownLand.isTapped()).isTrue();
         assertThat(opponentCreature.isTapped()).isTrue();
-        assertThat(opponentCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
     }
 
     @Test
@@ -46,8 +47,8 @@ class ZealousDisplayTest extends BaseCardTest {
         castOnYourTurn();
 
         assertThat(ownCreature.isTapped()).isTrue();
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test
@@ -56,14 +57,14 @@ class ZealousDisplayTest extends BaseCardTest {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castOnYourTurn();
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test
@@ -77,10 +78,10 @@ class ZealousDisplayTest extends BaseCardTest {
 
         assertThat(tappedCreature.isTapped()).isFalse();
         assertThat(untappedCreature.isTapped()).isFalse();
-        assertThat(tappedCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(untappedCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(tappedCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(untappedCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, tappedCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, untappedCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tappedCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, untappedCreature)).isEqualTo(2);
     }
 
     @Test
@@ -91,9 +92,9 @@ class ZealousDisplayTest extends BaseCardTest {
         castOnYourTurn();
         Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(existingCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, existingCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
     }
 
     @Test

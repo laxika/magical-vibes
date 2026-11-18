@@ -30,8 +30,8 @@ class HopToItTest extends BaseCardTest {
                 .allSatisfy(permanent -> {
                     assertThat(permanent.getCard().getColor()).isEqualTo(CardColor.WHITE);
                     assertThat(permanent.getCard().getSubtypes()).contains(CardSubtype.RABBIT);
-                    assertThat(permanent.getEffectivePower()).isEqualTo(1);
-                    assertThat(permanent.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(1);
                 });
     }
 

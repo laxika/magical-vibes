@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SarkhanTheMasterless;
@@ -163,7 +164,7 @@ class TheWandererTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
-        target.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, target, -3);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);

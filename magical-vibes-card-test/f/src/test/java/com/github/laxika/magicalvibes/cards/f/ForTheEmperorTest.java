@@ -23,8 +23,8 @@ class ForTheEmperorTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
     }
@@ -37,15 +37,15 @@ class ForTheEmperorTest extends BaseCardTest {
         harness.castFromHand(player1, new ForTheEmperor(), "{3}{W}");
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
     }
@@ -76,13 +76,13 @@ class ForTheEmperorTest extends BaseCardTest {
         harness.castFromHand(player1, new ForTheEmperor(), "{3}{W}");
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.LIFELINK)).isTrue();
 
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.LIFELINK)).isFalse();
     }
@@ -98,8 +98,8 @@ class ForTheEmperorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
     }
@@ -114,10 +114,10 @@ class ForTheEmperorTest extends BaseCardTest {
 
         Permanent laterCreature = addCreatureReady(player1, new WoodlandDruid());
 
-        assertThat(existingCreature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, existingCreature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, existingCreature, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, existingCreature, Keyword.LIFELINK)).isTrue();
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.LIFELINK)).isFalse();
     }

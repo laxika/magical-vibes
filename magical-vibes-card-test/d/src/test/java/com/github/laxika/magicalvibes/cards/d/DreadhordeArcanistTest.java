@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.c.CrushDissent;
 import com.github.laxika.magicalvibes.cards.s.SparkHarvest;
@@ -30,7 +31,7 @@ class DreadhordeArcanistTest extends BaseCardTest {
         Card shock = new Shock();
         Card counsel = new CounselOfTheSoratami();
         Card creature = new GrizzlyBears();
-        arcanist.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, arcanist, 2);
         harness.setGraveyard(player1, List.of(shock, counsel, creature));
 
         declareAttackers(List.of(0));
@@ -46,7 +47,7 @@ class DreadhordeArcanistTest extends BaseCardTest {
     void castsChosenCardForFreeAndExilesIt() {
         Permanent arcanist = addReadyArcanist();
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-        arcanist.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, arcanist, 2);
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.setGraveyard(player1, List.of(counsel));
 
@@ -67,12 +68,12 @@ class DreadhordeArcanistTest extends BaseCardTest {
     void targetMustStillFitPowerOnResolution() {
         Permanent arcanist = addReadyArcanist();
         Card counsel = new CounselOfTheSoratami();
-        arcanist.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, arcanist, 2);
         harness.setGraveyard(player1, List.of(counsel));
 
         declareAttackers(List.of(0));
         harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
-        arcanist.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, arcanist, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -84,7 +85,7 @@ class DreadhordeArcanistTest extends BaseCardTest {
     void usesLastKnownPowerIfSourceLeaves() {
         Permanent arcanist = addReadyArcanist();
         Card counsel = new CounselOfTheSoratami();
-        arcanist.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, arcanist, 2);
         harness.setGraveyard(player1, List.of(counsel));
         harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -121,7 +122,7 @@ class DreadhordeArcanistTest extends BaseCardTest {
     @DisplayName("An uncastable counterspell remains in the graveyard")
     void noLegalSpellTargetsDoesNotExileCard() {
         Permanent arcanist = addReadyArcanist();
-        arcanist.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, arcanist, 3);
         CrushDissent dissent = new CrushDissent();
         harness.setGraveyard(player1, List.of(dissent));
 
@@ -161,7 +162,7 @@ class DreadhordeArcanistTest extends BaseCardTest {
     @DisplayName("Last known power reflects changes after attacking")
     void usesChangedPowerAtDepartureRatherThanAttackPower() {
         Permanent arcanist = addReadyArcanist();
-        arcanist.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, arcanist, 2);
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
         harness.setGraveyard(player1, List.of(counsel));
         harness.setHand(player2, List.of(new LightningBolt()));
@@ -169,7 +170,7 @@ class DreadhordeArcanistTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
-        arcanist.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, arcanist, 0);
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, arcanist.getId());
         harness.passBothPriorities();

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
@@ -31,9 +32,9 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Gives a permanent a type, colour, keyword or protection, or takes a keyword away, as a resolved effect would
- * (CR 611.2a): a floating effect on the permanent at its own timestamp, with no stated duration or until end of
- * turn. Reads back what the floating effects on a permanent give it or take from it, of any duration.
+ * Gives a permanent a type, colour, keyword, protection, P/T boost or base P/T, or takes a keyword away, as a resolved
+ * effect would (CR 611.2a): a floating effect on the permanent at its own timestamp, with no stated duration or until
+ * end of turn. Reads back what the floating effects on a permanent give it or take from it, of any duration.
  */
 public final class PermanentGrants {
 
@@ -94,6 +95,56 @@ public final class PermanentGrants {
     public static FloatingContinuousEffect supertype(GameData gd, Permanent permanent, CardSupertype supertype,
                                                      boolean gained) {
         return grant(gd, permanent, new SetTargetPermanentSupertypeEffect(supertype, gained));
+    }
+
+    /** Gives {@code permanent} +{@code power}/+{@code toughness} until end of turn (layer 7c). */
+    public static FloatingContinuousEffect boostUntilEndOfTurn(GameData gd, Permanent permanent, int power,
+                                                               int toughness) {
+        return gd.addPowerToughnessBoost("Test", null, gd.findControllerOf(permanent), permanent.getId(), power,
+                toughness, Duration.UNTIL_END_OF_TURN);
+    }
+
+    /** The power the floating P/T boosts on {@code permanent} give it, of any duration. */
+    public static int powerBoostOf(GameData gd, Permanent permanent) {
+        return gd.floatingPowerBoost(permanent.getId());
+    }
+
+    /** The toughness the floating P/T boosts on {@code permanent} give it, of any duration. */
+    public static int toughnessBoostOf(GameData gd, Permanent permanent) {
+        return gd.floatingToughnessBoost(permanent.getId());
+    }
+
+    /**
+     * Makes the floating P/T boosts on {@code permanent} give it {@code power} power in all, by giving it the
+     * difference until end of turn.
+     */
+    public static void setPowerBoost(GameData gd, Permanent permanent, int power) {
+        boostUntilEndOfTurn(gd, permanent, power - powerBoostOf(gd, permanent), 0);
+    }
+
+    /**
+     * Makes the floating P/T boosts on {@code permanent} give it {@code toughness} toughness in all, by giving it
+     * the difference until end of turn.
+     */
+    public static void setToughnessBoost(GameData gd, Permanent permanent, int toughness) {
+        boostUntilEndOfTurn(gd, permanent, 0, toughness - toughnessBoostOf(gd, permanent));
+    }
+
+    /** Gives {@code permanent} base power and toughness {@code power}/{@code toughness} until end of turn (layer 7b). */
+    public static FloatingContinuousEffect basePowerToughnessUntilEndOfTurn(GameData gd, Permanent permanent,
+                                                                            int power, int toughness) {
+        return untilEndOfTurn(gd, permanent, new SetBasePowerToughnessEffect(power, toughness));
+    }
+
+    /** Gives {@code permanent} base power and toughness {@code power}/{@code toughness} with no duration (layer 7b). */
+    public static FloatingContinuousEffect basePowerToughness(GameData gd, Permanent permanent, int power,
+                                                              int toughness) {
+        return grant(gd, permanent, SetBasePowerToughnessEffect.indefinitely(power, toughness));
+    }
+
+    /** Whether a floating effect sets {@code permanent}'s base power or toughness (layer 7b). */
+    public static boolean hasBasePowerToughnessSet(GameData gd, Permanent permanent) {
+        return gd.hasFloatingEffectOnPermanent(permanent.getId(), SetBasePowerToughnessEffect.class);
     }
 
     /** The subtypes the floating effects on {@code permanent} add to it, oldest first. */

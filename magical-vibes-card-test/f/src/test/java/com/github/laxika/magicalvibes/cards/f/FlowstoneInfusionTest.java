@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AutomaticLibrarian;
 import com.github.laxika.magicalvibes.cards.m.MoltenMonstrosity;
 import com.github.laxika.magicalvibes.cards.r.RelicOfLegends;
@@ -26,8 +27,8 @@ class FlowstoneInfusionTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new MoltenMonstrosity());
         castFlowstoneInfusion(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
     }
 
     @Test
@@ -40,8 +41,8 @@ class FlowstoneInfusionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -73,10 +74,10 @@ class FlowstoneInfusionTest extends BaseCardTest {
         castFlowstoneInfusion(target);
         castFlowstoneInfusion(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(-4);
-        assertThat(target.getEffectivePower()).isEqualTo(9);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
     }
 
@@ -92,8 +93,8 @@ class FlowstoneInfusionTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Flowstone Infusion");
     }

@@ -54,8 +54,8 @@ class SkeletonShipTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(bears.getEffectivePower()).isEqualTo(1);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
 
     @Test

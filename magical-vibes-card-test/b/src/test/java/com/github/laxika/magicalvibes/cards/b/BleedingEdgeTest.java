@@ -36,8 +36,8 @@ class BleedingEdgeTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getEffectivePower()).isEqualTo(2);
-        assertThat(army.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, army)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, army)).isEqualTo(2);
     }
 
     @Test
@@ -60,13 +60,13 @@ class BleedingEdgeTest extends BaseCardTest {
 
         castBleedingEdge(List.of(target.getId()));
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test

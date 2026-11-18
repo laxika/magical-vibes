@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 import com.github.laxika.magicalvibes.cards.b.BilboUnexpectedAdventurer;
@@ -42,13 +44,13 @@ class OrcishSiegemasterTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(siegemaster.getPowerModifier()).isEqualTo(3);
-        assertThat(siegemaster.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, siegemaster)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, siegemaster)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(siegemaster.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, siegemaster)).isZero();
     }
 
     @Test
@@ -62,8 +64,8 @@ class OrcishSiegemasterTest extends BaseCardTest {
         goblin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         resolveAllTriggers();
 
-        assertThat(siegemaster.getPowerModifier()).isEqualTo(5);
-        assertThat(siegemaster.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, siegemaster)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, siegemaster)).isZero();
 
         gd.playerBattlefields.get(player1.getId()).remove(goblin);
         assertThat(gqs.getEffectivePower(gd, siegemaster)).isEqualTo(5);
@@ -79,7 +81,7 @@ class OrcishSiegemasterTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(siegemaster.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, siegemaster)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, siegemaster)).isEqualTo(4);
     }
 
@@ -95,8 +97,8 @@ class OrcishSiegemasterTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(goblin);
         resolveAllTriggers();
 
-        assertThat(siegemaster.getPowerModifier()).isEqualTo(2);
-        assertThat(siegemaster.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, siegemaster)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, siegemaster)).isZero();
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -28,8 +29,8 @@ class BrushfireElementalTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(elemental.getEffectivePower()).isEqualTo(3);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(3);
     }
 
     @Test
@@ -44,8 +45,8 @@ class BrushfireElementalTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elemental.getEffectivePower()).isEqualTo(1);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
     }
 
     @Test
@@ -58,8 +59,8 @@ class BrushfireElementalTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(elemental.getEffectivePower()).isEqualTo(1);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
     }
 
     @Test
@@ -109,12 +110,12 @@ class BrushfireElementalTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
-        assertThat(elemental.getEffectivePower()).isEqualTo(1);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
         resolveAllTriggers();
 
-        assertThat(elemental.getEffectivePower()).isEqualTo(5);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(5);
     }
 
     @Test
@@ -122,7 +123,7 @@ class BrushfireElementalTest extends BaseCardTest {
     void boostedLowPowerCreatureCanBlock() {
         Permanent elemental = addCreatureReady(player1, new BrushfireElemental());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, blocker, 1);
 
         declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(elemental)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
@@ -137,7 +138,7 @@ class BrushfireElementalTest extends BaseCardTest {
     void weakenedHighPowerCreatureCannotBlock() {
         Permanent elemental = addCreatureReady(player1, new BrushfireElemental());
         Permanent blocker = addCreatureReady(player2, new HillGiant());
-        blocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
 
         declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(elemental)));
 

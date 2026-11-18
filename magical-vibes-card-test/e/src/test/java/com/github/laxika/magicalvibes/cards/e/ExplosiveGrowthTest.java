@@ -26,8 +26,8 @@ class ExplosiveGrowthTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
         Permanent resolvedBear = findPermanent(player1, "Nomadic Elf");
-        assertThat(resolvedBear.getEffectivePower()).isEqualTo(4);
-        assertThat(resolvedBear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, resolvedBear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, resolvedBear)).isEqualTo(4);
     }
 
     @Test
@@ -41,8 +41,8 @@ class ExplosiveGrowthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent resolvedBear = findPermanent(player1, "Nomadic Elf");
-        assertThat(resolvedBear.getEffectivePower()).isEqualTo(7);
-        assertThat(resolvedBear.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, resolvedBear)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, resolvedBear)).isEqualTo(7);
     }
 
     @Test
@@ -54,8 +54,8 @@ class ExplosiveGrowthTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
         Permanent resolvedBear = findPermanent(player2, "Nomadic Elf");
-        assertThat(resolvedBear.getEffectivePower()).isEqualTo(4);
-        assertThat(resolvedBear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, resolvedBear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, resolvedBear)).isEqualTo(4);
     }
 
     @Test
@@ -71,8 +71,8 @@ class ExplosiveGrowthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent resolvedBear = findPermanent(player1, "Nomadic Elf");
-        assertThat(resolvedBear.getEffectivePower()).isEqualTo(2);
-        assertThat(resolvedBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, resolvedBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, resolvedBear)).isEqualTo(2);
     }
 
     @Test
@@ -97,16 +97,16 @@ class ExplosiveGrowthTest extends BaseCardTest {
         harness.castKickedInstant(player1, 0, elf.getId());
         harness.passBothPriorities();
 
-        assertThat(elf.getEffectivePower()).isEqualTo(7);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(7);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent resolvedElf = findPermanent(player1, "Nomadic Elf");
-        assertThat(resolvedElf.getEffectivePower()).isEqualTo(2);
-        assertThat(resolvedElf.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, resolvedElf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, resolvedElf)).isEqualTo(2);
     }
 
     @Test
@@ -121,8 +121,8 @@ class ExplosiveGrowthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent resolvedElf = findPermanent(player2, "Nomadic Elf");
-        assertThat(resolvedElf.getEffectivePower()).isEqualTo(9);
-        assertThat(resolvedElf.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, resolvedElf)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, resolvedElf)).isEqualTo(9);
         harness.assertInGraveyard(player1, "Explosive Growth");
     }
 }

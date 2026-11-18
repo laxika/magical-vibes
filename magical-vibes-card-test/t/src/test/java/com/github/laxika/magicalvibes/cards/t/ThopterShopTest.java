@@ -38,8 +38,8 @@ class ThopterShopTest extends BaseCardTest {
         assertThat(thopter.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
         assertThat(thopter.getCard().getSubtypes()).containsExactly(CardSubtype.THOPTER);
         assertThat(thopter.getCard().getKeywords()).contains(Keyword.FLYING);
-        assertThat(thopter.getEffectivePower()).isEqualTo(1);
-        assertThat(thopter.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(1);
     }
 
     @Test

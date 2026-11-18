@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.SelesnyaGuildmage;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -34,10 +35,10 @@ class DroolingGroodionTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Drooling Groodion");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(fodder.getCard());
-        assertThat(firstTarget.getPowerModifier()).isEqualTo(2);
-        assertThat(firstTarget.getToughnessModifier()).isEqualTo(2);
-        assertThat(secondTarget.getPowerModifier()).isEqualTo(-2);
-        assertThat(secondTarget.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstTarget)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstTarget)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondTarget)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondTarget)).isEqualTo(-2);
     }
 
     @Test
@@ -83,8 +84,8 @@ class DroolingGroodionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Drooling Groodion");
-        assertThat(secondTarget.getPowerModifier()).isEqualTo(-2);
-        assertThat(secondTarget.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondTarget)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondTarget)).isEqualTo(-2);
         harness.assertInGraveyard(player2, "Selesnya Guildmage");
     }
 
@@ -119,8 +120,8 @@ class DroolingGroodionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Selesnya Guildmage");
-        assertThat(firstTarget.getPowerModifier()).isEqualTo(2);
-        assertThat(firstTarget.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstTarget)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstTarget)).isEqualTo(2);
     }
 
     @Test
@@ -136,19 +137,19 @@ class DroolingGroodionTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
 
-        assertThat(firstTarget.getPowerModifier()).isEqualTo(2);
-        assertThat(firstTarget.getToughnessModifier()).isEqualTo(2);
-        assertThat(source.getPowerModifier()).isEqualTo(-2);
-        assertThat(source.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstTarget)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstTarget)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(-2);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player1, "Drooling Groodion");
         harness.assertOnBattlefield(player2, "Selesnya Guildmage");
-        assertThat(firstTarget.getPowerModifier()).isZero();
-        assertThat(firstTarget.getToughnessModifier()).isZero();
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstTarget)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstTarget)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
     }
 
     @Test

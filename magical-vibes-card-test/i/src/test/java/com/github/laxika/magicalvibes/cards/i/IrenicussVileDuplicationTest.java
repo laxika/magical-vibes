@@ -106,8 +106,8 @@ class IrenicussVileDuplicationTest extends BaseCardTest {
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
         assertThat(token.isFaceDown()).isFalse();
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
         assertThat(token.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
         assertThat(token.hasKeyword(Keyword.VIGILANCE)).isFalse();

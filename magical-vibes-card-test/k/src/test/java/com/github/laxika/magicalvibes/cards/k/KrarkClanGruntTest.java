@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WeldingJar;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,8 +26,8 @@ class KrarkClanGruntTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Welding Jar");
-        assertThat(grunt.getPowerModifier()).isEqualTo(1);
-        assertThat(grunt.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, grunt)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, grunt)).isZero();
         assertThat(gqs.hasKeyword(gd, grunt, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -42,8 +43,8 @@ class KrarkClanGruntTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(grunt.getPowerModifier()).isZero();
-        assertThat(grunt.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, grunt)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, grunt)).isZero();
         assertThat(gqs.hasKeyword(gd, grunt, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -71,8 +72,8 @@ class KrarkClanGruntTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Welding Jar")).isZero();
-        assertThat(grunt.getPowerModifier()).isEqualTo(2);
-        assertThat(grunt.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, grunt)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, grunt)).isZero();
         assertThat(gqs.hasKeyword(gd, grunt, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -87,7 +88,7 @@ class KrarkClanGruntTest extends BaseCardTest {
                 .hasMessageContaining("No permanent to sacrifice matching: an artifact");
 
         harness.assertOnBattlefield(player2, "Welding Jar");
-        assertThat(grunt.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, grunt)).isZero();
         assertThat(gqs.hasKeyword(gd, grunt, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -103,14 +104,14 @@ class KrarkClanGruntTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Welding Jar");
         harness.assertInGraveyard(player1, "Welding Jar");
         assertThat(gd.stack).hasSize(1);
-        assertThat(grunt.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, grunt)).isZero();
         assertThat(gqs.hasKeyword(gd, grunt, Keyword.FIRST_STRIKE)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(grunt.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, grunt)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, grunt, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(otherGrunt.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherGrunt)).isZero();
         assertThat(gqs.hasKeyword(gd, otherGrunt, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -127,8 +128,8 @@ class KrarkClanGruntTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Welding Jar");
-        assertThat(grunt.getPowerModifier()).isEqualTo(1);
-        assertThat(grunt.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, grunt)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, grunt)).isZero();
         assertThat(gqs.hasKeyword(gd, grunt, Keyword.FIRST_STRIKE)).isTrue();
     }
 }

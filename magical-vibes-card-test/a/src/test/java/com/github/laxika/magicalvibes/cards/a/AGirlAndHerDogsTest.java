@@ -27,8 +27,8 @@ class AGirlAndHerDogsTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(dog.getCard().getSubtypes()).contains(CardSubtype.DOG);
         assertThat(dog.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
-        assertThat(dog.getEffectivePower()).isEqualTo(1);
-        assertThat(dog.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, dog)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, dog)).isEqualTo(1);
     }
 
     @Test

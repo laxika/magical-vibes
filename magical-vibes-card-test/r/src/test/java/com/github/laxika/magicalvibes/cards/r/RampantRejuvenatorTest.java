@@ -29,8 +29,8 @@ class RampantRejuvenatorTest extends BaseCardTest {
         Permanent rejuvenator = harness.enterBattlefieldAndReturn(player1, new RampantRejuvenator());
 
         assertThat(rejuvenator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(rejuvenator.getEffectivePower()).isEqualTo(2);
-        assertThat(rejuvenator.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rejuvenator)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rejuvenator)).isEqualTo(2);
     }
 
     @Test

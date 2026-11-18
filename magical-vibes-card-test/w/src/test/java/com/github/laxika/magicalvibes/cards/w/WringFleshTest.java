@@ -32,8 +32,8 @@ class WringFleshTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(-1);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Wring Flesh");
     }
 
@@ -68,8 +68,8 @@ class WringFleshTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -118,8 +118,8 @@ class WringFleshTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Runeclaw Bear");
         harness.assertOnBattlefield(player2, "Llanowar Elves");
         Permanent elves = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(elves.getEffectivePower()).isEqualTo(1);
-        assertThat(elves.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elves)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elves)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Wring Flesh");
         harness.assertInGraveyard(player1, "Unsummon");
         assertThat(gd.stack).isEmpty();

@@ -24,8 +24,8 @@ class SavageKnucklebladeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(knuckleblade.getEffectivePower()).isEqualTo(6);
-        assertThat(knuckleblade.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, knuckleblade)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, knuckleblade)).isEqualTo(6);
     }
 
     @Test
@@ -55,8 +55,8 @@ class SavageKnucklebladeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(knuckleblade.getEffectivePower()).isEqualTo(4);
-        assertThat(knuckleblade.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, knuckleblade)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, knuckleblade)).isEqualTo(4);
     }
 
     @Test
@@ -116,10 +116,10 @@ class SavageKnucklebladeTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(6);
-        assertThat(first.getEffectiveToughness()).isEqualTo(6);
-        assertThat(second.getEffectivePower()).isEqualTo(6);
-        assertThat(second.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(6);
     }
 
     @Test

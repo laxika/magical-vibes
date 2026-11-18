@@ -34,8 +34,8 @@ class CurseOfDisturbanceTest extends BaseCardTest {
         assertThat(findTokens(player2)).hasSize(1);
         assertThat(findTokens(player1).getFirst().getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(findTokens(player1).getFirst().getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
-        assertThat(findTokens(player1).getFirst().getEffectivePower()).isEqualTo(2);
-        assertThat(findTokens(player1).getFirst().getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findTokens(player1).getFirst())).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findTokens(player1).getFirst())).isEqualTo(2);
         assertThat(findTokens(player1).getFirst().isTapped()).isFalse();
     }
 

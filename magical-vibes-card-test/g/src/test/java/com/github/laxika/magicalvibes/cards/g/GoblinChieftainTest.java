@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -161,10 +164,10 @@ class GoblinChieftainTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GoblinChieftain());
         Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
 
-        goblin.setPowerModifier(goblin.getPowerModifier() + 5);
+        PermanentGrants.setPowerBoost(gd, goblin, PermanentGrants.powerBoostOf(gd, goblin) + 5);
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(8); // 2 base + 5 spell + 1 static
 
-        goblin.resetModifiers();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3); // 2 base + 1 static
         assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);

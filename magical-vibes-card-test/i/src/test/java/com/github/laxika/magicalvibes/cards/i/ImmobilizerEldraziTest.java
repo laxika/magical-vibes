@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MakindiAeronaut;
 import com.github.laxika.magicalvibes.cards.w.WallOfWood;
@@ -55,7 +56,7 @@ class ImmobilizerEldraziTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        blocker.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, blocker, 1);
         declareAttackersAndPrepareBlockers(List.of(1));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
@@ -104,7 +105,7 @@ class ImmobilizerEldraziTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        blocker.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, blocker, 2);
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

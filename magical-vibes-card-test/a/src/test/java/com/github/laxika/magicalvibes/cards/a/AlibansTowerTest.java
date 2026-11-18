@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DeathSpeakers;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,8 +27,8 @@ class AlibansTowerTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, blocker.getId());
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(3);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Aliban's Tower");
     }
 
@@ -43,8 +44,8 @@ class AlibansTowerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(0);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(0);
     }
 
     @Test
@@ -67,8 +68,8 @@ class AlibansTowerTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, blocker.getId());
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(3);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(1);
     }
 
     @Test
@@ -81,8 +82,8 @@ class AlibansTowerTest extends BaseCardTest {
         blocker.setBlocking(false);
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
     }
 
     @Test

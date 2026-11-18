@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -58,7 +59,7 @@ class TheHippodromeTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         triggerChaosAndChooseTarget(target);
-        target.setPowerModifier(4);
+        PermanentGrants.setPowerBoost(gd, target, 4);
         harness.passBothPriorities();
         // "You may destroy target creature if its power is 0 or less": the choice is asked as the ability resolves,
         // and the "if" is checked as the destruction would happen.
@@ -71,7 +72,7 @@ class TheHippodromeTest extends BaseCardTest {
     @Test
     void chaosMayDestroyCreatureWithExactlyZeroPower() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, target, 3);
 
         triggerChaosAndChooseTarget(target);
         harness.passBothPriorities();
@@ -98,7 +99,7 @@ class TheHippodromeTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
 
         triggerChaosAndChooseTarget(target);
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 

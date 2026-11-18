@@ -37,10 +37,10 @@ class ViolentOutburstTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the cascade trigger (no hit, bottoms lands)
         harness.passBothPriorities(); // resolve the spell -> pump
 
-        assertThat(mine.getEffectivePower()).isEqualTo(3);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(2);
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 
     @Test
@@ -51,13 +51,13 @@ class ViolentOutburstTest extends BaseCardTest {
         castViolentOutburst();
         harness.passBothPriorities(); // cascade trigger
         harness.passBothPriorities(); // spell
-        assertThat(mine.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(2);
     }
 
     @Test
@@ -94,7 +94,7 @@ class ViolentOutburstTest extends BaseCardTest {
         // The pump still applies to the caster's creature once everything resolves.
         harness.passBothPriorities(); // resolve Grizzly Bears
         harness.passBothPriorities(); // resolve Violent Outburst
-        assertThat(mine.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(3);
     }
 
     @Test
@@ -130,14 +130,14 @@ class ViolentOutburstTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
         Permanent cascaded = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(cascaded.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, cascaded)).isEqualTo(2);
         harness.passBothPriorities();
-        assertThat(cascaded.getEffectivePower()).isEqualTo(3);
-        assertThat(cascaded.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, cascaded)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cascaded)).isEqualTo(2);
 
         Permanent later = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        assertThat(later.getEffectivePower()).isEqualTo(2);
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
     }
 
     @Test

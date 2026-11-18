@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudRidgeback;
@@ -116,7 +117,7 @@ class LaccolithWhelpTest extends BaseCardTest {
     void damageUsesCurrentPowerAtResolution() {
         Permanent attacker = addAttacker();
         Permanent blocker = addBlocker();
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
 
         declareBlock(attacker, blocker);
         harness.handlePermanentChosen(player1, blocker.getId());
@@ -245,11 +246,11 @@ class LaccolithWhelpTest extends BaseCardTest {
         Permanent blocker = addBlocker();
         declareBlock(attacker, blocker);
         harness.handlePermanentChosen(player1, blocker.getId());
-        attacker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, attacker, -1);
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        attacker.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, attacker, 0);
         resolveCombat();
 
         assertThat(blocker.getMarkedDamage()).isZero();

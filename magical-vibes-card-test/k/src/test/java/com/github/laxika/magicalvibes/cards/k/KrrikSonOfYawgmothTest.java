@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.b.BeseechTheQueen;
 import com.github.laxika.magicalvibes.cards.b.BlindObedience;
@@ -67,8 +68,8 @@ class KrrikSonOfYawgmothTest extends BaseCardTest {
         harness.assertLife(player1, 18);
         harness.passBothPriorities();
 
-        assertThat(shade.getPowerModifier()).isEqualTo(2);
-        assertThat(shade.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(2);
     }
 
     @Test

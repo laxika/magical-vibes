@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HuntedWitness;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -51,15 +52,15 @@ class BorosChallengerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(challenger.getPowerModifier()).isEqualTo(1);
-        assertThat(challenger.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, challenger)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, challenger)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(challenger.getPowerModifier()).isZero();
-        assertThat(challenger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, challenger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, challenger)).isZero();
     }
 
     @Test
@@ -103,7 +104,7 @@ class BorosChallengerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(challenger.getPowerModifier()).isEqualTo(2);
-        assertThat(challenger.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, challenger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, challenger)).isEqualTo(2);
     }
 }

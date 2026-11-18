@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CorruptedConviction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -214,7 +215,7 @@ class EtaliPrimalConquerorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
-        etali.setPowerModifier(-6);
+        PermanentGrants.setPowerBoost(gd, etali, -6);
         etali.setAttacking(true);
         harness.setLife(player2, 20);
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
@@ -223,7 +224,7 @@ class EtaliPrimalConquerorTest extends BaseCardTest {
 
         harness.assertLife(player2, 15);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
-        etali.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, etali, 0);
         resolveAllTriggers();
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(5);
         assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();

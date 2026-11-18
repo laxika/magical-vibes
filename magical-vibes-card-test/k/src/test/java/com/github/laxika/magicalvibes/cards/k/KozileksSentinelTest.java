@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SludgeCrawler;
 import com.github.laxika.magicalvibes.cards.s.SnappingGnarlid;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,8 +23,8 @@ class KozileksSentinelTest extends BaseCardTest {
         harness.castFromHand(player1, new SludgeCrawler(), "{B}");
         harness.passBothPriorities();
 
-        assertThat(sentinel.getPowerModifier()).isEqualTo(1);
-        assertThat(sentinel.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sentinel)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentinel)).isZero();
     }
 
     @Test
@@ -34,8 +35,8 @@ class KozileksSentinelTest extends BaseCardTest {
         harness.castFromHand(player1, new SnappingGnarlid(), "{1}{G}");
         harness.passBothPriorities();
 
-        assertThat(sentinel.getPowerModifier()).isZero();
-        assertThat(sentinel.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sentinel)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentinel)).isZero();
     }
 
     @Test
@@ -45,7 +46,7 @@ class KozileksSentinelTest extends BaseCardTest {
 
         harness.castFromHand(player1, new SludgeCrawler(), "{B}");
         harness.passBothPriorities();
-        assertThat(sentinel.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentinel)).isEqualTo(1);
         harness.passBothPriorities();
         assertThat(gd.stack).isEmpty();
 
@@ -53,8 +54,8 @@ class KozileksSentinelTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(sentinel.getPowerModifier()).isZero();
-        assertThat(sentinel.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sentinel)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentinel)).isZero();
     }
 
     @Test
@@ -64,12 +65,12 @@ class KozileksSentinelTest extends BaseCardTest {
 
         harness.castFromHand(player1, new SludgeCrawler(), "{B}");
         assertThat(gd.stack).hasSize(2);
-        assertThat(sentinel.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sentinel)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(sentinel.getPowerModifier()).isEqualTo(1);
-        assertThat(sentinel.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sentinel)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentinel)).isZero();
         assertThat(gd.stack).hasSize(1);
         harness.assertNotOnBattlefield(player1, "Sludge Crawler");
     }
@@ -85,8 +86,8 @@ class KozileksSentinelTest extends BaseCardTest {
         harness.castFromHand(player1, new SludgeCrawler(), "{B}");
         harness.passBothPriorities();
 
-        assertThat(sentinel.getPowerModifier()).isEqualTo(2);
-        assertThat(sentinel.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sentinel)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentinel)).isZero();
     }
 
     @Test
@@ -100,8 +101,8 @@ class KozileksSentinelTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(sentinel.getPowerModifier()).isZero();
-        assertThat(sentinel.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sentinel)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentinel)).isZero();
     }
 
     @Test
@@ -115,8 +116,8 @@ class KozileksSentinelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent sentinel = findPermanent(player1, "Kozilek's Sentinel");
-        assertThat(sentinel.getPowerModifier()).isZero();
-        assertThat(sentinel.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sentinel)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentinel)).isZero();
     }
 
     private Permanent addSentinel() {

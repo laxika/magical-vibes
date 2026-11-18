@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
@@ -50,10 +51,10 @@ class RangersGuileTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(1);
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isTrue();
     }
 
@@ -73,8 +74,8 @@ class RangersGuileTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isFalse();
     }
 
@@ -124,8 +125,8 @@ class RangersGuileTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(wolf);
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isZero();
-        assertThat(wolf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isZero();
         assertThat(gqs.hasKeyword(gd, wolf, Keyword.HEXPROOF)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Ranger's Guile");
@@ -164,8 +165,8 @@ class RangersGuileTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent wolf = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(wolf.getPowerModifier()).isEqualTo(2);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, wolf, Keyword.HEXPROOF)).isTrue();
     }
 }

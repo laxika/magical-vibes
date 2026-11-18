@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CaseOfTheGatewayExpress;
 import com.github.laxika.magicalvibes.cards.g.GraniteWitness;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -127,7 +128,7 @@ class MarketwatchPhantomTest extends BaseCardTest {
         Permanent phantom = harness.addToBattlefieldAndReturn(player1, new MarketwatchPhantom());
         Permanent entering = harness.enterBattlefieldAndReturn(player1, new MarketwatchPhantom());
         assertThat(gd.stack).hasSize(1);
-        entering.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, entering, 2);
 
         harness.passBothPriorities();
 

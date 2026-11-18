@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChitteringHost;
 import com.github.laxika.magicalvibes.cards.m.MidnightScavengers;
 import com.github.laxika.magicalvibes.model.Card;
@@ -105,10 +106,10 @@ class GrafRatsTest extends BaseCardTest {
 
         Permanent host = findPermanent(player1, "Chittering Host");
 
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isTrue();
-        assertThat(host.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, host)).isEqualTo(0);
     }
 
     private static Card namedMidnightScavengers() {

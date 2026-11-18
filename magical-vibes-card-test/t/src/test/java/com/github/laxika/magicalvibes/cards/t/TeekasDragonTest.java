@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BayFalcon;
 import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,8 +31,8 @@ class TeekasDragonTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isZero();
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
     }
 
     @Test
@@ -49,8 +50,8 @@ class TeekasDragonTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(4);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(4);
     }
 
     @Test
@@ -70,8 +71,8 @@ class TeekasDragonTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(8);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(8);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(8);
     }
 
     @Test
@@ -84,8 +85,8 @@ class TeekasDragonTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(dragon.getPowerModifier()).isZero();
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
     }
 
     @Test
@@ -103,15 +104,15 @@ class TeekasDragonTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(4);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isZero();
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
     }
 
     @Test
@@ -134,8 +135,8 @@ class TeekasDragonTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Bay Falcon");
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isZero();
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
     }
 
     @Test
@@ -154,7 +155,7 @@ class TeekasDragonTest extends BaseCardTest {
                 new BlockerAssignment(2, 0)
         ));
         assertThat(gd.stack).hasSize(1);
-        assertThat(dragon.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
 
         harness.setHand(player2, List.of(new DarkBanishing()));
         harness.addMana(player2, ManaColor.BLACK, 1);
@@ -164,8 +165,8 @@ class TeekasDragonTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Bay Falcon");
-        assertThat(dragon.getPowerModifier()).isEqualTo(4);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(4);
     }
 
     @Test
@@ -184,8 +185,8 @@ class TeekasDragonTest extends BaseCardTest {
                 new BlockerAssignment(2, 0)
         ));
         resolveAllTriggers();
-        assertThat(dragon.getPowerModifier()).isEqualTo(8);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(8);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(8);
 
         harness.setHand(player2, List.of(new DarkBanishing()));
         harness.addMana(player2, ManaColor.BLACK, 1);
@@ -195,8 +196,8 @@ class TeekasDragonTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Bay Falcon");
-        assertThat(dragon.getPowerModifier()).isEqualTo(8);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(8);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(8);
     }
 
     private Permanent addReadyDragon(Player player) {

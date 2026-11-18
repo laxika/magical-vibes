@@ -117,7 +117,7 @@ class ArchaeomancersSpadeTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(6);
         assertThat(gd.playerManaPools.get(player1.getId()).getNonHandSpellOnlyMana(ManaColor.RED))
                 .isZero();
     }

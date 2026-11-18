@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,11 +24,11 @@ class PearlDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(dragon.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(1);
     }
 
     @Test
@@ -41,9 +42,9 @@ class PearlDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(firstDragon.getToughnessModifier()).isZero();
-        assertThat(secondDragon.getToughnessModifier()).isEqualTo(1);
-        assertThat(opposingDragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstDragon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondDragon)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingDragon)).isZero();
     }
 
     @Test
@@ -57,8 +58,8 @@ class PearlDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(dragon.getPowerModifier()).isEqualTo(0);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(1);
     }
 
     @Test
@@ -72,7 +73,7 @@ class PearlDragonTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(dragon.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(3);
     }
 
     @Test
@@ -87,7 +88,7 @@ class PearlDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(dragon.isTapped()).isTrue();
-        assertThat(dragon.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(1);
     }
 
     @Test
@@ -99,7 +100,7 @@ class PearlDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(1);
     }
 
     @Test
@@ -115,7 +116,7 @@ class PearlDragonTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dragon.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(0);
     }
 
     @Test

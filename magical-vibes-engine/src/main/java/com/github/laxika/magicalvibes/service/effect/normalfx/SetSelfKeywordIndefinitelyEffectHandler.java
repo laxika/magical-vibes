@@ -55,7 +55,7 @@ public class SetSelfKeywordIndefinitelyEffectHandler implements NormalEffectHand
                         || floating.effect() instanceof RemoveKeywordEffect remove
                                 && remove.keyword() == change.keyword()));
 
-        // CR 611.2b: no stated duration means the continuous effect lasts indefinitely. It is a
+        // CR 611.2a: no stated duration means the continuous effect lasts indefinitely. It is a
         // layer-6 effect with its own timestamp (CR 613.7), so a later grant or removal by another
         // source (Soar) wins over it and an earlier one loses to it.
         CardEffect layerEffect = change.gained()

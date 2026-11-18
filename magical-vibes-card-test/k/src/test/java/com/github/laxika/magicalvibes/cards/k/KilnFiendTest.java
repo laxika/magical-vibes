@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FlameSlash;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -35,8 +36,8 @@ class KilnFiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(fiend.getPowerModifier()).isEqualTo(3);
-        assertThat(fiend.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isEqualTo(0);
     }
 
     @Test
@@ -49,8 +50,8 @@ class KilnFiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveSorcery(player1, 0, findPermanent(player2, "Grizzly Bears").getId());
 
-        assertThat(fiend.getPowerModifier()).isEqualTo(3);
-        assertThat(fiend.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isEqualTo(0);
     }
 
     @Test
@@ -63,8 +64,8 @@ class KilnFiendTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(fiend.getPowerModifier()).isEqualTo(0);
-        assertThat(fiend.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isEqualTo(0);
     }
 
     @Test
@@ -76,14 +77,14 @@ class KilnFiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(fiend.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(fiend.getPowerModifier()).isEqualTo(0);
-        assertThat(fiend.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isEqualTo(0);
     }
 
     @Test
@@ -96,8 +97,8 @@ class KilnFiendTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(fiend.getPowerModifier()).isZero();
-        assertThat(fiend.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -110,13 +111,13 @@ class KilnFiendTest extends BaseCardTest {
         int startingLife = gd.playerLifeTotals.get(player2.getId());
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(fiend.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(3);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(startingLife);
         harness.passBothPriorities();
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(fiend.getPowerModifier()).isEqualTo(6);
-        assertThat(fiend.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isZero();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(startingLife - 2);
     }
 
@@ -140,7 +141,7 @@ class KilnFiendTest extends BaseCardTest {
         }
 
         assertThat(gd.stack).isEmpty();
-        assertThat(other.getPowerModifier()).isEqualTo(3);
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 }

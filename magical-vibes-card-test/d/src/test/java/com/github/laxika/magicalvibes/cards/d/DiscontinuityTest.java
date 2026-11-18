@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlpineWatchdog;
 import com.github.laxika.magicalvibes.cards.t.TeferisProtege;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -134,7 +135,7 @@ class DiscontinuityTest extends BaseCardTest {
     void discardPrecedesCleanupResets() {
         Permanent watchdog = harness.addToBattlefieldAndReturn(player1, new AlpineWatchdog());
         watchdog.setMarkedDamage(1);
-        watchdog.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, watchdog, 3);
         harness.setHand(player1, List.of(
                 new AlpineWatchdog(), new AlpineWatchdog(), new AlpineWatchdog(), new AlpineWatchdog(),
                 new AlpineWatchdog(), new AlpineWatchdog(), new AlpineWatchdog(), new AlpineWatchdog()));
@@ -148,13 +149,13 @@ class DiscontinuityTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
                 .isEqualTo(1);
         assertThat(watchdog.getMarkedDamage()).isEqualTo(1);
-        assertThat(watchdog.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, watchdog)).isEqualTo(3);
 
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
         harness.assertInGraveyard(player1, "Alpine Watchdog");
         assertThat(watchdog.getMarkedDamage()).isZero();
-        assertThat(watchdog.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, watchdog)).isZero();
     }
 }

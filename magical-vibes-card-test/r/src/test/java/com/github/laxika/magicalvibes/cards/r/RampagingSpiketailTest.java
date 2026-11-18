@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -29,10 +30,10 @@ class RampagingSpiketailTest extends BaseCardTest {
 
         castWithTarget(bears);
 
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
@@ -44,8 +45,8 @@ class RampagingSpiketailTest extends BaseCardTest {
         castWithTarget(bears);
         advanceToEndStep();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 

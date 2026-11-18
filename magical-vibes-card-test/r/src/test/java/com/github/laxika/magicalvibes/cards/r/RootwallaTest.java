@@ -49,8 +49,8 @@ class RootwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(4);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(4);
     }
 
     @Test
@@ -64,8 +64,8 @@ class RootwallaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(rootwalla.isTapped()).isTrue();
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(4);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(4);
     }
 
     @Test
@@ -110,8 +110,8 @@ class RootwallaTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(2);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(2);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once each turn");
@@ -119,8 +119,8 @@ class RootwallaTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(4);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(4);
     }
 
     @Test
@@ -133,18 +133,18 @@ class RootwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(2);
-        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
     }
 
     @Test
@@ -157,8 +157,8 @@ class RootwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(4);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(4);
     }
 
     @Test
@@ -170,13 +170,13 @@ class RootwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(4);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(2);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(2);
     }
 }

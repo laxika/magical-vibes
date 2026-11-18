@@ -33,8 +33,8 @@ class CavalryDrillmasterTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FIRST_STRIKE);
     }
 
@@ -50,7 +50,7 @@ class CavalryDrillmasterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FIRST_STRIKE);
     }
 
@@ -70,8 +70,8 @@ class CavalryDrillmasterTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
@@ -104,8 +104,8 @@ class CavalryDrillmasterTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(drillmaster.getEffectivePower()).isEqualTo(4);
-        assertThat(drillmaster.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, drillmaster)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, drillmaster)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, drillmaster)).contains(Keyword.FIRST_STRIKE);
     }
 
@@ -124,8 +124,8 @@ class CavalryDrillmasterTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FIRST_STRIKE);
     }
 }

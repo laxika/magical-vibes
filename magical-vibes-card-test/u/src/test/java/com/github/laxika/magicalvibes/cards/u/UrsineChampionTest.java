@@ -25,8 +25,8 @@ class UrsineChampionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(champion.getEffectivePower()).isEqualTo(5);
-        assertThat(champion.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(5);
         assertThat(gqs.effectiveCreatureSubtypes(gd, champion))
                 .containsExactlyInAnyOrder(CardSubtype.BEAR, CardSubtype.BERSERKER);
     }
@@ -50,8 +50,8 @@ class UrsineChampionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(champion.getEffectivePower()).isEqualTo(2);
-        assertThat(champion.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(2);
         assertThat(gqs.effectiveCreatureSubtypes(gd, champion))
                 .doesNotContain(CardSubtype.BEAR)
                 .contains(CardSubtype.HUMAN, CardSubtype.BERSERKER);
@@ -71,8 +71,8 @@ class UrsineChampionTest extends BaseCardTest {
                 .hasMessageContaining("only once each turn");
 
         harness.passBothPriorities();
-        assertThat(champion.getEffectivePower()).isEqualTo(5);
-        assertThat(champion.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(5);
     }
 
     @Test
@@ -91,8 +91,8 @@ class UrsineChampionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(champion.isTapped()).isTrue();
-        assertThat(champion.getEffectivePower()).isEqualTo(5);
-        assertThat(champion.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(5);
         assertThat(gqs.effectiveCreatureSubtypes(gd, champion))
                 .containsExactlyInAnyOrder(CardSubtype.BEAR, CardSubtype.BERSERKER);
     }
@@ -110,8 +110,8 @@ class UrsineChampionTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(5);
-        assertThat(second.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
         assertThat(gqs.effectiveCreatureSubtypes(gd, first))
                 .containsExactlyInAnyOrder(CardSubtype.BEAR, CardSubtype.BERSERKER);
         assertThat(gqs.effectiveCreatureSubtypes(gd, second))

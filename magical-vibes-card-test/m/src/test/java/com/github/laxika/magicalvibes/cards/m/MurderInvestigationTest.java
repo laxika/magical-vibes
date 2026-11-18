@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -92,7 +93,7 @@ class MurderInvestigationTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new MurderInvestigation());
         aura.setAttachedTo(creature.getId());
-        creature.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, creature, 3);
         creature.setMarkedDamage(4);
         harness.runStateBasedActions();
         harness.passBothPriorities();
@@ -105,7 +106,7 @@ class MurderInvestigationTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new MurderInvestigation());
         aura.setAttachedTo(creature.getId());
-        creature.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, creature, -3);
         creature.setMarkedDamage(4);
         harness.runStateBasedActions();
         harness.passBothPriorities();

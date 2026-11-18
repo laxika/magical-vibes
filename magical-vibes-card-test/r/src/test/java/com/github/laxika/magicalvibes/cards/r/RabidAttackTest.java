@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -30,8 +31,8 @@ class RabidAttackTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(bearA.getId(), bearB.getId()));
 
         for (Permanent bear : List.of(bearA, bearB)) {
-            assertThat(bear.getPowerModifier()).isEqualTo(1);
-            assertThat(bear.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
             assertThat(bear.getTemporaryTriggeredAbilities()).hasSize(1);
         }
     }
@@ -66,14 +67,14 @@ class RabidAttackTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castAndResolveInstant(player1, 0, List.of(bear.getId()));
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advance through cleanup
 
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(bear.getTemporaryTriggeredAbilities()).isEmpty();
     }
 
@@ -111,7 +112,7 @@ class RabidAttackTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bears.stream().map(Permanent::getId).toList());
 
-        assertThat(bears).allSatisfy(bear -> assertThat(bear.getPowerModifier()).isEqualTo(1));
+        assertThat(bears).allSatisfy(bear -> assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1));
     }
 
     @Test
@@ -128,7 +129,7 @@ class RabidAttackTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearA.getId());
         harness.passBothPriorities();
 
-        assertThat(bearB.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bearB)).isEqualTo(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.castAndResolveInstant(player1, 0, bearB.getId());
         harness.passBothPriorities();
@@ -147,7 +148,7 @@ class RabidAttackTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(bear.getId()));
         harness.castAndResolveInstant(player1, 0, List.of(bear.getId()));
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
         harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

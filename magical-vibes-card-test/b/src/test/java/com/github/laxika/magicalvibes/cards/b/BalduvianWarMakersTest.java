@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.IvoryGargoyle;
 import com.github.laxika.magicalvibes.cards.s.StormCrow;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -52,8 +53,8 @@ class BalduvianWarMakersTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Ivory Gargoyle");
         harness.passBothPriorities();
 
-        assertThat(warMakers.getPowerModifier()).isZero();
-        assertThat(warMakers.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warMakers)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warMakers)).isZero();
     }
 
     @Test
@@ -67,8 +68,8 @@ class BalduvianWarMakersTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(warMakers.getPowerModifier()).isZero();
-        assertThat(warMakers.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warMakers)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warMakers)).isZero();
     }
 
     @Test
@@ -88,8 +89,8 @@ class BalduvianWarMakersTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Ivory Gargoyle");
         harness.passBothPriorities();
 
-        assertThat(warMakers.getPowerModifier()).isZero();
-        assertThat(warMakers.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warMakers)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warMakers)).isZero();
     }
 
     @Test
@@ -109,8 +110,8 @@ class BalduvianWarMakersTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(warMakers.getPowerModifier()).isEqualTo(2);
-        assertThat(warMakers.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, warMakers)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warMakers)).isEqualTo(2);
     }
 
     @Test
@@ -123,8 +124,8 @@ class BalduvianWarMakersTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(warMakers.getPowerModifier()).isZero();
-        assertThat(warMakers.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warMakers)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warMakers)).isZero();
     }
 
     @Test
@@ -142,14 +143,14 @@ class BalduvianWarMakersTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(warMakers.getPowerModifier()).isEqualTo(1);
-        assertThat(warMakers.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, warMakers)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warMakers)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(warMakers.getPowerModifier()).isZero();
-        assertThat(warMakers.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warMakers)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warMakers)).isZero();
     }
 }

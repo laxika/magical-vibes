@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.cards.h.Hammerheim;
 import com.github.laxika.magicalvibes.cards.h.HundingGjornersen;
@@ -41,8 +42,8 @@ class RapidFireTest extends BaseCardTest {
                 new BlockerAssignment(2, 0)));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -59,8 +60,8 @@ class RapidFireTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -128,8 +129,8 @@ class RapidFireTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -153,8 +154,8 @@ class RapidFireTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -172,8 +173,8 @@ class RapidFireTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -191,8 +192,8 @@ class RapidFireTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
     }
 
     private void castRapidFire(Permanent target) {

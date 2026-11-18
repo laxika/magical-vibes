@@ -25,9 +25,9 @@ class DarkTriumphTest extends BaseCardTest {
 
         castForMana();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -39,7 +39,7 @@ class DarkTriumphTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test
@@ -52,11 +52,11 @@ class DarkTriumphTest extends BaseCardTest {
 
         harness.castWithAlternateCost(player1, 0, List.of(paymentCreature.getId()));
         harness.assertInGraveyard(player1, "Flint Golem");
-        assertThat(survivingCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, survivingCreature)).isEqualTo(2);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Flint Golem");
-        assertThat(survivingCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, survivingCreature)).isEqualTo(4);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -91,8 +91,8 @@ class DarkTriumphTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new FlintGolem());
 
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(4);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
     }
 
     @Test

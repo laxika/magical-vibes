@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.DuskborneSkymarcher;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
@@ -42,8 +43,8 @@ class AnointedDeaconTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent vampire = findPermanent(player1, "Duskborne Skymarcher");
-        assertThat(vampire.getPowerModifier()).isEqualTo(2);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(0);
     }
 
     @Test
@@ -58,8 +59,8 @@ class AnointedDeaconTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent deacon = findPermanent(player1, "Anointed Deacon");
-        assertThat(deacon.getPowerModifier()).isEqualTo(2);
-        assertThat(deacon.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, deacon)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, deacon)).isEqualTo(0);
     }
 
     @Test
@@ -75,8 +76,8 @@ class AnointedDeaconTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         Permanent vampire = findPermanent(player1, "Duskborne Skymarcher");
-        assertThat(vampire.getPowerModifier()).isEqualTo(0);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(0);
     }
 
     @Test
@@ -105,8 +106,8 @@ class AnointedDeaconTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent vampire = findPermanent(player2, "Duskborne Skymarcher");
-        assertThat(vampire.getPowerModifier()).isEqualTo(2);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(0);
     }
 
     @Test
@@ -122,7 +123,7 @@ class AnointedDeaconTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent vampire = findPermanent(player1, "Duskborne Skymarcher");
-        assertThat(vampire.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(2);
 
         // Advance to end step — modifiers reset
         gd.interaction.clearAwaitingInput();
@@ -130,8 +131,8 @@ class AnointedDeaconTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(0);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(0);
     }
 
     @Test
@@ -166,8 +167,8 @@ class AnointedDeaconTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(2);
-        assertThat(vampire.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isZero();
     }
 
     @Test
@@ -185,7 +186,7 @@ class AnointedDeaconTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
-        assertThat(vampire.getPowerModifier()).isZero();
-        assertThat(findPermanent(player1, "Anointed Deacon").getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Anointed Deacon"))).isZero();
     }
 }

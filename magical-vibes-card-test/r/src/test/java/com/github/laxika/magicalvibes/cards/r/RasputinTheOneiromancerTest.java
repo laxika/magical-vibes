@@ -53,8 +53,8 @@ class RasputinTheOneiromancerTest extends BaseCardTest {
 
         Permanent knight = findPermanent(player1, "Knight");
         assertThat(rasputin.getCounterCount(CounterType.DREAM)).isZero();
-        assertThat(knight.getEffectivePower()).isEqualTo(2);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
         assertThat(gqs.hasProtectionFrom(gd, knight, CardColor.RED)).isTrue();
     }
 

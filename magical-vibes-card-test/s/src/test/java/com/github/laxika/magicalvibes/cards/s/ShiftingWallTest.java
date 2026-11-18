@@ -28,8 +28,8 @@ class ShiftingWallTest extends BaseCardTest {
 
         Permanent wall = findPermanent(player1, "Shifting Wall");
         assertThat(wall.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(wall.getEffectivePower()).isEqualTo(3);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
     }
 
     @Test
@@ -79,6 +79,6 @@ class ShiftingWallTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent wall = findPermanent(player1, "Shifting Wall");
         assertThat(wall.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(1);
     }
 }

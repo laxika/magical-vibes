@@ -30,8 +30,8 @@ class GatherCourageTest extends BaseCardTest {
         harness.castInstant(player1, 0, wolf.getId());
         harness.passBothPriorities();
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(5);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(5);
     }
 
     @Test
@@ -47,8 +47,8 @@ class GatherCourageTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(3);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(3);
     }
 
     @Test
@@ -64,8 +64,8 @@ class GatherCourageTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -80,8 +80,8 @@ class GatherCourageTest extends BaseCardTest {
         assertThat(boost.isTapped()).isTrue();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -94,8 +94,8 @@ class GatherCourageTest extends BaseCardTest {
         harness.castInstant(player1, 0, opponentWolf.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentWolf.getEffectivePower()).isEqualTo(5);
-        assertThat(opponentWolf.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opponentWolf)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opponentWolf)).isEqualTo(5);
     }
 
     @Test
@@ -123,8 +123,8 @@ class GatherCourageTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -178,8 +178,8 @@ class GatherCourageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(other.getEffectivePower()).isEqualTo(3);
-        assertThat(other.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof GatherCourage);
     }

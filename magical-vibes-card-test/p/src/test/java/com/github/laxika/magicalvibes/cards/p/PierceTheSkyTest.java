@@ -94,7 +94,7 @@ class PierceTheSkyTest extends BaseCardTest {
     @DisplayName("Pierce the Sky deals exactly seven damage to its controller's surviving flyer")
     void dealsExactlySevenDamageToOwnFlyer() {
         Permanent flyer = harness.addToBattlefieldAndReturn(player1, new AirElemental());
-        flyer.setToughnessModifier(4);
+        PermanentGrants.setToughnessBoost(gd, flyer, 4);
         harness.setHand(player1, List.of(new PierceTheSky()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 

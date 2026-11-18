@@ -35,8 +35,8 @@ class BountyOfTheHuntTest extends BaseCardTest {
 
         // Grizzly Bears (2/2) with three +1/+1 counters -> 5/5.
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
     }
 
     @Test
@@ -74,7 +74,7 @@ class BountyOfTheHuntTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 

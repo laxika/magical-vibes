@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.t.Transluminant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,15 +28,15 @@ class DarkblastTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test

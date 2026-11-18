@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Cromat;
 import com.github.laxika.magicalvibes.cards.g.GaeasSkyfolk;
 import com.github.laxika.magicalvibes.cards.g.GladeGnarr;
@@ -25,8 +26,8 @@ class AnaSanctuaryTest extends BaseCardTest {
 
         resolveTarget(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -36,8 +37,8 @@ class AnaSanctuaryTest extends BaseCardTest {
 
         resolveTarget(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -50,8 +51,8 @@ class AnaSanctuaryTest extends BaseCardTest {
 
         resolveTarget(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(5);
-        assertThat(target.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -63,8 +64,8 @@ class AnaSanctuaryTest extends BaseCardTest {
 
         resolveTarget(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(5);
-        assertThat(target.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -76,8 +77,8 @@ class AnaSanctuaryTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -90,8 +91,8 @@ class AnaSanctuaryTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -104,8 +105,8 @@ class AnaSanctuaryTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -118,8 +119,8 @@ class AnaSanctuaryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GaeasSkyfolk());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -133,8 +134,8 @@ class AnaSanctuaryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MournfulZombie());
         chooseTarget(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(5);
-        assertThat(target.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -149,8 +150,8 @@ class AnaSanctuaryTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(blackPermanent);
         chooseTarget(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -164,8 +165,8 @@ class AnaSanctuaryTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(bluePermanent);
         chooseTarget(target);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -194,8 +195,8 @@ class AnaSanctuaryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -210,8 +211,8 @@ class AnaSanctuaryTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(sanctuary);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(5);
-        assertThat(target.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -224,8 +225,8 @@ class AnaSanctuaryTest extends BaseCardTest {
         resolveTarget(target);
         gd.playerBattlefields.get(player1.getId()).remove(support);
 
-        assertThat(target.getPowerModifier()).isEqualTo(5);
-        assertThat(target.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(5);
     }
 
     private Permanent setUpWithTarget(com.github.laxika.magicalvibes.model.Card supportPermanent) {

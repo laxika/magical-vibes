@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BuiltToLast;
 import com.github.laxika.magicalvibes.cards.e.EagerConstruct;
 import com.github.laxika.magicalvibes.cards.l.LongFinnedSkywhale;
@@ -72,7 +73,7 @@ class SkywhalersShotTest extends BaseCardTest {
     @DisplayName("Can destroy its controller's creature with exactly 3 effective power")
     void destroysOwnCreatureAtPowerThreshold() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new EagerConstruct());
-        creature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, creature, 1);
 
         addManaAndCast(creature.getId());
         harness.passBothPriorities();
@@ -99,7 +100,7 @@ class SkywhalersShotTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(top));
 
         addManaAndCast(creature.getId());
-        creature.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, creature, -2);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Long-Finned Skywhale");

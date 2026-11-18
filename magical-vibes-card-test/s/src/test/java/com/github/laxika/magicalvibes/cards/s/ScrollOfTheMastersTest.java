@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -56,8 +57,8 @@ class ScrollOfTheMastersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(3);
-        assertThat(bears.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(3);
     }
 
     @Test
@@ -96,13 +97,13 @@ class ScrollOfTheMastersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         harness.passBothPriorities();
 
         assertThat(scroll.getCounterCount(CounterType.LORE)).isEqualTo(1);
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -117,13 +118,13 @@ class ScrollOfTheMastersTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(2);
 
         harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         assertThat(scroll.getCounterCount(CounterType.LORE)).isEqualTo(2);
     }
 

@@ -34,8 +34,8 @@ class GrimPoppetTest extends BaseCardTest {
         Permanent poppet = findPoppet(player1);
 
         assertThat(poppet.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
-        assertThat(poppet.getEffectivePower()).isEqualTo(1);
-        assertThat(poppet.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, poppet)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, poppet)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 

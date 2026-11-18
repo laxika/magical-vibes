@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -88,8 +89,8 @@ class GoblinRabblemasterTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(rabblemaster.getPowerModifier()).isEqualTo(2);
-        assertThat(rabblemaster.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, rabblemaster)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rabblemaster)).isEqualTo(0);
     }
 
     @Test
@@ -100,7 +101,7 @@ class GoblinRabblemasterTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(rabblemaster.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, rabblemaster)).isEqualTo(0);
     }
 
     @Test
@@ -113,7 +114,7 @@ class GoblinRabblemasterTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(rabblemaster.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, rabblemaster)).isEqualTo(1);
     }
 
     @Test
@@ -184,8 +185,8 @@ class GoblinRabblemasterTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(rabblemaster.getPowerModifier()).isEqualTo(1);
-        assertThat(rabblemaster.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rabblemaster)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rabblemaster)).isZero();
     }
 
     @Test
@@ -202,7 +203,7 @@ class GoblinRabblemasterTest extends BaseCardTest {
 
         assertThat(tappedGoblin.isAttacking()).isFalse();
         assertThat(sickGoblin.isAttacking()).isFalse();
-        assertThat(rabblemaster.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rabblemaster)).isZero();
     }
 
     @Test
@@ -219,8 +220,8 @@ class GoblinRabblemasterTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
     }
 
     @Test
@@ -238,7 +239,7 @@ class GoblinRabblemasterTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
 
         resolveAllTriggers();
-        assertThat(rabblemaster.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rabblemaster)).isZero();
     }
 
     @Test
@@ -248,14 +249,14 @@ class GoblinRabblemasterTest extends BaseCardTest {
         Permanent goblin = addGoblin(player1);
         declareAttackers(List.of(0, 1));
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
-        assertThat(rabblemaster.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, rabblemaster)).isEqualTo(1);
 
         harness.setHand(player2, List.of(new LightningStrike()));
         harness.addMana(player2, ManaColor.RED, 2);
         harness.castAndResolveInstant(player2, 0, goblin.getId());
 
         harness.assertInGraveyard(player1, "Goblin Roughrider");
-        assertThat(rabblemaster.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, rabblemaster)).isEqualTo(1);
     }
 
     @Test
@@ -287,9 +288,9 @@ class GoblinRabblemasterTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
-        assertThat(rabblemaster.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, rabblemaster)).isEqualTo(1);
         harness.passUntil(player1, TurnStep.CLEANUP);
-        assertThat(rabblemaster.getPowerModifier()).isZero();
-        assertThat(rabblemaster.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rabblemaster)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rabblemaster)).isZero();
     }
 }

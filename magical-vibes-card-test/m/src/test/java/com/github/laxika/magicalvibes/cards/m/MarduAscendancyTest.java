@@ -32,8 +32,8 @@ class MarduAscendancyTest extends BaseCardTest {
         assertThat(goblin.isAttacking()).isTrue();
         assertThat(goblin.getAttackTarget()).isEqualTo(player2.getId());
         assertThat(goblin.isAttackedThisTurn()).isFalse();
-        assertThat(goblin.getEffectivePower()).isEqualTo(1);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
     }
 
     @Test
@@ -66,10 +66,10 @@ class MarduAscendancyTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Mardu Ascendancy");
         harness.assertInGraveyard(player1, "Mardu Ascendancy");
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(5);
-        assertThat(enemy.getEffectivePower()).isEqualTo(4);
-        assertThat(enemy.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, enemy)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, enemy)).isEqualTo(2);
     }
 
     @Test
@@ -121,14 +121,14 @@ class MarduAscendancyTest extends BaseCardTest {
 
             harness.assertNotOnBattlefield(player1, "Mardu Ascendancy");
             harness.assertInGraveyard(player1, "Mardu Ascendancy");
-            assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
             assertThat(gd.stack).hasSize(2);
             resolveAllTriggers();
         });
 
         Permanent goblin = findPermanent(player1, "Goblin");
-        assertThat(bear.getEffectiveToughness()).isEqualTo(5);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
         assertThat(goblin.isAttacking()).isTrue();
     }
 
@@ -146,8 +146,8 @@ class MarduAscendancyTest extends BaseCardTest {
         });
 
         Permanent goblin = findPermanent(player1, "Goblin");
-        assertThat(goblin.getEffectivePower()).isEqualTo(1);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(4);
     }
 
     @Test
@@ -161,16 +161,16 @@ class MarduAscendancyTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent afterResolution = harness.enterBattlefieldAndReturn(player1, new AlpineGrizzly());
 
-        assertThat(original.getEffectiveToughness()).isEqualTo(5);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(5);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(original.getEffectiveToughness()).isEqualTo(2);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
     }
 
     private Permanent addReadyAscendancy() {

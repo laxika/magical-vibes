@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,8 +32,8 @@ class UndeadLeotauTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(leotau.getPowerModifier()).isEqualTo(1);
-        assertThat(leotau.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, leotau)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, leotau)).isEqualTo(-1);
     }
 
     @Test
@@ -48,8 +49,8 @@ class UndeadLeotauTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(leotau.getPowerModifier()).isEqualTo(0);
-        assertThat(leotau.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, leotau)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, leotau)).isEqualTo(0);
     }
 
     @Test
@@ -98,8 +99,8 @@ class UndeadLeotauTest extends BaseCardTest {
         for (int i = 1; i <= 3; i++) {
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
-            assertThat(leotau.getPowerModifier()).isEqualTo(i);
-            assertThat(leotau.getToughnessModifier()).isEqualTo(-i);
+            assertThat(PermanentGrants.powerBoostOf(gd, leotau)).isEqualTo(i);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, leotau)).isEqualTo(-i);
             harness.assertOnBattlefield(player1, "Undead Leotau");
         }
         harness.activateAbility(player1, 0, null, null);
@@ -189,8 +190,8 @@ class UndeadLeotauTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(leotau.getPowerModifier()).isZero();
-        assertThat(leotau.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, leotau)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, leotau)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

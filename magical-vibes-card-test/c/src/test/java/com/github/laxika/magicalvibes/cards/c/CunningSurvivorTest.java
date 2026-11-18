@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.StripedRiverwinder;
 import com.github.laxika.magicalvibes.cards.t.TormentOfScarabs;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -29,8 +30,8 @@ class CunningSurvivorTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities(); // resolve the trigger
 
-        assertThat(survivor.getPowerModifier()).isEqualTo(1);
-        assertThat(survivor.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isEqualTo(0);
         assertThat(gqs.hasCantBeBlocked(gd, survivor)).isTrue();
     }
 
@@ -47,8 +48,8 @@ class CunningSurvivorTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        assertThat(survivor.getPowerModifier()).isEqualTo(2);
-        assertThat(survivor.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isEqualTo(0);
         assertThat(gqs.hasCantBeBlocked(gd, survivor)).isTrue();
     }
 
@@ -63,15 +64,15 @@ class CunningSurvivorTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        assertThat(survivor.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, survivor)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(survivor.getPowerModifier()).isEqualTo(0);
-        assertThat(survivor.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isEqualTo(0);
         assertThat(gqs.hasCantBeBlocked(gd, survivor)).isFalse();
     }
 
@@ -85,15 +86,15 @@ class CunningSurvivorTest extends BaseCardTest {
 
         harness.activateHandAbility(player1, 0, null);
 
-        assertThat(survivor.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, survivor)).isFalse();
         harness.passBothPriorities();
-        assertThat(survivor.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, survivor)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.passBothPriorities();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(survivor.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(1);
     }
 
     @Test
@@ -110,8 +111,8 @@ class CunningSurvivorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         for (Permanent survivor : List.of(first, second)) {
-            assertThat(survivor.getPowerModifier()).isEqualTo(1);
-            assertThat(survivor.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isZero();
             assertThat(gqs.hasCantBeBlocked(gd, survivor)).isTrue();
         }
     }
@@ -128,7 +129,7 @@ class CunningSurvivorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        assertThat(survivor.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, survivor)).isFalse();
     }
 
@@ -148,8 +149,8 @@ class CunningSurvivorTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Striped Riverwinder");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(survivor.getPowerModifier()).isEqualTo(1);
-        assertThat(survivor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, survivor)).isTrue();
     }
 

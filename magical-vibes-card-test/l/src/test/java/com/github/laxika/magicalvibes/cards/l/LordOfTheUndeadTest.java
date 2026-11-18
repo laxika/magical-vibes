@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.Gravedigger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
@@ -178,10 +181,10 @@ class LordOfTheUndeadTest extends BaseCardTest {
 
         Permanent gravedigger = findPermanent(player1, "Gravedigger");
 
-        gravedigger.setPowerModifier(gravedigger.getPowerModifier() + 5);
+        PermanentGrants.setPowerBoost(gd, gravedigger, PermanentGrants.powerBoostOf(gd, gravedigger) + 5);
         assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(8); // 2 base + 5 spell + 1 static
 
-        gravedigger.resetModifiers();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThat(gqs.getEffectivePower(gd, gravedigger)).isEqualTo(3); // 2 base + 1 static
         assertThat(gqs.getEffectiveToughness(gd, gravedigger)).isEqualTo(3);

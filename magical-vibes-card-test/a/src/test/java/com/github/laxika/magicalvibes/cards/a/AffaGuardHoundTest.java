@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -45,17 +46,17 @@ class AffaGuardHoundTest extends BaseCardTest {
         harness.castCreature(player1, 0, List.of(target.getId()));
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -92,8 +93,8 @@ class AffaGuardHoundTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, hound.getId());
         resolveAllTriggers();
 
-        assertThat(hound.getEffectivePower()).isEqualTo(2);
-        assertThat(hound.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, hound)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hound)).isEqualTo(5);
     }
 
     @Test
@@ -109,8 +110,8 @@ class AffaGuardHoundTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
         resolveAllTriggers();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         assertThat(gd.stack).isEmpty();
     }
 }

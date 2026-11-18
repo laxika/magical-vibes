@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.v.VenerableKnight;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -25,8 +26,8 @@ class BurningYardTrainerTest extends BaseCardTest {
         Permanent knight = harness.addToBattlefieldAndReturn(player1, new VenerableKnight());
         castTrainer(knight.getId());
 
-        assertThat(knight.getPowerModifier()).isEqualTo(2);
-        assertThat(knight.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, knight, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isTrue();
     }
@@ -64,8 +65,8 @@ class BurningYardTrainerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(knight.getPowerModifier()).isZero();
-        assertThat(knight.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isZero();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isFalse();
     }
@@ -81,8 +82,8 @@ class BurningYardTrainerTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(knight.getPowerModifier()).isEqualTo(2);
-        assertThat(knight.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, knight, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isTrue();
     }
@@ -97,8 +98,8 @@ class BurningYardTrainerTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(knight.getPowerModifier()).isZero();
-        assertThat(knight.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isZero();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isFalse();
     }

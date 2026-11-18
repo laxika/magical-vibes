@@ -28,8 +28,8 @@ class RecklessRansackingTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
 
@@ -47,8 +47,8 @@ class RecklessRansackingTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -100,8 +100,8 @@ class RecklessRansackingTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(8);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
 }

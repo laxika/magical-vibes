@@ -33,8 +33,8 @@ class SplicersSkillTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.PHYREXIAN, CardSubtype.GOLEM);
         assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();
     }
@@ -88,8 +88,8 @@ class SplicersSkillTest extends BaseCardTest {
             assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
             assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.PHYREXIAN, CardSubtype.GOLEM);
-            assertThat(token.getEffectivePower()).isEqualTo(3);
-            assertThat(token.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         });
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(revealed);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);

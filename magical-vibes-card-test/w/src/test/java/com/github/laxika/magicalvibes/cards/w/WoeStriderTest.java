@@ -40,8 +40,8 @@ class WoeStriderTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(goat.getCard().isToken()).isTrue();
         assertThat(goat.getCard().getSubtypes()).containsExactly(CardSubtype.GOAT);
-        assertThat(goat.getEffectivePower()).isZero();
-        assertThat(goat.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, goat)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, goat)).isEqualTo(1);
     }
 
     @Test
@@ -93,8 +93,8 @@ class WoeStriderTest extends BaseCardTest {
 
         Permanent escapedWoeStrider = findPermanent(player1, "Woe Strider");
         assertThat(escapedWoeStrider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(escapedWoeStrider.getEffectivePower()).isEqualTo(5);
-        assertThat(escapedWoeStrider.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, escapedWoeStrider)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, escapedWoeStrider)).isEqualTo(4);
     }
 
     @Test
@@ -136,8 +136,8 @@ class WoeStriderTest extends BaseCardTest {
         Permanent goat = findPermanent(player1, "Goat");
         assertThat(goat.getCard().isToken()).isTrue();
         assertThat(goat.getCard().getColor()).isEqualTo(CardColor.WHITE);
-        assertThat(goat.getEffectivePower()).isZero();
-        assertThat(goat.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, goat)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, goat)).isEqualTo(1);
     }
 
     @Test

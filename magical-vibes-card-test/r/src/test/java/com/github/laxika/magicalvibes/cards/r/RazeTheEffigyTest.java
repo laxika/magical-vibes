@@ -54,17 +54,17 @@ class RazeTheEffigyTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 1, List.of(attacker.getId()));
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(4);
-        assertThat(nonAttacker.getEffectivePower()).isEqualTo(2);
-        assertThat(nonAttacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, nonAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonAttacker)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -103,8 +103,8 @@ class RazeTheEffigyTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 1, List.of(attacker.getId()));
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
@@ -122,8 +122,8 @@ class RazeTheEffigyTest extends BaseCardTest {
         attacker.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Raze the Effigy");
         assertThat(gd.stack).isEmpty();
     }

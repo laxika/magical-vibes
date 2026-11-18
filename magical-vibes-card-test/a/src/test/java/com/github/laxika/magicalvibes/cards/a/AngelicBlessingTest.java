@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -25,8 +26,8 @@ class AngelicBlessingTest extends BaseCardTest {
         Permanent other = addCreatureReady(player1, new GrizzlyBears());
         Permanent target = castAngelicBlessing(addCreatureReady(player1, new GrizzlyBears()));
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
@@ -42,8 +43,8 @@ class AngelicBlessingTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
@@ -52,8 +53,8 @@ class AngelicBlessingTest extends BaseCardTest {
     void canTargetOpponentsCreature() {
         Permanent target = castAngelicBlessing(addCreatureReady(player2, new GrizzlyBears()));
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
@@ -125,7 +126,7 @@ class AngelicBlessingTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gameLogContains("fizzles")).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 }

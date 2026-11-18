@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -35,8 +36,8 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(moku.getPowerModifier()).isEqualTo(2);
-        assertThat(moku.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, moku)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moku)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, moku, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasKeyword(gd, opposingBear, Keyword.HASTE)).isFalse();
@@ -55,8 +56,8 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(moku.getPowerModifier()).isZero();
-        assertThat(moku.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, moku)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moku)).isZero();
         assertThat(gqs.hasKeyword(gd, moku, Keyword.HASTE)).isFalse();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -79,8 +80,8 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(moku.getPowerModifier()).isZero();
-        assertThat(moku.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, moku)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moku)).isZero();
         assertThat(gqs.hasKeyword(gd, moku, Keyword.HASTE)).isFalse();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isFalse();
     }
@@ -109,8 +110,8 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(moku.getPowerModifier()).isEqualTo(2);
-        assertThat(moku.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, moku)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moku)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, moku, Keyword.HASTE)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
@@ -131,8 +132,8 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(moku.getPowerModifier()).isEqualTo(4);
-        assertThat(moku.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, moku)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moku)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
@@ -164,7 +165,7 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
         harness.castArtifact(player2, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(moku.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, moku)).isZero();
         assertThat(gqs.hasKeyword(gd, moku, Keyword.HASTE)).isFalse();
     }
 
@@ -179,8 +180,8 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(moku.getPowerModifier()).isZero();
-        assertThat(moku.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, moku)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moku)).isZero();
         assertThat(gqs.hasKeyword(gd, moku, Keyword.HASTE)).isFalse();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isFalse();
     }

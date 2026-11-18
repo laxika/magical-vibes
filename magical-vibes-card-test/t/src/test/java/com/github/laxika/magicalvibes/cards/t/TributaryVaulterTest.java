@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -29,8 +30,8 @@ class TributaryVaulterTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetMerfolk.getId());
         harness.passBothPriorities();
 
-        assertThat(targetMerfolk.getPowerModifier()).isEqualTo(2);
-        assertThat(targetMerfolk.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, targetMerfolk)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, targetMerfolk)).isZero();
     }
 
     @Test
@@ -72,7 +73,7 @@ class TributaryVaulterTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(targetMerfolk.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, targetMerfolk)).isZero();
     }
 
     @Test
@@ -84,7 +85,7 @@ class TributaryVaulterTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(otherMerfolk.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherMerfolk)).isZero();
     }
 
     @Test
@@ -99,8 +100,8 @@ class TributaryVaulterTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, opponentMerfolk.getId());
         harness.passBothPriorities();
 
-        assertThat(ownMerfolk.getPowerModifier()).isZero();
-        assertThat(opponentMerfolk.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownMerfolk)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentMerfolk)).isEqualTo(2);
     }
 
     @Test
@@ -118,8 +119,8 @@ class TributaryVaulterTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetMerfolk.getId());
         harness.passBothPriorities();
 
-        assertThat(targetMerfolk.getPowerModifier()).isEqualTo(4);
-        assertThat(targetMerfolk.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, targetMerfolk)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, targetMerfolk)).isZero();
     }
 
     @Test
@@ -133,7 +134,7 @@ class TributaryVaulterTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(vaulter);
         harness.passBothPriorities();
 
-        assertThat(targetMerfolk.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, targetMerfolk)).isEqualTo(2);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -33,11 +34,11 @@ class ChargingBanditsTest extends BaseCardTest {
         Permanent bandits = addCreatureReady(player1, new ChargingBandits());
 
         declareAttackers(player1, List.of(0));
-        assertThat(bandits.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bandits)).isZero();
         resolveAllTriggers();
 
-        assertThat(bandits.getPowerModifier()).isEqualTo(2);
-        assertThat(bandits.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bandits)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bandits)).isEqualTo(0);
     }
 
     @Test
@@ -49,8 +50,8 @@ class ChargingBanditsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(attackingBandits.getPowerModifier()).isEqualTo(2);
-        assertThat(restingBandits.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attackingBandits)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, restingBandits)).isZero();
     }
 
     @Test
@@ -61,13 +62,13 @@ class ChargingBanditsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(bandits.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bandits)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(bandits.getPowerModifier()).isEqualTo(0);
-        assertThat(bandits.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bandits)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bandits)).isEqualTo(0);
     }
 
     @Test
@@ -79,10 +80,10 @@ class ChargingBanditsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -98,8 +99,8 @@ class ChargingBanditsTest extends BaseCardTest {
         Permanent returned = addCreatureReady(player1, card);
         resolveAllTriggers();
 
-        assertThat(returned.getPowerModifier()).isZero();
-        assertThat(returned.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, returned)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, returned)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

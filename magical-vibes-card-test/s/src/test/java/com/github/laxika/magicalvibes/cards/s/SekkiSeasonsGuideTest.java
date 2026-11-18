@@ -47,8 +47,8 @@ class SekkiSeasonsGuideTest extends BaseCardTest {
                     assertThat(token.getCard().isToken()).isTrue();
                     assertThat(token.getCard().getColors()).isEmpty();
                     assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SPIRIT);
-                    assertThat(token.getEffectivePower()).isEqualTo(1);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
                 });
         assertThat(survivingSekki.getMarkedDamage()).isZero();
     }

@@ -110,7 +110,7 @@ class SymmetrySageTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(sage.getEffectivePower()).isZero();
+        assertThat(gqs.getEffectivePower(gd, sage)).isZero();
     }
 
     @Test

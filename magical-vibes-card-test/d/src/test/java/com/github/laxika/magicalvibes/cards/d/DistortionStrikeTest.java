@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NestInvader;
@@ -30,8 +31,8 @@ class DistortionStrikeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, bear)).isTrue();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
@@ -47,7 +48,7 @@ class DistortionStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, bear)).isFalse();
     }
 
@@ -72,7 +73,7 @@ class DistortionStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, bear)).isTrue();
         harness.assertInGraveyard(player1, "Distortion Strike");
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
@@ -96,8 +97,8 @@ class DistortionStrikeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
     }
 
@@ -139,9 +140,9 @@ class DistortionStrikeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, second.getId());
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, first)).isFalse();
-        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
         harness.assertInGraveyard(player1, "Distortion Strike");
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
@@ -173,7 +174,7 @@ class DistortionStrikeTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, creature)).isFalse();
     }
 

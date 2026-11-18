@@ -5,10 +5,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -90,35 +88,12 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
 
     private void applyBoost(GameData gameData, StackEntry entry, Permanent target,
                             int powerBoost, int toughnessBoost, Duration duration) {
-        // The end-of-turn pump is the plain modifier, wiped by turn cleanup. An "until your next
-        // turn" pump must outlive that cleanup and end at the *ability controller's* next turn, so
-        // it is recorded as a floating continuous effect keyed to that controller instead — the
-        // layered pass reads the sublayer-7c addition off it (same read path as Riding the Dilu
-        // Horse's indefinite buff).
-        if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)
-                || Duration.UNTIL_END_OF_COMBAT.equals(duration)) {
-            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                    entry.getCard().getName(), null, entry.getControllerId(),
-                    new BuffTargetCreatureIndefinitelyEffect(powerBoost, toughnessBoost),
-                    target.getId(), null, null,
-                    Duration.UNTIL_END_OF_COMBAT.equals(duration)
-                            ? Duration.UNTIL_END_OF_COMBAT : Duration.UNTIL_YOUR_NEXT_TURN, 0));
-        } else {
-            target.setPowerModifier(target.getPowerModifier() + powerBoost);
-            target.setToughnessModifier(target.getToughnessModifier() + toughnessBoost);
-            gameData.stack.stream()
-                    .filter(stackEntry -> target.getId().equals(stackEntry.getSourcePermanentId()))
-                    .forEach(stackEntry -> {
-                        Permanent previous = stackEntry.getSourcePermanentSnapshot();
-                        Permanent refreshed = new Permanent(target);
-                        if (previous != null && previous.getId().equals(target.getId())) {
-                            // The refresh only updates last-known stats; the face the ability was put on
-                            // the stack with must stay recorded so a stale transform can be recognized.
-                            refreshed.setTransformationSequence(previous.getTransformationSequence());
-                        }
-                        stackEntry.setSourcePermanentSnapshot(refreshed);
-                    });
-        }
+        // A layer-7c floating effect on the target with the stated duration (CR 613.4c, 611.2a): until end of turn,
+        // until end of combat, or until the ability controller's next turn.
+        gameData.addPowerToughnessBoost(entry.getCard().getName(), entry.getSourcePermanentId(),
+                entry.getControllerId(), target.getId(), powerBoost, toughnessBoost,
+                Duration.UNTIL_YOUR_NEXT_TURN.equals(duration) || Duration.UNTIL_END_OF_COMBAT.equals(duration)
+                        ? duration : Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvenInitiate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,10 +28,10 @@ class MinotaurSureshotTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sureshot.getPowerModifier()).isEqualTo(1);
-        assertThat(sureshot.getToughnessModifier()).isEqualTo(0);
-        assertThat(sureshot.getEffectivePower()).isEqualTo(3);
-        assertThat(sureshot.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, sureshot)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sureshot)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, sureshot)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sureshot)).isEqualTo(3);
     }
 
     @Test
@@ -45,8 +46,8 @@ class MinotaurSureshotTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sureshot.getEffectivePower()).isEqualTo(4);
-        assertThat(sureshot.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sureshot)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, sureshot)).isEqualTo(3);
     }
 
     @Test
@@ -57,14 +58,14 @@ class MinotaurSureshotTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(sureshot.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sureshot)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(sureshot.getPowerModifier()).isEqualTo(0);
-        assertThat(sureshot.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sureshot)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, sureshot)).isEqualTo(2);
     }
 
     @Test
@@ -89,11 +90,11 @@ class MinotaurSureshotTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(sureshot.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, sureshot)).isEqualTo(2);
         harness.passBothPriorities();
 
-        assertThat(sureshot.getEffectivePower()).isEqualTo(3);
-        assertThat(sureshot.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sureshot)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sureshot)).isEqualTo(3);
         assertThat(sureshot.isTapped()).isTrue();
     }
 
@@ -108,6 +109,6 @@ class MinotaurSureshotTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(sureshot.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, sureshot)).isEqualTo(2);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,8 +24,8 @@ class BullAurochsTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(bullAurochs.getPowerModifier()).isEqualTo(1);
-        assertThat(bullAurochs.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bullAurochs)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bullAurochs)).isEqualTo(0);
     }
 
     @Test
@@ -37,8 +38,8 @@ class BullAurochsTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(bullAurochs.getPowerModifier()).isEqualTo(2);
-        assertThat(bullAurochs.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bullAurochs)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bullAurochs)).isZero();
     }
 
     @Test
@@ -50,8 +51,8 @@ class BullAurochsTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(bullAurochs.getPowerModifier()).isZero();
-        assertThat(bullAurochs.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bullAurochs)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bullAurochs)).isZero();
     }
 
     @Test
@@ -62,8 +63,8 @@ class BullAurochsTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(bullAurochs.getPowerModifier()).isZero();
-        assertThat(bullAurochs.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bullAurochs)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bullAurochs)).isZero();
     }
 
     @Test
@@ -76,9 +77,9 @@ class BullAurochsTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(ally.getPowerModifier()).isZero();
-        assertThat(defender.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, defender)).isZero();
     }
 
     @Test
@@ -92,8 +93,8 @@ class BullAurochsTest extends BaseCardTest {
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, other));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -105,17 +106,17 @@ class BullAurochsTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(other.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(1);
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, other));
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 }

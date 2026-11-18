@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Censor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TormentOfVenom;
@@ -55,10 +56,10 @@ class OminousSphinxTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities(); // resolve the -2/-0
 
-        assertThat(bears.getPowerModifier()).isEqualTo(-2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.getEffectivePower()).isEqualTo(0);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -75,13 +76,13 @@ class OminousSphinxTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -135,8 +136,8 @@ class OminousSphinxTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Censor");
-        assertThat(bears.getPowerModifier()).isEqualTo(-2);
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -156,7 +157,7 @@ class OminousSphinxTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(sphinx.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sphinx)).isZero();
     }
 
     @Test
@@ -176,9 +177,9 @@ class OminousSphinxTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(-4);
-        assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.getEffectivePower()).isEqualTo(-2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 }

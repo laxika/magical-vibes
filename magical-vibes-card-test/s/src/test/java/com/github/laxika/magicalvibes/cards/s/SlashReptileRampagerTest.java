@@ -59,8 +59,8 @@ class SlashReptileRampagerTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(1);
-        assertThat(tokens.getFirst().getEffectivePower()).isEqualTo(2);
-        assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, tokens.getFirst())).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, tokens.getFirst())).isEqualTo(2);
         assertThat(tokens.getFirst().getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(tokens.getFirst().getCard().getSubtypes()).containsExactly(CardSubtype.MUTANT);
         assertThat(tokens.getFirst().isTapped()).isFalse();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Fireball;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JacesIngenuity;
@@ -29,8 +30,8 @@ class KulrathMysticTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(mystic.getPowerModifier()).isEqualTo(2);
-        assertThat(mystic.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mystic)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isTrue();
     }
 
@@ -45,8 +46,8 @@ class KulrathMysticTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(mystic.getPowerModifier()).isEqualTo(0);
-        assertThat(mystic.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mystic)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -59,14 +60,14 @@ class KulrathMysticTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(mystic.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(mystic.getPowerModifier()).isEqualTo(0);
-        assertThat(mystic.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mystic)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -80,8 +81,8 @@ class KulrathMysticTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(mystic.getPowerModifier()).isEqualTo(2);
-        assertThat(mystic.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mystic)).isZero();
         assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isTrue();
         harness.assertNotOnBattlefield(player1, "Luminollusk");
     }
@@ -95,7 +96,7 @@ class KulrathMysticTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0);
 
-        assertThat(mystic.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isZero();
         assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -110,10 +111,10 @@ class KulrathMysticTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(mystic.getPowerModifier()).isEqualTo(4);
-        assertThat(mystic.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mystic)).isZero();
         assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isTrue();
-        assertThat(opponentMystic.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentMystic)).isZero();
         assertThat(gqs.hasKeyword(gd, opponentMystic, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -127,8 +128,8 @@ class KulrathMysticTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 3, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(mystic.getPowerModifier()).isEqualTo(2);
-        assertThat(mystic.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mystic)).isZero();
         assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isTrue();
     }
 
@@ -141,8 +142,8 @@ class KulrathMysticTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
 
-        assertThat(mystic.getPowerModifier()).isZero();
-        assertThat(mystic.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mystic)).isZero();
         assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isFalse();
     }
 }

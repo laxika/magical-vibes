@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -30,8 +31,8 @@ class PradeshGypsiesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getPowerModifier()).isEqualTo(-2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -54,8 +55,8 @@ class PradeshGypsiesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(-2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -67,8 +68,8 @@ class PradeshGypsiesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, gypsies.getId());
         harness.passBothPriorities();
 
-        assertThat(gypsies.getPowerModifier()).isEqualTo(-2);
-        assertThat(gypsies.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, gypsies)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gypsies)).isEqualTo(0);
     }
 
     @Test
@@ -147,8 +148,8 @@ class PradeshGypsiesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -164,8 +165,8 @@ class PradeshGypsiesTest extends BaseCardTest {
         harness.activateAbility(player1, 2, null, bear.getId());
         resolveAllTriggers();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(-4);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
@@ -184,12 +185,12 @@ class PradeshGypsiesTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Pradesh Gypsies");
         harness.assertNotOnBattlefield(player1, "Pradesh Gypsies");
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(-2);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -209,7 +210,7 @@ class PradeshGypsiesTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Grizzly Bears");
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

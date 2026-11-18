@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.v.VernadiShieldmate;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -168,13 +169,13 @@ class PeltCollectorTest extends BaseCardTest {
     void negativeDyingPowerIsNotRoundedToZeroForResolutionComparison() {
         Permanent pelt = harness.addToBattlefieldAndReturn(player1, new PeltCollector());
         Permanent shieldmate = harness.addToBattlefieldAndReturn(player1, new VernadiShieldmate());
-        pelt.setPowerModifier(-3);
-        shieldmate.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, pelt, -3);
+        PermanentGrants.setPowerBoost(gd, shieldmate, -3);
         shieldmate.setMarkedDamage(gqs.getEffectiveToughness(gd, shieldmate));
         harness.runStateBasedActions();
         assertThat(gd.stack).hasSize(1);
 
-        pelt.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, pelt, -2);
         resolveAllTriggers();
 
         assertThat(pelt.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

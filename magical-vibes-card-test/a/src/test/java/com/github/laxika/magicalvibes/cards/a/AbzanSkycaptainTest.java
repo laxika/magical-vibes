@@ -33,8 +33,8 @@ class AbzanSkycaptainTest extends BaseCardTest {
 
         assertThat(leastToughCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(largerCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(leastToughCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(leastToughCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, leastToughCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, leastToughCreature)).isEqualTo(4);
     }
 
     @Test

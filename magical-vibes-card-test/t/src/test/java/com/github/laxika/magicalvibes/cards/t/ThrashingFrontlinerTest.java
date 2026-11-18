@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfErgamon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -26,8 +27,8 @@ class ThrashingFrontlinerTest extends BaseCardTest {
         declareAttackersAt(battle);
         resolveAllTriggers();
 
-        assertThat(frontliner.getPowerModifier()).isEqualTo(1);
-        assertThat(frontliner.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, frontliner)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, frontliner)).isEqualTo(1);
     }
 
     @Test
@@ -37,8 +38,8 @@ class ThrashingFrontlinerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(frontliner.getPowerModifier()).isZero();
-        assertThat(frontliner.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, frontliner)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, frontliner)).isZero();
     }
 
     @Test
@@ -48,14 +49,14 @@ class ThrashingFrontlinerTest extends BaseCardTest {
 
         declareAttackersAt(battle);
         resolveAllTriggers();
-        assertThat(frontliner.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, frontliner)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(frontliner.getPowerModifier()).isZero();
-        assertThat(frontliner.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, frontliner)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, frontliner)).isZero();
     }
 
     @Test
@@ -66,15 +67,15 @@ class ThrashingFrontlinerTest extends BaseCardTest {
 
         declareAttackersAt(battle);
         assertThat(gd.stack).hasSize(1);
-        assertThat(frontliner.getPowerModifier()).isZero();
-        assertThat(frontliner.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, frontliner)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, frontliner)).isZero();
 
         gd.playerBattlefields.get(player1.getId()).remove(battle);
         gd.playerGraveyards.get(player1.getId()).add(battle.getCard());
         resolveAllTriggers();
 
-        assertThat(frontliner.getPowerModifier()).isEqualTo(1);
-        assertThat(frontliner.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, frontliner)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, frontliner)).isEqualTo(1);
     }
 
     @Test
@@ -86,8 +87,8 @@ class ThrashingFrontlinerTest extends BaseCardTest {
         declareAttackersAt(battle);
         resolveAllTriggers();
 
-        assertThat(frontliner.getPowerModifier()).isEqualTo(1);
-        assertThat(frontliner.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, frontliner)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, frontliner)).isEqualTo(1);
     }
 
     private Permanent addBattle(Player controller) {

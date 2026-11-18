@@ -72,8 +72,7 @@ public class RevealRandomCardFromTargetPlayerHandBoostTargetCreatureByManaValueE
         }
 
         int modifier = e.positive() ? manaValue : -manaValue;
-        target.setPowerModifier(target.getPowerModifier() + modifier);
-        target.setToughnessModifier(target.getToughnessModifier() + modifier);
+        gameData.addPowerToughnessBoost(entry, target.getId(), modifier, modifier);
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())
                 .text(String.format(" gets %+d/%+d until end of turn.", modifier, modifier))

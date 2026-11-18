@@ -28,8 +28,8 @@ class ChupacabraEchoTest extends BaseCardTest {
 
         castChupacabra(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -40,8 +40,8 @@ class ChupacabraEchoTest extends BaseCardTest {
 
         castChupacabra(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -51,13 +51,13 @@ class ChupacabraEchoTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castChupacabra(target);
-        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -93,8 +93,8 @@ class ChupacabraEchoTest extends BaseCardTest {
 
         castChupacabra(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -110,11 +110,11 @@ class ChupacabraEchoTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new Swamp()));
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         harness.setGraveyard(player1, List.of(new Swamp(), new Swamp()));
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Chupacabra Echo");
     }
 
@@ -149,8 +149,8 @@ class ChupacabraEchoTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Chupacabra Echo");
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Chupacabra Echo");
     }
 

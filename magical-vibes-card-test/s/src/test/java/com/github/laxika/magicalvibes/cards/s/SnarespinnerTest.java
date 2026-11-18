@@ -31,8 +31,8 @@ class SnarespinnerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(snarespinner.getPowerModifier()).isEqualTo(2);
-        assertThat(snarespinner.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, snarespinner)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, snarespinner)).isZero();
     }
 
     @Test
@@ -46,8 +46,8 @@ class SnarespinnerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(snarespinner.getPowerModifier()).isZero();
-        assertThat(snarespinner.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, snarespinner)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, snarespinner)).isZero();
     }
 
     @Test
@@ -61,8 +61,8 @@ class SnarespinnerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(snarespinner.getPowerModifier()).isZero();
-        assertThat(snarespinner.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, snarespinner)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, snarespinner)).isZero();
     }
 
     @Test
@@ -75,12 +75,12 @@ class SnarespinnerTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         assertThat(gd.stack).hasSize(1);
-        assertThat(snarespinner.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, snarespinner)).isZero();
         PermanentGrants.removeKeywordUntilEndOfTurn(gd, attacker, Keyword.FLYING);
         harness.passBothPriorities();
 
-        assertThat(snarespinner.getPowerModifier()).isEqualTo(2);
-        assertThat(snarespinner.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, snarespinner)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, snarespinner)).isZero();
     }
 
     @Test
@@ -97,8 +97,8 @@ class SnarespinnerTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(attacker.getCard());
         harness.passBothPriorities();
 
-        assertThat(snarespinner.getPowerModifier()).isEqualTo(2);
-        assertThat(snarespinner.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, snarespinner)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, snarespinner)).isZero();
     }
 
     @Test
@@ -112,12 +112,12 @@ class SnarespinnerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(snarespinner.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, snarespinner)).isEqualTo(2);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(snarespinner.getPowerModifier()).isZero();
-        assertThat(snarespinner.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, snarespinner)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, snarespinner)).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(snarespinner);
     }
 

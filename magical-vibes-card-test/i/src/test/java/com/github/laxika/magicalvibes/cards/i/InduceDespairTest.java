@@ -31,8 +31,8 @@ class InduceDespairTest extends BaseCardTest {
         harness.castInstantWithDiscard(player1, 0, target.getId(), 1);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(revealed);
     }
 
@@ -48,8 +48,8 @@ class InduceDespairTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -115,11 +115,11 @@ class InduceDespairTest extends BaseCardTest {
 
         harness.castInstantWithDiscard(player1, 1, target.getId(), 0);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(revealed);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -133,8 +133,8 @@ class InduceDespairTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LagacLizard()));
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test

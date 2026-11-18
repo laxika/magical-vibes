@@ -36,8 +36,8 @@ class StingmoggieTest extends BaseCardTest {
         Permanent moggie = findMoggie(player1);
 
         assertThat(moggie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(moggie.getEffectivePower()).isEqualTo(2);
-        assertThat(moggie.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, moggie)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, moggie)).isEqualTo(2);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.ChandraHeartOfFire;
@@ -64,7 +65,7 @@ class LeafkinAvengerTest extends BaseCardTest {
         Permanent other = harness.addToBattlefieldAndReturn(player1, new LeafkinAvenger());
         harness.addToBattlefield(player2, new LeafkinAvenger());
         avenger.setSummoningSick(false);
-        other.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, other, -1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -77,7 +78,7 @@ class LeafkinAvengerTest extends BaseCardTest {
     void manaAbilityCanProduceZeroMana() {
         Permanent avenger = harness.addToBattlefieldAndReturn(player1, new LeafkinAvenger());
         avenger.setSummoningSick(false);
-        avenger.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, avenger, -1);
 
         harness.activateAbility(player1, 0, null, null);
 

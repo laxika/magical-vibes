@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -49,11 +50,11 @@ class PummelerForHireTest extends BaseCardTest {
         harness.setLife(player1, 10);
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new PummelerForHire());
         Permanent opposingGiant = harness.addToBattlefieldAndReturn(player2, new PummelerForHire());
-        opposingGiant.setPowerModifier(10);
+        PermanentGrants.setPowerBoost(gd, opposingGiant, 10);
         harness.castFromHand(player1, new PummelerForHire(), "{4}{G}");
         harness.passBothPriorities();
 
-        giant.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, giant, 3);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 17);

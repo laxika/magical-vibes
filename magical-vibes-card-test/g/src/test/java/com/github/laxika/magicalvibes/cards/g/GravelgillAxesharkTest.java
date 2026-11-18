@@ -29,8 +29,8 @@ class GravelgillAxesharkTest extends BaseCardTest {
         Permanent axeshark = findPermanent(player1, "Gravelgill Axeshark");
         assertThat(axeshark).isNotNull();
         assertThat(axeshark.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(axeshark.getEffectivePower()).isEqualTo(2);
-        assertThat(axeshark.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, axeshark)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, axeshark)).isEqualTo(2);
     }
 
     @Test

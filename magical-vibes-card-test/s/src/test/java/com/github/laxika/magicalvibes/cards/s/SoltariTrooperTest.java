@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.k.KnightOfDawn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -38,8 +39,8 @@ class SoltariTrooperTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(trooper.getPowerModifier()).isEqualTo(1);
-        assertThat(trooper.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, trooper)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, trooper)).isEqualTo(1);
     }
 
     @Test
@@ -50,14 +51,14 @@ class SoltariTrooperTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(trooper.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, trooper)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(trooper.getPowerModifier()).isEqualTo(0);
-        assertThat(trooper.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, trooper)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, trooper)).isEqualTo(0);
     }
 
     @Test
@@ -68,15 +69,15 @@ class SoltariTrooperTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
-        assertThat(nonAttacker.getPowerModifier()).isZero();
-        assertThat(nonAttacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonAttacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonAttacker)).isZero();
     }
 
     @Test
@@ -88,10 +89,10 @@ class SoltariTrooperTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(1);
     }
 
     @Test

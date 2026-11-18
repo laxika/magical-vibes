@@ -25,10 +25,10 @@ class SurgeOfThoughtweftTest extends BaseCardTest {
 
         cast();
 
-        assertThat(firstGiant.getEffectivePower()).isEqualTo(4);
-        assertThat(firstGiant.getEffectiveToughness()).isEqualTo(4);
-        assertThat(secondGiant.getEffectivePower()).isEqualTo(4);
-        assertThat(secondGiant.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, firstGiant)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, firstGiant)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, secondGiant)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondGiant)).isEqualTo(4);
     }
 
     @Test
@@ -38,8 +38,8 @@ class SurgeOfThoughtweftTest extends BaseCardTest {
 
         cast();
 
-        assertThat(enemy.getEffectivePower()).isEqualTo(3);
-        assertThat(enemy.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, enemy)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, enemy)).isEqualTo(3);
     }
 
     @Test
@@ -49,8 +49,8 @@ class SurgeOfThoughtweftTest extends BaseCardTest {
 
         cast();
 
-        assertThat(twig.getEffectivePower()).isEqualTo(0);
-        assertThat(twig.getEffectiveToughness()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, twig)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, twig)).isEqualTo(0);
     }
 
     @Test
@@ -94,14 +94,14 @@ class SurgeOfThoughtweftTest extends BaseCardTest {
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillcomberGiant());
 
         cast();
-        assertThat(giant.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(giant.getEffectivePower()).isEqualTo(3);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     @Test
@@ -125,8 +125,8 @@ class SurgeOfThoughtweftTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(kithkin.getEffectivePower()).isEqualTo(3);
-        assertThat(kithkin.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, kithkin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, kithkin)).isEqualTo(3);
     }
 
     @Test
@@ -137,10 +137,10 @@ class SurgeOfThoughtweftTest extends BaseCardTest {
         cast();
         Permanent later = harness.addToBattlefieldAndReturn(player1, new HillcomberGiant());
 
-        assertThat(original.getEffectivePower()).isEqualTo(4);
-        assertThat(original.getEffectiveToughness()).isEqualTo(4);
-        assertThat(later.getEffectivePower()).isEqualTo(3);
-        assertThat(later.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(3);
     }
 
     private void cast() {

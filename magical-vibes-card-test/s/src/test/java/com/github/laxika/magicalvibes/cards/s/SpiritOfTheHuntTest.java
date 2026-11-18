@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GreaterWerewolf;
 import com.github.laxika.magicalvibes.cards.y.YoungWolf;
@@ -25,10 +26,10 @@ class SpiritOfTheHuntTest extends BaseCardTest {
 
         castSpiritOfTheHunt();
 
-        assertThat(wolf.getToughnessModifier()).isEqualTo(3);
-        assertThat(werewolf.getToughnessModifier()).isEqualTo(3);
-        assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(opposingWolf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, werewolf)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingWolf)).isZero();
     }
 
     @Test
@@ -38,7 +39,7 @@ class SpiritOfTheHuntTest extends BaseCardTest {
 
         Permanent spirit = findPermanent(player1, "Spirit of the Hunt");
 
-        assertThat(spirit.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spirit)).isZero();
     }
 
     @Test
@@ -47,13 +48,13 @@ class SpiritOfTheHuntTest extends BaseCardTest {
         Permanent wolf = addCreatureReady(player1, new YoungWolf());
 
         castSpiritOfTheHunt();
-        assertThat(wolf.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wolf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isZero();
     }
 
     @Test
@@ -69,8 +70,8 @@ class SpiritOfTheHuntTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Spirit of the Hunt")).hasSize(2);
-        assertThat(otherSpirit.getPowerModifier()).isZero();
-        assertThat(otherSpirit.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherSpirit)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherSpirit)).isEqualTo(3);
     }
 
     @Test
@@ -83,7 +84,7 @@ class SpiritOfTheHuntTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent firstSpirit = findPermanent(player1, "Spirit of the Hunt");
         assertThat(gd.stack).hasSize(1);
-        assertThat(firstSpirit.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstSpirit)).isZero();
 
         harness.castFromHand(player1, new SpiritOfTheHunt(), "{1}{G}{G}");
         harness.passBothPriorities();
@@ -91,8 +92,8 @@ class SpiritOfTheHuntTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Spirit of the Hunt")).hasSize(2)
                 .allSatisfy(spirit -> {
-                    assertThat(spirit.getPowerModifier()).isZero();
-                    assertThat(spirit.getToughnessModifier()).isEqualTo(3);
+                    assertThat(PermanentGrants.powerBoostOf(gd, spirit)).isZero();
+                    assertThat(PermanentGrants.toughnessBoostOf(gd, spirit)).isEqualTo(3);
                 });
     }
 
@@ -107,8 +108,8 @@ class SpiritOfTheHuntTest extends BaseCardTest {
         Permanent secondSpirit = findPermanents(player1, "Spirit of the Hunt").get(1);
         resolveAllTriggers();
 
-        assertThat(firstSpirit.getToughnessModifier()).isEqualTo(3);
-        assertThat(secondSpirit.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstSpirit)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondSpirit)).isZero();
     }
 
     private void castSpiritOfTheHunt() {

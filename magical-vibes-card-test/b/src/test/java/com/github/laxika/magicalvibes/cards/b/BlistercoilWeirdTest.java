@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AnnihilatingFire;
 import com.github.laxika.magicalvibes.cards.d.Dispel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -39,8 +40,8 @@ class BlistercoilWeirdTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(weird.getPowerModifier()).isEqualTo(1);
-        assertThat(weird.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isEqualTo(1);
         assertThat(weird.isTapped()).isFalse();
     }
 
@@ -53,8 +54,8 @@ class BlistercoilWeirdTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(weird.getPowerModifier()).isEqualTo(1);
-        assertThat(weird.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isEqualTo(1);
     }
 
     @Test
@@ -68,8 +69,8 @@ class BlistercoilWeirdTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(weird.getPowerModifier()).isEqualTo(0);
-        assertThat(weird.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isEqualTo(0);
         assertThat(weird.isTapped()).isTrue();
     }
 
@@ -83,15 +84,15 @@ class BlistercoilWeirdTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
 
-        assertThat(weird.getPowerModifier()).isZero();
-        assertThat(weird.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isZero();
         assertThat(weird.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(2);
 
         harness.passBothPriorities();
 
-        assertThat(weird.getPowerModifier()).isEqualTo(1);
-        assertThat(weird.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isEqualTo(1);
         assertThat(weird.isTapped()).isFalse();
     }
 
@@ -105,8 +106,8 @@ class BlistercoilWeirdTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(weird.getPowerModifier()).isEqualTo(1);
-        assertThat(weird.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isEqualTo(1);
         assertThat(weird.isTapped()).isFalse();
     }
 
@@ -119,21 +120,21 @@ class BlistercoilWeirdTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(weird.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(1);
         assertThat(weird.isTapped()).isFalse();
         weird.tap();
         harness.ensurePriority(player1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passUntil(TurnStep.END_STEP);
 
-        assertThat(weird.getPowerModifier()).isEqualTo(2);
-        assertThat(weird.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isEqualTo(2);
         assertThat(weird.isTapped()).isFalse();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(weird.getPowerModifier()).isZero();
-        assertThat(weird.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isZero();
     }
 
     @Test
@@ -148,8 +149,8 @@ class BlistercoilWeirdTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(weird.getPowerModifier()).isZero();
-        assertThat(weird.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isZero();
         assertThat(weird.isTapped()).isTrue();
     }
 
@@ -166,8 +167,8 @@ class BlistercoilWeirdTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(weird.getPowerModifier()).isEqualTo(1);
-        assertThat(weird.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isEqualTo(1);
         assertThat(weird.isTapped()).isFalse();
     }
 
@@ -186,14 +187,14 @@ class BlistercoilWeirdTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passUntil(TurnStep.END_STEP);
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
         assertThat(first.isTapped()).isFalse();
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(1);
         assertThat(second.isTapped()).isFalse();
-        assertThat(opposing.getPowerModifier()).isZero();
-        assertThat(opposing.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposing)).isZero();
         assertThat(opposing.isTapped()).isTrue();
     }
 
@@ -215,8 +216,8 @@ class BlistercoilWeirdTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Annihilating Fire");
         harness.assertLife(player2, 20);
-        assertThat(weird.getPowerModifier()).isEqualTo(1);
-        assertThat(weird.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isEqualTo(1);
         assertThat(weird.isTapped()).isFalse();
     }
 }

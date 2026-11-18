@@ -24,8 +24,8 @@ class HedronScrabblerTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(scrabbler.getEffectivePower()).isEqualTo(2);
-        assertThat(scrabbler.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, scrabbler)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, scrabbler)).isEqualTo(2);
     }
 
     @Test
@@ -38,8 +38,8 @@ class HedronScrabblerTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(scrabbler.getEffectivePower()).isEqualTo(1);
-        assertThat(scrabbler.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, scrabbler)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, scrabbler)).isEqualTo(1);
     }
 
     @Test
@@ -54,8 +54,8 @@ class HedronScrabblerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(scrabbler.getEffectivePower()).isEqualTo(1);
-        assertThat(scrabbler.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, scrabbler)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, scrabbler)).isEqualTo(1);
     }
 
     @Test
@@ -66,12 +66,12 @@ class HedronScrabblerTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
-        assertThat(scrabbler.getEffectivePower()).isEqualTo(1);
-        assertThat(scrabbler.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, scrabbler)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, scrabbler)).isEqualTo(1);
         resolveAllTriggers();
 
-        assertThat(scrabbler.getEffectivePower()).isEqualTo(3);
-        assertThat(scrabbler.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, scrabbler)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, scrabbler)).isEqualTo(3);
     }
 
     @Test
@@ -85,11 +85,11 @@ class HedronScrabblerTest extends BaseCardTest {
         harness.playLand(player1, 0);
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(2);
-        assertThat(first.getEffectiveToughness()).isEqualTo(2);
-        assertThat(second.getEffectivePower()).isEqualTo(2);
-        assertThat(second.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opposing.getEffectivePower()).isEqualTo(1);
-        assertThat(opposing.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(1);
     }
 }

@@ -47,9 +47,9 @@ class FeatherRadiantArbiterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(feather.getEffectivePower()).isEqualTo(7);
-        assertThat(firstBear.getEffectivePower()).isEqualTo(5);
-        assertThat(secondBear.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, firstBear)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, secondBear)).isEqualTo(5);
     }
 
     @Test
@@ -104,8 +104,8 @@ class FeatherRadiantArbiterTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(StackEntry::isCopy);
         harness.passBothPriorities();
 
-        assertThat(feather.getEffectivePower()).isEqualTo(7);
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -120,8 +120,8 @@ class FeatherRadiantArbiterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(feather.getEffectivePower()).isEqualTo(7);
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
     }
 
     @Test

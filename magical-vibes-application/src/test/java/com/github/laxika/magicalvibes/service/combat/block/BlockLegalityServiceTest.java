@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -218,7 +219,7 @@ class BlockLegalityServiceTest extends BaseCardTest {
         gd.planechase.faceUp.add(new PlanarObject(new HedronFieldsOfAgadeem(), gd.nextTimestamp()));
 
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setPowerModifier(5);
+        PermanentGrants.setPowerBoost(gd, blocker, 5);
 
         assertThat(bls.canBlock(gd, blocker)).isFalse();
     }

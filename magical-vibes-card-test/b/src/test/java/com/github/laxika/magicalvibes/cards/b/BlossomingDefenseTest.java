@@ -29,10 +29,10 @@ class BlossomingDefenseTest extends BaseCardTest {
 
         castResolve(bears);
 
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(2);
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.HEXPROOF);
     }
 
@@ -46,8 +46,8 @@ class BlossomingDefenseTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.HEXPROOF);
     }
 
@@ -78,7 +78,7 @@ class BlossomingDefenseTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Terror");
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.HEXPROOF);
         assertThat(gd.stack).isEmpty();
     }
@@ -103,8 +103,8 @@ class BlossomingDefenseTest extends BaseCardTest {
         castResolve(bears);
         castResolve(bears);
 
-        assertThat(bears.getPowerModifier()).isEqualTo(4);
-        assertThat(bears.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.HEXPROOF);
     }
 
@@ -135,8 +135,8 @@ class BlossomingDefenseTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(other).doesNotContain(bears);
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Blossoming Defense");
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.HEXPROOF);
         assertThat(gd.stack).isEmpty();
     }

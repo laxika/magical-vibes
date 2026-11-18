@@ -37,8 +37,8 @@ class ChannelerInitiateTest extends BaseCardTest {
 
         // Hyena Pack (3/4) with three -1/-1 counters → 0/1.
         assertThat(elemental.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
-        assertThat(elemental.getEffectivePower()).isZero();
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
     }
 
     @Test
@@ -101,8 +101,8 @@ class ChannelerInitiateTest extends BaseCardTest {
 
         Permanent initiate = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(initiate.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
-        assertThat(initiate.getEffectivePower()).isZero();
-        assertThat(initiate.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, initiate)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, initiate)).isEqualTo(1);
     }
 
     @Test

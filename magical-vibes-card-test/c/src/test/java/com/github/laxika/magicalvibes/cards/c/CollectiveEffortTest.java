@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -188,7 +189,7 @@ class CollectiveEffortTest extends BaseCardTest {
 
         harness.castModalSorceryWithModesAndTaps(player1, 0, 1, 3,
                 new int[]{0, 2}, List.of(target.getId(), player1.getId()), List.of(tapper.getId()));
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -209,7 +210,7 @@ class CollectiveEffortTest extends BaseCardTest {
 
         harness.castModalSorceryWithModes(player1, 0, 1, 3,
                 new int[]{0}, List.of(target.getId()), null);
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");

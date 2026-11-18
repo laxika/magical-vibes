@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.n.NamelessInversion;
 import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -28,8 +29,8 @@ class InnerFlameIgniterTest extends BaseCardTest {
         activateAndResolve();
         activateAndResolve();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -44,7 +45,7 @@ class InnerFlameIgniterTest extends BaseCardTest {
         activateAndResolve();
         activateAndResolve();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -59,7 +60,7 @@ class InnerFlameIgniterTest extends BaseCardTest {
         activateAndResolve();
         activateAndResolve();
 
-        assertThat(enemyBears.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, enemyBears)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, enemyBears, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -75,9 +76,9 @@ class InnerFlameIgniterTest extends BaseCardTest {
         Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new WoodlandChangeling());
         activateAndResolve();
 
-        assertThat(igniter.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, igniter)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, igniter, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(lateCreature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, lateCreature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -98,8 +99,8 @@ class InnerFlameIgniterTest extends BaseCardTest {
 
         activateAndResolve();
 
-        assertThat(first.getPowerModifier()).isEqualTo(4);
-        assertThat(second.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, first, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, second, Keyword.FIRST_STRIKE)).isTrue();
     }
@@ -113,17 +114,17 @@ class InnerFlameIgniterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
-        assertThat(igniter.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, igniter)).isZero();
         assertThat(gqs.hasKeyword(gd, igniter, Keyword.FIRST_STRIKE)).isFalse();
         Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new WoodlandChangeling());
 
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(lateCreature.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, lateCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.FIRST_STRIKE)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(lateCreature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, lateCreature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -138,14 +139,14 @@ class InnerFlameIgniterTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(igniter.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, igniter)).isZero();
         assertThat(gqs.hasKeyword(gd, igniter, Keyword.FIRST_STRIKE)).isFalse();
         harness.addMana(player1, ManaColor.RED, 9);
         activateAndResolve();
         activateAndResolve();
         assertThat(gqs.hasKeyword(gd, igniter, Keyword.FIRST_STRIKE)).isFalse();
         activateAndResolve();
-        assertThat(igniter.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, igniter)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, igniter, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -169,7 +170,7 @@ class InnerFlameIgniterTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
     }
 

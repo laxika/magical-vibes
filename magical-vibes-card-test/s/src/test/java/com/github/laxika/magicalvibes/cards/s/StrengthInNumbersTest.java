@@ -33,8 +33,8 @@ class StrengthInNumbersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -56,8 +56,8 @@ class StrengthInNumbersTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -81,8 +81,8 @@ class StrengthInNumbersTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -101,8 +101,8 @@ class StrengthInNumbersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -127,15 +127,15 @@ class StrengthInNumbersTest extends BaseCardTest {
         harness.assertInHand(player1, "Ashcoat Bear");
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.castAndResolveInstant(player2, 0, remainingAttacker.getId());
 
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -155,8 +155,8 @@ class StrengthInNumbersTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Strength in Numbers");
         harness.assertNotOnBattlefield(player1, "Ashcoat Bear");
         harness.assertInHand(player1, "Ashcoat Bear");
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 }

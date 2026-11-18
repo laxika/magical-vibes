@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OnAlert;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,8 +29,8 @@ class SilverflameSquireTest extends BaseCardTest {
         harness.castAdventure(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
         assertThat(bear.isTapped()).isFalse();
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
         assertThat(harness.getGameData().exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
@@ -45,15 +46,15 @@ class SilverflameSquireTest extends BaseCardTest {
         harness.castAdventure(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(target.isTapped()).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test

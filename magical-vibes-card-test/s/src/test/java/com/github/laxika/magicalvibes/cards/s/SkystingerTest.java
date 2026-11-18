@@ -57,7 +57,7 @@ class SkystingerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(skystinger.getPowerModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, skystinger)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);

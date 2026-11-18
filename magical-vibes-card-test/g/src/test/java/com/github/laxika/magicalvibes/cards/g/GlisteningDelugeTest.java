@@ -32,10 +32,10 @@ class GlisteningDelugeTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(green);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(white);
-        assertThat(red.getEffectivePower()).isEqualTo(2);
-        assertThat(red.getEffectiveToughness()).isEqualTo(2);
-        assertThat(land.getEffectivePower()).isEqualTo(0);
-        assertThat(land.getEffectiveToughness()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, red)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, red)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(0);
     }
 
     @Test
@@ -44,13 +44,13 @@ class GlisteningDelugeTest extends BaseCardTest {
         Permanent red = harness.addToBattlefieldAndReturn(player1, new HillGiant());
 
         castDeluge();
-        assertThat(red.getEffectivePower()).isEqualTo(2);
-        assertThat(red.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, red)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, red)).isEqualTo(2);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(red.getEffectivePower()).isEqualTo(3);
-        assertThat(red.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, red)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, red)).isEqualTo(3);
     }
 
     @Test
@@ -61,13 +61,13 @@ class GlisteningDelugeTest extends BaseCardTest {
         castDeluge();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
-        assertThat(creature.getEffectivePower()).isEqualTo(9);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(9);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(12);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(12);
     }
 
     @Test
@@ -78,8 +78,8 @@ class GlisteningDelugeTest extends BaseCardTest {
         castDeluge();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -90,10 +90,10 @@ class GlisteningDelugeTest extends BaseCardTest {
         Permanent multicolor = harness.addToBattlefieldAndReturn(player2, new GhaltaAndMavren());
         Permanent colorless = harness.addToBattlefieldAndReturn(player1, new PhyrexianArchivist());
 
-        assertThat(multicolor.getEffectivePower()).isEqualTo(12);
-        assertThat(multicolor.getEffectiveToughness()).isEqualTo(12);
-        assertThat(colorless.getEffectivePower()).isEqualTo(4);
-        assertThat(colorless.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, multicolor)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, multicolor)).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, colorless)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, colorless)).isEqualTo(5);
     }
 
     private void castDeluge() {

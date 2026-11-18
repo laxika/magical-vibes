@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class KjeldoranOutriderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(outrider.getPowerModifier()).isEqualTo(0);
-        assertThat(outrider.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, outrider)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, outrider)).isEqualTo(1);
     }
 
     @Test
@@ -39,7 +40,7 @@ class KjeldoranOutriderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(outrider.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, outrider)).isEqualTo(2);
     }
 
     @Test
@@ -51,7 +52,7 @@ class KjeldoranOutriderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(outrider.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, outrider)).isEqualTo(1);
     }
 
     @Test
@@ -77,7 +78,7 @@ class KjeldoranOutriderTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(outrider.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, outrider)).isEqualTo(0);
     }
 
     @Test
@@ -90,7 +91,7 @@ class KjeldoranOutriderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(outrider.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, outrider)).isEqualTo(1);
         assertThat(outrider.isTapped()).isTrue();
     }
 
@@ -104,15 +105,15 @@ class KjeldoranOutriderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
 
-        assertThat(source.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(0);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(0);
-        assertThat(source.getToughnessModifier()).isEqualTo(1);
-        assertThat(otherOutrider.getToughnessModifier()).isEqualTo(0);
-        assertThat(opposingOutrider.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherOutrider)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingOutrider)).isEqualTo(0);
         assertThat(source.isTapped()).isFalse();
     }
 
@@ -127,7 +128,7 @@ class KjeldoranOutriderTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(outrider.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, outrider)).isEqualTo(0);
     }
     private Permanent addReadyOutrider() {
         return addCreatureReady(player1, new KjeldoranOutrider());

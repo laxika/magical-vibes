@@ -79,8 +79,8 @@ class CanonizedInBloodTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(canonized);
         Permanent token = findPermanent(player1, "Vampire Demon");
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(token.getCard().getColors()).containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
         assertThat(token.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.VAMPIRE, CardSubtype.DEMON);

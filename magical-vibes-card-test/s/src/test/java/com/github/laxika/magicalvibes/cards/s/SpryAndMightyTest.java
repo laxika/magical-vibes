@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.t.ThoughtweftImbuer;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -82,7 +83,7 @@ class SpryAndMightyTest extends BaseCardTest {
     void usesEffectiveNegativePowerAndExpiresAtEndOfTurn() {
         Permanent smaller = harness.addToBattlefieldAndReturn(player1, new ThoughtweftImbuer());
         Permanent larger = harness.addToBattlefieldAndReturn(player1, new SizzlingChangeling());
-        smaller.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, smaller, -2);
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
         castSpryAndMighty();
 

@@ -31,8 +31,8 @@ class DanceOfTheSkywiseTest extends BaseCardTest {
 
         castDanceOfTheSkywise(bear);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
         assertThat(gqs.hasColor(gd, bear, CardColor.BLUE)).isTrue();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, bear, CardSubtype.DRAGON)).isTrue();
@@ -59,8 +59,8 @@ class DanceOfTheSkywiseTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasColor(gd, bear, CardColor.BLUE)).isFalse();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasEffectiveSubtype(gd, bear, CardSubtype.BEAR)).isTrue();

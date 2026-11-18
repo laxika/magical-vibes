@@ -35,8 +35,8 @@ class AccidentProneApprenticeTest extends BaseCardTest {
         harness.castAdventure(player1, 0, angel.getId());
         harness.passBothPriorities();
 
-        assertThat(angel.getEffectivePower()).isEqualTo(1);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isFalse();
         assertThat(gqs.getEffectiveColors(gd, angel)).containsExactly(CardColor.BLUE);
         assertThat(gqs.effectiveCreatureSubtypes(gd, angel)).containsExactly(CardSubtype.FROG);
@@ -52,8 +52,8 @@ class AccidentProneApprenticeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(angel.getEffectivePower()).isEqualTo(4);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
         assertThat(gqs.getEffectiveColors(gd, angel)).contains(CardColor.WHITE);
         assertThat(gd.floatingEffectsOnPermanent(angel.getId(), GrantSubtypeEffect.class)).isEmpty();

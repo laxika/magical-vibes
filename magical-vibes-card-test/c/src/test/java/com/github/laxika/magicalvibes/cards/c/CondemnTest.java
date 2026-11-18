@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -132,7 +133,7 @@ class CondemnTest extends BaseCardTest {
 
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        attacker.setToughnessModifier(3); // 2 + 3 = 5 effective toughness
+        PermanentGrants.setToughnessBoost(gd, attacker, 3); // 2 + 3 = 5 effective toughness
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.setHand(player2, List.of(new Condemn()));

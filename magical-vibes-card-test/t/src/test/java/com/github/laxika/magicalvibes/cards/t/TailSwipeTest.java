@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,8 +32,8 @@ class TailSwipeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(
                 myBear.getId(), harness.getPermanentId(player2, "Grizzly Bears")));
 
-        assertThat(myBear.getPowerModifier()).isEqualTo(1);
-        assertThat(myBear.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, myBear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myBear)).isEqualTo(1);
         assertThat(myBear.getMarkedDamage()).isEqualTo(2);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
@@ -122,16 +123,16 @@ class TailSwipeTest extends BaseCardTest {
                 myBear.getId(), harness.getPermanentId(player2, "Grizzly Bears")));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(myBear.getPowerModifier()).isEqualTo(1);
-        assertThat(myBear.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, myBear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myBear)).isEqualTo(1);
         assertThat(myBear.getMarkedDamage()).isEqualTo(2);
         harness.assertInGraveyard(player2, "Grizzly Bears");
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(myBear.getPowerModifier()).isZero();
-        assertThat(myBear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, myBear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myBear)).isZero();
         assertThat(myBear.getMarkedDamage()).isZero();
     }
 
@@ -150,8 +151,8 @@ class TailSwipeTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(otherBear);
         harness.passBothPriorities();
 
-        assertThat(myBear.getPowerModifier()).isEqualTo(1);
-        assertThat(myBear.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, myBear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myBear)).isEqualTo(1);
         assertThat(myBear.getMarkedDamage()).isZero();
         harness.assertInGraveyard(player1, "Tail Swipe");
     }
@@ -172,8 +173,8 @@ class TailSwipeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(otherBear.getPowerModifier()).isZero();
-        assertThat(otherBear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherBear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherBear)).isZero();
         assertThat(otherBear.getMarkedDamage()).isZero();
         harness.assertInGraveyard(player1, "Tail Swipe");
     }

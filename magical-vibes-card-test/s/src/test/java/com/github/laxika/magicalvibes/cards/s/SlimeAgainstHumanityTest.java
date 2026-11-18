@@ -29,8 +29,8 @@ class SlimeAgainstHumanityTest extends BaseCardTest {
 
         Permanent ooze = findPermanent(player1, "Ooze");
         assertThat(ooze.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
-        assertThat(ooze.getEffectivePower()).isEqualTo(6);
-        assertThat(ooze.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(6);
     }
 
     @Test
@@ -42,8 +42,8 @@ class SlimeAgainstHumanityTest extends BaseCardTest {
 
         Permanent ooze = findPermanent(player1, "Ooze");
         assertThat(ooze.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(ooze.getEffectivePower()).isEqualTo(2);
-        assertThat(ooze.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(2);
     }
 
     @Test

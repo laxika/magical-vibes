@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
 import com.github.laxika.magicalvibes.cards.b.BrimstoneVolley;
 import com.github.laxika.magicalvibes.cards.b.BumpInTheNight;
@@ -138,8 +139,8 @@ class CharmbreakerDevilsTest extends BaseCardTest {
         // Spell cast trigger fires — resolve the +4/+0 boost
         harness.passBothPriorities();
 
-        assertThat(devils.getPowerModifier()).isEqualTo(4);
-        assertThat(devils.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, devils)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, devils)).isEqualTo(0);
     }
 
     @Test
@@ -156,8 +157,8 @@ class CharmbreakerDevilsTest extends BaseCardTest {
         // No spell cast trigger — resolve Darkthicket Wolf
         harness.passBothPriorities();
 
-        assertThat(devils.getPowerModifier()).isEqualTo(0);
-        assertThat(devils.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, devils)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, devils)).isEqualTo(0);
     }
 
     @Test
@@ -175,7 +176,7 @@ class CharmbreakerDevilsTest extends BaseCardTest {
 
         // Resolve spell cast trigger (+4/+0)
         harness.passBothPriorities();
-        assertThat(devils.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, devils)).isEqualTo(4);
 
         // Resolve Brimstone Volley
         harness.passBothPriorities();
@@ -187,7 +188,7 @@ class CharmbreakerDevilsTest extends BaseCardTest {
 
         // Resolve second spell cast trigger (+4/+0 again)
         harness.passBothPriorities();
-        assertThat(devils.getPowerModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, devils)).isEqualTo(8);
     }
 
     @Test
@@ -236,14 +237,14 @@ class CharmbreakerDevilsTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(devils.getPowerModifier()).isEqualTo(4);
-        assertThat(devils.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, devils)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, devils)).isZero();
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(devils.getPowerModifier()).isZero();
-        assertThat(devils.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, devils)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, devils)).isZero();
     }
 
     @Test
@@ -259,8 +260,8 @@ class CharmbreakerDevilsTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(devils.getPowerModifier()).isZero();
-        assertThat(devils.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, devils)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, devils)).isZero();
     }
 
     @Test

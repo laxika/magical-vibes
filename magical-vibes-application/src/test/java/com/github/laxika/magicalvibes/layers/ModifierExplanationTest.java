@@ -163,15 +163,15 @@ class ModifierExplanationTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("One-shot pumps stored on the permanent are not attributed")
-    void oneShotPumpNotAttributed() {
+    @DisplayName("A one-shot pump is attributed to the card that made it")
+    void oneShotPumpAttributedToItsSource() {
         Permanent bears = addPermanent(player1, new GrizzlyBears());
         castAndResolveInstantOn(player1, new GiantGrowth(), bears, ManaColor.GREEN, 1);
 
-        // The +3/+3 lives in the permanent's own modifier, visible in the aggregates; the
-        // attribution deliberately carries no line for it (client shows it as "Other effects").
-        assertThat(lines(bears)).allSatisfy(line -> {
-            assertThat(line.power()).isNotEqualTo(3);
+        assertThat(lines(bears)).anySatisfy(line -> {
+            assertThat(line.source()).isEqualTo("Giant Growth");
+            assertThat(line.power()).isEqualTo(3);
+            assertThat(line.toughness()).isEqualTo(3);
         });
     }
 

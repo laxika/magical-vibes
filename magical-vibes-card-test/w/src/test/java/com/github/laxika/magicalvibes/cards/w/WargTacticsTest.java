@@ -49,8 +49,8 @@ class WargTacticsTest extends BaseCardTest {
         cast(1, bear.getId());
 
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.HEXPROOF)).isTrue();
     }

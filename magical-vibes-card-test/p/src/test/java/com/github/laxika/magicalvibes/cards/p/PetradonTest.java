@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChainersEdict;
 import com.github.laxika.magicalvibes.cards.t.TaintedPeak;
 import com.github.laxika.magicalvibes.cards.t.TaintedWood;
@@ -122,15 +123,15 @@ class PetradonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(petradon.getPowerModifier()).isEqualTo(1);
-        assertThat(petradon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, petradon)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, petradon)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(petradon.getPowerModifier()).isZero();
-        assertThat(petradon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, petradon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, petradon)).isZero();
     }
 
     @Test
@@ -217,15 +218,15 @@ class PetradonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(petradon.getPowerModifier()).isEqualTo(2);
-        assertThat(petradon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, petradon)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, petradon)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(petradon.getPowerModifier()).isZero();
-        assertThat(petradon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, petradon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, petradon)).isZero();
     }
 
     @Test

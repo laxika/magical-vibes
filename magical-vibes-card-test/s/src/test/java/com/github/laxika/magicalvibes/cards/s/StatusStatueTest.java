@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -34,16 +35,16 @@ class StatusStatueTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(creature.getId()));
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
     }
 
@@ -123,8 +124,8 @@ class StatusStatueTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
     }
 
@@ -176,8 +177,8 @@ class StatusStatueTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Status // Statue");
         harness.assertInGraveyard(player2, "Status // Statue");
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
     }
 }

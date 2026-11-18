@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.w.WirewoodLodge;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,8 +30,8 @@ class PrimalBoostTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, warrior.getId());
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(4);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(4);
     }
 
     @Test
@@ -40,8 +41,8 @@ class PrimalBoostTest extends BaseCardTest {
         prepareCycle();
         cycleAndChoose(warrior, true);
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(1);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Primal Boost");
         harness.assertInHand(player1, "Elvish Warrior");
     }
@@ -53,8 +54,8 @@ class PrimalBoostTest extends BaseCardTest {
         prepareCycle();
         cycleAndChoose(warrior, false);
 
-        assertThat(warrior.getPowerModifier()).isZero();
-        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isZero();
         harness.assertInGraveyard(player1, "Primal Boost");
         harness.assertInHand(player1, "Elvish Warrior");
     }
@@ -96,11 +97,11 @@ class PrimalBoostTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, warrior.getId());
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(4);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(4);
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(warrior.getPowerModifier()).isZero();
-        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isZero();
     }
 
     @Test
@@ -111,12 +112,12 @@ class PrimalBoostTest extends BaseCardTest {
 
         cycleAndChoose(warrior, true);
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(1);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(1);
         harness.assertInHand(player1, "Elvish Warrior");
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(warrior.getPowerModifier()).isZero();
-        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isZero();
     }
 
     private void prepareCycle() {

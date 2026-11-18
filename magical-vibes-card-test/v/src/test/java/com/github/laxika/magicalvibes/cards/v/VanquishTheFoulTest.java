@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.ColossusOfAkros;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -107,7 +108,7 @@ class VanquishTheFoulTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(top));
 
         addManaAndCast(elemental.getId());
-        elemental.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, elemental, -1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Air Elemental");
@@ -134,7 +135,7 @@ class VanquishTheFoulTest extends BaseCardTest {
     @Test
     void usesModifiedPowerToDetermineLegalTarget() {
         Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        giant.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, giant, 1);
         harness.setLibrary(player1, List.of());
 
         addManaAndCast(giant.getId());

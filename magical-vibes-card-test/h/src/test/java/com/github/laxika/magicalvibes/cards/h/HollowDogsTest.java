@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -20,13 +21,13 @@ class HollowDogsTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
 
-        assertThat(dogs.getPowerModifier()).isZero();
-        assertThat(dogs.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dogs)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dogs)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(dogs.getPowerModifier()).isEqualTo(2);
-        assertThat(dogs.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dogs)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dogs)).isZero();
     }
 
     @Test
@@ -39,12 +40,12 @@ class HollowDogsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(firstDogs.getPowerModifier()).isEqualTo(2);
-        assertThat(firstDogs.getToughnessModifier()).isZero();
-        assertThat(secondDogs.getPowerModifier()).isEqualTo(2);
-        assertThat(secondDogs.getToughnessModifier()).isZero();
-        assertThat(defendingDogs.getPowerModifier()).isZero();
-        assertThat(defendingDogs.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstDogs)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstDogs)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, secondDogs)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondDogs)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, defendingDogs)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, defendingDogs)).isZero();
     }
 
     @Test
@@ -80,8 +81,8 @@ class HollowDogsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(attackingDogs.getPowerModifier()).isEqualTo(2);
-        assertThat(restingDogs.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attackingDogs)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, restingDogs)).isZero();
     }
 
     @Test
@@ -92,8 +93,8 @@ class HollowDogsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(dogs.getPowerModifier()).isEqualTo(2);
-        assertThat(dogs.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dogs)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dogs)).isEqualTo(0);
     }
 
     @Test
@@ -104,13 +105,13 @@ class HollowDogsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(dogs.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dogs)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(dogs.getPowerModifier()).isEqualTo(0);
-        assertThat(dogs.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dogs)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dogs)).isEqualTo(0);
     }
 
     @Test
@@ -121,12 +122,12 @@ class HollowDogsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(dogs.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dogs)).isEqualTo(2);
 
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(dogs.getPowerModifier()).isEqualTo(0);
-        assertThat(dogs.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dogs)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dogs)).isEqualTo(0);
     }
 
     @Test
@@ -138,7 +139,7 @@ class HollowDogsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(attackingDogs.getPowerModifier()).isEqualTo(2);
-        assertThat(restingDogs.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, attackingDogs)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, restingDogs)).isEqualTo(0);
     }
 }

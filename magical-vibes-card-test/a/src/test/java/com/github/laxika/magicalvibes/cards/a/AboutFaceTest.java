@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GhituFireEater;
 import com.github.laxika.magicalvibes.cards.g.GrimMonolith;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,7 @@ class AboutFaceTest extends BaseCardTest {
     @Test
     void switchesTargetCreaturesPowerAndToughness() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GhituFireEater());
-        creature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, creature, 1);
         harness.setHand(player1, List.of(new AboutFace()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -33,7 +34,7 @@ class AboutFaceTest extends BaseCardTest {
     @Test
     void switchWearsOffAtCleanup() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GhituFireEater());
-        creature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, creature, 1);
         harness.setHand(player1, List.of(new AboutFace()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -49,7 +50,7 @@ class AboutFaceTest extends BaseCardTest {
     @Test
     void canTargetAnOpponentsCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GhituFireEater());
-        creature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, creature, 1);
         harness.setHand(player1, List.of(new AboutFace()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -74,7 +75,7 @@ class AboutFaceTest extends BaseCardTest {
     @Test
     void twoSwitchesRestoreOriginalPowerAndToughness() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GhituFireEater());
-        creature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, creature, 1);
         harness.setHand(player1, List.of(new AboutFace(), new AboutFace()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -96,7 +97,7 @@ class AboutFaceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
-        creature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, creature, 1);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
@@ -105,7 +106,7 @@ class AboutFaceTest extends BaseCardTest {
     @Test
     void zeroPowerCreatureDiesWhenSwitchedToZeroToughness() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GhituFireEater());
-        creature.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, creature, -2);
         harness.setHand(player1, List.of(new AboutFace()));
         harness.addMana(player1, ManaColor.RED, 1);
 

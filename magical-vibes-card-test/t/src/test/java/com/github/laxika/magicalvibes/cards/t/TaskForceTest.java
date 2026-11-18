@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.Buoyancy;
 import com.github.laxika.magicalvibes.cards.s.StingingBarrier;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,9 +28,9 @@ class TaskForceTest extends BaseCardTest {
         harness.castEnchantment(player2, 0, taskForce.getId());
         harness.passBothPriorities();
 
-        assertThat(taskForce.getToughnessModifier()).isEqualTo(3);
-        assertThat(taskForce.getEffectivePower()).isEqualTo(1);
-        assertThat(taskForce.getEffectiveToughness()).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, taskForce)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, taskForce)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, taskForce)).isEqualTo(6);
     }
 
     @Test
@@ -44,9 +45,9 @@ class TaskForceTest extends BaseCardTest {
         harness.castEnchantment(player2, 0, taskForce.getId());
         harness.passBothPriorities();
 
-        assertThat(taskForce.getToughnessModifier()).isEqualTo(6);
-        assertThat(taskForce.getEffectivePower()).isEqualTo(1);
-        assertThat(taskForce.getEffectiveToughness()).isEqualTo(9);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, taskForce)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, taskForce)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, taskForce)).isEqualTo(9);
     }
 
     @Test
@@ -59,8 +60,8 @@ class TaskForceTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, taskForce.getId());
         harness.passBothPriorities();
 
-        assertThat(taskForce.getToughnessModifier()).isEqualTo(3);
-        assertThat(taskForce.getEffectiveToughness()).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, taskForce)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, taskForce)).isEqualTo(6);
     }
 
     @Test
@@ -73,8 +74,8 @@ class TaskForceTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, taskForce.getId());
         harness.passBothPriorities();
 
-        assertThat(taskForce.getToughnessModifier()).isEqualTo(3);
-        assertThat(taskForce.getEffectiveToughness()).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, taskForce)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, taskForce)).isEqualTo(6);
     }
 
     @Test
@@ -87,13 +88,13 @@ class TaskForceTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, taskForce.getId());
         harness.passBothPriorities();
 
-        assertThat(taskForce.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, taskForce)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(taskForce.getToughnessModifier()).isEqualTo(0);
-        assertThat(taskForce.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, taskForce)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, taskForce)).isEqualTo(3);
     }
 
     @Test
@@ -106,19 +107,19 @@ class TaskForceTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, taskForce.getId());
 
-        assertThat(taskForce.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, taskForce)).isZero();
         assertThat(taskForce.getMarkedDamage()).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(taskForce.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, taskForce)).isEqualTo(6);
         assertThat(taskForce.getMarkedDamage()).isEqualTo(2);
 
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Task Force");
         assertThat(taskForce.getMarkedDamage()).isEqualTo(3);
-        assertThat(taskForce.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, taskForce)).isEqualTo(6);
     }
 
     @Test
@@ -132,7 +133,7 @@ class TaskForceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(barrier.getMarkedDamage()).isEqualTo(1);
-        assertThat(taskForce.getToughnessModifier()).isZero();
-        assertThat(taskForce.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, taskForce)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, taskForce)).isEqualTo(3);
     }
 }

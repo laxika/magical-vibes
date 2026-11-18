@@ -31,8 +31,8 @@ class ChandraFlamecallerTest extends BaseCardTest {
         List<Permanent> elementals = findPermanents(player1, "Elemental");
         assertThat(elementals).hasSize(2);
         assertThat(elementals).allSatisfy(elemental -> {
-            assertThat(elemental.getEffectivePower()).isEqualTo(3);
-            assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
             assertThat(elemental.getCard().getKeywords()).contains(Keyword.HASTE);
         });
 

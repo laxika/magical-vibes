@@ -30,8 +30,8 @@ class RollingSpoilTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertInGraveyard(player2, "Forest");
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
     }
 
     @Test
@@ -43,14 +43,14 @@ class RollingSpoilTest extends BaseCardTest {
 
         castRollingSpoil(target, true);
 
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
     }
 
     @Test
@@ -92,8 +92,8 @@ class RollingSpoilTest extends BaseCardTest {
 
         harness.assertInHand(player2, "Forest");
         harness.assertInGraveyard(player1, "Rolling Spoil");
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -110,8 +110,8 @@ class RollingSpoilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Forest");
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -125,10 +125,10 @@ class RollingSpoilTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertInGraveyard(player1, "Forest");
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
     }
 
     private void castRollingSpoil(Permanent target, boolean blackManaSpent) {

@@ -68,10 +68,10 @@ class ClawsOutTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(permanentOf(player1, "Bear Cub").getEffectivePower()).isEqualTo(4);
-        assertThat(permanentOf(player1, "Bear Cub").getEffectiveToughness()).isEqualTo(4);
-        assertThat(permanentOf(player2, "Bear Cub").getEffectivePower()).isEqualTo(2);
-        assertThat(permanentOf(player2, "Bear Cub").getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, permanentOf(player1, "Bear Cub"))).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, permanentOf(player1, "Bear Cub"))).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, permanentOf(player2, "Bear Cub"))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, permanentOf(player2, "Bear Cub"))).isEqualTo(2);
     }
 
     @Test
@@ -88,8 +88,8 @@ class ClawsOutTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = permanentOf(player1, "Bear Cub");
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -105,8 +105,8 @@ class ClawsOutTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .allSatisfy(cat -> {
-                    assertThat(cat.getEffectivePower()).isEqualTo(4);
-                    assertThat(cat.getEffectiveToughness()).isEqualTo(3);
+                    assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(4);
+                    assertThat(gqs.getEffectiveToughness(gd, cat)).isEqualTo(3);
                 });
     }
 
@@ -145,10 +145,10 @@ class ClawsOutTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new BearCub());
 
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(4);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(4);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Claws Out");
     }
 

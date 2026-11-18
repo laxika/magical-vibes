@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -22,11 +23,11 @@ class GeminiEngineTest extends BaseCardTest {
     @DisplayName("Attacking creates an untapped colorless artifact Twin with the source's current power and toughness")
     void attackCreatesTwinWithCurrentPowerAndToughness() {
         Permanent engine = addCreatureReady(player1, new GeminiEngine());
-        engine.setPowerModifier(2);
-        engine.setToughnessModifier(1);
+        PermanentGrants.setPowerBoost(gd, engine, 2);
+        PermanentGrants.setToughnessBoost(gd, engine, 1);
         Permanent secondEngine = addCreatureReady(player1, new GeminiEngine());
-        secondEngine.setPowerModifier(2);
-        secondEngine.setToughnessModifier(1);
+        PermanentGrants.setPowerBoost(gd, secondEngine, 2);
+        PermanentGrants.setToughnessBoost(gd, secondEngine, 1);
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
             declareAttackers(List.of(0, 1));
@@ -58,8 +59,8 @@ class GeminiEngineTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
             declareAttackers(List.of(0));
-            engine.setPowerModifier(2);
-            engine.setToughnessModifier(1);
+            PermanentGrants.setPowerBoost(gd, engine, 2);
+            PermanentGrants.setToughnessBoost(gd, engine, 1);
             resolveAllTriggers();
         });
 
@@ -69,8 +70,8 @@ class GeminiEngineTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, twin)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, twin)).isEqualTo(5);
 
-        engine.setPowerModifier(7);
-        engine.setToughnessModifier(7);
+        PermanentGrants.setPowerBoost(gd, engine, 7);
+        PermanentGrants.setToughnessBoost(gd, engine, 7);
 
         assertThat(gqs.getEffectivePower(gd, twin)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, twin)).isEqualTo(5);
@@ -123,7 +124,7 @@ class GeminiEngineTest extends BaseCardTest {
     @DisplayName("Twin preserves a negative source power")
     void twinPreservesNegativePower() {
         Permanent engine = addCreatureReady(player1, new GeminiEngine());
-        engine.setPowerModifier(-5);
+        PermanentGrants.setPowerBoost(gd, engine, -5);
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
             declareAttackers(List.of(0));

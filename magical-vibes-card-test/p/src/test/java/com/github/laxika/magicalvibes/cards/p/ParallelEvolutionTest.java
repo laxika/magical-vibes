@@ -107,18 +107,18 @@ class ParallelEvolutionTest extends BaseCardTest {
         Permanent copy = findTokens(player1, "Basking Rootwalla").stream()
                 .filter(permanent -> !permanent.getId().equals(original.getId()))
                 .findFirst().orElseThrow();
-        assertThat(original.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
         assertThat(original.isTapped()).isTrue();
-        assertThat(copy.getEffectivePower()).isEqualTo(1);
-        assertThat(copy.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(1);
         assertThat(copy.isTapped()).isFalse();
 
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(copy), null, null);
         harness.passBothPriorities();
 
-        assertThat(copy.getEffectivePower()).isEqualTo(3);
-        assertThat(copy.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(3);
     }
 
     @Test

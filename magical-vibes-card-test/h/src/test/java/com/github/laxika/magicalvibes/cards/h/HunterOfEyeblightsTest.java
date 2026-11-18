@@ -34,8 +34,8 @@ class HunterOfEyeblightsTest extends BaseCardTest {
 
         Permanent target = findPermanent(player2, "Woodland Changeling");
         assertThat(target.getPlusOnePlusOneCounters()).isEqualTo(1);
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test

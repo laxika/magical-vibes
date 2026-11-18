@@ -35,8 +35,8 @@ class GixsCommandTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
         harness.handleGraveyardCardChosen(player1, 0);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
         harness.assertInHand(player1, firstGraveyardCreature.getName());
         harness.assertInHand(player1, secondGraveyardCreature.getName());
@@ -47,7 +47,7 @@ class GixsCommandTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
     }
 
     @Test
@@ -106,7 +106,7 @@ class GixsCommandTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(saved.getId()));
 
         harness.assertOnBattlefield(player1, "Argothian Sprite");
-        assertThat(saved.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, saved)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, saved, Keyword.LIFELINK)).isTrue();
         harness.assertInGraveyard(player2, "Argothian Sprite");
     }
@@ -121,8 +121,8 @@ class GixsCommandTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
 
-        assertThat(chosen.getEffectivePower()).isEqualTo(4);
-        assertThat(chosen.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, chosen)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, chosen)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, chosen, Keyword.LIFELINK)).isTrue();
     }
 

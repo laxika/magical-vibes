@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -27,8 +28,8 @@ class AwakenTheBearTest extends BaseCardTest {
         castAwakenTheBearOnBears();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getPowerModifier()).isEqualTo(3);
-        assertThat(bears.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -42,8 +43,8 @@ class AwakenTheBearTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -89,11 +90,11 @@ class AwakenTheBearTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Awaken the Bear");
     }
@@ -108,16 +109,16 @@ class AwakenTheBearTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(6);
-        assertThat(target.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 

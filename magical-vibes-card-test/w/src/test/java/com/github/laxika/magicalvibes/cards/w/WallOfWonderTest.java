@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -37,10 +38,10 @@ class WallOfWonderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(wall.getPowerModifier()).isEqualTo(4);
-        assertThat(wall.getToughnessModifier()).isEqualTo(-4);
-        assertThat(wall.getEffectivePower()).isEqualTo(5);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isEqualTo(-4);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(1);
 
         declareAttackers(List.of(0));
 
@@ -55,14 +56,14 @@ class WallOfWonderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(wall.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wall.getPowerModifier()).isEqualTo(0);
-        assertThat(wall.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isEqualTo(0);
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -130,7 +131,7 @@ class WallOfWonderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(4);
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
@@ -146,9 +147,9 @@ class WallOfWonderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(activatedWall.getPowerModifier()).isEqualTo(4);
-        assertThat(otherWall.getPowerModifier()).isZero();
-        assertThat(otherWall.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, activatedWall)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherWall)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherWall)).isZero();
         assertThatThrownBy(() -> declareAttackers(List.of(1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");

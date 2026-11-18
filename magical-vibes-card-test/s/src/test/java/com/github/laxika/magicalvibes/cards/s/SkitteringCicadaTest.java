@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.w.WalkingBallista;
@@ -60,16 +61,16 @@ class SkitteringCicadaTest extends BaseCardTest {
         harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
 
         Permanent cicada = findPermanent(player1, "Skittering Cicada");
-        assertThat(cicada.getPowerModifier()).isEqualTo(2);
-        assertThat(cicada.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, cicada)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cicada)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, cicada, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(cicada.getPowerModifier()).isZero();
-        assertThat(cicada.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cicada)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cicada)).isZero();
         assertThat(gqs.hasKeyword(gd, cicada, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -84,8 +85,8 @@ class SkitteringCicadaTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
 
-        assertThat(cicada.getPowerModifier()).isEqualTo(2);
-        assertThat(cicada.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, cicada)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cicada)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, cicada, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.stack).hasSize(1);
     }
@@ -99,8 +100,8 @@ class SkitteringCicadaTest extends BaseCardTest {
         gs.playCard(gd, player1, 0, 3, null, null);
         harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
 
-        assertThat(cicada.getPowerModifier()).isEqualTo(6);
-        assertThat(cicada.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, cicada)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cicada)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, cicada, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -114,8 +115,8 @@ class SkitteringCicadaTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(cicada.getPowerModifier()).isZero();
-        assertThat(cicada.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cicada)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cicada)).isZero();
         assertThat(gqs.hasKeyword(gd, cicada, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -132,8 +133,8 @@ class SkitteringCicadaTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(cicada.getPowerModifier()).isZero();
-        assertThat(cicada.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cicada)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cicada)).isZero();
         assertThat(gqs.hasKeyword(gd, cicada, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -151,8 +152,8 @@ class SkitteringCicadaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent cicada = findPermanent(player1, "Skittering Cicada");
-        assertThat(cicada.getPowerModifier()).isZero();
-        assertThat(cicada.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cicada)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cicada)).isZero();
         assertThat(gqs.hasKeyword(gd, cicada, Keyword.TRAMPLE)).isFalse();
     }
 }

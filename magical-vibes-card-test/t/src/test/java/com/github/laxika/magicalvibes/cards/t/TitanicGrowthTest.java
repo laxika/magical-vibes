@@ -31,8 +31,8 @@ class TitanicGrowthTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(6);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(6);
     }
 
     @Test
@@ -50,8 +50,8 @@ class TitanicGrowthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -78,10 +78,10 @@ class TitanicGrowthTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
-        assertThat(ownBear.getEffectivePower()).isEqualTo(2);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Titanic Growth");
     }
 
@@ -95,8 +95,8 @@ class TitanicGrowthTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(10);
-        assertThat(target.getEffectiveToughness()).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(10);
     }
 
     @Test
@@ -118,8 +118,8 @@ class TitanicGrowthTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Titanic Growth");
         harness.assertInGraveyard(player2, "Unsummon");
-        assertThat(otherBear.getEffectivePower()).isEqualTo(2);
-        assertThat(otherBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherBear)).isEqualTo(2);
         assertThat(gameLogContains("fizzles")).isTrue();
     }
 }

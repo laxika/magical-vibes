@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -93,7 +94,7 @@ class GruesomeSlaughterTest extends BaseCardTest {
         castGruesomeSlaughter();
 
         harness.activateAbility(player1, 0, null, target.getId());
-        source.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, source, 1);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -104,7 +105,7 @@ class GruesomeSlaughterTest extends BaseCardTest {
     @DisplayName("A creature with zero power deals no damage")
     void zeroPowerDealsNoDamage() {
         Permanent source = addCreatureReady(player1, new Memnite());
-        source.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, source, -1);
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         castGruesomeSlaughter();
 

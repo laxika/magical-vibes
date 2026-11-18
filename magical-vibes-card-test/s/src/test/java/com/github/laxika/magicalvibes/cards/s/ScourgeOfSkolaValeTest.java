@@ -29,8 +29,8 @@ class ScourgeOfSkolaValeTest extends BaseCardTest {
 
         Permanent scourge = findPermanent(player1, "Scourge of Skola Vale");
         assertThat(scourge.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(scourge.getEffectivePower()).isEqualTo(2);
-        assertThat(scourge.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, scourge)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, scourge)).isEqualTo(2);
     }
 
     @Test

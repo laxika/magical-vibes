@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -63,7 +64,7 @@ class WallOfFaithTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Wall of Faith");
-        assertThat(wallPerm.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wallPerm)).isEqualTo(5);
     }
 
     @Test
@@ -90,10 +91,10 @@ class WallOfFaithTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent wall = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(wall.getEffectivePower()).isEqualTo(0);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(6);
-        assertThat(wall.getToughnessModifier()).isEqualTo(1);
-        assertThat(wall.getPowerModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(0);
     }
 
     @Test
@@ -110,9 +111,9 @@ class WallOfFaithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent wall = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(wall.getEffectivePower()).isEqualTo(0);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(8);
-        assertThat(wall.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(8);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isEqualTo(3);
     }
 
     @Test
@@ -139,15 +140,15 @@ class WallOfFaithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent wall = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(wall.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(7);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wall.getToughnessModifier()).isEqualTo(0);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(5);
     }
 
     @Test
@@ -190,7 +191,7 @@ class WallOfFaithTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(6);
         assertThat(wall.isTapped()).isTrue();
     }
 
@@ -218,9 +219,9 @@ class WallOfFaithTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectiveToughness()).isEqualTo(6);
-        assertThat(other.getEffectiveToughness()).isEqualTo(5);
-        assertThat(opposing.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(5);
     }
 
     @Test
@@ -235,7 +236,7 @@ class WallOfFaithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(returned.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(5);
     }
 
     private Permanent addWallOfFaithReady(Player player) {

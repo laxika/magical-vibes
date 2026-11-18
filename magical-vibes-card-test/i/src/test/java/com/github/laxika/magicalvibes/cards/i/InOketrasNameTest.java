@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BindingMummy;
 import com.github.laxika.magicalvibes.cards.p.PouncingCheetah;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,11 +29,11 @@ class InOketrasNameTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(zombie.getPowerModifier()).isEqualTo(2);
-        assertThat(zombie.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, zombie)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, zombie)).isEqualTo(1);
 
-        assertThat(cheetah.getPowerModifier()).isEqualTo(1);
-        assertThat(cheetah.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cheetah)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cheetah)).isEqualTo(1);
     }
 
     @Test
@@ -48,8 +49,8 @@ class InOketrasNameTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         for (Permanent p : gd.playerBattlefields.get(player2.getId())) {
-            assertThat(p.getPowerModifier()).isEqualTo(0);
-            assertThat(p.getToughnessModifier()).isEqualTo(0);
+            assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
         }
     }
 
@@ -65,10 +66,10 @@ class InOketrasNameTest extends BaseCardTest {
         Permanent zombie = harness.enterBattlefieldAndReturn(player1, new BindingMummy());
         Permanent cheetah = harness.enterBattlefieldAndReturn(player1, new PouncingCheetah());
 
-        assertThat(zombie.getPowerModifier()).isZero();
-        assertThat(zombie.getToughnessModifier()).isZero();
-        assertThat(cheetah.getPowerModifier()).isZero();
-        assertThat(cheetah.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, zombie)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, zombie)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cheetah)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cheetah)).isZero();
     }
 
     @Test
@@ -83,10 +84,10 @@ class InOketrasNameTest extends BaseCardTest {
         Permanent cheetah = harness.enterBattlefieldAndReturn(player1, new PouncingCheetah());
         harness.passBothPriorities();
 
-        assertThat(zombie.getPowerModifier()).isEqualTo(2);
-        assertThat(zombie.getToughnessModifier()).isEqualTo(1);
-        assertThat(cheetah.getPowerModifier()).isEqualTo(1);
-        assertThat(cheetah.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, zombie)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, zombie)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cheetah)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cheetah)).isEqualTo(1);
     }
 
     @Test
@@ -105,8 +106,8 @@ class InOketrasNameTest extends BaseCardTest {
         harness.passBothPriorities();
 
         for (Permanent p : gd.playerBattlefields.get(player1.getId())) {
-            assertThat(p.getPowerModifier()).isEqualTo(0);
-            assertThat(p.getToughnessModifier()).isEqualTo(0);
+            assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
         }
     }
 }

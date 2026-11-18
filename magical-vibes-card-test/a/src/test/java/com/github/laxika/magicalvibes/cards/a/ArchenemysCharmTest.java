@@ -201,8 +201,8 @@ class ArchenemysCharmTest extends BaseCardTest {
             castCharm(2, ownCreature.getId());
 
             assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-            assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-            assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
             assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.LIFELINK)).isTrue();
             assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
             assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.LIFELINK)).isFalse();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -87,7 +88,7 @@ class StoneBySunlightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, 0, target.getId());
 
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Air Elemental");

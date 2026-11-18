@@ -50,8 +50,8 @@ class DraconauticsEngineerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent token = findPermanent(player1, "Dinosaur Dragon");
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.DINOSAUR, CardSubtype.DRAGON);
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();

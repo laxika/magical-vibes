@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -54,8 +55,8 @@ class KitsuneDawnbladeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(dawnblade.getPowerModifier()).isEqualTo(1);
-        assertThat(dawnblade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, dawnblade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dawnblade)).isEqualTo(1);
     }
 
     @Test
@@ -69,8 +70,8 @@ class KitsuneDawnbladeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(dawnblade.getPowerModifier()).isEqualTo(1);
-        assertThat(dawnblade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, dawnblade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dawnblade)).isEqualTo(1);
     }
 
     @Test
@@ -82,8 +83,8 @@ class KitsuneDawnbladeTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(dawnblade.getPowerModifier()).isZero();
-        assertThat(dawnblade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dawnblade)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dawnblade)).isZero();
     }
 
     @Test
@@ -97,15 +98,15 @@ class KitsuneDawnbladeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(dawnblade.getPowerModifier()).isEqualTo(1);
-        assertThat(dawnblade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, dawnblade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dawnblade)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dawnblade.getPowerModifier()).isZero();
-        assertThat(dawnblade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dawnblade)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dawnblade)).isZero();
     }
 
     @Test
@@ -124,8 +125,8 @@ class KitsuneDawnbladeTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(dawnblade.getPowerModifier()).isEqualTo(1);
-        assertThat(dawnblade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, dawnblade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dawnblade)).isEqualTo(1);
     }
 
     @Test

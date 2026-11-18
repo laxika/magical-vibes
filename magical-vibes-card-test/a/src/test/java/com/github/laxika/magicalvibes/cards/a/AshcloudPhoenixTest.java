@@ -37,7 +37,7 @@ class AshcloudPhoenixTest extends BaseCardTest {
     @Test
     void deathReturnsItToTheBattlefieldFaceDown() {
         Permanent phoenix = harness.addToBattlefieldAndReturn(player1, new AshcloudPhoenix());
-        phoenix.setMarkedDamage(phoenix.getEffectiveToughness());
+        phoenix.setMarkedDamage(gqs.getEffectiveToughness(gd, phoenix));
         harness.runStateBasedActions();
         harness.passBothPriorities();
 

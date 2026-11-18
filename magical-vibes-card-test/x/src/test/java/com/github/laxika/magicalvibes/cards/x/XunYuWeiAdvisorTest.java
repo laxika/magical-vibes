@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.x;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.w.WeiInfantry;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class XunYuWeiAdvisorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent infantry = findPermanent(player1, "Wei Infantry");
-        assertThat(infantry.getPowerModifier()).isEqualTo(2);
-        assertThat(infantry.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, infantry)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, infantry)).isEqualTo(0);
     }
 
     @Test
@@ -45,8 +46,8 @@ class XunYuWeiAdvisorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent infantry = findPermanent(player1, "Wei Infantry");
-        assertThat(infantry.getPowerModifier()).isEqualTo(0);
-        assertThat(infantry.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, infantry)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, infantry)).isEqualTo(0);
     }
 
     @Test
@@ -116,7 +117,7 @@ class XunYuWeiAdvisorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Wei Infantry"));
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Wei Infantry").getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Wei Infantry"))).isEqualTo(2);
     }
 
     @Test
@@ -129,8 +130,8 @@ class XunYuWeiAdvisorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(advisor.isTapped()).isTrue();
-        assertThat(advisor.getPowerModifier()).isEqualTo(2);
-        assertThat(advisor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, advisor)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, advisor)).isZero();
     }
 
     @Test
@@ -181,7 +182,7 @@ class XunYuWeiAdvisorTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(advisor.getCard());
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Wei Infantry").getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Wei Infantry"))).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -196,8 +197,8 @@ class XunYuWeiAdvisorTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(infantry);
         harness.passBothPriorities();
 
-        assertThat(infantry.getPowerModifier()).isZero();
-        assertThat(infantry.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, infantry)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, infantry)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

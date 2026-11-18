@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BubbleUp;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -70,13 +71,13 @@ class AquaticAlchemistBubbleUpTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(alchemist.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, alchemist)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(alchemist.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, alchemist)).isZero();
     }
 
     @Test
@@ -98,7 +99,7 @@ class AquaticAlchemistBubbleUpTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(alchemist.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, alchemist)).isEqualTo(2);
     }
 
     @Test
@@ -112,7 +113,7 @@ class AquaticAlchemistBubbleUpTest extends BaseCardTest {
 
         assertThat(gd.stack).noneMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
         harness.passBothPriorities();
-        assertThat(alchemist.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, alchemist)).isZero();
     }
 
     @Test
@@ -195,7 +196,7 @@ class AquaticAlchemistBubbleUpTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(alchemist.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, alchemist)).isEqualTo(2);
     }
 
     @Test
@@ -209,7 +210,7 @@ class AquaticAlchemistBubbleUpTest extends BaseCardTest {
 
         harness.castAdventure(player1, 0, target.getId());
         harness.passBothPriorities();
-        assertThat(alchemist.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, alchemist)).isEqualTo(2);
         harness.passBothPriorities();
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isEqualTo(target);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(target);
@@ -223,15 +224,15 @@ class AquaticAlchemistBubbleUpTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(alchemist.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, alchemist)).isEqualTo(2);
         harness.passBothPriorities();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(alchemist.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, alchemist)).isZero();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(alchemist.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, alchemist)).isEqualTo(2);
     }
 }

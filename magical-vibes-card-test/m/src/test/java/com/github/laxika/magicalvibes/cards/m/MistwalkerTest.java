@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,10 +25,10 @@ class MistwalkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mistwalker.getPowerModifier()).isEqualTo(1);
-        assertThat(mistwalker.getToughnessModifier()).isEqualTo(-1);
-        assertThat(mistwalker.getEffectivePower()).isEqualTo(2);
-        assertThat(mistwalker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, mistwalker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mistwalker)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, mistwalker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mistwalker)).isEqualTo(3);
     }
 
     @Test
@@ -38,15 +39,15 @@ class MistwalkerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(mistwalker.getPowerModifier()).isEqualTo(1);
-        assertThat(mistwalker.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mistwalker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mistwalker)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mistwalker.getPowerModifier()).isEqualTo(0);
-        assertThat(mistwalker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mistwalker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mistwalker)).isEqualTo(0);
     }
 
     @Test
@@ -68,16 +69,16 @@ class MistwalkerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
-        assertThat(source.getEffectivePower()).isEqualTo(1);
-        assertThat(source.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(4);
 
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(3);
-        assertThat(source.getEffectiveToughness()).isEqualTo(2);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -106,8 +107,8 @@ class MistwalkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mistwalker.getEffectivePower()).isEqualTo(2);
-        assertThat(mistwalker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mistwalker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mistwalker)).isEqualTo(3);
         assertThat(mistwalker.isTapped()).isTrue();
     }
 

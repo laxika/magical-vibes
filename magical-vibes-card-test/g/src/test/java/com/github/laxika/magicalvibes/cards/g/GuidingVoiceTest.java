@@ -30,8 +30,8 @@ class GuidingVoiceTest extends BaseCardTest {
         gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(lesson, nonLesson)));
         castGuidingVoice(creature, new ScurridColony());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, false);
@@ -58,7 +58,7 @@ class GuidingVoiceTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
         assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
     }
@@ -83,7 +83,7 @@ class GuidingVoiceTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new ScurridColony());
         castGuidingVoice(creature);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -113,7 +113,7 @@ class GuidingVoiceTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.handleCardChosen(player1, -1);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(lesson);
@@ -132,7 +132,7 @@ class GuidingVoiceTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(lesson);
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -145,8 +145,8 @@ class GuidingVoiceTest extends BaseCardTest {
         castGuidingVoice(creature);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(lesson);
         assertThat(gd.playerHands.get(player2.getId())).doesNotContain(lesson);
     }

@@ -29,8 +29,8 @@ class KrakilinTest extends BaseCardTest {
 
         Permanent krakilin = findPermanent(player1, "Krakilin");
         assertThat(krakilin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(krakilin.getEffectivePower()).isEqualTo(3);
-        assertThat(krakilin.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, krakilin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, krakilin)).isEqualTo(3);
     }
 
     @Test

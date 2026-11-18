@@ -64,8 +64,8 @@ class SylvanScavengingTest extends BaseCardTest {
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.RACCOON);
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
     }
 
     @Test

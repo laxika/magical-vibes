@@ -25,11 +25,11 @@ class JelennSphinxTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         harness.passBothPriorities();
 
-        assertThat(otherAttacker.getEffectivePower()).isEqualTo(3);
-        assertThat(otherAttacker.getEffectiveToughness()).isEqualTo(3);
-        assertThat(sphinx.getEffectivePower()).isEqualTo(1);
-        assertThat(sphinx.getEffectiveToughness()).isEqualTo(5);
-        assertThat(homeBody.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherAttacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherAttacker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sphinx)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, sphinx)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, homeBody)).isEqualTo(2);
     }
 
     @Test
@@ -41,14 +41,14 @@ class JelennSphinxTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         harness.passBothPriorities();
 
-        assertThat(otherAttacker.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, otherAttacker)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(otherAttacker.getEffectivePower()).isEqualTo(2);
-        assertThat(otherAttacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherAttacker)).isEqualTo(2);
     }
 
     @Test
@@ -59,8 +59,8 @@ class JelennSphinxTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(sphinx.getEffectivePower()).isEqualTo(1);
-        assertThat(sphinx.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, sphinx)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, sphinx)).isEqualTo(5);
     }
 
     @Test
@@ -73,12 +73,12 @@ class JelennSphinxTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(2);
-        assertThat(first.getEffectiveToughness()).isEqualTo(6);
-        assertThat(second.getEffectivePower()).isEqualTo(2);
-        assertThat(second.getEffectiveToughness()).isEqualTo(6);
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -95,8 +95,8 @@ class JelennSphinxTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
     }
 
     @Test
@@ -112,7 +112,7 @@ class JelennSphinxTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 }

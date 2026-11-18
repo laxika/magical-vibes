@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.cards.c.CrawGiant;
@@ -31,8 +32,8 @@ class KryShieldTest extends BaseCardTest {
 
         activateShield(archer);
 
-        assertThat(archer.getPowerModifier()).isZero();
-        assertThat(archer.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, archer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, archer)).isEqualTo(3);
 
         attackWith(List.of(1));
 
@@ -82,14 +83,14 @@ class KryShieldTest extends BaseCardTest {
         Permanent archer = addReadyArcher(player1);
 
         activateShield(archer);
-        assertThat(archer.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, archer)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(archer.getPowerModifier()).isZero();
-        assertThat(archer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, archer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, archer)).isZero();
         assertThat(shield.isTapped()).isTrue();
 
         harness.setLife(player2, 20);
@@ -133,8 +134,8 @@ class KryShieldTest extends BaseCardTest {
 
         activateShield(giant);
 
-        assertThat(giant.getPowerModifier()).isZero();
-        assertThat(giant.getToughnessModifier()).isEqualTo(7);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(7);
 
         declareAttackersAndPrepareBlockers(List.of(1));
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
@@ -155,13 +156,13 @@ class KryShieldTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, archer.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(shield.isTapped()).isFalse();
-        assertThat(archer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, archer)).isZero();
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, archer.getId());
         harness.passBothPriorities();
         assertThat(shield.isTapped()).isTrue();
-        assertThat(archer.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, archer)).isEqualTo(3);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, archer.getId()))

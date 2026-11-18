@@ -58,17 +58,17 @@ class FlowerFlourishTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 1);
 
-        assertThat(ownBears.getEffectivePower()).isEqualTo(4);
-        assertThat(ownBears.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opposingBears.getEffectivePower()).isEqualTo(2);
-        assertThat(opposingBears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownBears)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingBears)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownBears.getEffectivePower()).isEqualTo(2);
-        assertThat(ownBears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownBears)).isEqualTo(2);
     }
 
     @Test
@@ -134,11 +134,11 @@ class FlowerFlourishTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent later = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(beforeCast.getEffectivePower()).isEqualTo(4);
-        assertThat(beforeCast.getEffectiveToughness()).isEqualTo(4);
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(4);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(4);
-        assertThat(later.getEffectivePower()).isEqualTo(2);
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, beforeCast)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beforeCast)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
     }
 }

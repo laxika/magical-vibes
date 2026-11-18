@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.v.VioletPall;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -42,10 +43,10 @@ class BurrentonShieldBearersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent targetAfter = gqs.findPermanentById(gd, target.getId());
-        assertThat(targetAfter.getPowerModifier()).isEqualTo(0);
-        assertThat(targetAfter.getToughnessModifier()).isEqualTo(3);
-        assertThat(targetAfter.getEffectivePower()).isEqualTo(2);
-        assertThat(targetAfter.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, targetAfter)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, targetAfter)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, targetAfter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, targetAfter)).isEqualTo(5);
     }
 
     @Test
@@ -57,8 +58,8 @@ class BurrentonShieldBearersTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearer.getId());
         harness.passBothPriorities();
 
-        assertThat(bearer.getToughnessModifier()).isEqualTo(3);
-        assertThat(bearer.getEffectiveToughness()).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bearer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bearer)).isEqualTo(6);
     }
 
     @Test
@@ -71,9 +72,9 @@ class BurrentonShieldBearersTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
-        assertThat(bearer.getToughnessModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bearer)).isZero();
     }
 
     @Test
@@ -90,8 +91,8 @@ class BurrentonShieldBearersTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Burrenton Shield-Bearers");
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -108,8 +109,8 @@ class BurrentonShieldBearersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Burrenton Bombardier");
-        assertThat(bearer.getEffectivePower()).isEqualTo(3);
-        assertThat(bearer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bearer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bearer)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -124,7 +125,7 @@ class BurrentonShieldBearersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent targetAfter = gqs.findPermanentById(gd, target.getId());
-        assertThat(targetAfter.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, targetAfter)).isEqualTo(3);
 
         // Combat left a blocker-declaration interaction pending (player2 has an untapped creature);
         // clear it so priority can pass through the end step into cleanup.
@@ -133,7 +134,7 @@ class BurrentonShieldBearersTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(targetAfter.getToughnessModifier()).isEqualTo(0);
-        assertThat(targetAfter.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, targetAfter)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, targetAfter)).isEqualTo(2);
     }
 }

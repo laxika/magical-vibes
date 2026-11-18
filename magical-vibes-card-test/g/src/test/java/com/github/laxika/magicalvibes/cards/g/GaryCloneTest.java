@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WatchfulRadstag;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -38,10 +39,10 @@ class GaryCloneTest extends BaseCardTest {
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(otherClone.getPowerModifier()).isEqualTo(1);
-        assertThat(radstag.getPowerModifier()).isZero();
-        assertThat(opponentClone.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherClone)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, radstag)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentClone)).isZero();
     }
 
     @Test
@@ -70,8 +71,8 @@ class GaryCloneTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(clones).allSatisfy(permanent -> {
-            assertThat(permanent.getPowerModifier()).isEqualTo(1);
-            assertThat(permanent.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isEqualTo(1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isZero();
         });
         assertThat(findPermanents(player1, "Gary Clone")).hasSize(2);
     }
@@ -88,8 +89,8 @@ class GaryCloneTest extends BaseCardTest {
         resolveAllTriggers();
 
         for (Permanent clone : List.of(first, second, nonattacker)) {
-            assertThat(clone.getPowerModifier()).isEqualTo(2);
-            assertThat(clone.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, clone)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, clone)).isZero();
         }
 
         prepareDeclareBlockers();
@@ -97,8 +98,8 @@ class GaryCloneTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         for (Permanent clone : List.of(first, second, nonattacker)) {
-            assertThat(clone.getPowerModifier()).isZero();
-            assertThat(clone.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, clone)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, clone)).isZero();
         }
     }
 

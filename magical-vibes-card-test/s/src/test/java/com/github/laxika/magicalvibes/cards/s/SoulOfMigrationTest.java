@@ -113,8 +113,8 @@ class SoulOfMigrationTest extends BaseCardTest {
 
     private void assertBirdTokens() {
         assertThat(findPermanents(player1, "Bird")).hasSize(2).allSatisfy(bird -> {
-            assertThat(bird.getEffectivePower()).isEqualTo(1);
-            assertThat(bird.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
             assertThat(bird.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(bird.getCard().getSubtypes()).contains(CardSubtype.BIRD);
             assertThat(bird.hasKeyword(Keyword.FLYING)).isTrue();

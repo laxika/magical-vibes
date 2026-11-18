@@ -25,8 +25,8 @@ class BalothWoodcrasherTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(baloth.getEffectivePower()).isEqualTo(8);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, baloth, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -40,8 +40,8 @@ class BalothWoodcrasherTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(baloth.getEffectivePower()).isEqualTo(4);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, baloth, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -55,8 +55,8 @@ class BalothWoodcrasherTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(baloth.getEffectivePower()).isEqualTo(4);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, baloth, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -69,15 +69,15 @@ class BalothWoodcrasherTest extends BaseCardTest {
         harness.playLand(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(baloth.getEffectivePower()).isEqualTo(4);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, baloth, Keyword.TRAMPLE)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(baloth.getEffectivePower()).isEqualTo(8);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, baloth, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -91,14 +91,14 @@ class BalothWoodcrasherTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.passBothPriorities();
 
-        assertThat(baloth.getEffectivePower()).isEqualTo(12);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(12);
         assertThat(gqs.hasKeyword(gd, baloth, Keyword.TRAMPLE)).isTrue();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(baloth.getEffectivePower()).isEqualTo(4);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, baloth, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -110,8 +110,8 @@ class BalothWoodcrasherTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new BalothWoodcrasher());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(baloth.getEffectivePower()).isEqualTo(4);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, baloth, Keyword.TRAMPLE)).isFalse();
     }
 }

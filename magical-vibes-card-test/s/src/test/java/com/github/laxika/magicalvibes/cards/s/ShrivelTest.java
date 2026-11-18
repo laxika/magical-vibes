@@ -26,10 +26,10 @@ class ShrivelTest extends BaseCardTest {
         Permanent own = findPermanent(player1, "Grizzly Bears");
         Permanent theirs = findPermanent(player2, "Grizzly Bears");
 
-        assertThat(own.getEffectivePower()).isEqualTo(1);
-        assertThat(own.getEffectiveToughness()).isEqualTo(1);
-        assertThat(theirs.getEffectivePower()).isEqualTo(1);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(1);
     }
 
     @Test
@@ -53,14 +53,14 @@ class ShrivelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -74,10 +74,10 @@ class ShrivelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent wizard = findPermanent(player1, "Fugitive Wizard");
-        assertThat(wizard.getEffectivePower()).isEqualTo(1);
-        assertThat(wizard.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, wizard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wizard)).isEqualTo(1);
         harness.assertNotInGraveyard(player1, "Fugitive Wizard");
-        assertThat(findPermanent(player1, "Grizzly Bears").getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(1);
     }
 
     @Test
@@ -119,7 +119,7 @@ class ShrivelTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(1);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
 }

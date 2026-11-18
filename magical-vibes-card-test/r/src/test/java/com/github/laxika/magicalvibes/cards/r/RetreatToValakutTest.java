@@ -32,14 +32,14 @@ class RetreatToValakutTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -81,13 +81,13 @@ class RetreatToValakutTest extends BaseCardTest {
         harness.handleListChoice(player1, BOOST_MODE);
         harness.handlePermanentChosen(player1, bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isFalse();
     }
 
@@ -107,7 +107,7 @@ class RetreatToValakutTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.hasFloatingEffectOnPermanent(chosen.getId(), CantBlockEffect.class)).isTrue();
-        assertThat(chosen.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, chosen)).isEqualTo(2);
         assertThat(gd.hasFloatingEffectOnPermanent(other.getId(), CantBlockEffect.class)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -142,7 +142,7 @@ class RetreatToValakutTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), CantBlockEffect.class)).isFalse();
     }
 }

@@ -23,11 +23,11 @@ class VolatileClawsTest extends BaseCardTest {
 
         cast();
 
-        assertThat(own.getEffectivePower()).isEqualTo(4);
-        assertThat(own.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(2);
         assertThat(gqs.hasEffectiveSubtype(gd, own, CardSubtype.GOBLIN)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, own, CardSubtype.ELF)).isTrue();
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
         assertThat(gqs.hasEffectiveSubtype(gd, opponent, CardSubtype.GOBLIN)).isFalse();
     }
 
@@ -37,14 +37,14 @@ class VolatileClawsTest extends BaseCardTest {
         Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         cast();
-        assertThat(own.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(4);
         assertThat(gqs.hasEffectiveSubtype(gd, own, CardSubtype.GOBLIN)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(own.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(2);
         assertThat(gqs.hasEffectiveSubtype(gd, own, CardSubtype.GOBLIN)).isFalse();
     }
 

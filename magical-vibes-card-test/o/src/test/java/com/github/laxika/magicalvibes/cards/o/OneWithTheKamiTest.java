@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -140,7 +141,7 @@ class OneWithTheKamiTest extends BaseCardTest {
     @DisplayName("A creature with zero power creates no Spirits when it dies")
     void zeroPowerCreatureCreatesNoTokens() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, bears, -2);
         castAuraOn(bears);
 
         killWithMurder(player2, bears.getId());

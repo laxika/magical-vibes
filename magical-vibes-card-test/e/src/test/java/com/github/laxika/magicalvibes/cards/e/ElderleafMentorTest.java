@@ -30,8 +30,8 @@ class ElderleafMentorTest extends BaseCardTest {
 
         List<Permanent> tokens = findPermanents(player1, "Elf Warrior");
         assertThat(tokens).hasSize(1);
-        assertThat(tokens.getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tokens.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tokens.getFirst())).isEqualTo(1);
     }
 
     @Test
@@ -49,8 +49,8 @@ class ElderleafMentorTest extends BaseCardTest {
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(token.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.ELF, CardSubtype.WARRIOR);
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.isTapped()).isFalse();
         assertThat(findPermanents(player1, "Elf Warrior")).isEmpty();
         assertThat(gd.stack).isEmpty();

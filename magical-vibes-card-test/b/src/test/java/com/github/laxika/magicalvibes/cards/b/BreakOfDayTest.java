@@ -50,10 +50,10 @@ class BreakOfDayTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(1);
-                assertThat(p.getToughnessModifier()).isEqualTo(1);
-                assertThat(p.getEffectivePower()).isEqualTo(3);
-                assertThat(p.getEffectiveToughness()).isEqualTo(3);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(1);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(1);
+                assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(3);
+                assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(3);
             }
         }
     }
@@ -71,8 +71,8 @@ class BreakOfDayTest extends BaseCardTest {
         List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
         for (Permanent p : p2Battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
-                assertThat(p.getToughnessModifier()).isEqualTo(0);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
             }
         }
     }
@@ -93,8 +93,8 @@ class BreakOfDayTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
-                assertThat(p.getToughnessModifier()).isEqualTo(0);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
             }
         }
     }
@@ -124,8 +124,8 @@ class BreakOfDayTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(1);
-                assertThat(p.getToughnessModifier()).isEqualTo(1);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(1);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(1);
                 assertThat(PermanentGrants.keywordsOf(gd, p)).contains(Keyword.INDESTRUCTIBLE);
             }
         }
@@ -162,8 +162,8 @@ class BreakOfDayTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(1);
-                assertThat(p.getToughnessModifier()).isEqualTo(1);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(1);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(1);
                 assertThat(PermanentGrants.keywordsOf(gd, p)).doesNotContain(Keyword.INDESTRUCTIBLE);
             }
         }
@@ -198,7 +198,7 @@ class BreakOfDayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent creature = findPermanent(player1, "Grizzly Bears");
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
@@ -214,7 +214,7 @@ class BreakOfDayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent creature = findPermanent(player1, "Grizzly Bears");
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -235,8 +235,8 @@ class BreakOfDayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -251,10 +251,10 @@ class BreakOfDayTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent newcomer = gd.playerBattlefields.get(player1.getId()).getLast();
 
-        assertThat(original.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, original, Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(newcomer.getEffectivePower()).isEqualTo(2);
-        assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, newcomer, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -272,7 +272,7 @@ class BreakOfDayTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.INDESTRUCTIBLE)).isTrue();
         Permanent opponent = findPermanent(player2, "Grizzly Bears");
         assertThat(gqs.hasKeyword(gd, opponent, Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
     }
 }

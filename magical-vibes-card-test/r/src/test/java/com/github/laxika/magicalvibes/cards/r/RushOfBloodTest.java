@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.ThunderStrike;
@@ -33,8 +34,8 @@ class RushOfBloodTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -51,8 +52,8 @@ class RushOfBloodTest extends BaseCardTest {
 
         // 2/2 + Thunder Strike (+2/+0) = 4/2, then +4/+0 = 8/2
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getEffectivePower()).isEqualTo(8);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -66,7 +67,7 @@ class RushOfBloodTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
     }
 
     @Test
@@ -84,8 +85,8 @@ class RushOfBloodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -109,12 +110,12 @@ class RushOfBloodTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bears.getId());
         harness.castAndResolveInstant(player1, 0, bears.getId());
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
 
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(8);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -127,8 +128,8 @@ class RushOfBloodTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(6);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @ParameterizedTest
@@ -136,14 +137,14 @@ class RushOfBloodTest extends BaseCardTest {
     @DisplayName("Zero or negative power produces a zero boost")
     void nonpositivePowerProducesNoBoost(int powerModifier) {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setPowerModifier(powerModifier);
+        PermanentGrants.setPowerBoost(gd, bears, powerModifier);
         harness.setHand(player1, List.of(new RushOfBlood()));
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2 + powerModifier);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2 + powerModifier);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Rush of Blood");
     }
 
@@ -157,8 +158,8 @@ class RushOfBloodTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(8);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -175,8 +176,8 @@ class RushOfBloodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Rush of Blood");
     }
 }

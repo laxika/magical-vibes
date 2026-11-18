@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -67,7 +68,7 @@ class HidetsuguConsumesAllTest extends BaseCardTest {
     @Test
     void vesselPutsPlusOneCounterOnItWhenItDealsDamage() {
         Permanent vessel = addVessel();
-        vessel.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, vessel, 2);
         vessel.setAttacking(true);
 
         resolveCombat();
@@ -80,7 +81,7 @@ class HidetsuguConsumesAllTest extends BaseCardTest {
     @Test
     void vesselMakesDamagedPlayerLoseAfterTenDamageThisTurn() {
         Permanent vessel = addVessel();
-        vessel.setPowerModifier(7);
+        PermanentGrants.setPowerBoost(gd, vessel, 7);
         vessel.setAttacking(true);
 
         resolveCombat();
@@ -161,7 +162,7 @@ class HidetsuguConsumesAllTest extends BaseCardTest {
     @Test
     void nineDamageDoesNotMakeThePlayerLose() {
         Permanent vessel = addVessel();
-        vessel.setPowerModifier(6);
+        PermanentGrants.setPowerBoost(gd, vessel, 6);
         vessel.setAttacking(true);
 
         resolveCombat();
@@ -176,8 +177,8 @@ class HidetsuguConsumesAllTest extends BaseCardTest {
     void damageFromDifferentVesselsDoesNotCombineForTheLossCondition() {
         Permanent first = addVessel();
         Permanent second = addVessel();
-        first.setPowerModifier(2);
-        second.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, first, 2);
+        PermanentGrants.setPowerBoost(gd, second, 2);
         first.setAttacking(true);
         second.setAttacking(true);
 
@@ -211,7 +212,7 @@ class HidetsuguConsumesAllTest extends BaseCardTest {
     @Test
     void zeroDamageDoesNotAddACounter() {
         Permanent vessel = addVessel();
-        vessel.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, vessel, -3);
         vessel.setAttacking(true);
 
         resolveCombat();

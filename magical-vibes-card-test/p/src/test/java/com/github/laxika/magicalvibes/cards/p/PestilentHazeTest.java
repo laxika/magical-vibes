@@ -28,8 +28,8 @@ class PestilentHazeTest extends BaseCardTest {
 
         castPestilentHaze(0);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCreature);
     }
 
@@ -44,8 +44,8 @@ class PestilentHazeTest extends BaseCardTest {
 
         assertThat(ownPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
         assertThat(opponentPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -77,15 +77,15 @@ class PestilentHazeTest extends BaseCardTest {
 
         castPestilentHaze(0);
 
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(3);
     }
 
     @Test
@@ -96,8 +96,8 @@ class PestilentHazeTest extends BaseCardTest {
         Permanent newcomer = harness.enterBattlefieldAndReturn(player2, new AlpineWatchdog());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(newcomer);
-        assertThat(newcomer.getEffectivePower()).isEqualTo(2);
-        assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(2);
     }
 
     @Test
@@ -142,8 +142,8 @@ class PestilentHazeTest extends BaseCardTest {
         castPestilentHaze(1);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 

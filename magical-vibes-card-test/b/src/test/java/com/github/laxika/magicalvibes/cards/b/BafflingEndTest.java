@@ -69,8 +69,8 @@ class BafflingEndTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Sun Sentinel"));
         Permanent dinosaur = findPermanent(player2, "Dinosaur");
-        assertThat(dinosaur.getEffectivePower()).isEqualTo(3);
-        assertThat(dinosaur.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, dinosaur)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, dinosaur)).isEqualTo(3);
         assertThat(dinosaur.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(dinosaur.getCard().getKeywords()).contains(Keyword.TRAMPLE);
     }

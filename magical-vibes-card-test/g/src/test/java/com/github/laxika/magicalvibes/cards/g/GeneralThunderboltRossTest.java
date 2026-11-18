@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,10 +28,10 @@ class GeneralThunderboltRossTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(ross.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(otherAttacker.getPowerModifier()).isEqualTo(1);
-        assertThat(nonAttacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ross)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAttacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonAttacker)).isZero();
     }
 
     @Test
@@ -42,7 +43,7 @@ class GeneralThunderboltRossTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(ross.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ross)).isZero();
     }
 
     @Test
@@ -54,13 +55,13 @@ class GeneralThunderboltRossTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
-        assertThat(ross.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ross)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ross.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ross)).isZero();
     }
 
     @Test
@@ -73,8 +74,8 @@ class GeneralThunderboltRossTest extends BaseCardTest {
         declareAttackers(List.of(1, 2, 3));
         resolveAllTriggers();
 
-        assertThat(ross.getPowerModifier()).isZero();
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ross)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -91,10 +92,10 @@ class GeneralThunderboltRossTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(returnedAttacker);
-        assertThat(ross.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(ross.getToughnessModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ross)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ross)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -112,8 +113,8 @@ class GeneralThunderboltRossTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ross);
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(otherAttacker.getPowerModifier()).isEqualTo(1);
-        assertThat(defender.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAttacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, defender)).isZero();
     }
 }

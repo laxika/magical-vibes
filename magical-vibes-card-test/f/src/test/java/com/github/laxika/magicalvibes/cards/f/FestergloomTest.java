@@ -27,12 +27,12 @@ class FestergloomTest extends BaseCardTest {
 
         castFestergloom();
 
-        assertThat(own.getEffectivePower()).isEqualTo(1);
-        assertThat(own.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponent.getEffectivePower()).isEqualTo(1);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(1);
-        assertThat(black.getEffectivePower()).isEqualTo(1);
-        assertThat(black.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, black)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, black)).isEqualTo(1);
     }
 
     @Test
@@ -51,14 +51,14 @@ class FestergloomTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
 
         castFestergloom();
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -68,8 +68,8 @@ class FestergloomTest extends BaseCardTest {
 
         castFestergloom();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(-1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Ornithopter");
     }
 
@@ -86,10 +86,10 @@ class FestergloomTest extends BaseCardTest {
 
         Permanent later = gd.playerBattlefields.get(player1.getId()).getLast();
         assertThat(later.getId()).isNotEqualTo(original.getId());
-        assertThat(later.getEffectivePower()).isEqualTo(2);
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
-        assertThat(original.getEffectivePower()).isEqualTo(1);
-        assertThat(original.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(1);
     }
 
     @Test

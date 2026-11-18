@@ -48,8 +48,7 @@ public class BoostReferencedPermanentEffectHandler implements NormalEffectHandle
         var context = AmountContext.forStackEntry(entry, source);
         int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), context);
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), context);
-        referenced.setPowerModifier(referenced.getPowerModifier() + powerBoost);
-        referenced.setToughnessModifier(referenced.getToughnessModifier() + toughnessBoost);
+        gameData.addPowerToughnessBoost(entry, referenced.getId(), powerBoost, toughnessBoost);
         if (!boost.keywords().isEmpty()) {
             gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Set.copyOf(boost.keywords()), GrantScope.TARGET),
                     referenced.getId(), Duration.UNTIL_END_OF_TURN);

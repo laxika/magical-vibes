@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -225,7 +226,7 @@ class ShrivelingRotTest extends BaseCardTest {
     @DisplayName("Death mode uses modified toughness immediately before death")
     void deathModeUsesLastKnownModifiedToughness() {
         Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        giant.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, giant, 2);
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new ShrivelingRot()));
         addMana(false);

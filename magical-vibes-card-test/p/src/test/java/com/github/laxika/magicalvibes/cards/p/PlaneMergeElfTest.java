@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -69,10 +70,10 @@ class PlaneMergeElfTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(elf.getPowerModifier()).isEqualTo(1);
-        assertThat(elf.getToughnessModifier()).isEqualTo(1);
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(1);
     }
 
     @Test
@@ -87,10 +88,10 @@ class PlaneMergeElfTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(elf.getPowerModifier()).isZero();
-        assertThat(elf.getToughnessModifier()).isZero();
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -107,8 +108,8 @@ class PlaneMergeElfTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elf.getPowerModifier()).isZero();
-        assertThat(elf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isZero();
     }
 
     @Test
@@ -172,12 +173,12 @@ class PlaneMergeElfTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent elf = findPermanent(player1, "Plane-Merge Elf");
-        assertThat(elf.getPowerModifier()).isEqualTo(1);
-        assertThat(elf.getToughnessModifier()).isEqualTo(1);
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(1);
-        assertThat(opposingBears.getPowerModifier()).isZero();
-        assertThat(opposingBears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingBears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingBears)).isZero();
     }
 
     @Test
@@ -198,10 +199,10 @@ class PlaneMergeElfTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, warrior.getId());
         resolveAllTriggers();
 
-        assertThat(elf.getPowerModifier()).isZero();
-        assertThat(elf.getToughnessModifier()).isZero();
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test

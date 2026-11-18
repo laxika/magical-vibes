@@ -27,8 +27,8 @@ class OmnibianTest extends BaseCardTest {
 
         activateOmnibian(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.FROG);
     }
 
@@ -42,8 +42,8 @@ class OmnibianTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.PEGASUS);
     }
 
@@ -80,8 +80,8 @@ class OmnibianTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(omnibian.isTapped()).isTrue();
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.FROG);
     }
 
@@ -95,8 +95,8 @@ class OmnibianTest extends BaseCardTest {
         activateOmnibian(target);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.FROG);
     }
 
@@ -108,8 +108,8 @@ class OmnibianTest extends BaseCardTest {
         activateOmnibian(omnibian);
 
         assertThat(omnibian.isTapped()).isTrue();
-        assertThat(omnibian.getEffectivePower()).isEqualTo(3);
-        assertThat(omnibian.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, omnibian)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, omnibian)).isEqualTo(3);
         assertThat(gqs.effectiveCreatureSubtypes(gd, omnibian)).containsExactly(CardSubtype.FROG);
     }
     private void activateOmnibian(Permanent target) {

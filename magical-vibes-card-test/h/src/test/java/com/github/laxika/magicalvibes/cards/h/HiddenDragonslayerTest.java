@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ class HiddenDragonslayerTest extends BaseCardTest {
     @Test
     void megamorphPutsCounterOnItAndDestroysTargetOpponentCreatureWithPowerAtLeastFour() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent dragonslayer = castFaceDown();
 
@@ -39,7 +40,7 @@ class HiddenDragonslayerTest extends BaseCardTest {
     @Test
     void megamorphHasNoTargetWhenOnlyOwnOrLowPowerCreaturesExist() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
-        ownCreature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, ownCreature, 1);
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent dragonslayer = castFaceDown();
 
@@ -56,7 +57,7 @@ class HiddenDragonslayerTest extends BaseCardTest {
     @Test
     void turningFaceUpWithoutPayingMegamorphStillDestroysButDoesNotAddCounter() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         Permanent dragonslayer = castFaceDown();
 
         harness.inMutationScope(() -> {
@@ -77,7 +78,7 @@ class HiddenDragonslayerTest extends BaseCardTest {
     @Test
     void counterIsPlacedBeforeTheDestructionTriggerResolves() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         Permanent dragonslayer = castFaceDown();
 
         turnFaceUp(dragonslayer);
@@ -94,12 +95,12 @@ class HiddenDragonslayerTest extends BaseCardTest {
     @Test
     void targetSurvivesIfItsPowerDropsBelowFourBeforeResolution() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         Permanent dragonslayer = castFaceDown();
         turnFaceUp(dragonslayer);
         harness.handlePermanentChosen(player1, target.getId());
 
-        target.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, target, 0);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Hill Giant");
@@ -110,7 +111,7 @@ class HiddenDragonslayerTest extends BaseCardTest {
     @Test
     void targetSurvivesIfItsControllerBecomesTheTriggerController() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         Permanent dragonslayer = castFaceDown();
         turnFaceUp(dragonslayer);
         harness.handlePermanentChosen(player1, target.getId());
@@ -126,7 +127,7 @@ class HiddenDragonslayerTest extends BaseCardTest {
     @Test
     void castingFaceUpDoesNotTriggerDestructionOrAddCounter() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.setHand(player1, List.of(new HiddenDragonslayer()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

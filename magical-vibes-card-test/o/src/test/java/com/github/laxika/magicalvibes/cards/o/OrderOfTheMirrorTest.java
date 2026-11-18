@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BolaSlinger;
 import com.github.laxika.magicalvibes.cards.s.SaibaCryptomancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -64,10 +65,10 @@ class OrderOfTheMirrorTest extends BaseCardTest {
         ));
         resolveAllTriggers();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()).get(0).getPowerModifier()).isEqualTo(-1);
-        assertThat(gd.playerBattlefields.get(player2.getId()).get(0).getToughnessModifier()).isEqualTo(-1);
-        assertThat(gd.playerBattlefields.get(player2.getId()).get(1).getPowerModifier()).isEqualTo(-1);
-        assertThat(gd.playerBattlefields.get(player2.getId()).get(1).getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, gd.playerBattlefields.get(player2.getId()).get(0))).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gd.playerBattlefields.get(player2.getId()).get(0))).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, gd.playerBattlefields.get(player2.getId()).get(1))).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gd.playerBattlefields.get(player2.getId()).get(1))).isEqualTo(-1);
     }
 
     @Test
@@ -85,8 +86,8 @@ class OrderOfTheMirrorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent blocker = gd.playerBattlefields.get(player2.getId()).get(0);
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
     }
 
     @Test
@@ -152,8 +153,8 @@ class OrderOfTheMirrorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
     }
 
     @Test

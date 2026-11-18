@@ -38,8 +38,8 @@ class BladeSplicerTest extends BaseCardTest {
         assertThat(golemToken.getCard().getSubtypes()).contains(CardSubtype.PHYREXIAN, CardSubtype.GOLEM);
         assertThat(golemToken.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(golemToken.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
-        assertThat(golemToken.getEffectivePower()).isEqualTo(3);
-        assertThat(golemToken.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, golemToken)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, golemToken)).isEqualTo(3);
     }
 
     @Test

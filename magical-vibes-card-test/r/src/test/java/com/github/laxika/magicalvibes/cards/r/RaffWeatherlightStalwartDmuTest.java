@@ -80,10 +80,10 @@ class RaffWeatherlightStalwartDmuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(raff.getEffectivePower()).isEqualTo(2);
-        assertThat(raff.getEffectiveToughness()).isEqualTo(4);
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, raff)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, raff)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
         assertThat(raff.hasKeyword(Keyword.VIGILANCE)).isTrue();
         assertThat(bear.hasKeyword(Keyword.VIGILANCE)).isTrue();
 
@@ -91,10 +91,10 @@ class RaffWeatherlightStalwartDmuTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(raff.getEffectivePower()).isEqualTo(1);
-        assertThat(raff.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, raff)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, raff)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(raff.hasKeyword(Keyword.VIGILANCE)).isFalse();
         assertThat(bear.hasKeyword(Keyword.VIGILANCE)).isFalse();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArmoredWhirlTurtle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,11 +26,11 @@ class ScreechingPhoenixTest extends BaseCardTest {
 
         activateAbility(player1);
 
-        assertThat(phoenix.getPowerModifier()).isEqualTo(1);
-        assertThat(phoenix.getToughnessModifier()).isZero();
-        assertThat(turtle.getPowerModifier()).isEqualTo(1);
-        assertThat(turtle.getToughnessModifier()).isZero();
-        assertThat(opponentTurtle.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, phoenix)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, phoenix)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, turtle)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, turtle)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentTurtle)).isZero();
     }
 
     @Test
@@ -43,8 +44,8 @@ class ScreechingPhoenixTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(turtle.getPowerModifier()).isZero();
-        assertThat(turtle.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, turtle)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, turtle)).isZero();
     }
 
     @Test
@@ -58,8 +59,8 @@ class ScreechingPhoenixTest extends BaseCardTest {
 
         activateAbility(player1);
 
-        assertThat(phoenix.getPowerModifier()).isEqualTo(1);
-        assertThat(phoenix.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, phoenix)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, phoenix)).isZero();
         assertThat(phoenix.isTapped()).isTrue();
     }
 
@@ -70,8 +71,8 @@ class ScreechingPhoenixTest extends BaseCardTest {
         activateAbility(player1);
         activateAbility(player1);
 
-        assertThat(phoenix.getPowerModifier()).isEqualTo(2);
-        assertThat(phoenix.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, phoenix)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, phoenix)).isZero();
     }
 
     @Test
@@ -80,15 +81,15 @@ class ScreechingPhoenixTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
         Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new ScreechingPhoenix());
 
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new ScreechingPhoenix());
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
-        assertThat(afterResolution.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
     }
 
     @Test
@@ -102,8 +103,8 @@ class ScreechingPhoenixTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(other.getPowerModifier()).isEqualTo(1);
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -115,7 +116,7 @@ class ScreechingPhoenixTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(phoenix.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, phoenix)).isZero();
     }
 
     private Permanent addPhoenix(Player player) {

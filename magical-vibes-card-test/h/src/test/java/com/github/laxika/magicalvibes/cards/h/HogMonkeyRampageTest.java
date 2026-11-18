@@ -26,7 +26,7 @@ class HogMonkeyRampageTest extends BaseCardTest {
         cast(attacker, blocker);
 
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(attacker.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(attacker.getMarkedDamage()).isEqualTo(2);
     }

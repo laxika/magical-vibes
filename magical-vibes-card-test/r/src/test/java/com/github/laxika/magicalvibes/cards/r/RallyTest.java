@@ -24,13 +24,13 @@ class RallyTest extends BaseCardTest {
 
         castRally();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(3);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
 
-        assertThat(nonBlocker.getEffectivePower()).isEqualTo(2);
-        assertThat(nonBlocker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -41,15 +41,15 @@ class RallyTest extends BaseCardTest {
 
         castRally();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(3);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -64,10 +64,10 @@ class RallyTest extends BaseCardTest {
         blocker.setBlocking(false);
         laterBlocker.setBlocking(true);
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(3);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
-        assertThat(laterBlocker.getEffectivePower()).isEqualTo(2);
-        assertThat(laterBlocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, laterBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterBlocker)).isEqualTo(2);
     }
 
     private void castRally() {
@@ -91,12 +91,12 @@ class RallyTest extends BaseCardTest {
         harness.castFromHand(player2, new Rally(), "{W}{W}");
         harness.passBothPriorities();
 
-        assertThat(firstBlocker.getEffectivePower()).isEqualTo(3);
-        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(3);
-        assertThat(secondBlocker.getEffectivePower()).isEqualTo(3);
-        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(3);
-        assertThat(nonBlocker.getEffectivePower()).isEqualTo(2);
-        assertThat(nonBlocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, firstBlocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firstBlocker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondBlocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, secondBlocker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nonBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonBlocker)).isEqualTo(2);
     }
 
     @Test
@@ -111,7 +111,7 @@ class RallyTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Rally");
         creature.setBlocking(true);
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }

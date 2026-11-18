@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -40,8 +41,8 @@ class BecomeImmenseTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(6);
-        assertThat(bears.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(6);
     }
 
     @Test
@@ -59,8 +60,8 @@ class BecomeImmenseTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -94,8 +95,8 @@ class BecomeImmenseTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(unselected);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, last);
         harness.passBothPriorities();
-        assertThat(bears.getPowerModifier()).isEqualTo(6);
-        assertThat(bears.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(6);
     }
 
     @Test
@@ -115,7 +116,7 @@ class BecomeImmenseTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(graveyard);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         harness.assertInHand(player1, "Become Immense");
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -151,8 +152,8 @@ class BecomeImmenseTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(6);
-        assertThat(bears.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(6);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(unselected);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Become Immense");

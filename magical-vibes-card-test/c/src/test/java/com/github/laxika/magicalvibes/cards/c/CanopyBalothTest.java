@@ -24,8 +24,8 @@ class CanopyBalothTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(baloth.getEffectivePower()).isEqualTo(6);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(5);
     }
 
     @Test
@@ -38,8 +38,8 @@ class CanopyBalothTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(baloth.getEffectivePower()).isEqualTo(4);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(3);
     }
 
     @Test
@@ -52,8 +52,8 @@ class CanopyBalothTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(baloth.getEffectivePower()).isEqualTo(4);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(3);
     }
 
     @Test
@@ -64,24 +64,24 @@ class CanopyBalothTest extends BaseCardTest {
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
 
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(6);
-        assertThat(first.getEffectiveToughness()).isEqualTo(5);
-        assertThat(second.getEffectivePower()).isEqualTo(6);
-        assertThat(second.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(8);
-        assertThat(first.getEffectiveToughness()).isEqualTo(7);
-        assertThat(second.getEffectivePower()).isEqualTo(8);
-        assertThat(second.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(7);
     }
 }

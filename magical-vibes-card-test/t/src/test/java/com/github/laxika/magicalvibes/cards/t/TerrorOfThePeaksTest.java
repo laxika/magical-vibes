@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -50,7 +51,7 @@ class TerrorOfThePeaksTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent entering = findPermanent(player1, "Hill Giant");
-        entering.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, entering, 2);
 
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
@@ -171,7 +172,7 @@ class TerrorOfThePeaksTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
 
         Permanent giant = findPermanent(player1, "Hill Giant");
-        giant.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, giant, 2);
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, giant.getId());

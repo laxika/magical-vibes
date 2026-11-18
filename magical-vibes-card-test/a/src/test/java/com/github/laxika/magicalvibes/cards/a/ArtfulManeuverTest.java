@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.s.SpidersilkNet;
 import com.github.laxika.magicalvibes.cards.d.DromokaWarrior;
@@ -29,8 +30,8 @@ class ArtfulManeuverTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
     }
@@ -46,8 +47,8 @@ class ArtfulManeuverTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -72,8 +73,8 @@ class ArtfulManeuverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Artful Maneuver");
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
@@ -97,8 +98,8 @@ class ArtfulManeuverTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
     }
 
     @Test

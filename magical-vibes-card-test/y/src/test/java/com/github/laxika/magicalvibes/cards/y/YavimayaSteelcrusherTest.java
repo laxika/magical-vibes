@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.InscribedTablet;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -34,8 +35,8 @@ class YavimayaSteelcrusherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(supporter.isTapped()).isTrue();
-        assertThat(crusher.getPowerModifier()).isEqualTo(2);
-        assertThat(crusher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, crusher)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crusher)).isZero();
     }
 
     @Test
@@ -72,15 +73,15 @@ class YavimayaSteelcrusherTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
-        assertThat(crusher.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, crusher)).isZero();
 
         harness.activateAbility(player1, 1, null, artifact.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(supporter);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Inscribed Tablet");
-        assertThat(crusher.getPowerModifier()).isEqualTo(2);
-        assertThat(crusher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, crusher)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crusher)).isZero();
     }
 
     @Test
@@ -93,7 +94,7 @@ class YavimayaSteelcrusherTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(supporter.isTapped()).isFalse();
-        assertThat(crusher.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, crusher)).isZero();
     }
 
     @Test

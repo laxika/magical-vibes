@@ -30,19 +30,19 @@ class YahennisExpertiseTest extends BaseCardTest {
 
         castExpertise(List.of(new YahennisExpertise()));
 
-        assertThat(ownAngel.getEffectivePower()).isEqualTo(1);
-        assertThat(ownAngel.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opposingAngel.getEffectivePower()).isEqualTo(1);
-        assertThat(opposingAngel.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownAngel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownAngel)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingAngel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingAngel)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownAngel.getEffectivePower()).isEqualTo(4);
-        assertThat(ownAngel.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opposingAngel.getEffectivePower()).isEqualTo(4);
-        assertThat(opposingAngel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownAngel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownAngel)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingAngel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingAngel)).isEqualTo(4);
     }
 
     @Test
@@ -92,7 +92,7 @@ class YahennisExpertiseTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(angel.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(1);
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Yahenni's Expertise");
@@ -109,7 +109,7 @@ class YahennisExpertiseTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Trained Armodon");
         harness.assertNotInHand(player1, "Trained Armodon");
-        assertThat(findPermanent(player1, "Trained Armodon").getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Trained Armodon"))).isEqualTo(3);
     }
 
     @Test
@@ -169,7 +169,7 @@ class YahennisExpertiseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Trained Armodon");
-        assertThat(findPermanent(player1, "Trained Armodon").getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Trained Armodon"))).isEqualTo(3);
     }
 
     private void castExpertise(List<Card> hand) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
@@ -48,10 +49,10 @@ class ElvishBerserkerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(berserker.getPowerModifier()).isEqualTo(1);
-        assertThat(berserker.getToughnessModifier()).isEqualTo(1);
-        assertThat(berserker.getEffectivePower()).isEqualTo(2);
-        assertThat(berserker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, berserker)).isEqualTo(2);
     }
 
     @Test
@@ -68,10 +69,10 @@ class ElvishBerserkerTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(berserker.getPowerModifier()).isEqualTo(2);
-        assertThat(berserker.getToughnessModifier()).isEqualTo(2);
-        assertThat(berserker.getEffectivePower()).isEqualTo(3);
-        assertThat(berserker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, berserker)).isEqualTo(3);
     }
 
     @Test
@@ -83,8 +84,8 @@ class ElvishBerserkerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(berserker.getPowerModifier()).isZero();
-        assertThat(berserker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isZero();
     }
 
     @Test
@@ -97,17 +98,17 @@ class ElvishBerserkerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(berserker.getEffectivePower()).isEqualTo(2);
-        assertThat(berserker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, berserker)).isEqualTo(2);
 
         harness.passUntil(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(berserker.getPowerModifier()).isZero();
-        assertThat(berserker.getToughnessModifier()).isZero();
-        assertThat(berserker.getEffectivePower()).isEqualTo(1);
-        assertThat(berserker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isZero();
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, berserker)).isEqualTo(1);
     }
 
     @ParameterizedTest
@@ -128,8 +129,8 @@ class ElvishBerserkerTest extends BaseCardTest {
                 : List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(berserker.getPowerModifier()).isZero();
-        assertThat(berserker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isZero();
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
             harness.castAndResolveInstant(player1, 0, blocker.getId());
@@ -138,7 +139,7 @@ class ElvishBerserkerTest extends BaseCardTest {
             harness.passBothPriorities();
         });
 
-        assertThat(berserker.getPowerModifier()).isEqualTo(blockerCount - 1);
-        assertThat(berserker.getToughnessModifier()).isEqualTo(blockerCount - 1);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(blockerCount - 1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isEqualTo(blockerCount - 1);
     }
 }

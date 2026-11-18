@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.z.ZephyrFalcon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,8 +29,8 @@ class FrostGiantTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isZero();
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
     }
 
     @Test
@@ -46,8 +47,8 @@ class FrostGiantTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(2);
-        assertThat(giant.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(2);
     }
 
     @Test
@@ -66,8 +67,8 @@ class FrostGiantTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(4);
-        assertThat(giant.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(4);
     }
 
     @Test
@@ -79,8 +80,8 @@ class FrostGiantTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(giant.getPowerModifier()).isZero();
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
     }
 
     @Test
@@ -101,8 +102,8 @@ class FrostGiantTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
         resolveAllTriggers();
 
-        assertThat(giant.getPowerModifier()).isZero();
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
     }
 
     @Test
@@ -117,14 +118,14 @@ class FrostGiantTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
-        assertThat(giant.getPowerModifier()).isEqualTo(2);
-        assertThat(giant.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(2);
 
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castAndResolveInstant(player1, 0, blocker.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
-        assertThat(giant.getPowerModifier()).isEqualTo(2);
-        assertThat(giant.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(2);
     }
 
     @Test
@@ -141,14 +142,14 @@ class FrostGiantTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(2);
-        assertThat(giant.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isZero();
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvenFlock;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,10 +25,10 @@ class PiannaNomadCaptainTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(pianna.getPowerModifier()).isEqualTo(1);
-        assertThat(pianna.getToughnessModifier()).isEqualTo(1);
-        assertThat(flock.getPowerModifier()).isEqualTo(1);
-        assertThat(flock.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, pianna)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pianna)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, flock)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, flock)).isEqualTo(1);
     }
 
     @Test
@@ -39,8 +40,8 @@ class PiannaNomadCaptainTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(flock.getPowerModifier()).isZero();
-        assertThat(flock.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, flock)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, flock)).isZero();
     }
 
     @Test
@@ -55,8 +56,8 @@ class PiannaNomadCaptainTest extends BaseCardTest {
         flock.setAttacking(true);
         resolveAllTriggers();
 
-        assertThat(flock.getPowerModifier()).isEqualTo(1);
-        assertThat(flock.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, flock)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, flock)).isEqualTo(1);
     }
 
     @Test
@@ -68,10 +69,10 @@ class PiannaNomadCaptainTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
 
-        assertThat(pianna.getPowerModifier()).isZero();
-        assertThat(pianna.getToughnessModifier()).isZero();
-        assertThat(flock.getPowerModifier()).isZero();
-        assertThat(flock.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pianna)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pianna)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, flock)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, flock)).isZero();
     }
 
     @Test
@@ -86,10 +87,10 @@ class PiannaNomadCaptainTest extends BaseCardTest {
         flock.setAttackTarget(null);
         resolveAllTriggers();
 
-        assertThat(pianna.getPowerModifier()).isEqualTo(1);
-        assertThat(pianna.getToughnessModifier()).isEqualTo(1);
-        assertThat(flock.getPowerModifier()).isZero();
-        assertThat(flock.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pianna)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pianna)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, flock)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, flock)).isZero();
     }
 
     @Test
@@ -103,8 +104,8 @@ class PiannaNomadCaptainTest extends BaseCardTest {
         flock.setAttacking(false);
         flock.setAttackTarget(null);
 
-        assertThat(flock.getPowerModifier()).isEqualTo(1);
-        assertThat(flock.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, flock)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, flock)).isEqualTo(1);
     }
 
     @Test
@@ -115,12 +116,12 @@ class PiannaNomadCaptainTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
-        assertThat(flock.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, flock)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(flock.getPowerModifier()).isZero();
-        assertThat(flock.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, flock)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, flock)).isZero();
     }
 }

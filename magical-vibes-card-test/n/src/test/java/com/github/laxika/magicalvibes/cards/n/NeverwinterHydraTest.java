@@ -51,8 +51,8 @@ class NeverwinterHydraTest extends BaseCardTest {
 
         Permanent permanent = findPermanent(player1, "Neverwinter Hydra");
         assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(11);
-        assertThat(permanent.getEffectivePower()).isEqualTo(11);
-        assertThat(permanent.getEffectiveToughness()).isEqualTo(11);
+        assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(11);
         assertThat(gameLogContains("rolls 3 d6 for Neverwinter Hydra: [1, 4, 6].")).isTrue();
     }
 

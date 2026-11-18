@@ -40,8 +40,8 @@ class HoardSmelterDragonTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Rod of Ruin");
 
         // Dragon gets +4/+0 (Rod of Ruin MV = 4), so effective power = 5 + 4 = 9
-        assertThat(dragon.getEffectivePower()).isEqualTo(9);
-        assertThat(dragon.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(5);
     }
 
     @Test
@@ -59,7 +59,7 @@ class HoardSmelterDragonTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Fountain of Youth");
 
         // Dragon power unchanged (MV = 0)
-        assertThat(dragon.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(5);
     }
 
     @Test
@@ -75,14 +75,14 @@ class HoardSmelterDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, scimitarId);
         harness.passBothPriorities();
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(6); // 5 + 1
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(6); // 5 + 1
 
         // Destroy Rod of Ruin second
         UUID rodId = harness.getPermanentId(player2, "Rod of Ruin");
         harness.activateAbility(player1, 0, null, rodId);
         harness.passBothPriorities();
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(10); // 5 + 1 + 4
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(10); // 5 + 1 + 4
     }
 
 
@@ -115,7 +115,7 @@ class HoardSmelterDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Dragon gets no boost
-        assertThat(dragon.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(5);
     }
 
 
@@ -134,7 +134,7 @@ class HoardSmelterDragonTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Rod of Ruin");
 
         // Dragon still gets the boost
-        assertThat(dragon.getEffectivePower()).isEqualTo(9); // 5 + 4
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(9); // 5 + 4
     }
 
 
@@ -147,12 +147,12 @@ class HoardSmelterDragonTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, artifact.getId());
         harness.passBothPriorities();
-        assertThat(dragon.getEffectivePower()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(9);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(5);
-        assertThat(dragon.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(5);
     }
 
     @Test
@@ -167,7 +167,7 @@ class HoardSmelterDragonTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Rod of Ruin");
         harness.assertInGraveyard(player1, "Rod of Ruin");
-        assertThat(dragon.getEffectivePower()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(9);
     }
 
     @Test
@@ -198,7 +198,7 @@ class HoardSmelterDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Rod of Ruin");
-        assertThat(dragon.getEffectivePower()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(9);
         assertThat(dragon.isTapped()).isTrue();
     }
 }

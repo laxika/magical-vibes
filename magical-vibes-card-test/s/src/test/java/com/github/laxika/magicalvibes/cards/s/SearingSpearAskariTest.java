@@ -113,10 +113,10 @@ class SearingSpearAskariTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
 
-        assertThat(scouts.getEffectivePower()).isZero();
-        assertThat(scouts.getEffectiveToughness()).isEqualTo(3);
-        assertThat(herder.getEffectivePower()).isEqualTo(1);
-        assertThat(herder.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, scouts)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, scouts)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, herder)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, herder)).isEqualTo(1);
     }
 
     @Test
@@ -132,15 +132,15 @@ class SearingSpearAskariTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isZero();
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
     }
 
     @Test
@@ -154,8 +154,8 @@ class SearingSpearAskariTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
     }
 
     @Test

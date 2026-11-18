@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.s.ScaledWurm;
@@ -104,7 +105,7 @@ class WhaleboneGliderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        target.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, 2);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
@@ -160,7 +161,7 @@ class WhaleboneGliderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        target.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, 2);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }

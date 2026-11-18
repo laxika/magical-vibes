@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -26,8 +27,8 @@ class ChartoothCougarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(cougar.getPowerModifier()).isEqualTo(1);
-        assertThat(cougar.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, cougar)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cougar)).isEqualTo(0);
     }
 
     @Test
@@ -38,13 +39,13 @@ class ChartoothCougarTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(cougar.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cougar)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(cougar.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, cougar)).isEqualTo(0);
     }
 
     @Test
@@ -103,10 +104,10 @@ class ChartoothCougarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(cougar.getPowerModifier()).isEqualTo(2);
-        assertThat(cougar.getToughnessModifier()).isZero();
-        assertThat(otherCougar.getPowerModifier()).isZero();
-        assertThat(otherCougar.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cougar)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cougar)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCougar)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCougar)).isZero();
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.s.SeasClaim;
@@ -82,8 +83,8 @@ class PietyCharmTest extends BaseCardTest {
             Permanent soldier = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
             castCharm(1, soldier.getId());
 
-            assertThat(soldier.getPowerModifier()).isEqualTo(2);
-            assertThat(soldier.getToughnessModifier()).isEqualTo(2);
+            assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(2);
         }
 
         @Test
@@ -110,8 +111,8 @@ class PietyCharmTest extends BaseCardTest {
             Permanent soldier = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
             castCharm(1, soldier.getId());
 
-            assertThat(soldier.getPowerModifier()).isEqualTo(2);
-            assertThat(soldier.getToughnessModifier()).isEqualTo(2);
+            assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(2);
         }
 
         @Test
@@ -124,8 +125,8 @@ class PietyCharmTest extends BaseCardTest {
             harness.clearPriorityPassed();
             harness.passBothPriorities();
 
-            assertThat(soldier.getPowerModifier()).isZero();
-            assertThat(soldier.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
         }
     }
 

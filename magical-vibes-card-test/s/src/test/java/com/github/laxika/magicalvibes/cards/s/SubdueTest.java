@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AzureDrake;
 import com.github.laxika.magicalvibes.cards.d.DAvenantArcher;
 import com.github.laxika.magicalvibes.cards.r.RelicBarrier;
@@ -27,8 +28,8 @@ class SubdueTest extends BaseCardTest {
 
         castSubdue(target);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -64,14 +65,14 @@ class SubdueTest extends BaseCardTest {
 
         castSubdue(target);
 
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(gqs.isPreventedFromDealingDamage(gd, target, true)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.isPreventedFromDealingDamage(gd, target, true)).isFalse();
     }
 
@@ -103,7 +104,7 @@ class SubdueTest extends BaseCardTest {
 
         assertThat(attacker.getMarkedDamage()).isZero();
         assertThat(blocker.getMarkedDamage()).isEqualTo(1);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(4);
     }
 
     @Test
@@ -117,7 +118,7 @@ class SubdueTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertLife(player2, 19);
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
     private void castSubdue(Permanent target) {
         harness.setHand(player1, List.of(new Subdue()));

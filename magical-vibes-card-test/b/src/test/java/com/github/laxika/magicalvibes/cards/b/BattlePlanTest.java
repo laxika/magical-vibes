@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -39,8 +40,8 @@ class BattlePlanTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -72,8 +73,8 @@ class BattlePlanTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -110,7 +111,7 @@ class BattlePlanTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
     }
 
     @Test

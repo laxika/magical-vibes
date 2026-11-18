@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeatherbackBaloth;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -125,7 +126,7 @@ class ViciousClownTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         Permanent enteringClown = findPermanents(player1, "Vicious Clown").get(1);
-        enteringClown.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, enteringClown, 3);
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, clown)).isEqualTo(4);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TakeUpTheShield;
 import com.github.laxika.magicalvibes.cards.t.ThousandYearElixir;
@@ -56,11 +57,11 @@ class ArgivianCavalierTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
         assertThat(supporter.isTapped()).isTrue();
-        assertThat(cavalier.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalier)).isZero();
 
         harness.passBothPriorities();
-        assertThat(cavalier.getPowerModifier()).isEqualTo(2);
-        assertThat(cavalier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalier)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cavalier)).isZero();
     }
 
     @Test
@@ -72,7 +73,7 @@ class ArgivianCavalierTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
-        assertThat(cavalier.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalier)).isZero();
     }
 
     @Test
@@ -85,7 +86,7 @@ class ArgivianCavalierTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(supporter.isTapped()).isFalse();
-        assertThat(cavalier.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalier)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -101,7 +102,7 @@ class ArgivianCavalierTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
-        assertThat(cavalier.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalier)).isZero();
     }
 
     @Test
@@ -115,11 +116,11 @@ class ArgivianCavalierTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
         harness.castAndResolveInstant(player1, 0, supporter.getId());
-        assertThat(cavalier.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalier)).isZero();
         harness.passBothPriorities();
 
-        assertThat(cavalier.getPowerModifier()).isEqualTo(3);
-        assertThat(cavalier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalier)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cavalier)).isZero();
     }
 
     @Test
@@ -131,13 +132,13 @@ class ArgivianCavalierTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
         harness.passBothPriorities();
-        assertThat(cavalier.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalier)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(cavalier.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalier)).isZero();
     }
 
     @Test
@@ -150,6 +151,6 @@ class ArgivianCavalierTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
-        assertThat(cavalier.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalier)).isZero();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -33,8 +34,8 @@ class ElectrostaticPummelerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
-        assertThat(pummeler.getEffectivePower()).isEqualTo(2);
-        assertThat(pummeler.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, pummeler)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pummeler)).isEqualTo(2);
     }
 
     @Test
@@ -47,8 +48,8 @@ class ElectrostaticPummelerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(pummeler.getEffectivePower()).isEqualTo(4);
-        assertThat(pummeler.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, pummeler)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, pummeler)).isEqualTo(4);
     }
 
     @Test
@@ -62,8 +63,8 @@ class ElectrostaticPummelerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(pummeler.getEffectivePower()).isEqualTo(1);
-        assertThat(pummeler.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, pummeler)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, pummeler)).isEqualTo(1);
     }
 
     @Test
@@ -91,39 +92,39 @@ class ElectrostaticPummelerTest extends BaseCardTest {
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(3);
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
-        assertThat(pummeler.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, pummeler)).isEqualTo(1);
 
         resolveAllTriggers();
 
-        assertThat(pummeler.getEffectivePower()).isEqualTo(4);
-        assertThat(pummeler.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, pummeler)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, pummeler)).isEqualTo(4);
     }
 
     @Test
     void bothBonusesUsePowerRatherThanDoublingToughness() {
         Permanent pummeler = addReadyPummeler(player1);
-        pummeler.setPowerModifier(2);
-        pummeler.setToughnessModifier(4);
+        PermanentGrants.setPowerBoost(gd, pummeler, 2);
+        PermanentGrants.setToughnessBoost(gd, pummeler, 4);
         gd.playerEnergyCounters.put(player1.getId(), 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(pummeler.getEffectivePower()).isEqualTo(6);
-        assertThat(pummeler.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, pummeler)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, pummeler)).isEqualTo(8);
     }
 
     @Test
     void negativePowerGivesNoBonus() {
         Permanent pummeler = addReadyPummeler(player1);
-        pummeler.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, pummeler, -2);
         gd.playerEnergyCounters.put(player1.getId(), 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(pummeler.getEffectivePower()).isEqualTo(-1);
-        assertThat(pummeler.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, pummeler)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, pummeler)).isEqualTo(1);
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
     }
 
@@ -137,8 +138,8 @@ class ElectrostaticPummelerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(pummeler.getEffectivePower()).isEqualTo(2);
-        assertThat(pummeler.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, pummeler)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pummeler)).isEqualTo(2);
     }
 
     @Test

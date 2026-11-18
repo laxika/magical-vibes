@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.l.LuxuriousLocomotive;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -51,7 +52,7 @@ class ScalestormSummonerTest extends BaseCardTest {
         Permanent airElemental = addCreatureReady(player1, new AirElemental());
 
         declareAttackers(player1, List.of(0));
-        airElemental.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, airElemental, -1);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Dinosaur")).isEmpty();
@@ -75,7 +76,7 @@ class ScalestormSummonerTest extends BaseCardTest {
         Permanent summoner = addCreatureReady(player1, new ScalestormSummoner());
 
         declareAttackers(player1, List.of(0));
-        summoner.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, summoner, 1);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Dinosaur")).hasSize(1);
@@ -85,7 +86,7 @@ class ScalestormSummonerTest extends BaseCardTest {
     @DisplayName("The Summoner itself can satisfy the power condition")
     void boostedSummonerCreatesOneUntappedNonattackingToken() {
         Permanent summoner = addCreatureReady(player1, new ScalestormSummoner());
-        summoner.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, summoner, 1);
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();

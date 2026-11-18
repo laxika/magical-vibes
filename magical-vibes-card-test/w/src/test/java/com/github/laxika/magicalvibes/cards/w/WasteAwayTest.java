@@ -29,8 +29,8 @@ class WasteAwayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Cabal Surgeon");
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -44,8 +44,8 @@ class WasteAwayTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
     }
 
     @Test
@@ -70,8 +70,8 @@ class WasteAwayTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstantWithDiscard(player1, 0, target.getId(), 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("discard");
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
         harness.assertInHand(player1, "Waste Away");
     }
 
@@ -101,14 +101,14 @@ class WasteAwayTest extends BaseCardTest {
         harness.assertInHand(player1, "Cabal Surgeon");
         harness.assertNotInGraveyard(player1, "Waste Away");
         assertThat(gd.stack).hasSize(1);
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
 
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Waste Away");
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test

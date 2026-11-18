@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,14 +24,14 @@ class SteadfastnessTest extends BaseCardTest {
         harness.castFromHand(player1, new Steadfastness(), "{1}{W}");
         harness.passBothPriorities();
 
-        assertThat(firstCreature.getPowerModifier()).isZero();
-        assertThat(firstCreature.getToughnessModifier()).isEqualTo(3);
-        assertThat(firstCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(firstCreature.getEffectiveToughness()).isEqualTo(5);
-        assertThat(secondCreature.getPowerModifier()).isZero();
-        assertThat(secondCreature.getToughnessModifier()).isEqualTo(3);
-        assertThat(secondCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(secondCreature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(5);
     }
 
     @Test
@@ -41,8 +42,8 @@ class SteadfastnessTest extends BaseCardTest {
         harness.castFromHand(player1, new Steadfastness(), "{1}{W}");
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getPowerModifier()).isZero();
-        assertThat(opponentCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isZero();
     }
 
     @Test
@@ -57,9 +58,9 @@ class SteadfastnessTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -80,9 +81,9 @@ class SteadfastnessTest extends BaseCardTest {
         harness.castFromHand(player1, new Steadfastness(), "{1}{W}");
         harness.passBothPriorities();
 
-        assertThat(creature.getToughnessModifier()).isEqualTo(3);
-        assertThat(land.getPowerModifier()).isZero();
-        assertThat(land.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, land)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, land)).isZero();
     }
 
     @Test
@@ -95,9 +96,9 @@ class SteadfastnessTest extends BaseCardTest {
 
         Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(existingCreature.getToughnessModifier()).isEqualTo(3);
-        assertThat(laterCreature.getPowerModifier()).isZero();
-        assertThat(laterCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, existingCreature)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, laterCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterCreature)).isZero();
     }
 
     @Test
@@ -108,8 +109,8 @@ class SteadfastnessTest extends BaseCardTest {
         Permanent creature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 
     @Test
@@ -122,15 +123,15 @@ class SteadfastnessTest extends BaseCardTest {
         harness.castFromHand(player1, new Steadfastness(), "{1}{W}");
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
 
         harness.forceStep(TurnStep.END_STEP);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,7 +25,7 @@ class OwlbearShepherdTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
-        owlbear.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, owlbear, 1);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
 
@@ -54,13 +55,13 @@ class OwlbearShepherdTest extends BaseCardTest {
     @DisplayName("Rechecks total power when the end-step trigger resolves")
     void doesNotDrawWhenPowerFallsBelowThresholdBeforeResolution() {
         Permanent owlbear = addCreatureReady(player1, new OwlbearShepherd());
-        owlbear.setPowerModifier(7);
+        PermanentGrants.setPowerBoost(gd, owlbear, 7);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
 
         advanceToEndStep(player1);
         assertThat(gd.stack).hasSize(1);
-        owlbear.setPowerModifier(6);
+        PermanentGrants.setPowerBoost(gd, owlbear, 6);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -72,7 +73,7 @@ class OwlbearShepherdTest extends BaseCardTest {
     @DisplayName("Does not trigger on the opponent's end step even with enough power")
     void doesNotTriggerOnOpponentsEndStep() {
         Permanent owlbear = addCreatureReady(player1, new OwlbearShepherd());
-        owlbear.setPowerModifier(7);
+        PermanentGrants.setPowerBoost(gd, owlbear, 7);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
 
@@ -102,9 +103,9 @@ class OwlbearShepherdTest extends BaseCardTest {
     @DisplayName("Negative creature power reduces the total used for the threshold")
     void includesNegativePowerInTotal() {
         Permanent owlbear = addCreatureReady(player1, new OwlbearShepherd());
-        owlbear.setPowerModifier(7);
+        PermanentGrants.setPowerBoost(gd, owlbear, 7);
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, bear, -3);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
 

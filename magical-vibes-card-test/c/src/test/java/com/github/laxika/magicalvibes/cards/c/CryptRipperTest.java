@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -26,8 +27,8 @@ class CryptRipperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ripper.getPowerModifier()).isEqualTo(1);
-        assertThat(ripper.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ripper)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ripper)).isEqualTo(1);
     }
 
     @Test
@@ -41,8 +42,8 @@ class CryptRipperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ripper.getPowerModifier()).isEqualTo(2);
-        assertThat(ripper.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ripper)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ripper)).isEqualTo(2);
     }
 
     @Test
@@ -80,8 +81,8 @@ class CryptRipperTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ripper.getPowerModifier()).isEqualTo(0);
-        assertThat(ripper.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ripper)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ripper)).isEqualTo(0);
     }
 
     @Test
@@ -107,16 +108,16 @@ class CryptRipperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(ripper.getPowerModifier()).isZero();
-        assertThat(ripper.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ripper)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ripper)).isZero();
         harness.passBothPriorities();
-        assertThat(ripper.getPowerModifier()).isEqualTo(1);
-        assertThat(ripper.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ripper)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ripper)).isEqualTo(1);
         harness.passBothPriorities();
-        assertThat(ripper.getPowerModifier()).isEqualTo(2);
-        assertThat(ripper.getToughnessModifier()).isEqualTo(2);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ripper)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ripper)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
     private Permanent addReadyCryptRipper(Player player) {

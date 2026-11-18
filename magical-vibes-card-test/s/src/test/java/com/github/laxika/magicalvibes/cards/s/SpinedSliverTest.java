@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HibernationSliver;
 import com.github.laxika.magicalvibes.cards.i.Imagecrafter;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -36,8 +37,8 @@ class SpinedSliverTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
     }
 
     @Test
@@ -57,8 +58,8 @@ class SpinedSliverTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -71,10 +72,10 @@ class SpinedSliverTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(sliver.getPowerModifier()).isEqualTo(1);
-        assertThat(sliver.getToughnessModifier()).isEqualTo(1);
-        assertThat(sliver.getEffectivePower()).isEqualTo(3);
-        assertThat(sliver.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, sliver)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sliver)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sliver)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sliver)).isEqualTo(3);
     }
 
     @Test
@@ -91,10 +92,10 @@ class SpinedSliverTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(sliver.getPowerModifier()).isEqualTo(2);
-        assertThat(sliver.getToughnessModifier()).isEqualTo(2);
-        assertThat(sliver.getEffectivePower()).isEqualTo(4);
-        assertThat(sliver.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, sliver)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sliver)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, sliver)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, sliver)).isEqualTo(4);
     }
 
     @Test
@@ -108,8 +109,8 @@ class SpinedSliverTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(sliver.getPowerModifier()).isEqualTo(1);
-        assertThat(sliver.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, sliver)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sliver)).isEqualTo(1);
     }
 
     @Test
@@ -123,8 +124,8 @@ class SpinedSliverTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(wurm.getPowerModifier()).isZero();
-        assertThat(wurm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wurm)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wurm)).isZero();
     }
 
     @Test
@@ -136,8 +137,8 @@ class SpinedSliverTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(sliver.getPowerModifier()).isZero();
-        assertThat(sliver.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sliver)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sliver)).isZero();
     }
 
     @Test
@@ -150,15 +151,15 @@ class SpinedSliverTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(sliver.getPowerModifier()).isEqualTo(1);
-        assertThat(sliver.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, sliver)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sliver)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(sliver.getPowerModifier()).isZero();
-        assertThat(sliver.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sliver)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sliver)).isZero();
     }
 
     @Test
@@ -173,8 +174,8 @@ class SpinedSliverTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(source);
         harness.passBothPriorities();
 
-        assertThat(sliver.getPowerModifier()).isEqualTo(1);
-        assertThat(sliver.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, sliver)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sliver)).isEqualTo(1);
     }
 
     @Test
@@ -194,10 +195,10 @@ class SpinedSliverTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(4);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(4);
-        assertThat(otherSliver.getPowerModifier()).isZero();
-        assertThat(otherSliver.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherSliver)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherSliver)).isZero();
     }
 
     @Test
@@ -219,8 +220,8 @@ class SpinedSliverTest extends BaseCardTest {
         harness.assertInHand(player2, "Hibernation Sliver");
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
     }
 
     @Test
@@ -242,9 +243,9 @@ class SpinedSliverTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(2);
     }
 }

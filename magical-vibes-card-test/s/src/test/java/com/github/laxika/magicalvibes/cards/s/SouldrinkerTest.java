@@ -24,8 +24,8 @@ class SouldrinkerTest extends BaseCardTest {
 
         harness.assertLife(player1, 17);
         assertThat(souldrinker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(souldrinker.getEffectivePower()).isEqualTo(3);
-        assertThat(souldrinker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, souldrinker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, souldrinker)).isEqualTo(3);
     }
 
     @Test

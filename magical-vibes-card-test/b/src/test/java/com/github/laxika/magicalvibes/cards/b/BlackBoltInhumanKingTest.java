@@ -28,8 +28,8 @@ class BlackBoltInhumanKingTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(blackBolt.getEffectivePower()).isEqualTo(5);
-        assertThat(blackBolt.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, blackBolt)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, blackBolt)).isEqualTo(5);
     }
 
     @Test
@@ -40,14 +40,14 @@ class BlackBoltInhumanKingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(blackBolt.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, blackBolt)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blackBolt.getEffectivePower()).isEqualTo(3);
-        assertThat(blackBolt.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blackBolt)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blackBolt)).isEqualTo(3);
     }
 
     @Test
@@ -99,8 +99,8 @@ class BlackBoltInhumanKingTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(blackBolt.getEffectivePower()).isEqualTo(3);
-        assertThat(blackBolt.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blackBolt)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blackBolt)).isEqualTo(3);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
@@ -114,8 +114,8 @@ class BlackBoltInhumanKingTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(blackBolt.getEffectivePower()).isEqualTo(3);
-        assertThat(blackBolt.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blackBolt)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blackBolt)).isEqualTo(3);
         harness.assertLife(player1, 17);
     }
 
@@ -130,8 +130,8 @@ class BlackBoltInhumanKingTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 
-        assertThat(blackBolt.getEffectivePower()).isEqualTo(7);
-        assertThat(blackBolt.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, blackBolt)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, blackBolt)).isEqualTo(7);
         harness.assertLife(player2, 14);
     }
 
@@ -148,7 +148,7 @@ class BlackBoltInhumanKingTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertOnBattlefield(player1, "Black Bolt, Inhuman King");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(blackBolt.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, blackBolt)).isEqualTo(5);
     }
 
     @Test

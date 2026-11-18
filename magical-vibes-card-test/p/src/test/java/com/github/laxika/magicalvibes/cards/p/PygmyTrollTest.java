@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ElvishBerserker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,8 +29,8 @@ class PygmyTrollTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(troll.getPowerModifier()).isEqualTo(1);
-        assertThat(troll.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, troll)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, troll)).isEqualTo(1);
     }
 
     @Test
@@ -42,8 +43,8 @@ class PygmyTrollTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(troll.getPowerModifier()).isZero();
-        assertThat(troll.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, troll)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, troll)).isZero();
     }
 
     @Test
@@ -61,8 +62,8 @@ class PygmyTrollTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
-        assertThat(troll.getPowerModifier()).isEqualTo(2);
-        assertThat(troll.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, troll)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, troll)).isEqualTo(2);
     }
 
     @Test
@@ -80,8 +81,8 @@ class PygmyTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(troll.isBlockedWithoutBlockers()).isTrue();
-        assertThat(troll.getPowerModifier()).isZero();
-        assertThat(troll.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, troll)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, troll)).isZero();
     }
 
     @Test
@@ -125,14 +126,14 @@ class PygmyTrollTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(troll.getPowerModifier()).isEqualTo(1);
-        assertThat(troll.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, troll)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, troll)).isEqualTo(1);
 
         harness.passUntil(player1, TurnStep.CLEANUP);
 
         harness.assertOnBattlefield(player1, "Pygmy Troll");
-        assertThat(troll.getPowerModifier()).isZero();
-        assertThat(troll.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, troll)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, troll)).isZero();
     }
 
     @Test
@@ -157,7 +158,7 @@ class PygmyTrollTest extends BaseCardTest {
         assertThat(troll.isTapped()).isTrue();
         assertThat(troll.isBlocking()).isFalse();
         assertThat(gd.regenerationShieldCount(troll.getId())).isZero();
-        assertThat(troll.getPowerModifier()).isZero();
-        assertThat(troll.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, troll)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, troll)).isZero();
     }
 }

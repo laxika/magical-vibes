@@ -30,8 +30,8 @@ class BriarhornTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent bears = findPermanent(player2, "Woodland Changeling");
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
 
         harness.assertOnBattlefield(player1, "Briarhorn");
         harness.assertNotInGraveyard(player1, "Briarhorn");
@@ -50,14 +50,14 @@ class BriarhornTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent bears = findPermanent(player1, "Woodland Changeling");
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -73,8 +73,8 @@ class BriarhornTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent bears = findPermanent(player2, "Woodland Changeling");
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
 
         harness.assertNotOnBattlefield(player1, "Briarhorn");
@@ -112,8 +112,8 @@ class BriarhornTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent briarhorn = findPermanent(player1, "Briarhorn");
-        assertThat(briarhorn.getEffectivePower()).isEqualTo(6);
-        assertThat(briarhorn.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, briarhorn)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, briarhorn)).isEqualTo(6);
         harness.assertNotInGraveyard(player1, "Briarhorn");
     }
 
@@ -151,8 +151,8 @@ class BriarhornTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Briarhorn");
         Permanent target = findPermanent(player2, "Woodland Changeling");
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -175,7 +175,7 @@ class BriarhornTest extends BaseCardTest {
         harness.handleListChoice(player1, order.options().stream()
                 .filter(option -> option.contains("sacrifice")).findFirst().orElseThrow());
         harness.passBothPriorities();
-        assertThat(findPermanent(player2, "Woodland Changeling").getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Woodland Changeling"))).isEqualTo(5);
         harness.assertOnBattlefield(player1, "Briarhorn");
         resolveAllTriggers();
         harness.assertInGraveyard(player1, "Briarhorn");

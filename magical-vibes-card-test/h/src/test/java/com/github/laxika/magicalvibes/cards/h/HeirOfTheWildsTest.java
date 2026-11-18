@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlpineGrizzly;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -25,8 +26,8 @@ class HeirOfTheWildsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(heir.getPowerModifier()).isEqualTo(0);
-        assertThat(heir.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isEqualTo(0);
     }
 
     @Test
@@ -38,8 +39,8 @@ class HeirOfTheWildsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(heir.getPowerModifier()).isEqualTo(1);
-        assertThat(heir.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isEqualTo(1);
     }
 
     @Test
@@ -55,8 +56,8 @@ class HeirOfTheWildsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(heir.getPowerModifier()).isEqualTo(0);
-        assertThat(heir.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isEqualTo(0);
     }
 
     @Test
@@ -68,7 +69,7 @@ class HeirOfTheWildsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         addCreatureReady(player1, new AlpineGrizzly());
         resolveAllTriggers();
-        assertThat(heir.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isZero();
     }
 
     @Test
@@ -80,8 +81,8 @@ class HeirOfTheWildsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         resolveAllTriggers();
 
-        assertThat(heir.getPowerModifier()).isZero();
-        assertThat(heir.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isZero();
     }
 
     @Test
@@ -91,24 +92,24 @@ class HeirOfTheWildsTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         assertThat(gd.stack).hasSize(1);
-        grizzly.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, grizzly, -1);
         resolveAllTriggers();
 
-        assertThat(heir.getPowerModifier()).isZero();
-        assertThat(heir.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isZero();
     }
 
     @Test
     void heirCanItselfEnableFerociousUsingItsCurrentPower() {
         Permanent heir = addCreatureReady(player1, new HeirOfTheWilds());
-        heir.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, heir, 2);
 
         declareAttackers(List.of(0));
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
 
-        assertThat(heir.getPowerModifier()).isEqualTo(3);
-        assertThat(heir.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isEqualTo(1);
     }
 
     @Test
@@ -118,12 +119,12 @@ class HeirOfTheWildsTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         assertThat(gd.stack).hasSize(1);
-        grizzly.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, grizzly, -1);
         addCreatureReady(player1, new AlpineGrizzly());
         resolveAllTriggers();
 
-        assertThat(heir.getPowerModifier()).isEqualTo(1);
-        assertThat(heir.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isEqualTo(1);
     }
 
     private Card makeCreature(String name, int power, int toughness) {

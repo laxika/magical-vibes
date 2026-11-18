@@ -28,8 +28,8 @@ class CrashThePartyTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Rhino Warrior")).hasSize(2)
                 .allSatisfy(rhino -> {
                     assertThat(rhino.isTapped()).isTrue();
-                    assertThat(rhino.getEffectivePower()).isEqualTo(4);
-                    assertThat(rhino.getEffectiveToughness()).isEqualTo(4);
+                    assertThat(gqs.getEffectivePower(gd, rhino)).isEqualTo(4);
+                    assertThat(gqs.getEffectiveToughness(gd, rhino)).isEqualTo(4);
                 });
     }
 

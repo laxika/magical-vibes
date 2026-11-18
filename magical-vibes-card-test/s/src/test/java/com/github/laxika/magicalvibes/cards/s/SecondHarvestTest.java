@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BoundByMoonsilver;
 import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
@@ -181,8 +182,8 @@ class SecondHarvestTest extends BaseCardTest {
         Permanent original = addToken(player1, "Spirit", CardType.CREATURE, List.of(CardSubtype.SPIRIT));
         original.tap();
         original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        original.setPowerModifier(3);
-        original.setToughnessModifier(3);
+        PermanentGrants.setPowerBoost(gd, original, 3);
+        PermanentGrants.setToughnessBoost(gd, original, 3);
         original.setMarkedDamage(1);
         harness.setHand(player1, List.of(new SecondHarvest()));
         harness.addMana(player1, ManaColor.GREEN, 4);

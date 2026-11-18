@@ -65,8 +65,8 @@ class SultaiMonumentTest extends BaseCardTest {
                         && permanent.getCard().getName().equals("Zombie Druid"))
                 .hasSize(2)
                 .allSatisfy(token -> {
-                    assertThat(token.getEffectivePower()).isEqualTo(2);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(2);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
                     assertThat(token.getCard().getSubtypes())
                             .containsExactlyInAnyOrder(CardSubtype.ZOMBIE, CardSubtype.DRUID);
                 });

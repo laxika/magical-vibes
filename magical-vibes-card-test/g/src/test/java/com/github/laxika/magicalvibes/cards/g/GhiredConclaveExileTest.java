@@ -31,8 +31,8 @@ class GhiredConclaveExileTest extends BaseCardTest {
 
         Permanent rhino = findPermanents(player1, "Rhino").getFirst();
         assertThat(rhino.getCard().isToken()).isTrue();
-        assertThat(rhino.getEffectivePower()).isEqualTo(4);
-        assertThat(rhino.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rhino)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rhino)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, rhino, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -109,7 +109,7 @@ class GhiredConclaveExileTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Rhino")).hasSize(3);
         Permanent copy = findPermanents(player1, "Rhino").getLast();
         assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(copy.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(4);
         assertThat(copy.isTapped()).isTrue();
         assertThat(copy.isAttacking()).isTrue();
         assertThat(first.isAttacking()).isFalse();

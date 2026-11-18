@@ -28,15 +28,15 @@ class MiserysShadowTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shadow.getEffectivePower()).isEqualTo(3);
-        assertThat(shadow.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shadow)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shadow)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shadow.getEffectivePower()).isEqualTo(2);
-        assertThat(shadow.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shadow)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shadow)).isEqualTo(2);
     }
 
     @Test
@@ -82,8 +82,8 @@ class MiserysShadowTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(shadow.getEffectivePower()).isEqualTo(4);
-        assertThat(shadow.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, shadow)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, shadow)).isEqualTo(4);
         assertThat(shadow.isTapped()).isTrue();
     }
 

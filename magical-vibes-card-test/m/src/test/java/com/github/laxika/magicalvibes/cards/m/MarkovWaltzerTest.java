@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AmbushViper;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -36,10 +37,10 @@ class MarkovWaltzerTest extends BaseCardTest {
         chooseTargets(viper1.getId(), viper2.getId());
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(viper1.getPowerModifier()).isEqualTo(1);
-        assertThat(viper1.getToughnessModifier()).isEqualTo(0);
-        assertThat(viper2.getPowerModifier()).isEqualTo(1);
-        assertThat(viper2.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, viper1)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, viper1)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, viper2)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, viper2)).isEqualTo(0);
     }
 
     @Test
@@ -52,7 +53,7 @@ class MarkovWaltzerTest extends BaseCardTest {
         chooseTargets(viper.getId());
         harness.passBothPriorities();
 
-        assertThat(viper.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, viper)).isEqualTo(1);
     }
 
     @Test
@@ -87,14 +88,14 @@ class MarkovWaltzerTest extends BaseCardTest {
         advanceToCombat(player1);
         chooseTargets(viper.getId());
         harness.passBothPriorities();
-        assertThat(viper.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, viper)).isEqualTo(1);
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(viper.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, viper)).isEqualTo(0);
     }
 
     @Test
@@ -107,8 +108,8 @@ class MarkovWaltzerTest extends BaseCardTest {
         chooseTargets();
         harness.passBothPriorities();
 
-        assertThat(waltzer.getPowerModifier()).isZero();
-        assertThat(viper.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, waltzer)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, viper)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -121,8 +122,8 @@ class MarkovWaltzerTest extends BaseCardTest {
         chooseTargets(waltzer.getId());
         harness.passBothPriorities();
 
-        assertThat(waltzer.getPowerModifier()).isEqualTo(1);
-        assertThat(waltzer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, waltzer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, waltzer)).isZero();
     }
 
     @Test
@@ -137,8 +138,8 @@ class MarkovWaltzerTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(viper.getId(), waltzer.getId()));
         harness.passBothPriorities();
 
-        assertThat(waltzer.getPowerModifier()).isEqualTo(1);
-        assertThat(viper.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, waltzer)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, viper)).isEqualTo(1);
     }
 
     @Test
@@ -153,8 +154,8 @@ class MarkovWaltzerTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, first));
         harness.passBothPriorities();
 
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -169,8 +170,8 @@ class MarkovWaltzerTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, waltzer));
         harness.passBothPriorities();
 
-        assertThat(viper.getPowerModifier()).isEqualTo(1);
-        assertThat(viper.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, viper)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, viper)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

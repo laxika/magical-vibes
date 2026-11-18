@@ -41,8 +41,8 @@ class AkkiEmberKeeperTest extends BaseCardTest {
         assertThat(spirits.getFirst().getCard().getColor()).isNull();
         assertThat(spirits.getFirst().getCard().getSubtypes()).contains(CardSubtype.SPIRIT);
         assertThat(spirits.getFirst().getCard().isToken()).isTrue();
-        assertThat(spirits.getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(spirits.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, spirits.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, spirits.getFirst())).isEqualTo(1);
     }
 
     @Test

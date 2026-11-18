@@ -29,8 +29,8 @@ class ForatogTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(foratog.getEffectivePower()).isEqualTo(3);
-        assertThat(foratog.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, foratog)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, foratog)).isEqualTo(4);
         harness.assertInGraveyard(player1, "Forest");
     }
 
@@ -53,8 +53,8 @@ class ForatogTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(foratog.getEffectivePower()).isEqualTo(5);
-        assertThat(foratog.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, foratog)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, foratog)).isEqualTo(6);
     }
 
     @Test
@@ -69,14 +69,14 @@ class ForatogTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(foratog.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, foratog)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(foratog.getEffectivePower()).isEqualTo(1);
-        assertThat(foratog.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, foratog)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, foratog)).isEqualTo(2);
     }
 
     @Test
@@ -139,13 +139,13 @@ class ForatogTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertInGraveyard(player1, "Forest");
-        assertThat(foratog.getEffectivePower()).isEqualTo(1);
-        assertThat(foratog.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, foratog)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, foratog)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(foratog.getEffectivePower()).isEqualTo(3);
-        assertThat(foratog.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, foratog)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, foratog)).isEqualTo(4);
     }
 
     @Test
@@ -164,8 +164,8 @@ class ForatogTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Forest");
-        assertThat(foratog.getEffectivePower()).isEqualTo(3);
-        assertThat(foratog.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, foratog)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, foratog)).isEqualTo(4);
         assertThat(foratog.isTapped()).isTrue();
     }
 

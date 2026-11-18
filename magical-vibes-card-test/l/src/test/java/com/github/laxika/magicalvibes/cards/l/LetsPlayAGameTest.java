@@ -29,16 +29,16 @@ class LetsPlayAGameTest extends BaseCardTest {
 
         cast(new int[]{0});
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
     }
 
     @Test
@@ -78,8 +78,8 @@ class LetsPlayAGameTest extends BaseCardTest {
 
         cast(new int[]{0, 2});
 
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -105,7 +105,7 @@ class LetsPlayAGameTest extends BaseCardTest {
 
         cast(new int[]{2, 1, 0});
 
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
@@ -132,7 +132,7 @@ class LetsPlayAGameTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(1);
         harness.assertLife(player1, 23);
         harness.assertLife(player2, 17);
     }
@@ -148,7 +148,7 @@ class LetsPlayAGameTest extends BaseCardTest {
 
         cast(new int[]{2});
 
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         harness.assertLife(player1, 23);
         harness.assertLife(player2, 17);
@@ -217,8 +217,8 @@ class LetsPlayAGameTest extends BaseCardTest {
 
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
     }
 
     private void cast(int[] modes) {

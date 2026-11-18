@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
 import com.github.laxika.magicalvibes.cards.n.Nourish;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -33,8 +34,8 @@ class LeoninBattlemageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(battlemage.isTapped()).isTrue();
     }
 
@@ -125,15 +126,15 @@ class LeoninBattlemageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -154,8 +155,8 @@ class LeoninBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(battlemage.isTapped()).isTrue();
-        assertThat(battlemage.getPowerModifier()).isEqualTo(1);
-        assertThat(battlemage.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, battlemage)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, battlemage)).isEqualTo(1);
     }
 
     @Test
@@ -168,8 +169,8 @@ class LeoninBattlemageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(battlemage.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -192,8 +193,8 @@ class LeoninBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(battlemage.isTapped()).isTrue();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
     }
 
     private Permanent addReadyBattlemage() {

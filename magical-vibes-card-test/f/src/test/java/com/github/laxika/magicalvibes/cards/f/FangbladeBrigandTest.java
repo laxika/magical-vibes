@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DawnhartRejuvenator;
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -26,14 +27,14 @@ class FangbladeBrigandTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(brigand.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, brigand)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, brigand, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(brigand.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, brigand)).isZero();
         assertThat(gqs.hasKeyword(gd, brigand, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -50,9 +51,9 @@ class FangbladeBrigandTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(brigand.getPowerModifier()).isEqualTo(2);
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(2);
-        assertThat(opposingCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, brigand)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isZero();
     }
 
     @Test
@@ -85,15 +86,15 @@ class FangbladeBrigandTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(brigand.getPowerModifier()).isEqualTo(2);
-        assertThat(brigand.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, brigand)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, brigand)).isZero();
         assertThat(gqs.hasKeyword(gd, brigand, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(brigand.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, brigand)).isZero();
         assertThat(gqs.hasKeyword(gd, brigand, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -110,19 +111,19 @@ class FangbladeBrigandTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = addCreatureReady(player1, new DawnhartRejuvenator());
 
-        assertThat(brigand.getPowerModifier()).isEqualTo(2);
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(2);
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(beforeResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, brigand)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isZero();
         assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.FIRST_STRIKE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(brigand.getPowerModifier()).isZero();
-        assertThat(beforeResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, brigand)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
     }
 
     @Test

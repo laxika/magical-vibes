@@ -44,8 +44,8 @@ class QuillBladeLaureateTwofoldIntentTest extends BaseCardTest {
 
         assertThat(laureate.isPrepared()).isFalse();
         assertThat(laureate.getPreparedSpellCardId()).isNull();
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
@@ -64,8 +64,8 @@ class QuillBladeLaureateTwofoldIntentTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
@@ -74,7 +74,7 @@ class QuillBladeLaureateTwofoldIntentTest extends BaseCardTest {
     void castingConsumesPreparationImmediately() {
         Permanent laureate = castLaureate();
         UUID copyId = laureate.getPreparedSpellCardId();
-        int originalPower = laureate.getEffectivePower();
+        int originalPower = gqs.getEffectivePower(gd, laureate);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castFromExile(player1, copyId, laureate.getId());
@@ -83,11 +83,11 @@ class QuillBladeLaureateTwofoldIntentTest extends BaseCardTest {
         assertThat(laureate.getPreparedSpellCardId()).isNull();
         assertThat(gd.findExiledCard(copyId)).isNull();
         assertThat(gd.stack).hasSize(1);
-        assertThat(laureate.getEffectivePower()).isEqualTo(originalPower);
+        assertThat(gqs.getEffectivePower(gd, laureate)).isEqualTo(originalPower);
 
         harness.passBothPriorities();
 
-        assertThat(laureate.getEffectivePower()).isEqualTo(originalPower + 1);
+        assertThat(gqs.getEffectivePower(gd, laureate)).isEqualTo(originalPower + 1);
     }
 
     @Test

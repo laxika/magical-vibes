@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranEscort;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,8 +29,8 @@ class UnlikelyAllianceTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, escort.getId());
         harness.passBothPriorities();
 
-        assertThat(escort.getEffectivePower()).isEqualTo(2);
-        assertThat(escort.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, escort)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, escort)).isEqualTo(5);
     }
 
     @Test
@@ -46,8 +47,8 @@ class UnlikelyAllianceTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(escort.getToughnessModifier()).isEqualTo(0);
-        assertThat(escort.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, escort)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, escort)).isEqualTo(3);
     }
 
     @Test
@@ -61,8 +62,8 @@ class UnlikelyAllianceTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, escort.getId());
         harness.passBothPriorities();
 
-        assertThat(escort.getEffectivePower()).isEqualTo(2);
-        assertThat(escort.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, escort)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, escort)).isEqualTo(5);
     }
 
     @Test
@@ -89,8 +90,8 @@ class UnlikelyAllianceTest extends BaseCardTest {
         escort.setAttacking(true);
         harness.passBothPriorities();
 
-        assertThat(escort.getEffectivePower()).isEqualTo(2);
-        assertThat(escort.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, escort)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, escort)).isEqualTo(3);
     }
 
     @Test
@@ -140,8 +141,8 @@ class UnlikelyAllianceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(escort.isTapped()).isTrue();
-        assertThat(escort.getEffectivePower()).isEqualTo(2);
-        assertThat(escort.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, escort)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, escort)).isEqualTo(5);
     }
 
     @Test
@@ -158,8 +159,8 @@ class UnlikelyAllianceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(alliance.isTapped()).isFalse();
-        assertThat(escort.getEffectivePower()).isEqualTo(2);
-        assertThat(escort.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, escort)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, escort)).isEqualTo(7);
     }
 
     @Test
@@ -175,7 +176,7 @@ class UnlikelyAllianceTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(1)));
 
         assertThat(escort.isAttacking()).isTrue();
-        assertThat(escort.getEffectivePower()).isEqualTo(2);
-        assertThat(escort.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, escort)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, escort)).isEqualTo(5);
     }
 }

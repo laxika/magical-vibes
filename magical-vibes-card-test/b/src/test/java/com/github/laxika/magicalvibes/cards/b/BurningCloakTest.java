@@ -33,8 +33,8 @@ class BurningCloakTest extends BaseCardTest {
         prepare();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         harness.castAndResolveSorcery(player1, 0, 0, target.getId());
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
 
@@ -65,8 +65,8 @@ class BurningCloakTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player2, "Hill Giant");
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -91,8 +91,8 @@ class BurningCloakTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(target);
         harness.passBothPriorities();
 
-        assertThat(other.getEffectivePower()).isEqualTo(3);
-        assertThat(other.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
         assertThat(other.getMarkedDamage()).isZero();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Burning Cloak");

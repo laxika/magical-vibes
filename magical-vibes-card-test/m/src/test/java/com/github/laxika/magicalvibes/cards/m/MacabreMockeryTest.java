@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.n.NoxiousGroodion;
 import com.github.laxika.magicalvibes.cards.e.EssenceCapture;
 import com.github.laxika.magicalvibes.model.Card;
@@ -34,7 +35,7 @@ class MacabreMockeryTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Noxious Groodion");
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
-        assertThat(returned.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, returned)).isEqualTo(2);
         harness.assertNotInGraveyard(player2, "Noxious Groodion");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -92,12 +93,12 @@ class MacabreMockeryTest extends BaseCardTest {
         });
         Permanent returned = findPermanent(player1, "Noxious Groodion");
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
-        assertThat(returned.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, returned)).isEqualTo(2);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player1, "Noxious Groodion");
-        assertThat(returned.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, returned)).isZero();
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

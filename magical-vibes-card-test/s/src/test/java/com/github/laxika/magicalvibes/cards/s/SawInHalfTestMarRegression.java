@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,8 +20,8 @@ class SawInHalfTestMarRegression extends BaseCardTest {
     @Test
     void destroysCreatureAndCreatesTwoHalfSizedCopies() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setPowerModifier(3);
-        target.setToughnessModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 3);
+        PermanentGrants.setToughnessBoost(gd, target, 1);
 
         castSawInHalf(target);
 

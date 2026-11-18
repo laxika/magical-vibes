@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PrimordialWurm;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,8 +31,8 @@ class GiftOfGrowthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -46,8 +47,8 @@ class GiftOfGrowthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -61,15 +62,15 @@ class GiftOfGrowthTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -84,8 +85,8 @@ class GiftOfGrowthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ownCreature.isTapped()).isFalse();
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(2);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test
@@ -117,8 +118,8 @@ class GiftOfGrowthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -132,15 +133,15 @@ class GiftOfGrowthTest extends BaseCardTest {
         harness.castKickedInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     private Permanent addTappedCreature(Player player) {

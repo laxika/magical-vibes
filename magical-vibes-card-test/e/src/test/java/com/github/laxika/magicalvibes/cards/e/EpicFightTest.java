@@ -24,8 +24,8 @@ class EpicFightTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         cast(new int[]{0}, List.of(creature.getId()));
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -36,8 +36,8 @@ class EpicFightTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -60,8 +60,8 @@ class EpicFightTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Hill Giant");
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
     }
 
     @Test
@@ -82,8 +82,8 @@ class EpicFightTest extends BaseCardTest {
 
         cast(new int[]{0}, List.of(creature.getId()));
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -94,10 +94,10 @@ class EpicFightTest extends BaseCardTest {
 
         cast(new int[]{0, 1}, List.of(doubled.getId(), fighter.getId(), opponent.getId()));
 
-        assertThat(doubled.getEffectivePower()).isEqualTo(4);
-        assertThat(doubled.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, doubled)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, doubled)).isEqualTo(4);
         assertThat(doubled.getMarkedDamage()).isZero();
-        assertThat(fighter.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, fighter)).isEqualTo(3);
         assertThat(fighter.getMarkedDamage()).isEqualTo(2);
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
@@ -113,8 +113,8 @@ class EpicFightTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         assertThat(creature.getMarkedDamage()).isZero();
         harness.assertInHand(player2, "Hill Giant");
     }

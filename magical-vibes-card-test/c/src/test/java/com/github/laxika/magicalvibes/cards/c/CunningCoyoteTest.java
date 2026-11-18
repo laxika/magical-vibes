@@ -30,10 +30,10 @@ class CunningCoyoteTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(armadillo.getPowerModifier()).isEqualTo(1);
-        assertThat(armadillo.getToughnessModifier()).isEqualTo(1);
-        assertThat(armadillo.getEffectivePower()).isEqualTo(1);
-        assertThat(armadillo.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, armadillo)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, armadillo)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, armadillo)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, armadillo)).isEqualTo(5);
         assertThat(PermanentGrants.keywordsOf(gd, armadillo)).contains(Keyword.HASTE);
     }
 
@@ -51,10 +51,10 @@ class CunningCoyoteTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(armadillo.getPowerModifier()).isZero();
-        assertThat(armadillo.getToughnessModifier()).isZero();
-        assertThat(armadillo.getEffectivePower()).isZero();
-        assertThat(armadillo.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, armadillo)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, armadillo)).isZero();
+        assertThat(gqs.getEffectivePower(gd, armadillo)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, armadillo)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, armadillo)).doesNotContain(Keyword.HASTE);
     }
 
@@ -69,15 +69,15 @@ class CunningCoyoteTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(existingCoyote.getPowerModifier()).isEqualTo(1);
-        assertThat(existingCoyote.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, existingCoyote)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, existingCoyote)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, existingCoyote)).contains(Keyword.HASTE);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> !permanent.getId().equals(existingCoyote.getId()))
                 .singleElement()
                 .satisfies(coyote -> {
-                    assertThat(coyote.getPowerModifier()).isZero();
-                    assertThat(coyote.getToughnessModifier()).isZero();
+                    assertThat(PermanentGrants.powerBoostOf(gd, coyote)).isZero();
+                    assertThat(PermanentGrants.toughnessBoostOf(gd, coyote)).isZero();
                     assertThat(PermanentGrants.keywordsOf(gd, coyote)).doesNotContain(Keyword.HASTE);
                 });
     }
@@ -124,7 +124,7 @@ class CunningCoyoteTest extends BaseCardTest {
         assertThat(gd.plottedCardIds).contains(coyote.getId());
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isZero();
-        assertThat(armadillo.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, armadillo)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, armadillo)).doesNotContain(Keyword.HASTE);
         assertThatThrownBy(() -> harness.castFromExile(player1, coyote.getId(), armadillo.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -138,8 +138,8 @@ class CunningCoyoteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Cunning Coyote");
-        assertThat(armadillo.getPowerModifier()).isEqualTo(1);
-        assertThat(armadillo.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, armadillo)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, armadillo)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, armadillo)).contains(Keyword.HASTE);
         assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isEqualTo(1);
     }
@@ -174,13 +174,13 @@ class CunningCoyoteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.HASTE);
         assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
                 .satisfies(remaining -> {
-                    assertThat(remaining.getPowerModifier()).isZero();
-                    assertThat(remaining.getToughnessModifier()).isZero();
+                    assertThat(PermanentGrants.powerBoostOf(gd, remaining)).isZero();
+                    assertThat(PermanentGrants.toughnessBoostOf(gd, remaining)).isZero();
                 });
     }
 

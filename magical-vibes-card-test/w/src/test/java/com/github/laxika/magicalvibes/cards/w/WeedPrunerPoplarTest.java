@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BurrentonShieldBearers;
 import com.github.laxika.magicalvibes.cards.c.CennsTactician;
 import com.github.laxika.magicalvibes.cards.m.Mutavault;
@@ -48,10 +49,10 @@ class WeedPrunerPoplarTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(-1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(-1);
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -64,8 +65,8 @@ class WeedPrunerPoplarTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(-1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(-1);
     }
 
     @Test
@@ -82,8 +83,8 @@ class WeedPrunerPoplarTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, otherPoplar.getId());
         harness.passBothPriorities();
 
-        assertThat(otherPoplar.getPowerModifier()).isEqualTo(-1);
-        assertThat(otherPoplar.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherPoplar)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherPoplar)).isEqualTo(-1);
     }
 
     @Test
@@ -121,8 +122,8 @@ class WeedPrunerPoplarTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -139,8 +140,8 @@ class WeedPrunerPoplarTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -170,8 +171,8 @@ class WeedPrunerPoplarTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Weed-Pruner Poplar");
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
     }
 
     @Test
@@ -189,9 +190,9 @@ class WeedPrunerPoplarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 }

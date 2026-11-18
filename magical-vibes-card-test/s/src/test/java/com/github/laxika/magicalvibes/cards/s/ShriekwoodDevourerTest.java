@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -107,7 +108,7 @@ class ShriekwoodDevourerTest extends BaseCardTest {
 
         declareAttackers(List.of(1));
         Permanent laterAttacker = addCreatureReady(player1, new GrizzlyBears());
-        laterAttacker.setPowerModifier(5);
+        PermanentGrants.setPowerBoost(gd, laterAttacker, 5);
         laterAttacker.setAttacking(true);
         laterAttacker.tap();
         harness.passBothPriorities();
@@ -177,7 +178,7 @@ class ShriekwoodDevourerTest extends BaseCardTest {
         Permanent fourth = addTappedLand(player1);
 
         declareAttackers(List.of(1, 2));
-        firstAttacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, firstAttacker, 1);
         harness.passBothPriorities();
 
         PendingInteraction.MultiPermanentChoice choice =

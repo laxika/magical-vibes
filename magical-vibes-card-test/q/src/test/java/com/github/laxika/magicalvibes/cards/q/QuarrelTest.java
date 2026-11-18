@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -89,7 +90,7 @@ class QuarrelTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
-        source.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, source, 1);
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
@@ -100,7 +101,7 @@ class QuarrelTest extends BaseCardTest {
     void negativePowerDealsNoDamage() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        source.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, source, -3);
         harness.setHand(player1, List.of(new Quarrel()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 

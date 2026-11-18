@@ -28,8 +28,8 @@ class KitsuneLoreweaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(loreweaver.getEffectivePower()).isEqualTo(2);
-        assertThat(loreweaver.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, loreweaver)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, loreweaver)).isEqualTo(4);
     }
 
     @Test
@@ -44,12 +44,12 @@ class KitsuneLoreweaverTest extends BaseCardTest {
         harness.setHand(player1, hand(4));
         harness.passBothPriorities();
 
-        assertThat(loreweaver.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, loreweaver)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(loreweaver.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, loreweaver)).isEqualTo(1);
     }
 
     @Test
@@ -63,8 +63,8 @@ class KitsuneLoreweaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(loreweaver.getEffectivePower()).isEqualTo(2);
-        assertThat(loreweaver.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, loreweaver)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, loreweaver)).isEqualTo(1);
     }
 
     @Test
@@ -78,17 +78,17 @@ class KitsuneLoreweaverTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(loreweaver.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, loreweaver)).isEqualTo(3);
 
         harness.setHand(player1, hand(4));
-        assertThat(loreweaver.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, loreweaver)).isEqualTo(3);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(loreweaver.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, loreweaver)).isEqualTo(7);
 
         harness.setHand(player1, hand(0));
-        assertThat(loreweaver.getEffectivePower()).isEqualTo(2);
-        assertThat(loreweaver.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, loreweaver)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, loreweaver)).isEqualTo(7);
     }
 
     @Test
@@ -105,8 +105,8 @@ class KitsuneLoreweaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(loreweaver.getEffectivePower()).isEqualTo(2);
-        assertThat(loreweaver.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, loreweaver)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, loreweaver)).isEqualTo(3);
         assertThat(loreweaver.isTapped()).isTrue();
     }
 

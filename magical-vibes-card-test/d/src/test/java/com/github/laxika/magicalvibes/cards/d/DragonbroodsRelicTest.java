@@ -49,8 +49,8 @@ class DragonbroodsRelicTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Dragonbroods' Relic");
         Permanent dragon = findPermanent(player1, "Reliquary Dragon");
-        assertThat(dragon.getEffectivePower()).isEqualTo(4);
-        assertThat(dragon.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(4);
         assertThat(dragon.getCard().getColors()).containsExactlyInAnyOrder(
                 CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN);
         assertThat(dragon.getCard().getKeywords()).contains(Keyword.FLYING, Keyword.LIFELINK);

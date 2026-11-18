@@ -47,8 +47,8 @@ class AssembleTheEntmootTest extends BaseCardTest {
         assertThat(treefolk).hasSize(3);
         assertThat(treefolk).allSatisfy(token -> {
             assertThat(token.isTapped()).isTrue();
-            assertThat(token.getEffectivePower()).isEqualTo(2);
-            assertThat(token.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
             assertThat(token.getCounterCount(CounterType.REACH)).isEqualTo(1);
             assertThat(gqs.hasKeyword(gd, token, Keyword.REACH)).isTrue();
         });
@@ -72,8 +72,8 @@ class AssembleTheEntmootTest extends BaseCardTest {
                 .toList();
         assertThat(treefolk).hasSize(3);
         assertThat(treefolk).allSatisfy(token -> {
-            assertThat(token.getEffectivePower()).isEqualTo(2);
-            assertThat(token.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
             assertThat(token.getCounterCount(CounterType.REACH)).isEqualTo(1);
         });
 
@@ -82,8 +82,8 @@ class AssembleTheEntmootTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(treefolk).allSatisfy(token -> {
-            assertThat(token.getEffectivePower()).isEqualTo(2);
-            assertThat(token.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         });
     }
 
@@ -111,8 +111,8 @@ class AssembleTheEntmootTest extends BaseCardTest {
                 .toList();
         assertThat(treefolk).hasSize(3);
         assertThat(treefolk).allSatisfy(token -> {
-            assertThat(token.getEffectivePower()).isEqualTo(4);
-            assertThat(token.getEffectiveToughness()).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         });
         harness.assertNotOnBattlefield(player2, "Treefolk");
     }

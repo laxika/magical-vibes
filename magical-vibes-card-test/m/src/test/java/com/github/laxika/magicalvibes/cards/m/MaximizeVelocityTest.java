@@ -28,8 +28,8 @@ class MaximizeVelocityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
@@ -44,8 +44,8 @@ class MaximizeVelocityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
@@ -63,7 +63,7 @@ class MaximizeVelocityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent battlefieldBears = findPermanent(player1, "Grizzly Bears");
-        assertThat(battlefieldBears.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, battlefieldBears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, battlefieldBears, Keyword.HASTE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(discarded.getId()));
@@ -107,8 +107,8 @@ class MaximizeVelocityTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
@@ -142,8 +142,8 @@ class MaximizeVelocityTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }

@@ -76,8 +76,8 @@ class NemataPrimevalWardenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(nemata.getEffectivePower()).isEqualTo(5);
-        assertThat(nemata.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, nemata)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, nemata)).isEqualTo(6);
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
     }
 

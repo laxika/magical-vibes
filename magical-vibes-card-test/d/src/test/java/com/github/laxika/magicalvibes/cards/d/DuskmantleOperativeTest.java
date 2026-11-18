@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -54,7 +55,7 @@ class DuskmantleOperativeTest extends BaseCardTest {
     @DisplayName("Uses increased current power when rejecting blockers")
     void cannotBeBlockedWhenCurrentPowerIsAtLeastFour(int power) {
         Permanent blocker = addCreatureReady(player2, new DuskmantleOperative());
-        blocker.setPowerModifier(power - 2);
+        PermanentGrants.setPowerBoost(gd, blocker, power - 2);
         Permanent operative = addCreatureReady(player1, new DuskmantleOperative());
         prepareBlockers(operative);
 
@@ -67,7 +68,7 @@ class DuskmantleOperativeTest extends BaseCardTest {
     @DisplayName("Can be blocked by a creature whose current power is exactly 3")
     void canBeBlockedWhenCurrentPowerIsThree() {
         Permanent blocker = addCreatureReady(player2, new DuskmantleOperative());
-        blocker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, blocker, 1);
         Permanent operative = addCreatureReady(player1, new DuskmantleOperative());
         prepareBlockers(operative);
 
@@ -80,7 +81,7 @@ class DuskmantleOperativeTest extends BaseCardTest {
     @DisplayName("Can be blocked by a printed power 4 creature reduced to power 3")
     void canBeBlockedWhenPrintedPowerFourIsReduced() {
         Permanent blocker = addCreatureReady(player2, new AirElemental());
-        blocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
         Permanent operative = addCreatureReady(player1, new DuskmantleOperative());
         prepareBlockers(operative);
 

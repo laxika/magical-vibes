@@ -39,12 +39,9 @@ public class SetSelfBasePowerFromTargetPowerEffectHandler implements NormalEffec
 
         int power = gameQueryService.getEffectivePower(gameData, target);
         var setter = new SetBasePowerToughnessEffect(power, null, GrantScope.SELF);
-        FloatingContinuousEffect floating = gameData.addFloatingEffect(new FloatingContinuousEffect(
+        gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), source.getId(), entry.getControllerId(),
                 setter, source.getId(), null, null, Duration.PERMANENT, 0));
-        source.setBasePowerOverriddenPermanently(true);
-        source.setPermanentBasePowerOverride(power);
-        source.setPermanentBasePowerOverrideTimestamp(floating.timestamp());
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(source.getCard())

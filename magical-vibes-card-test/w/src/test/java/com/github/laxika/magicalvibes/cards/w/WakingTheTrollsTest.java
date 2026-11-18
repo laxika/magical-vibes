@@ -89,8 +89,8 @@ class WakingTheTrollsTest extends BaseCardTest {
             assertThat(troll.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(troll.getCard().getSubtypes()).containsExactly(CardSubtype.TROLL, CardSubtype.WARRIOR);
             assertThat(troll.getCard().getKeywords()).contains(Keyword.TRAMPLE);
-            assertThat(troll.getEffectivePower()).isEqualTo(4);
-            assertThat(troll.getEffectiveToughness()).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, troll)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, troll)).isEqualTo(4);
         });
     }
 

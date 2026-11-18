@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -205,9 +206,9 @@ class QuandrixCharmTest extends BaseCardTest {
             harness.passBothPriorities();
 
             Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-            assertThat(bear.isBasePowerToughnessOverriddenUntilEndOfTurn()).isTrue();
-            assertThat(bear.getEffectivePower()).isEqualTo(5);
-            assertThat(bear.getEffectiveToughness()).isEqualTo(5);
+            assertThat(PermanentGrants.hasBasePowerToughnessSet(gd, bear)).isTrue();
+            assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+            assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(5);
         }
 
         @Test
@@ -226,9 +227,9 @@ class QuandrixCharmTest extends BaseCardTest {
             harness.passBothPriorities();
 
             Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-            assertThat(bear.isBasePowerToughnessOverriddenUntilEndOfTurn()).isFalse();
-            assertThat(bear.getEffectivePower()).isEqualTo(2);
-            assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+            assertThat(PermanentGrants.hasBasePowerToughnessSet(gd, bear)).isFalse();
+            assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         }
 
         @Test

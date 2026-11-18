@@ -22,14 +22,14 @@ class EndRazeForerunnersTest extends BaseCardTest {
         castEndRazeForerunners();
 
         Permanent endRaze = findPermanent(player1, "End-Raze Forerunners");
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
-        assertThat(endRaze.getEffectivePower()).isEqualTo(7);
-        assertThat(endRaze.getEffectiveToughness()).isEqualTo(7);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, endRaze)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, endRaze)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
     }
@@ -44,8 +44,8 @@ class EndRazeForerunnersTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isFalse();
     }
@@ -57,11 +57,11 @@ class EndRazeForerunnersTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new SauroformHybrid());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         resolveAllTriggers();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
@@ -75,8 +75,8 @@ class EndRazeForerunnersTest extends BaseCardTest {
         Permanent creature = harness.enterBattlefieldAndReturn(player1, new SauroformHybrid());
         resolveAllTriggers();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
@@ -92,8 +92,8 @@ class EndRazeForerunnersTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
@@ -107,12 +107,12 @@ class EndRazeForerunnersTest extends BaseCardTest {
         castEndRazeForerunners();
         Permanent second = findPermanents(player1, "End-Raze Forerunners").get(1);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(6);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(6);
-        assertThat(first.getEffectivePower()).isEqualTo(9);
-        assertThat(first.getEffectiveToughness()).isEqualTo(9);
-        assertThat(second.getEffectivePower()).isEqualTo(7);
-        assertThat(second.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(7);
     }
 
     private void castEndRazeForerunners() {

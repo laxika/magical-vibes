@@ -98,8 +98,8 @@ class BaruFistOfKrosaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent wurm = findPermanent(player1, "Wurm");
-        assertThat(wurm.getEffectivePower()).isEqualTo(3);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(3);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArtificialEvolution;
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.b.Bitterblossom;
@@ -83,8 +84,8 @@ class DeathsporeThallidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
     }
 
     @Test
@@ -154,8 +155,8 @@ class DeathsporeThallidTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test

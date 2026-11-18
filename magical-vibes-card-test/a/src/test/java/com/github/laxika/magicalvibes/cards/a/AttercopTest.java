@@ -23,17 +23,17 @@ class AttercopTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
-        assertThat(attercop.getEffectivePower()).isEqualTo(2);
-        assertThat(attercop.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, attercop)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attercop)).isEqualTo(1);
         assertThat(gd.stack).hasSize(2);
 
         harness.passBothPriorities();
-        assertThat(attercop.getEffectivePower()).isEqualTo(3);
-        assertThat(attercop.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attercop)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attercop)).isEqualTo(2);
 
         harness.passBothPriorities();
-        assertThat(attercop.getEffectivePower()).isEqualTo(4);
-        assertThat(attercop.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attercop)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attercop)).isEqualTo(3);
     }
 
     @Test
@@ -48,10 +48,10 @@ class AttercopTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(first.getEffectiveToughness()).isEqualTo(2);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
     }
 
     @Test
@@ -63,8 +63,8 @@ class AttercopTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(attercop.getEffectivePower()).isEqualTo(3);
-        assertThat(attercop.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attercop)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attercop)).isEqualTo(2);
     }
 
     @Test
@@ -77,8 +77,8 @@ class AttercopTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(attercop.getEffectivePower()).isEqualTo(2);
-        assertThat(attercop.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, attercop)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attercop)).isEqualTo(1);
     }
 
     @Test
@@ -89,13 +89,13 @@ class AttercopTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        assertThat(attercop.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attercop)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attercop.getEffectivePower()).isEqualTo(2);
-        assertThat(attercop.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, attercop)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attercop)).isEqualTo(1);
     }
 }

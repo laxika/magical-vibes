@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class FrostburnWeirdTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(weird.getPowerModifier()).isEqualTo(1);
-        assertThat(weird.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isEqualTo(-1);
     }
 
     @Test
@@ -36,8 +37,8 @@ class FrostburnWeirdTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(weird.getPowerModifier()).isEqualTo(1);
-        assertThat(weird.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isEqualTo(-1);
     }
 
     @Test
@@ -51,8 +52,8 @@ class FrostburnWeirdTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(weird.getPowerModifier()).isEqualTo(2);
-        assertThat(weird.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isEqualTo(-2);
     }
 
     @Test
@@ -63,15 +64,15 @@ class FrostburnWeirdTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(weird.getPowerModifier()).isEqualTo(1);
-        assertThat(weird.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(weird.getPowerModifier()).isEqualTo(0);
-        assertThat(weird.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isEqualTo(0);
     }
 
     @Test
@@ -85,8 +86,8 @@ class FrostburnWeirdTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(weird.getPowerModifier()).isEqualTo(1);
-        assertThat(weird.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isEqualTo(-1);
         assertThat(weird.isTapped()).isTrue();
     }
 
@@ -100,8 +101,8 @@ class FrostburnWeirdTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(weird.getPowerModifier()).isZero();
-        assertThat(weird.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isZero();
     }
 
     @Test

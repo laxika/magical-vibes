@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CallTheCavalry;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -40,7 +41,7 @@ class WildwoodMentorTest extends BaseCardTest {
         Permanent mentor = addCreatureReady(player1, new WildwoodMentor());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         Permanent groundCreature = addCreatureReady(player1, new GrizzlyBears());
-        mentor.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, mentor, 2);
 
         declareAttackers(List.of(0, 1));
 

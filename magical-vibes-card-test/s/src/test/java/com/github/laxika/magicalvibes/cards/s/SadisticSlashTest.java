@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -30,8 +31,8 @@ class SadisticSlashTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-5);
-        assertThat(target.getToughnessModifier()).isEqualTo(-5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-5);
     }
 
     @Test
@@ -46,8 +47,8 @@ class SadisticSlashTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test

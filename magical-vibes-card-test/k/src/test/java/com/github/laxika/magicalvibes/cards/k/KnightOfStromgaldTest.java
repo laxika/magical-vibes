@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -106,8 +107,8 @@ class KnightOfStromgaldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(knight.getPowerModifier()).isEqualTo(1);
-        assertThat(knight.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(0);
     }
 
     @Test
@@ -119,13 +120,13 @@ class KnightOfStromgaldTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(knight.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(knight.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(0);
     }
 
     @Test
@@ -153,7 +154,7 @@ class KnightOfStromgaldTest extends BaseCardTest {
 
         assertThat(knight.isTapped()).isTrue();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(knight.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(1);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,9 +29,9 @@ class HydrosurgeTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-5);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -61,7 +62,7 @@ class HydrosurgeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test

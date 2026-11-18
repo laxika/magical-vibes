@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
@@ -50,10 +51,10 @@ class MightyLeapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(2);
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
     }
 
@@ -71,8 +72,8 @@ class MightyLeapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 
@@ -106,11 +107,11 @@ class MightyLeapTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
     }
 
@@ -140,15 +141,15 @@ class MightyLeapTest extends BaseCardTest {
         harness.castInstant(player1, 0, pegasus.getId());
         harness.passBothPriorities();
 
-        assertThat(pegasus.getEffectivePower()).isEqualTo(6);
-        assertThat(pegasus.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, pegasus)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, pegasus)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, pegasus, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(pegasus.getPowerModifier()).isZero();
-        assertThat(pegasus.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pegasus)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pegasus)).isZero();
         assertThat(gqs.hasKeyword(gd, pegasus, Keyword.FLYING)).isTrue();
     }
 }

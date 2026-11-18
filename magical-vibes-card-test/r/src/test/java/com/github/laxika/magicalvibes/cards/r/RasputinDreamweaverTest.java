@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DrownInIchor;
 import com.github.laxika.magicalvibes.cards.p.Pyrotechnics;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -63,7 +64,7 @@ class RasputinDreamweaverTest extends BaseCardTest {
     void damagePreventionAbilityPreventsOnlyTheNextDamageToRasputin() {
         Permanent rasputin = addCreatureReady(player1, new RasputinDreamweaver());
         rasputin.setCounterCount(CounterType.DREAM, 1);
-        rasputin.setToughnessModifier(4);
+        PermanentGrants.setToughnessBoost(gd, rasputin, 4);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -116,7 +117,7 @@ class RasputinDreamweaverTest extends BaseCardTest {
     void staticLimitAlsoAppliesToProliferate() {
         Permanent rasputin = addCreatureReady(player1, new RasputinDreamweaver());
         rasputin.setCounterCount(CounterType.DREAM, 7);
-        rasputin.setToughnessModifier(4);
+        PermanentGrants.setToughnessBoost(gd, rasputin, 4);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);

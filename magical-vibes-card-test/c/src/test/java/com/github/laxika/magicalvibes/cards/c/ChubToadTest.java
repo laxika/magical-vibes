@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,17 +29,17 @@ class ChubToadTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(attackingToad.getPowerModifier()).isZero();
-        assertThat(attackingToad.getToughnessModifier()).isZero();
-        assertThat(blockingToad.getPowerModifier()).isZero();
-        assertThat(blockingToad.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attackingToad)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attackingToad)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blockingToad)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blockingToad)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(attackingToad.getPowerModifier()).isEqualTo(2);
-        assertThat(attackingToad.getToughnessModifier()).isEqualTo(2);
-        assertThat(blockingToad.getPowerModifier()).isEqualTo(2);
-        assertThat(blockingToad.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attackingToad)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attackingToad)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blockingToad)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blockingToad)).isEqualTo(2);
     }
 
     @Test
@@ -52,8 +53,8 @@ class ChubToadTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(toad.getPowerModifier()).isEqualTo(2);
-        assertThat(toad.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, toad)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, toad)).isEqualTo(2);
     }
 
     @Test
@@ -67,8 +68,8 @@ class ChubToadTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(toad.getPowerModifier()).isEqualTo(2);
-        assertThat(toad.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, toad)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, toad)).isEqualTo(2);
     }
 
     @Test
@@ -85,8 +86,8 @@ class ChubToadTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(toad.getPowerModifier()).isEqualTo(2);
-        assertThat(toad.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, toad)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, toad)).isEqualTo(2);
     }
 
     @Test
@@ -106,8 +107,8 @@ class ChubToadTest extends BaseCardTest {
                 new BlockerAssignment(toadIndex, 1)));
         resolveAllTriggers();
 
-        assertThat(toad.getPowerModifier()).isEqualTo(2);
-        assertThat(toad.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, toad)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, toad)).isEqualTo(2);
     }
 
     @Test
@@ -120,8 +121,8 @@ class ChubToadTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(toad.getPowerModifier()).isZero();
-        assertThat(toad.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, toad)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, toad)).isZero();
     }
 
     @Test
@@ -139,7 +140,7 @@ class ChubToadTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(toad.getPowerModifier()).isZero();
-        assertThat(toad.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, toad)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, toad)).isZero();
     }
 }

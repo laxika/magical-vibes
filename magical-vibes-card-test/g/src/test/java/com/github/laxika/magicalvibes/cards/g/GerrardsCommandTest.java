@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AuroraGriffin;
 import com.github.laxika.magicalvibes.cards.m.ManaCylix;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -25,8 +26,8 @@ class GerrardsCommandTest extends BaseCardTest {
         castGerrardsCommand(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -36,8 +37,8 @@ class GerrardsCommandTest extends BaseCardTest {
         castGerrardsCommand(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -50,8 +51,8 @@ class GerrardsCommandTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -80,11 +81,11 @@ class GerrardsCommandTest extends BaseCardTest {
         castGerrardsCommand(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(other.isTapped()).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -105,11 +106,11 @@ class GerrardsCommandTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof GerrardsCommand);
         assertThat(other.isTapped()).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     private Permanent addTappedCreature() {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.o.OgreResister;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -26,9 +27,9 @@ class GoblinWardriverTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
 
-        assertThat(ogre.getPowerModifier()).isEqualTo(1);
-        assertThat(ogre.getEffectivePower()).isEqualTo(5);
-        assertThat(ogre.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ogre)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ogre)).isEqualTo(0);
     }
 
     @Test
@@ -41,8 +42,8 @@ class GoblinWardriverTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
 
-        assertThat(wardriver.getPowerModifier()).isEqualTo(0);
-        assertThat(wardriver.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, wardriver)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wardriver)).isEqualTo(0);
     }
 
     @Test
@@ -54,8 +55,8 @@ class GoblinWardriverTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(nonattacker.getPowerModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -66,7 +67,7 @@ class GoblinWardriverTest extends BaseCardTest {
         declareAttackers(List.of(1));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -81,12 +82,12 @@ class GoblinWardriverTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(third.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
-        assertThat(third.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, third)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, third)).isZero();
     }
 
     @Test
@@ -98,7 +99,7 @@ class GoblinWardriverTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0, 1));
-            assertThat(ogre.getPowerModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isZero();
             harness.passPriority(player1);
             harness.castInstant(player2, 0, wardriver.getId());
             harness.passBothPriorities();
@@ -106,8 +107,8 @@ class GoblinWardriverTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(ogre.getPowerModifier()).isEqualTo(1);
-        assertThat(ogre.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ogre)).isZero();
     }
 
     @Test
@@ -118,11 +119,11 @@ class GoblinWardriverTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         harness.passUntil(TurnStep.END_STEP);
 
-        assertThat(ogre.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isEqualTo(1);
 
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(ogre.getPowerModifier()).isZero();
-        assertThat(ogre.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ogre)).isZero();
     }
 }

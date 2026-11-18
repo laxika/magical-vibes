@@ -82,9 +82,9 @@ class RhonasTheIndomitableTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.TRAMPLE);
     }
 
@@ -104,8 +104,8 @@ class RhonasTheIndomitableTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.TRAMPLE);
     }
 
@@ -121,7 +121,7 @@ class RhonasTheIndomitableTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.TRAMPLE);
     }
 
@@ -191,7 +191,7 @@ class RhonasTheIndomitableTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bears.getId());
         resolveAllTriggers();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.TRAMPLE);
     }
 

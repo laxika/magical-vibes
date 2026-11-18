@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CylianElf;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -43,7 +44,7 @@ class SoulsGraceTest extends BaseCardTest {
     void gainsLifeAccountsForPowerModifiers() {
         harness.setLife(player1, 10);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new CylianElf());
-        creature.setPowerModifier(3); // 2 + 3 = 5 effective power
+        PermanentGrants.setPowerBoost(gd, creature, 3); // 2 + 3 = 5 effective power
 
         prepareSoulsGrace();
         harness.castAndResolveInstant(player1, 0, creature.getId());
@@ -82,7 +83,7 @@ class SoulsGraceTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new CylianElf());
         prepareSoulsGrace();
         harness.castInstant(player1, 0, creature.getId());
-        creature.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, creature, 3);
 
         harness.passBothPriorities();
 
@@ -93,7 +94,7 @@ class SoulsGraceTest extends BaseCardTest {
     @DisplayName("Zero power causes no life gain")
     void zeroPowerGainsNoLife() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new CylianElf());
-        creature.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, creature, -2);
         prepareSoulsGrace();
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
@@ -106,7 +107,7 @@ class SoulsGraceTest extends BaseCardTest {
     @DisplayName("Negative power causes no life gain or life loss")
     void negativePowerDoesNotLoseLife() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new CylianElf());
-        creature.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, creature, -3);
         prepareSoulsGrace();
 
         harness.castAndResolveInstant(player1, 0, creature.getId());

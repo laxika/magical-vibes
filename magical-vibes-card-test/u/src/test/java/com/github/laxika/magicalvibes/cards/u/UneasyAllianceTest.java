@@ -67,8 +67,8 @@ class UneasyAllianceTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(ninja.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(ninja.getCard().getSubtypes()).containsExactly(CardSubtype.NINJA);
-        assertThat(ninja.getEffectivePower()).isEqualTo(1);
-        assertThat(ninja.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ninja)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ninja)).isEqualTo(1);
     }
 
     @Test

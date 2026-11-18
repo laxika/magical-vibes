@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CloudcrownOak;
 import com.github.laxika.magicalvibes.cards.l.LowlandOaf;
 import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
@@ -64,8 +65,8 @@ class HornetHarasserTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve trigger
 
         Permanent bear = findPermanent(player2, "Cloudcrown Oak");
-        assertThat(bear.getPowerModifier()).isEqualTo(-2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(-2);
     }
 
     @Test
@@ -105,8 +106,8 @@ class HornetHarasserTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player2, "Cloudcrown Oak");
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -181,6 +182,6 @@ class HornetHarasserTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(findPermanent(player2, "Woodland Changeling").getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player2, "Woodland Changeling"))).isZero();
     }
 }

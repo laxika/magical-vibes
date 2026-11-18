@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -32,8 +33,8 @@ class TimelyInterferenceTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(Forest.class);
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
@@ -49,7 +50,7 @@ class TimelyInterferenceTest extends BaseCardTest {
         harness.castKickedInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(Forest.class);
     }
@@ -85,7 +86,7 @@ class TimelyInterferenceTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
@@ -166,8 +167,8 @@ class TimelyInterferenceTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1);
         castKicked(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(Forest.class);
     }

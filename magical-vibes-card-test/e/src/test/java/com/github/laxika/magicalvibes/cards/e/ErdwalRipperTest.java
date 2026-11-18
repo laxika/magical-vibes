@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.t.TragicSlip;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -80,7 +81,7 @@ class ErdwalRipperTest extends BaseCardTest {
     @DisplayName("Zero power deals no damage and does not trigger a counter")
     void zeroPowerDoesNotTrigger() {
         Permanent ripper = addReadyRipper();
-        ripper.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, ripper, -2);
         ripper.setAttacking(true);
         harness.setLife(player2, 20);
 

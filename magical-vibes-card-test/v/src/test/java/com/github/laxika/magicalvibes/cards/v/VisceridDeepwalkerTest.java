@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.t.TeferiMageOfZhalfir;
 import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -105,15 +106,15 @@ class VisceridDeepwalkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(permanent.getPowerModifier()).isEqualTo(1);
-        assertThat(permanent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(permanent.getPowerModifier()).isZero();
-        assertThat(permanent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isZero();
     }
 
     private VisceridDeepwalker suspendCard() {
@@ -182,14 +183,14 @@ class VisceridDeepwalkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(2);
-        assertThat(source.getToughnessModifier()).isZero();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
     @Test

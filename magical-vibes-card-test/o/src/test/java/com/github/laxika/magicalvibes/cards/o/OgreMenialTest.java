@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,8 +25,8 @@ class OgreMenialTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(perm.getPowerModifier()).isEqualTo(1);
-        assertThat(perm.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, perm)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, perm)).isEqualTo(0);
     }
 
     @Test
@@ -42,7 +43,7 @@ class OgreMenialTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(perm.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, perm)).isEqualTo(3);
     }
 
     @Test
@@ -99,11 +100,11 @@ class OgreMenialTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(perm.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, perm)).isZero();
         harness.passBothPriorities();
 
-        assertThat(perm.getPowerModifier()).isEqualTo(1);
-        assertThat(perm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, perm)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, perm)).isZero();
         assertThat(perm.isTapped()).isTrue();
     }
 
@@ -114,13 +115,13 @@ class OgreMenialTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(perm.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, perm)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(perm.getPowerModifier()).isZero();
-        assertThat(perm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, perm)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, perm)).isZero();
     }
 
     @Test
@@ -150,6 +151,6 @@ class OgreMenialTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
         assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 }

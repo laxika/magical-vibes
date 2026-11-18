@@ -26,8 +26,8 @@ class GoblinSledderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Goblin Sledder");
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
                 permanent -> permanent.getCard() instanceof GoblinSledder);
     }
@@ -42,8 +42,8 @@ class GoblinSledderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Goblin Sledder");
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -54,13 +54,13 @@ class GoblinSledderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -93,8 +93,8 @@ class GoblinSledderTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Glory Seeker");
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
                 permanent -> permanent.getId().equals(sledder.getId()));
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -109,8 +109,8 @@ class GoblinSledderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, sacrifice.getId());
         harness.passBothPriorities();
 
-        assertThat(sledder.getEffectivePower()).isEqualTo(2);
-        assertThat(sledder.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, sledder)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sledder)).isEqualTo(2);
         assertThat(sledder.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Goblin Sledder");
     }
@@ -124,24 +124,24 @@ class GoblinSledderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.handlePermanentChosen(player1, sacrifice.getId());
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         harness.activateAbility(player1, 0, null, target.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(sledder.getId()));
         harness.passBothPriorities();
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -160,7 +160,7 @@ class GoblinSledderTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Goblin Sledder");
         harness.assertNotInGraveyard(player2, "Goblin Sledder");
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.Rootwalla;
 import com.github.laxika.magicalvibes.cards.f.FireBellyChangeling;
 import com.github.laxika.magicalvibes.cards.s.Smokebraider;
@@ -43,8 +44,8 @@ class CeaselessSearbladesTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         resolveAllTriggers();
 
-        assertThat(searblades.getPowerModifier()).isEqualTo(1);
-        assertThat(searblades.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, searblades)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, searblades)).isEqualTo(0);
     }
 
     @Test
@@ -59,7 +60,7 @@ class CeaselessSearbladesTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         resolveAllTriggers();
 
-        assertThat(searblades.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, searblades)).isEqualTo(2);
     }
 
     @Test
@@ -75,7 +76,7 @@ class CeaselessSearbladesTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(e ->
                 e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && e.getCard().getName().equals("Ceaseless Searblades"));
-        assertThat(searblades.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, searblades)).isEqualTo(0);
     }
 
     @Test
@@ -87,13 +88,13 @@ class CeaselessSearbladesTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
         resolveAllTriggers();
-        assertThat(searblades.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, searblades)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(searblades.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, searblades)).isEqualTo(0);
     }
 
     @Test
@@ -107,15 +108,15 @@ class CeaselessSearbladesTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(searblades.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, searblades)).isZero();
         harness.passBothPriorities();
 
-        assertThat(searblades.getPowerModifier()).isEqualTo(1);
-        assertThat(servant.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, searblades)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, servant)).isZero();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         resolveAllTriggers();
-        assertThat(servant.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, servant)).isEqualTo(1);
     }
 
     @Test
@@ -130,7 +131,7 @@ class CeaselessSearbladesTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         resolveAllTriggers();
-        assertThat(searblades.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, searblades)).isZero();
     }
 
     @Test
@@ -143,8 +144,8 @@ class CeaselessSearbladesTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         resolveAllTriggers();
 
-        assertThat(searblades.getPowerModifier()).isEqualTo(1);
-        assertThat(searblades.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, searblades)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, searblades)).isZero();
     }
 
     @Test
@@ -158,8 +159,8 @@ class CeaselessSearbladesTest extends BaseCardTest {
         harness.activateAbility(player1, 2, null, null);
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
     }
 
     @Test
@@ -173,7 +174,7 @@ class CeaselessSearbladesTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
         resolveAllTriggers();
 
-        assertThat(searblades.getPowerModifier()).isEqualTo(1);
-        assertThat(searblades.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, searblades)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, searblades)).isZero();
     }
 }

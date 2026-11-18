@@ -32,8 +32,8 @@ class FractalizeTest extends BaseCardTest {
 
         castFractalize(elemental.getId(), 3);
 
-        assertThat(elemental.getEffectivePower()).isEqualTo(4);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(4);
         assertThat(gqs.hasColor(gd, elemental, CardColor.GREEN)).isTrue();
         assertThat(gqs.hasColor(gd, elemental, CardColor.BLUE)).isTrue();
         assertThat(gqs.effectiveCreatureSubtypes(gd, elemental)).containsExactly(CardSubtype.FRACTAL);
@@ -62,8 +62,8 @@ class FractalizeTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(elemental.getEffectivePower()).isEqualTo(4);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(4);
         assertThat(gqs.hasColor(gd, elemental, CardColor.BLUE)).isTrue();
         assertThat(gqs.hasColor(gd, elemental, CardColor.GREEN)).isFalse();
         assertThat(gd.floatingEffectsOnPermanent(elemental.getId(), GrantSubtypeEffect.class)).isEmpty();

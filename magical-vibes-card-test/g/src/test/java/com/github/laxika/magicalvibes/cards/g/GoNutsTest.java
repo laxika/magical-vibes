@@ -22,8 +22,8 @@ class GoNutsTest extends BaseCardTest {
 
         cast(new int[]{0}, List.of(target.getId()), List.of());
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -47,8 +47,8 @@ class GoNutsTest extends BaseCardTest {
                 counterTarget.getId(), counterTarget.getId(), opposingCreature.getId()),
                 List.of(teammate.getId()));
 
-        assertThat(counterTarget.getEffectivePower()).isEqualTo(3);
-        assertThat(counterTarget.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, counterTarget)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, counterTarget)).isEqualTo(3);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Hill Giant");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -78,7 +78,7 @@ class GoNutsTest extends BaseCardTest {
 
         assertThat(fighter.isTapped()).isTrue();
         assertThat(teammate.isTapped()).isTrue();
-        assertThat(fighter.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, fighter)).isEqualTo(3);
         assertThat(fighter.getMarkedDamage()).isEqualTo(2);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -133,8 +133,8 @@ class GoNutsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(target.getMarkedDamage()).isZero();
         assertThat(fighter.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player1, "Hill Giant");

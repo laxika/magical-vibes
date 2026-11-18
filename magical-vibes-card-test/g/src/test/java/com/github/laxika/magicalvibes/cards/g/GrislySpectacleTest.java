@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -78,7 +79,7 @@ class GrislySpectacleTest extends BaseCardTest {
         int libraryBefore = gd.playerDecks.get(player2.getId()).size();
 
         harness.castInstant(player1, 0, creature.getId());
-        creature.setPowerModifier(power - 2);
+        PermanentGrants.setPowerBoost(gd, creature, power - 2);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Elite Vanguard");

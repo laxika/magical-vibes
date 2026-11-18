@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
@@ -39,8 +40,8 @@ class EzurisArchersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Archers should have +3/+0
-        assertThat(archers.getPowerModifier()).isEqualTo(3);
-        assertThat(archers.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, archers)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, archers)).isEqualTo(0);
         assertThat(gqs.getEffectivePower(gd, archers)).isEqualTo(4);   // 1 base + 3
         assertThat(gqs.getEffectiveToughness(gd, archers)).isEqualTo(2); // 2 base + 0
     }
@@ -58,8 +59,8 @@ class EzurisArchersTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Archers should have no boost
-        assertThat(archers.getPowerModifier()).isEqualTo(0);
-        assertThat(archers.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, archers)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, archers)).isEqualTo(0);
     }
 
     @Test
@@ -72,12 +73,12 @@ class EzurisArchersTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(archers.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, archers)).isEqualTo(3);
 
         harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(archers);
-        assertThat(archers.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, archers)).isEqualTo(0);
         assertThat(gqs.getEffectivePower(gd, archers)).isEqualTo(1);
     }
 
@@ -113,7 +114,7 @@ class EzurisArchersTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, flyer.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(flyer);
         harness.assertInHand(player1, "Suntail Hawk");
-        assertThat(archers.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, archers)).isEqualTo(0);
 
         resolveAllTriggers();
 
@@ -142,7 +143,7 @@ class EzurisArchersTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, idleArchers)).isEqualTo(1);
-        assertThat(idleArchers.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, idleArchers)).isEqualTo(0);
     }
 
     private Permanent addReadyArchers(Player player) {

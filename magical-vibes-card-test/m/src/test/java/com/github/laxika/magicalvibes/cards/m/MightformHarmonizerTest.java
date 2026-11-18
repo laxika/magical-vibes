@@ -28,14 +28,14 @@ class MightformHarmonizerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
     }
 
     @Test

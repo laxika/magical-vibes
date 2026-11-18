@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -237,7 +238,7 @@ class InfernoTitanTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities(); // resolve ability
 
-            assertThat(infernoTitan.getPowerModifier()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, infernoTitan)).isEqualTo(1);
         }
 
         @Test
@@ -247,14 +248,14 @@ class InfernoTitanTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.RED, 1);
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
-            assertThat(titan.getPowerModifier()).isEqualTo(1);
-            assertThat(titan.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, titan)).isEqualTo(1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, titan)).isZero();
 
             harness.forceStep(TurnStep.END_STEP);
             harness.clearPriorityPassed();
             harness.passBothPriorities();
-            assertThat(titan.getPowerModifier()).isZero();
-            assertThat(titan.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, titan)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, titan)).isZero();
         }
 
         @Test
@@ -287,7 +288,7 @@ class InfernoTitanTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
 
-            assertThat(infernoTitan.getPowerModifier()).isEqualTo(3);
+            assertThat(PermanentGrants.powerBoostOf(gd, infernoTitan)).isEqualTo(3);
         }
     }
 

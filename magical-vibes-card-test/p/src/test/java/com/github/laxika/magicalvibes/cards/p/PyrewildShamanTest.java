@@ -96,8 +96,8 @@ class PyrewildShamanTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(5);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(shaman);
     }
 
@@ -149,8 +149,8 @@ class PyrewildShamanTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(6);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(shaman);
     }
 
@@ -166,8 +166,8 @@ class PyrewildShamanTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(shaman);
     }
 

@@ -38,8 +38,8 @@ class FrostFairLureFishTest extends BaseCardTest {
         assertThat(fish).allSatisfy(token -> {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLUE);
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.FISH);
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
             assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
             assertThat(token.isTapped()).isFalse();
         });

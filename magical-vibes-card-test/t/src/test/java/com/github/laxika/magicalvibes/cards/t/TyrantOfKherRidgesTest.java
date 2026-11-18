@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GoblinBlastRunner;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -54,13 +55,13 @@ class TyrantOfKherRidgesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(tyrant.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, tyrant)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(tyrant.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tyrant)).isZero();
     }
 
     private void castTyrant() {
@@ -129,8 +130,8 @@ class TyrantOfKherRidgesTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(tyrant.getPowerModifier()).isEqualTo(2);
-        assertThat(tyrant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tyrant)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tyrant)).isZero();
         assertThat(tyrant.isTapped()).isFalse();
     }
 }

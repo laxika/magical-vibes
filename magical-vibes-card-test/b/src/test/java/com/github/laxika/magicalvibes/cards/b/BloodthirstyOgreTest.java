@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ConsumingVortex;
 import com.github.laxika.magicalvibes.cards.k.KuroPitlord;
 import com.github.laxika.magicalvibes.cards.n.NoDachi;
@@ -66,8 +67,8 @@ class BloodthirstyOgreTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, ogre), 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
     }
 
     @Test
@@ -97,8 +98,8 @@ class BloodthirstyOgreTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, ogre), 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         harness.assertOnBattlefield(player2, "Wandering Ones");
     }
 
@@ -127,14 +128,14 @@ class BloodthirstyOgreTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, ogre), 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -166,8 +167,8 @@ class BloodthirstyOgreTest extends BaseCardTest {
         putDevotionCounters(ogre, 2);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
         putDevotionCounters(ogre, 3);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
@@ -190,8 +191,8 @@ class BloodthirstyOgreTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Kuro, Pitlord");
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
     }
 
     @Test
@@ -212,8 +213,8 @@ class BloodthirstyOgreTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Bloodthirsty Ogre");
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
     }
 
     @Test

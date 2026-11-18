@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DuneDrifter;
 import com.github.laxika.magicalvibes.cards.g.GuidelightMatrix;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -24,8 +25,8 @@ class FangGuardianTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new FangGuardian());
         castFangGuardian(creature);
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -34,8 +35,8 @@ class FangGuardianTest extends BaseCardTest {
         Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new DuneDrifter());
         castFangGuardian(vehicle);
 
-        assertThat(vehicle.getPowerModifier()).isEqualTo(2);
-        assertThat(vehicle.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, vehicle)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vehicle)).isEqualTo(2);
     }
 
     @Test
@@ -48,8 +49,8 @@ class FangGuardianTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -75,8 +76,8 @@ class FangGuardianTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Fang Guardian");
         Permanent guardian = findPermanent(player1, "Fang Guardian");
-        assertThat(guardian.getPowerModifier()).isZero();
-        assertThat(guardian.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, guardian)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, guardian)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -88,8 +89,8 @@ class FangGuardianTest extends BaseCardTest {
 
         castFangGuardian(creature);
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
         assertThat(countPermanents(player1, "Fang Guardian")).isEqualTo(2);
     }
 
@@ -131,8 +132,8 @@ class FangGuardianTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         resolveAllTriggers();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -148,8 +149,8 @@ class FangGuardianTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(creature);
         resolveAllTriggers();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

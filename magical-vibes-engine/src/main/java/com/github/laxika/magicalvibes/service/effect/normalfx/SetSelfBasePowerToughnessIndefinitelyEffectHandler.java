@@ -38,14 +38,6 @@ public class SetSelfBasePowerToughnessIndefinitelyEffectHandler implements Norma
             return;
         }
 
-        long timestamp = gameData.nextTimestamp();
-        source.setBasePowerOverriddenPermanently(true);
-        source.setPermanentBasePowerOverride(change.power());
-        source.setPermanentBasePowerOverrideTimestamp(timestamp);
-        source.setBaseToughnessOverriddenPermanently(true);
-        source.setPermanentBaseToughnessOverride(change.toughness());
-        source.setPermanentBaseToughnessOverrideTimestamp(timestamp);
-
         SetBasePowerToughnessEffect setter = new SetBasePowerToughnessEffect(
                 change.power(), change.toughness(), GrantScope.SELF);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -59,7 +60,7 @@ class RaftSecurityOfficerTest extends BaseCardTest {
     void reducesCostForCreatureWithCurrentPowerThree() {
         addReadyOfficer();
         Permanent target = addCreatureReady(player2, new RaftSecurityOfficer());
-        target.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -73,7 +74,7 @@ class RaftSecurityOfficerTest extends BaseCardTest {
     void cannotUseDiscountWhenCurrentPowerExceedsThree() {
         Permanent officer = addCreatureReady(player1, new RaftSecurityOfficer());
         Permanent target = addCreatureReady(player2, new RaftSecurityOfficer());
-        target.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, target, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -108,7 +109,7 @@ class RaftSecurityOfficerTest extends BaseCardTest {
 
         assertThat(officer.isTapped()).isTrue();
         assertThat(target.isTapped()).isFalse();
-        target.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, target, 3);
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();

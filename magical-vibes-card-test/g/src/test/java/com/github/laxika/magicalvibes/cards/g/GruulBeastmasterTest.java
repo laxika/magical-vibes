@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SauroformHybrid;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -47,7 +48,7 @@ class GruulBeastmasterTest extends BaseCardTest {
     void attackBoostsUsingCurrentPower() {
         Permanent beastmaster = addCreatureReady(player1, new GruulBeastmaster());
         Permanent target = addCreatureReady(player1, new SauroformHybrid());
-        beastmaster.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, beastmaster, 2);
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());
@@ -89,11 +90,11 @@ class GruulBeastmasterTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
             harness.handlePermanentChosen(player1, target.getId());
-            beastmaster.setPowerModifier(3);
+            PermanentGrants.setPowerBoost(gd, beastmaster, 3);
             harness.passBothPriorities();
 
             assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
-            beastmaster.setPowerModifier(0);
+            PermanentGrants.setPowerBoost(gd, beastmaster, 0);
             assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
             assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         });
@@ -104,7 +105,7 @@ class GruulBeastmasterTest extends BaseCardTest {
     void negativePowerIsZero() {
         Permanent beastmaster = addCreatureReady(player1, new GruulBeastmaster());
         Permanent target = addCreatureReady(player1, new SauroformHybrid());
-        beastmaster.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, beastmaster, -3);
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());
@@ -119,7 +120,7 @@ class GruulBeastmasterTest extends BaseCardTest {
     void boostUsesLastKnownPower() {
         Permanent beastmaster = addCreatureReady(player1, new GruulBeastmaster());
         Permanent target = addCreatureReady(player1, new SauroformHybrid());
-        beastmaster.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, beastmaster, 1);
         harness.setHand(player2, List.of(new GrotesqueDemise()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);

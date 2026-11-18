@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.s.StonewoodInvocation;
 import com.github.laxika.magicalvibes.cards.s.SuddenShock;
@@ -27,8 +28,8 @@ class PrimalForcemageTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent bears = findPermanent(player1, "Ashcoat Bear");
-        assertThat(bears.getPowerModifier()).isEqualTo(3);
-        assertThat(bears.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(3);
     }
 
     @Test
@@ -40,15 +41,15 @@ class PrimalForcemageTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent bears = findPermanent(player1, "Ashcoat Bear");
-        assertThat(bears.getPowerModifier()).isEqualTo(3);
-        assertThat(bears.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -64,8 +65,8 @@ class PrimalForcemageTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         Permanent bear = findPermanent(player2, "Ashcoat Bear");
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -76,8 +77,8 @@ class PrimalForcemageTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         Permanent forcemage = findPermanent(player1, "Primal Forcemage");
-        assertThat(forcemage.getPowerModifier()).isEqualTo(0);
-        assertThat(forcemage.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, forcemage)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, forcemage)).isEqualTo(0);
     }
 
     @Test
@@ -89,12 +90,12 @@ class PrimalForcemageTest extends BaseCardTest {
         harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
         resolveAllTriggers();
 
-        assertThat(existingBear.getPowerModifier()).isEqualTo(0);
-        assertThat(existingBear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, existingBear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, existingBear)).isEqualTo(0);
 
         Permanent enteringBear = findPermanents(player1, "Ashcoat Bear").get(1);
-        assertThat(enteringBear.getPowerModifier()).isEqualTo(3);
-        assertThat(enteringBear.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, enteringBear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enteringBear)).isEqualTo(3);
     }
 
     @Test
@@ -106,18 +107,18 @@ class PrimalForcemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent enteringBear = findPermanent(player1, "Ashcoat Bear");
-        assertThat(enteringBear.getPowerModifier()).isEqualTo(0);
-        assertThat(enteringBear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, enteringBear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enteringBear)).isEqualTo(0);
         harness.setHand(player1, List.of(new StonewoodInvocation()));
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castAndResolveInstant(player1, 0, enteringBear.getId());
 
-        assertThat(enteringBear.getPowerModifier()).isEqualTo(5);
-        assertThat(enteringBear.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, enteringBear)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enteringBear)).isEqualTo(5);
         resolveAllTriggers();
 
-        assertThat(enteringBear.getPowerModifier()).isEqualTo(8);
-        assertThat(enteringBear.getToughnessModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, enteringBear)).isEqualTo(8);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enteringBear)).isEqualTo(8);
     }
 
     @Test
@@ -130,8 +131,8 @@ class PrimalForcemageTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent bear = findPermanent(player1, "Ashcoat Bear");
-        assertThat(bear.getPowerModifier()).isEqualTo(6);
-        assertThat(bear.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(6);
     }
 
     @Test
@@ -148,8 +149,8 @@ class PrimalForcemageTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent bear = findPermanent(player1, "Ashcoat Bear");
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(3);
     }
 
     @Test
@@ -166,8 +167,8 @@ class PrimalForcemageTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Ashcoat Bear")).isEmpty();
-        assertThat(forcemage.getPowerModifier()).isEqualTo(0);
-        assertThat(forcemage.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, forcemage)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, forcemage)).isEqualTo(0);
         assertThat(gd.stack).isEmpty();
     }
 

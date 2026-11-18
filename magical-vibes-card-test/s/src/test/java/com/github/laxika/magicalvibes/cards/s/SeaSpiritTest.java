@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class SeaSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities(); // resolve ability
 
-        assertThat(seaSpirit.getPowerModifier()).isEqualTo(1);
-        assertThat(seaSpirit.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, seaSpirit)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, seaSpirit)).isEqualTo(0);
     }
 
     @Test
@@ -41,7 +42,7 @@ class SeaSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(seaSpirit.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, seaSpirit)).isEqualTo(3);
     }
 
     @Test
@@ -64,7 +65,7 @@ class SeaSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(seaSpirit.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, seaSpirit)).isEqualTo(1);
         assertThat(seaSpirit.isTapped()).isTrue();
     }
 
@@ -78,7 +79,7 @@ class SeaSpiritTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(seaSpirit.isSummoningSick()).isTrue();
-        assertThat(seaSpirit.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, seaSpirit)).isEqualTo(1);
     }
 
     @Test
@@ -89,12 +90,12 @@ class SeaSpiritTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(seaSpirit.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, seaSpirit)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(seaSpirit.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, seaSpirit)).isEqualTo(0);
     }
 
     @Test
@@ -108,15 +109,15 @@ class SeaSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
         harness.passBothPriorities();
-        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(2);
-        assertThat(source.getToughnessModifier()).isZero();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(opposing.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isZero();
     }
 
     @Test
@@ -130,6 +131,6 @@ class SeaSpiritTest extends BaseCardTest {
         assertThat(seaSpirit.isTapped()).isFalse();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(seaSpirit.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, seaSpirit)).isEqualTo(1);
     }
 }

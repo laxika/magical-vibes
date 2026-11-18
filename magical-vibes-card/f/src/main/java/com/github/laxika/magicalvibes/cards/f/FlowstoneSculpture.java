@@ -19,7 +19,7 @@ public class FlowstoneSculpture extends Card {
     public FlowstoneSculpture() {
         // {2}, Discard a card: Put a +1/+1 counter on this creature or this creature gains flying,
         // first strike, or trample. (This effect lasts indefinitely.) The keyword modes have no
-        // stated duration (CR 611.2b), so they use SetSelfKeywordIndefinitelyEffect rather than the
+        // stated duration (CR 611.2a), so they use SetSelfKeywordIndefinitelyEffect rather than the
         // until-end-of-turn GrantKeywordEffect. No mode targets, so the mode is picked on resolution.
         addActivatedAbility(new ActivatedAbility(
                 false,

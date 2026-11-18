@@ -58,9 +58,6 @@ public class SetSelfBasePowerToughnessFromCombatOpponentEffectHandler implements
         int toughness = lastKnown == null ? entry.getCombatOpponentToughnessAtTrigger()
                 : gameQueryService.getEffectiveToughness(gameData, lastKnown);
 
-        source.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
-        source.setBasePowerOverride(power);
-        source.setBaseToughnessOverride(toughness);
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(),

@@ -26,8 +26,8 @@ class TurnTheTideTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(0);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -40,8 +40,8 @@ class TurnTheTideTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -54,14 +54,14 @@ class TurnTheTideTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -74,11 +74,11 @@ class TurnTheTideTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(first.getEffectivePower()).isZero();
-        assertThat(second.getEffectivePower()).isZero();
-        assertThat(first.getEffectiveToughness()).isEqualTo(2);
-        assertThat(second.getEffectiveToughness()).isEqualTo(2);
-        assertThat(own.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isZero();
+        assertThat(gqs.getEffectivePower(gd, second)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(2);
     }
 
     @Test
@@ -90,9 +90,9 @@ class TurnTheTideTest extends BaseCardTest {
 
         Permanent newcomer = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThat(existing.getEffectivePower()).isZero();
-        assertThat(newcomer.getEffectivePower()).isEqualTo(2);
-        assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, existing)).isZero();
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(2);
     }
 
     @Test
@@ -104,8 +104,8 @@ class TurnTheTideTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(-2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }

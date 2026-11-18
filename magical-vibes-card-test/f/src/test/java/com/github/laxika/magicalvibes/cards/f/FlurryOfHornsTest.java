@@ -26,8 +26,8 @@ class FlurryOfHornsTest extends BaseCardTest {
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.getCard().getName()).isEqualTo("Minotaur");
-            assertThat(token.getEffectivePower()).isEqualTo(2);
-            assertThat(token.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.MINOTAUR);
             assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();

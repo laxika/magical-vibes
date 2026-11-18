@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -108,7 +109,7 @@ class GreaterSandwurmTest extends BaseCardTest {
     @DisplayName("A printed two-power blocker can block after its power increases to three")
     void boostedLowPowerCreatureCanBlock() {
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        blocker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, blocker, 1);
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GreaterSandwurm());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
@@ -123,7 +124,7 @@ class GreaterSandwurmTest extends BaseCardTest {
     @DisplayName("A printed three-power blocker cannot block after its power decreases to two")
     void weakenedHighPowerCreatureCannotBlock() {
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        blocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GreaterSandwurm());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);

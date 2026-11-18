@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -29,8 +30,8 @@ class StaggeringSizeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -48,8 +49,8 @@ class StaggeringSizeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -76,12 +77,12 @@ class StaggeringSizeTest extends BaseCardTest {
         Permanent target = findPermanent(player2, "Grizzly Bears");
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         Permanent other = findPermanent(player1, "Grizzly Bears");
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Staggering Size");
     }
@@ -96,16 +97,16 @@ class StaggeringSizeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(6);
-        assertThat(target.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 }

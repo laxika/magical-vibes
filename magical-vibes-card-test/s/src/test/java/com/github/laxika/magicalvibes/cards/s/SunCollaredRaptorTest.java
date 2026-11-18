@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,8 +25,8 @@ class SunCollaredRaptorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(raptor.getPowerModifier()).isEqualTo(3);
-        assertThat(raptor.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, raptor)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raptor)).isEqualTo(0);
     }
 
     @Test
@@ -39,7 +40,7 @@ class SunCollaredRaptorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(raptor.getPowerModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, raptor)).isEqualTo(6);
     }
 
     @Test
@@ -55,7 +56,7 @@ class SunCollaredRaptorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(raptor.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, raptor)).isEqualTo(0);
     }
 
     @Test
@@ -92,11 +93,11 @@ class SunCollaredRaptorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(raptor.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raptor)).isZero();
         harness.passBothPriorities();
 
-        assertThat(raptor.getPowerModifier()).isEqualTo(3);
-        assertThat(raptor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raptor)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raptor)).isZero();
         assertThat(raptor.isTapped()).isTrue();
     }
 
@@ -111,9 +112,9 @@ class SunCollaredRaptorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(3);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
     }
 
     private Permanent addReadyRaptor(Player player) {

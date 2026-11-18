@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CentaurCourser;
 import com.github.laxika.magicalvibes.cards.b.BenalishFaithbonder;
 import com.github.laxika.magicalvibes.cards.d.DelneyStreetwiseLookout;
@@ -50,7 +51,7 @@ class AradeshTheFounderTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(supporter.isTapped()).isTrue();
-        assertThat(aradesh.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, aradesh)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, aradesh, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1);
     }
@@ -67,7 +68,7 @@ class AradeshTheFounderTest extends BaseCardTest {
         stackAradeshsAbilityBelowTheEnlistBoost();
         resolveAllTriggers();
 
-        assertThat(aradesh.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, aradesh)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, aradesh, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
     }
@@ -230,7 +231,7 @@ class AradeshTheFounderTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, aradesh, Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(aradesh.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, aradesh)).isEqualTo(3);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
     }
 

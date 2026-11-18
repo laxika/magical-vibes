@@ -27,12 +27,12 @@ class WarScreecherTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(screecher), null, null);
         harness.passBothPriorities();
 
-        assertThat(screecher.getEffectivePower()).isEqualTo(1);
-        assertThat(screecher.getEffectiveToughness()).isEqualTo(3);
-        assertThat(ally.getEffectivePower()).isEqualTo(3);
-        assertThat(ally.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, screecher)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, screecher)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
         assertThat(screecher.isTapped()).isTrue();
     }
 
@@ -51,8 +51,8 @@ class WarScreecherTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ally.getEffectivePower()).isEqualTo(2);
-        assertThat(ally.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(2);
     }
 
     @Test
@@ -80,10 +80,10 @@ class WarScreecherTest extends BaseCardTest {
         Permanent other = harness.addToBattlefieldAndReturn(player1, new WarScreecher());
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(1);
-        assertThat(source.getEffectiveToughness()).isEqualTo(3);
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
     }
 
     @Test
@@ -98,10 +98,10 @@ class WarScreecherTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new WarScreecher());
 
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(4);
-        assertThat(lateCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(lateCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, lateCreature)).isEqualTo(3);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HiredMuscle;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.s.Scarmaker;
@@ -62,8 +63,8 @@ class RoninCliffriderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(ronin.getPowerModifier()).isEqualTo(1);
-        assertThat(ronin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isEqualTo(1);
     }
 
     @Test
@@ -79,8 +80,8 @@ class RoninCliffriderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(ronin.getPowerModifier()).isEqualTo(1);
-        assertThat(ronin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isEqualTo(1);
     }
 
     @Test
@@ -93,15 +94,15 @@ class RoninCliffriderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(ronin.getPowerModifier()).isEqualTo(1);
-        assertThat(ronin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ronin.getPowerModifier()).isZero();
-        assertThat(ronin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isZero();
     }
 
     @Test
@@ -139,8 +140,8 @@ class RoninCliffriderTest extends BaseCardTest {
                 new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(ronin.getPowerModifier()).isEqualTo(1);
-        assertThat(ronin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isEqualTo(1);
     }
 
     @Test

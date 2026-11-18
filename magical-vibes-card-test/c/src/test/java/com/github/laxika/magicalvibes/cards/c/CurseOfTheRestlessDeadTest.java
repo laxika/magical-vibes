@@ -30,8 +30,8 @@ class CurseOfTheRestlessDeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent zombie = findPermanent(player1, "Zombie");
-        assertThat(zombie.getEffectivePower()).isEqualTo(2);
-        assertThat(zombie.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(2);
         assertThat(zombie.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
         assertThat(zombie.getCard().getKeywords()).contains(Keyword.DECAYED);
     }

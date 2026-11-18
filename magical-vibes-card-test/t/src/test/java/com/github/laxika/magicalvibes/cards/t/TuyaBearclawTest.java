@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -49,15 +50,15 @@ class TuyaBearclawTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        assertThat(tuya.getPowerModifier()).isEqualTo(6);
-        assertThat(tuya.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, tuya)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tuya)).isEqualTo(6);
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(tuya.getPowerModifier()).isZero();
-        assertThat(tuya.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tuya)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tuya)).isZero();
     }
 
     @Test
@@ -68,7 +69,7 @@ class TuyaBearclawTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        wurm.setPowerModifier(-5);
+        PermanentGrants.setPowerBoost(gd, wurm, -5);
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, tuya)).isEqualTo(4);
@@ -80,7 +81,7 @@ class TuyaBearclawTest extends BaseCardTest {
     void floorsNegativePowerAtZero() {
         var tuya = addCreatureReady(player1, new TuyaBearclaw());
         var bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, bears, -3);
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
@@ -97,7 +98,7 @@ class TuyaBearclawTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        wurm.setPowerModifier(4);
+        PermanentGrants.setPowerBoost(gd, wurm, 4);
 
         assertThat(gqs.getEffectivePower(gd, tuya)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, tuya)).isEqualTo(8);

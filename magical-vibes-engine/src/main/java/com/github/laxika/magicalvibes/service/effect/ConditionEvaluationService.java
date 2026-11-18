@@ -2011,7 +2011,7 @@ public class ConditionEvaluationService {
                         ? gameQueryService.getEffectivePower(gameData, triggeringPermanent)
                         : ctx.triggeringPermanentPowerAtTrigger() != null
                         ? ctx.triggeringPermanentPowerAtTrigger()
-                        : triggeringPermanent.getEffectivePower();
+                        : gameQueryService.ownPower(gameData, triggeringPermanent);
                 yield gameQueryService.hasUniqueGreatestPowerAmongAllCreatures(
                         gameData, triggeringPermanent, triggeringPower);
             }

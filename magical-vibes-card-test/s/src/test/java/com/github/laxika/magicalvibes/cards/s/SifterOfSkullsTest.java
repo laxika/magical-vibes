@@ -33,8 +33,8 @@ class SifterOfSkullsTest extends BaseCardTest {
         assertThat(scion.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(scion.getCard().getColor()).isNull();
         assertThat(scion.getCard().getSubtypes()).containsExactly(CardSubtype.ELDRAZI, CardSubtype.SCION);
-        assertThat(scion.getEffectivePower()).isEqualTo(1);
-        assertThat(scion.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, scion)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, scion)).isEqualTo(1);
     }
 
     @Test

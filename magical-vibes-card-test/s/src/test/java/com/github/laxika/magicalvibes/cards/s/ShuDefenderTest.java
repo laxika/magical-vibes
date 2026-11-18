@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.v.VolunteerMilitia;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -47,10 +48,10 @@ class ShuDefenderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(defender.getPowerModifier()).isEqualTo(0);
-        assertThat(defender.getToughnessModifier()).isEqualTo(2);
-        assertThat(defender.getEffectivePower()).isEqualTo(2);
-        assertThat(defender.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, defender)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, defender)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(4);
     }
 
     @Test
@@ -64,15 +65,15 @@ class ShuDefenderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(defender.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, defender)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(defender.getPowerModifier()).isEqualTo(0);
-        assertThat(defender.getToughnessModifier()).isEqualTo(0);
-        assertThat(defender.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, defender)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, defender)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(2);
     }
 
     @Test
@@ -94,7 +95,7 @@ class ShuDefenderTest extends BaseCardTest {
                 .hasSize(1);
         resolveAllTriggers();
 
-        assertThat(defender.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, defender)).isEqualTo(2);
     }
 
     @Test
@@ -118,13 +119,13 @@ class ShuDefenderTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(blocker.getToughnessModifier()).isZero();
-        assertThat(nonblocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonblocker)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
-        assertThat(nonblocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonblocker)).isZero();
     }
 
     @Test
@@ -143,7 +144,7 @@ class ShuDefenderTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(returned.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, returned)).isZero();
     }
 
     private Permanent addDefenderReady(Player player) {

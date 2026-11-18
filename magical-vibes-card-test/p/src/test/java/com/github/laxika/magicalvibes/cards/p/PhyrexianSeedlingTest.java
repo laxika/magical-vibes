@@ -22,8 +22,8 @@ class PhyrexianSeedlingTest extends BaseCardTest {
 
         Permanent seedling = findPermanent(player1, "Phyrexian Seedling");
         assertThat(seedling.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(seedling.getEffectivePower()).isEqualTo(1);
-        assertThat(seedling.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, seedling)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, seedling)).isEqualTo(1);
     }
 
     @Test

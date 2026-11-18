@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -29,10 +30,10 @@ class StealStrengthTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(-1);
-        assertThat(second.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(-1);
         harness.assertInGraveyard(player1, "Steal Strength");
     }
 
@@ -58,10 +59,10 @@ class StealStrengthTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(-1);
-        assertThat(second.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(-1);
     }
 
     @Test
@@ -74,8 +75,8 @@ class StealStrengthTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(boosted.getId(), weakened.getId()));
 
-        assertThat(boosted.getPowerModifier()).isEqualTo(1);
-        assertThat(boosted.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, boosted)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, boosted)).isEqualTo(1);
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
     }
@@ -120,10 +121,10 @@ class StealStrengthTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getPowerModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 
     @Test
@@ -139,8 +140,8 @@ class StealStrengthTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, second));
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
     }
 
     @Test
@@ -156,7 +157,7 @@ class StealStrengthTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, first));
         harness.passBothPriorities();
 
-        assertThat(second.getPowerModifier()).isEqualTo(-1);
-        assertThat(second.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(-1);
     }
 }

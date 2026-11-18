@@ -80,11 +80,6 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
                     }
                 }
                 case ADDITIVE -> delta.put(field, SaturatingMath.subtract(intValue(current), intValue(old)));
-                case VALUE -> {
-                    if (current != null && !Objects.equals(current, old)) {
-                        delta.put(field, current);
-                    }
-                }
                 case SET -> {
                     Set<Object> added = new HashSet<>(setValue(current));
                     added.removeAll(setValue(old));
@@ -114,7 +109,6 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
             switch (field.kind()) {
                 case FLAG -> combined.put(field, Boolean.TRUE);
                 case ADDITIVE -> combined.put(field, SaturatingMath.add(intValue(mine), intValue(theirs)));
-                case VALUE -> combined.put(field, theirs);
                 case SET -> {
                     Set<Object> union = new HashSet<>(setValue(mine));
                     union.addAll(setValue(theirs));
@@ -133,15 +127,15 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
 
     /**
      * Restricts this share to what is still present in {@code current}: a flag or set element that was
-     * since removed and a shield that was since used up are not brought back. {@code ADDITIVE} and
-     * {@code VALUE} fields are kept as they are.
+     * since removed and a shield that was since used up are not brought back. {@code ADDITIVE} fields are
+     * kept as they are.
      */
     public EndOfTurnStateShare cappedBy(EndOfTurnStateShare current) {
         Map<EndOfTurnStateField, Object> capped = new EnumMap<>(EndOfTurnStateField.class);
         values.forEach((field, mine) -> {
             Object now = current.values.get(field);
             switch (field.kind()) {
-                case ADDITIVE, VALUE -> capped.put(field, mine);
+                case ADDITIVE -> capped.put(field, mine);
                 case FLAG -> {
                     if (now != null) {
                         capped.put(field, mine);
@@ -199,7 +193,6 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
         return switch (field.kind()) {
             case FLAG -> Boolean.TRUE.equals(value) ? Boolean.TRUE : null;
             case ADDITIVE -> intValue(value) == 0 ? null : value;
-            case VALUE -> value instanceof Integer i && i == 0 ? null : value;
             case SET -> setValue(value).isEmpty() ? null : Set.copyOf(setValue(value));
             case LIST, IDENTITY_LIST -> listValue(value).isEmpty() ? null : List.copyOf(listValue(value));
             case COUNTS -> {

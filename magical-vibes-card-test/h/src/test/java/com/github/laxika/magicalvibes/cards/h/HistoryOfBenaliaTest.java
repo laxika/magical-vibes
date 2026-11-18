@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalothGorger;
 import com.github.laxika.magicalvibes.cards.k.KnightOfGrace;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -140,8 +141,8 @@ class HistoryOfBenaliaTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Knight") && p.getCard().isToken())
                 .findFirst().orElse(null);
         assertThat(knight).isNotNull();
-        assertThat(knight.getCard().getPower() + knight.getPowerModifier()).isEqualTo(4);
-        assertThat(knight.getCard().getToughness() + knight.getToughnessModifier()).isEqualTo(3);
+        assertThat(knight.getCard().getPower() + PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(4);
+        assertThat(knight.getCard().getToughness() + PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(3);
     }
 
     @Test
@@ -174,8 +175,8 @@ class HistoryOfBenaliaTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Baloth Gorger"))
                 .findFirst().orElse(null);
         assertThat(bears).isNotNull();
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -241,10 +242,10 @@ class HistoryOfBenaliaTest extends BaseCardTest {
         harness.passUntil(TurnStep.PRECOMBAT_MAIN);
         harness.passBothPriorities();
 
-        assertThat(ownKnight.getPowerModifier()).isEqualTo(2);
-        assertThat(ownKnight.getToughnessModifier()).isEqualTo(1);
-        assertThat(opposingKnight.getPowerModifier()).isZero();
-        assertThat(opposingKnight.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownKnight)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownKnight)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingKnight)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingKnight)).isZero();
         harness.assertNotOnBattlefield(player1, "History of Benalia");
 
         harness.setHand(player1, List.of(new KnightOfGrace()));
@@ -252,13 +253,13 @@ class HistoryOfBenaliaTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         Permanent laterKnight = gd.playerBattlefields.get(player1.getId()).getLast();
-        assertThat(laterKnight.getPowerModifier()).isZero();
-        assertThat(laterKnight.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, laterKnight)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterKnight)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(ownKnight.getPowerModifier()).isZero();
-        assertThat(ownKnight.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownKnight)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownKnight)).isZero();
     }
 
     @Test

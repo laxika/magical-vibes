@@ -37,8 +37,8 @@ class DreadSummonsTest extends BaseCardTest {
         assertThat(zombies).hasSize(2);
         assertThat(zombies).allSatisfy(zombie -> {
             assertThat(zombie.isTapped()).isTrue();
-            assertThat(zombie.getEffectivePower()).isEqualTo(2);
-            assertThat(zombie.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(2);
         });
         assertThat(zombies(player2)).isEmpty();
     }

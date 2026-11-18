@@ -54,8 +54,8 @@ class TheImmortalWeaponsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.getEffectivePower()).isEqualTo(8);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
     }
 
@@ -74,8 +74,8 @@ class TheImmortalWeaponsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isFalse();
     }
 
@@ -87,7 +87,7 @@ class TheImmortalWeaponsTest extends BaseCardTest {
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isFalse();
     }
 
@@ -161,8 +161,8 @@ class TheImmortalWeaponsTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
-        assertThat(target.getEffectivePower()).isEqualTo(7);
-        assertThat(target.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isFalse();
     }
 
@@ -177,8 +177,8 @@ class TheImmortalWeaponsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
         harness.assertLife(player2, 20);
         assertThat(gd.stack).hasSize(1);
@@ -199,8 +199,8 @@ class TheImmortalWeaponsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(firstDraw, secondDraw);
     }
@@ -219,8 +219,8 @@ class TheImmortalWeaponsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.getEffectivePower()).isEqualTo(8);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
         harness.assertLife(player2, 16);
     }

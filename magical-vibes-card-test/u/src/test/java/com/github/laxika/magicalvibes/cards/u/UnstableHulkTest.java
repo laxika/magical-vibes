@@ -25,8 +25,8 @@ class UnstableHulkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hulk.isFaceDown()).isFalse();
-        assertThat(hulk.getEffectivePower()).isEqualTo(8);
-        assertThat(hulk.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, hulk)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, hulk)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, hulk, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
     }
@@ -40,8 +40,8 @@ class UnstableHulkTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(hulk.getEffectivePower()).isEqualTo(2);
-        assertThat(hulk.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hulk)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hulk)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, hulk, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -73,8 +73,8 @@ class UnstableHulkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent hulk = findPermanent(player1, "Unstable Hulk");
-        assertThat(hulk.getEffectivePower()).isEqualTo(2);
-        assertThat(hulk.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hulk)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hulk)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, hulk, Keyword.TRAMPLE)).isFalse();
         assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
         assertThat(gd.stack).isEmpty();
@@ -91,8 +91,8 @@ class UnstableHulkTest extends BaseCardTest {
         turnFaceUp(hulk);
         harness.passBothPriorities();
 
-        assertThat(hulk.getEffectivePower()).isEqualTo(8);
-        assertThat(hulk.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, hulk)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, hulk)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, hulk, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
         assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isZero();
@@ -101,8 +101,8 @@ class UnstableHulkTest extends BaseCardTest {
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isZero();
-        assertThat(hulk.getEffectivePower()).isEqualTo(2);
-        assertThat(hulk.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hulk)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hulk)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, hulk, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -116,8 +116,8 @@ class UnstableHulkTest extends BaseCardTest {
 
         Permanent hulk = findPermanent(player1, "Unstable Hulk");
         assertThat(hulk.isFaceDown()).isTrue();
-        assertThat(hulk.getEffectivePower()).isEqualTo(2);
-        assertThat(hulk.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hulk)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hulk)).isEqualTo(2);
         return hulk;
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GiantMantis;
 import com.github.laxika.magicalvibes.cards.w.WallOfRoots;
@@ -31,10 +32,10 @@ class JungleWurmTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(wurm.getPowerModifier()).isZero();
-        assertThat(wurm.getToughnessModifier()).isZero();
-        assertThat(wurm.getEffectivePower()).isEqualTo(5);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, wurm)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wurm)).isZero();
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(5);
     }
 
     @Test
@@ -54,10 +55,10 @@ class JungleWurmTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(wurm.getPowerModifier()).isEqualTo(-2);
-        assertThat(wurm.getToughnessModifier()).isEqualTo(-2);
-        assertThat(wurm.getEffectivePower()).isEqualTo(3);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, wurm)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wurm)).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(3);
     }
 
     @Test
@@ -70,8 +71,8 @@ class JungleWurmTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(wurm.getPowerModifier()).isZero();
-        assertThat(wurm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wurm)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wurm)).isZero();
     }
 
     @Test
@@ -95,8 +96,8 @@ class JungleWurmTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
-        assertThat(wurm.getPowerModifier()).isEqualTo(-1);
-        assertThat(wurm.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wurm)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wurm)).isEqualTo(-1);
     }
 
     @Test
@@ -115,8 +116,8 @@ class JungleWurmTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
-        assertThat(wurm.getPowerModifier()).isZero();
-        assertThat(wurm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wurm)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wurm)).isZero();
     }
 
     @Test
@@ -132,18 +133,18 @@ class JungleWurmTest extends BaseCardTest {
                 new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
-        assertThat(wurm.getPowerModifier()).isEqualTo(-1);
-        assertThat(wurm.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wurm)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wurm)).isEqualTo(-1);
 
         resolveCombat();
         harness.handleCombatDamageAssigned(player1, 0, Map.of(wall.getId(), 4));
         harness.passUntil(player1, TurnStep.END_STEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(wurm);
-        assertThat(wurm.getPowerModifier()).isEqualTo(-1);
-        assertThat(wurm.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wurm)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wurm)).isEqualTo(-1);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(wurm.getPowerModifier()).isZero();
-        assertThat(wurm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wurm)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wurm)).isZero();
     }
 }

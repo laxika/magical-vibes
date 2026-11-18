@@ -39,8 +39,8 @@ class TheHuntsmansRedemptionTest extends BaseCardTest {
                 .toList();
         assertThat(beasts).hasSize(1);
         assertThat(beasts.getFirst().getCard().getColor()).isEqualTo(com.github.laxika.magicalvibes.model.CardColor.GREEN);
-        assertThat(beasts.getFirst().getEffectivePower()).isEqualTo(3);
-        assertThat(beasts.getFirst().getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beasts.getFirst())).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beasts.getFirst())).isEqualTo(3);
     }
 
     @Test

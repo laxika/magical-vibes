@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DeconstructionHammer;
 import com.github.laxika.magicalvibes.cards.g.GoldfuryStrider;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -30,8 +31,8 @@ class AncestorsAidTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Goldfury Strider"));
 
         Permanent bear = findPermanent(player1, "Goldfury Strider");
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
@@ -50,8 +51,8 @@ class AncestorsAidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Goldfury Strider");
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -77,8 +78,8 @@ class AncestorsAidTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Goldfury Strider"));
 
         Permanent creature = findPermanent(player2, "Goldfury Strider");
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
         assertThat(findPermanents(player2, "Treasure")).isEmpty();

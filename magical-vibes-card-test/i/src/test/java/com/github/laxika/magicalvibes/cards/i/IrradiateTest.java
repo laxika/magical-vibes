@@ -34,8 +34,8 @@ class IrradiateTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, hunterId);
 
         Permanent hunter = findPermanent(player2, "Fangren Hunter");
-        assertThat(hunter.getEffectivePower()).isEqualTo(2);
-        assertThat(hunter.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hunter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hunter)).isEqualTo(2);
     }
 
     @Test
@@ -54,8 +54,8 @@ class IrradiateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent hunter = findPermanent(player2, "Fangren Hunter");
-        assertThat(hunter.getEffectivePower()).isEqualTo(4);
-        assertThat(hunter.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, hunter)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hunter)).isEqualTo(4);
     }
 
     @Test
@@ -81,8 +81,8 @@ class IrradiateTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, hunterId);
 
         Permanent hunter = findPermanent(player1, "Fangren Hunter");
-        assertThat(hunter.getEffectivePower()).isEqualTo(4);
-        assertThat(hunter.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, hunter)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hunter)).isEqualTo(4);
     }
 
     @Test
@@ -99,8 +99,8 @@ class IrradiateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent hunter = findPermanent(player2, "Fangren Hunter");
-        assertThat(hunter.getEffectivePower()).isEqualTo(2);
-        assertThat(hunter.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hunter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hunter)).isEqualTo(2);
     }
 
     @Test
@@ -116,8 +116,8 @@ class IrradiateTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Ornithopter());
 
         Permanent hunter = findPermanent(player2, "Fangren Hunter");
-        assertThat(hunter.getEffectivePower()).isEqualTo(3);
-        assertThat(hunter.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, hunter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hunter)).isEqualTo(3);
     }
 
     @Test

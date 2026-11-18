@@ -23,19 +23,19 @@ class MoonstoneHarbingerTest extends BaseCardTest {
         Permanent bat = addCreatureReady(player1, new GlidediveDuo());
         Permanent bear = addCreatureReady(player1, new BonebindOrator());
         Permanent opposingBat = addCreatureReady(player2, new GlidediveDuo());
-        int batPower = bat.getEffectivePower();
+        int batPower = gqs.getEffectivePower(gd, bat);
 
         harness.forceActivePlayer(player1);
         harness.inMutationScope(() ->
                 gd.rulesEvents.occur(new LifeEvent.Gained(player1.getId(), 1, null, null)));
         harness.passBothPriorities();
 
-        assertThat(harbinger.getEffectivePower()).isEqualTo(2);
-        assertThat(bat.getEffectivePower()).isEqualTo(batPower + 1);
+        assertThat(gqs.getEffectivePower(gd, harbinger)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bat)).isEqualTo(batPower + 1);
         assertThat(gqs.hasKeyword(gd, bat, Keyword.DEATHTOUCH)).isTrue();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.DEATHTOUCH)).isFalse();
-        assertThat(opposingBat.getEffectivePower()).isEqualTo(batPower);
+        assertThat(gqs.getEffectivePower(gd, opposingBat)).isEqualTo(batPower);
         assertThat(gqs.hasKeyword(gd, opposingBat, Keyword.DEATHTOUCH)).isFalse();
     }
 
@@ -43,14 +43,14 @@ class MoonstoneHarbingerTest extends BaseCardTest {
     void lifeLossAlsoTriggersDuringYourTurn() {
         addCreatureReady(player1, new MoonstoneHarbinger());
         Permanent bat = addCreatureReady(player1, new GlidediveDuo());
-        int batPower = bat.getEffectivePower();
+        int batPower = gqs.getEffectivePower(gd, bat);
 
         harness.forceActivePlayer(player1);
         harness.inMutationScope(() ->
                 GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player1.getId(), 1));
         harness.passBothPriorities();
 
-        assertThat(bat.getEffectivePower()).isEqualTo(batPower + 1);
+        assertThat(gqs.getEffectivePower(gd, bat)).isEqualTo(batPower + 1);
         assertThat(gqs.hasKeyword(gd, bat, Keyword.DEATHTOUCH)).isTrue();
     }
 
@@ -58,7 +58,7 @@ class MoonstoneHarbingerTest extends BaseCardTest {
     void triggersOnlyOnceEachTurn() {
         addCreatureReady(player1, new MoonstoneHarbinger());
         Permanent bat = addCreatureReady(player1, new GlidediveDuo());
-        int batPower = bat.getEffectivePower();
+        int batPower = gqs.getEffectivePower(gd, bat);
 
         harness.forceActivePlayer(player1);
         harness.inMutationScope(() ->
@@ -68,14 +68,14 @@ class MoonstoneHarbingerTest extends BaseCardTest {
                 GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player1.getId(), 1));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bat.getEffectivePower()).isEqualTo(batPower + 1);
+        assertThat(gqs.getEffectivePower(gd, bat)).isEqualTo(batPower + 1);
     }
 
     @Test
     void doesNotTriggerDuringOpponentTurn() {
         addCreatureReady(player1, new MoonstoneHarbinger());
         Permanent bat = addCreatureReady(player1, new GlidediveDuo());
-        int batPower = bat.getEffectivePower();
+        int batPower = gqs.getEffectivePower(gd, bat);
 
         harness.forceActivePlayer(player2);
         harness.inMutationScope(() -> {
@@ -84,7 +84,7 @@ class MoonstoneHarbingerTest extends BaseCardTest {
         });
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bat.getEffectivePower()).isEqualTo(batPower);
+        assertThat(gqs.getEffectivePower(gd, bat)).isEqualTo(batPower);
         assertThat(gqs.hasKeyword(gd, bat, Keyword.DEATHTOUCH)).isFalse();
     }
 
@@ -92,7 +92,7 @@ class MoonstoneHarbingerTest extends BaseCardTest {
     void boostAndDeathtouchWearOffAtEndOfTurn() {
         addCreatureReady(player1, new MoonstoneHarbinger());
         Permanent bat = addCreatureReady(player1, new GlidediveDuo());
-        int batPower = bat.getEffectivePower();
+        int batPower = gqs.getEffectivePower(gd, bat);
 
         harness.forceActivePlayer(player1);
         harness.inMutationScope(() ->
@@ -102,7 +102,7 @@ class MoonstoneHarbingerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bat.getEffectivePower()).isEqualTo(batPower);
+        assertThat(gqs.getEffectivePower(gd, bat)).isEqualTo(batPower);
         assertThat(gqs.hasKeyword(gd, bat, Keyword.DEATHTOUCH)).isFalse();
     }
     @Test
@@ -114,12 +114,12 @@ class MoonstoneHarbingerTest extends BaseCardTest {
                 harness.getLifeSupport().applyLifePayment(gd, player1.getId(), 2, "Life payment"));
         resolveAllTriggers();
         harness.assertLife(player1, 18);
-        assertThat(harbinger.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, harbinger)).isEqualTo(2);
 
         harness.inMutationScope(() ->
                 harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
         assertThat(gd.stack).isEmpty();
-        assertThat(harbinger.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, harbinger)).isEqualTo(2);
     }
 
     @Test
@@ -132,8 +132,8 @@ class MoonstoneHarbingerTest extends BaseCardTest {
                 harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
         harness.inMutationScope(() ->
                 harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 1, "Life loss"));
         assertThat(gd.stack).isEmpty();
@@ -147,13 +147,13 @@ class MoonstoneHarbingerTest extends BaseCardTest {
                 harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
 
         Permanent beforeResolution = addCreatureReady(player1, new GlidediveDuo());
-        int basePower = beforeResolution.getEffectivePower();
+        int basePower = gqs.getEffectivePower(gd, beforeResolution);
         resolveAllTriggers();
         Permanent afterResolution = addCreatureReady(player1, new GlidediveDuo());
 
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(basePower + 1);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(basePower + 1);
         assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.DEATHTOUCH)).isTrue();
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(basePower);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(basePower);
         assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.DEATHTOUCH)).isFalse();
     }
 
@@ -171,7 +171,7 @@ class MoonstoneHarbingerTest extends BaseCardTest {
         harness.inMutationScope(() ->
                 harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
         resolveAllTriggers();
-        assertThat(harbinger.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, harbinger)).isEqualTo(2);
     }
 
     @Test
@@ -186,7 +186,7 @@ class MoonstoneHarbingerTest extends BaseCardTest {
         });
         resolveAllTriggers();
 
-        assertThat(harbinger.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, harbinger)).isEqualTo(2);
     }
 
     @Test
@@ -203,6 +203,6 @@ class MoonstoneHarbingerTest extends BaseCardTest {
         harness.inMutationScope(() ->
                 harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 1, "Life loss"));
         resolveAllTriggers();
-        assertThat(harbinger.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, harbinger)).isEqualTo(2);
     }
 }

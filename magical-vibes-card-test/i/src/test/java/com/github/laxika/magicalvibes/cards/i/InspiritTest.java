@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,8 +30,8 @@ class InspiritTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -42,15 +43,15 @@ class InspiritTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -63,8 +64,8 @@ class InspiritTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, ownCreature.getId());
 
         assertThat(ownCreature.isTapped()).isFalse();
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(2);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(4);
     }
 
     @Test
@@ -77,8 +78,8 @@ class InspiritTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -120,15 +121,15 @@ class InspiritTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(8);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     private Permanent addTappedCreature(Player player) {

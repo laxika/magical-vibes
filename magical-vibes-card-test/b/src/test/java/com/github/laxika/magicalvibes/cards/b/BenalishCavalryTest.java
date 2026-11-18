@@ -28,8 +28,8 @@ class BenalishCavalryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(4);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
     }
 
     @Test
@@ -43,8 +43,8 @@ class BenalishCavalryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -61,10 +61,10 @@ class BenalishCavalryTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker1.getEffectivePower()).isEqualTo(4);
-        assertThat(blocker1.getEffectiveToughness()).isEqualTo(4);
-        assertThat(blocker2.getEffectivePower()).isEqualTo(4);
-        assertThat(blocker2.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocker1)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocker1)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocker2)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocker2)).isEqualTo(4);
     }
 
     @Test
@@ -78,15 +78,15 @@ class BenalishCavalryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(4);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(5);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(5);
     }
 
     @Test
@@ -112,9 +112,9 @@ class BenalishCavalryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getEffectivePower()).isEqualTo(5);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(5);
-        assertThat(cavalry.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, cavalry)).isEqualTo(2);
     }
 
     @Test
@@ -160,7 +160,7 @@ class BenalishCavalryTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(reassignedBlocker.getBlockingTargetIds()).containsExactly(cavalry.getId());
-        assertThat(reassignedBlocker.getEffectivePower()).isEqualTo(4);
-        assertThat(reassignedBlocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, reassignedBlocker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, reassignedBlocker)).isEqualTo(4);
     }
 }

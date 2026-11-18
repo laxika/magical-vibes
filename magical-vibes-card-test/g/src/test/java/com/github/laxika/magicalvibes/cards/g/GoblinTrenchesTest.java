@@ -34,8 +34,8 @@ class GoblinTrenchesTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Goblin Soldier")).isEqualTo(2);
         assertThat(findPermanents(player1, "Goblin Soldier")).allSatisfy(token -> {
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(token.getCard().getColors()).containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);
             assertThat(token.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.GOBLIN, CardSubtype.SOLDIER);

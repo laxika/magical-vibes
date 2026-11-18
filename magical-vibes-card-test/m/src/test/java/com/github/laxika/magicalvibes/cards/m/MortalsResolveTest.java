@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -33,8 +34,8 @@ class MortalsResolveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
@@ -62,8 +63,8 @@ class MortalsResolveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 

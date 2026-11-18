@@ -24,8 +24,8 @@ class SteppeLynxTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(lynx.getEffectivePower()).isEqualTo(2);
-        assertThat(lynx.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, lynx)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lynx)).isEqualTo(3);
     }
 
     @Test
@@ -38,8 +38,8 @@ class SteppeLynxTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(lynx.getEffectivePower()).isEqualTo(0);
-        assertThat(lynx.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, lynx)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, lynx)).isEqualTo(1);
     }
 
     @Test
@@ -50,14 +50,14 @@ class SteppeLynxTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        assertThat(lynx.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, lynx)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(lynx.getEffectivePower()).isEqualTo(0);
-        assertThat(lynx.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, lynx)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, lynx)).isEqualTo(1);
     }
 
     @Test
@@ -66,17 +66,17 @@ class SteppeLynxTest extends BaseCardTest {
         Permanent lynx = harness.addToBattlefieldAndReturn(player1, new SteppeLynx());
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
-        assertThat(lynx.getEffectivePower()).isEqualTo(0);
-        assertThat(lynx.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, lynx)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, lynx)).isEqualTo(1);
         resolveAllTriggers();
-        assertThat(lynx.getEffectivePower()).isEqualTo(2);
-        assertThat(lynx.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, lynx)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lynx)).isEqualTo(3);
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
         resolveAllTriggers();
 
-        assertThat(lynx.getEffectivePower()).isEqualTo(4);
-        assertThat(lynx.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, lynx)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, lynx)).isEqualTo(5);
     }
 
     @Test
@@ -88,10 +88,10 @@ class SteppeLynxTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(2);
-        assertThat(first.getEffectiveToughness()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(2);
-        assertThat(second.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
     }
 
     @Test
@@ -103,7 +103,7 @@ class SteppeLynxTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         resolveAllTriggers();
 
-        assertThat(lynx.getEffectivePower()).isEqualTo(0);
-        assertThat(lynx.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, lynx)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, lynx)).isEqualTo(1);
     }
 }

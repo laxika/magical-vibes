@@ -30,8 +30,8 @@ class ToucanPuffinTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -50,8 +50,8 @@ class ToucanPuffinTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -81,8 +81,8 @@ class ToucanPuffinTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, puffin.getId());
         harness.passBothPriorities();
 
-        assertThat(puffin.getEffectivePower()).isEqualTo(4);
-        assertThat(puffin.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, puffin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, puffin)).isEqualTo(2);
     }
 
     @Test
@@ -93,7 +93,7 @@ class ToucanPuffinTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, puffin.getId());
         harness.passBothPriorities();
 
-        assertThat(puffin.getEffectivePower()).isEqualTo(4);
-        assertThat(puffin.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, puffin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, puffin)).isEqualTo(2);
     }
 }

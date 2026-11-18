@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.b.BarkformHarvester;
 import com.github.laxika.magicalvibes.model.Card;
@@ -49,7 +50,7 @@ class SazacapsBrewTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
         Permanent fish = findPermanent(player2, "Fish");
         assertThat(fish).isNotNull();
         assertThat(fish.isTapped()).isTrue();
@@ -129,7 +130,7 @@ class SazacapsBrewTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(findPermanent(player2, "Fish").isTapped()).isTrue();
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -145,6 +146,6 @@ class SazacapsBrewTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(findPermanent(player2, "Fish").isTapped()).isTrue();
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
     }
 }

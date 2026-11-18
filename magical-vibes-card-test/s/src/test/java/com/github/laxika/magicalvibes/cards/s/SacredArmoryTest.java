@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,13 +30,13 @@ class SacredArmoryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -49,7 +50,7 @@ class SacredArmoryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(1);
     }
 
     @Test
@@ -63,14 +64,14 @@ class SacredArmoryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bear.getId());
 
         assertThat(armory.isTapped()).isFalse();
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(gd.stack).hasSize(2);
 
         harness.passBothPriorities();
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
         harness.passBothPriorities();
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bear.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -88,7 +89,7 @@ class SacredArmoryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
         assertThat(armory.isTapped()).isTrue();
     }
 
@@ -104,7 +105,7 @@ class SacredArmoryTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -132,8 +133,8 @@ class SacredArmoryTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(armory.getCard());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

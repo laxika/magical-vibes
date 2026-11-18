@@ -23,25 +23,25 @@ class JeskaiDevoteeTest extends BaseCardTest {
     @DisplayName("The second spell gives Jeskai Devotee +1/+1 until end of turn")
     void secondSpellBoostsUntilEndOfTurn() {
         Permanent devotee = addCreatureReady(player1, new JeskaiDevotee());
-        int initialPower = devotee.getEffectivePower();
+        int initialPower = gqs.getEffectivePower(gd, devotee);
 
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(devotee.getEffectivePower()).isEqualTo(initialPower);
+        assertThat(gqs.getEffectivePower(gd, devotee)).isEqualTo(initialPower);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(devotee.getEffectivePower()).isEqualTo(initialPower + 1);
+        assertThat(gqs.getEffectivePower(gd, devotee)).isEqualTo(initialPower + 1);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(devotee.getEffectivePower()).isEqualTo(initialPower + 1);
+        assertThat(gqs.getEffectivePower(gd, devotee)).isEqualTo(initialPower + 1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(devotee.getEffectivePower()).isEqualTo(initialPower);
+        assertThat(gqs.getEffectivePower(gd, devotee)).isEqualTo(initialPower);
     }
 
     @Test
@@ -100,39 +100,39 @@ class JeskaiDevoteeTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         Permanent first = gd.playerBattlefields.get(player1.getId()).getFirst();
-        int initialPower = first.getEffectivePower();
-        int initialToughness = first.getEffectiveToughness();
+        int initialPower = gqs.getEffectivePower(gd, first);
+        int initialToughness = gqs.getEffectiveToughness(gd, first);
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(initialPower + 1);
-        assertThat(first.getEffectiveToughness()).isEqualTo(initialToughness + 1);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(initialPower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(initialToughness + 1);
         Permanent second = gd.playerBattlefields.get(player1.getId()).get(1);
-        assertThat(second.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(second.getEffectiveToughness()).isEqualTo(initialToughness);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(initialPower);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(initialToughness);
     }
 
     @Test
     void opponentsSecondSpellDoesNotTriggerFlurry() {
         Permanent devotee = harness.addToBattlefieldAndReturn(player1, new JeskaiDevotee());
-        int initialPower = devotee.getEffectivePower();
-        int initialToughness = devotee.getEffectiveToughness();
+        int initialPower = gqs.getEffectivePower(gd, devotee);
+        int initialToughness = gqs.getEffectiveToughness(gd, devotee);
         harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 2);
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(devotee.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(devotee.getEffectiveToughness()).isEqualTo(initialToughness);
+        assertThat(gqs.getEffectivePower(gd, devotee)).isEqualTo(initialPower);
+        assertThat(gqs.getEffectiveToughness(gd, devotee)).isEqualTo(initialToughness);
     }
 
     @Test
     void flurryCountsControllersSpellsOnOpponentsTurnAndResetsEachTurn() {
         Permanent devotee = harness.addToBattlefieldAndReturn(player1, new JeskaiDevotee());
-        int initialPower = devotee.getEffectivePower();
-        int initialToughness = devotee.getEffectiveToughness();
+        int initialPower = gqs.getEffectivePower(gd, devotee);
+        int initialToughness = gqs.getEffectiveToughness(gd, devotee);
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
@@ -142,15 +142,15 @@ class JeskaiDevoteeTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(devotee.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(devotee.getEffectiveToughness()).isEqualTo(initialToughness);
+        assertThat(gqs.getEffectivePower(gd, devotee)).isEqualTo(initialPower);
+        assertThat(gqs.getEffectiveToughness(gd, devotee)).isEqualTo(initialToughness);
 
         harness.castInstant(player1, 0, player2.getId());
-        assertThat(devotee.getEffectivePower()).isEqualTo(initialPower);
+        assertThat(gqs.getEffectivePower(gd, devotee)).isEqualTo(initialPower);
         resolveAllTriggers();
 
-        assertThat(devotee.getEffectivePower()).isEqualTo(initialPower + 1);
-        assertThat(devotee.getEffectiveToughness()).isEqualTo(initialToughness + 1);
+        assertThat(gqs.getEffectivePower(gd, devotee)).isEqualTo(initialPower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, devotee)).isEqualTo(initialToughness + 1);
     }
 
     @Test

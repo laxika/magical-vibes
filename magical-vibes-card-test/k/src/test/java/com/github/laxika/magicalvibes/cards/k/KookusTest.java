@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -103,8 +104,8 @@ class KookusTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(kookus.getPowerModifier()).isEqualTo(1);
-        assertThat(kookus.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, kookus)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kookus)).isEqualTo(0);
     }
 
     @Test
@@ -115,13 +116,13 @@ class KookusTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(kookus.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, kookus)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(kookus.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, kookus)).isEqualTo(0);
     }
 
     @Test
@@ -146,8 +147,8 @@ class KookusTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(kookus.getPowerModifier()).isEqualTo(2);
-        assertThat(kookus.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kookus)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kookus)).isZero();
     }
 
     @Test

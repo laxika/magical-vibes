@@ -30,8 +30,8 @@ class TriplicateSpiritsTest extends BaseCardTest {
         assertThat(spirits).hasSize(3);
         assertThat(findPermanents(player2, "Spirit")).isEmpty();
         assertThat(spirits).allSatisfy(spirit -> {
-            assertThat(spirit.getEffectivePower()).isEqualTo(1);
-            assertThat(spirit.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
             assertThat(spirit.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(spirit.hasKeyword(Keyword.FLYING)).isTrue();
         });

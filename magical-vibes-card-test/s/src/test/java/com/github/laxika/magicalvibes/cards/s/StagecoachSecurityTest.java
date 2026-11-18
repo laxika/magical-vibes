@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -34,13 +36,13 @@ class StagecoachSecurityTest extends BaseCardTest {
         castStagecoach();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getPowerModifiers()).isEqualTo(1);
-        assertThat(bears.getToughnessModifiers()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
 
         Permanent stagecoach = findPermanent(player1, "Stagecoach Security");
-        assertThat(stagecoach.getPowerModifiers()).isEqualTo(1);
-        assertThat(stagecoach.getToughnessModifiers()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, stagecoach)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, stagecoach)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, stagecoach, Keyword.VIGILANCE)).isTrue();
     }
 
@@ -52,8 +54,8 @@ class StagecoachSecurityTest extends BaseCardTest {
         castStagecoach();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getPowerModifiers()).isZero();
-        assertThat(bears.getToughnessModifiers()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -65,8 +67,8 @@ class StagecoachSecurityTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(stagecoach.getPowerModifiers()).isZero();
-        assertThat(stagecoach.getToughnessModifiers()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, stagecoach)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, stagecoach)).isZero();
         assertThat(gqs.hasKeyword(gd, stagecoach, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -77,8 +79,8 @@ class StagecoachSecurityTest extends BaseCardTest {
 
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new StagecoachSecurity());
 
-        assertThat(laterCreature.getPowerModifiers()).isZero();
-        assertThat(laterCreature.getToughnessModifiers()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, laterCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterCreature)).isZero();
         assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -128,7 +130,7 @@ class StagecoachSecurityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent plottedStagecoach = findPermanent(player1, "Stagecoach Security");
-        assertThat(plottedStagecoach.getPowerModifiers()).isEqualTo(1);
-        assertThat(plottedStagecoach.getToughnessModifiers()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, plottedStagecoach)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, plottedStagecoach)).isEqualTo(1);
     }
 }

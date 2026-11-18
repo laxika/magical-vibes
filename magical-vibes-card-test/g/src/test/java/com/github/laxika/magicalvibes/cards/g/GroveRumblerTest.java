@@ -26,8 +26,8 @@ class GroveRumblerTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(rumbler.getEffectivePower()).isEqualTo(5);
-        assertThat(rumbler.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, rumbler)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, rumbler)).isEqualTo(5);
     }
 
     @Test
@@ -40,8 +40,8 @@ class GroveRumblerTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(rumbler.getEffectivePower()).isEqualTo(3);
-        assertThat(rumbler.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rumbler)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, rumbler)).isEqualTo(3);
     }
 
     @Test
@@ -52,15 +52,15 @@ class GroveRumblerTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        assertThat(rumbler.getEffectivePower()).isEqualTo(5);
-        assertThat(rumbler.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, rumbler)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, rumbler)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(rumbler.getEffectivePower()).isEqualTo(3);
-        assertThat(rumbler.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rumbler)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, rumbler)).isEqualTo(3);
     }
 
     @Test
@@ -72,16 +72,16 @@ class GroveRumblerTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(rumbler.getEffectivePower()).isEqualTo(3);
-        assertThat(rumbler.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rumbler)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, rumbler)).isEqualTo(3);
 
         harness.passBothPriorities();
-        assertThat(rumbler.getEffectivePower()).isEqualTo(5);
-        assertThat(rumbler.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, rumbler)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, rumbler)).isEqualTo(5);
 
         harness.passBothPriorities();
-        assertThat(rumbler.getEffectivePower()).isEqualTo(7);
-        assertThat(rumbler.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, rumbler)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, rumbler)).isEqualTo(7);
     }
 
     @Test
@@ -92,8 +92,8 @@ class GroveRumblerTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new GroveRumbler());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(rumbler.getEffectivePower()).isEqualTo(3);
-        assertThat(rumbler.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rumbler)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, rumbler)).isEqualTo(3);
     }
 
     @Test

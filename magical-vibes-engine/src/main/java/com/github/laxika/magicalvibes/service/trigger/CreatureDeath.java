@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.UUID;
 
@@ -22,13 +24,13 @@ import java.util.UUID;
 public record CreatureDeath(Permanent permanent, Card card, UUID ownerId, UUID controllerId, int power, int toughness,
                             DepartedAttachments attachments) {
 
-    /** The death a departure {@code event} to a graveyard records. */
-    public static CreatureDeath of(ZoneChangeEvent event) {
+    /** The death a departure {@code event} to a graveyard records; a P/T the departure didn't record is its own. */
+    public static CreatureDeath of(ZoneChangeEvent event, GameData gameData, GameQueryService gameQueryService) {
         Permanent lastKnown = event.permanent();
         int power = lastKnown.getLastKnownPower() != null ? lastKnown.getLastKnownPower()
-                : lastKnown.getEffectivePower();
+                : gameQueryService.ownPower(gameData, lastKnown);
         int toughness = lastKnown.getLastKnownToughness() != null ? lastKnown.getLastKnownToughness()
-                : lastKnown.getEffectiveToughness();
+                : gameQueryService.ownToughness(gameData, lastKnown);
         return new CreatureDeath(lastKnown, event.card(), event.ownerId(), event.controllerId(), power, toughness,
                 event.attachments());
     }

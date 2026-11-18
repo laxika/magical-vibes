@@ -55,8 +55,8 @@ class MaritLagesSlumberTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Marit Lage's Slumber");
         Permanent maritLage = findPermanent(player1, "Marit Lage");
-        assertThat(maritLage.getEffectivePower()).isEqualTo(20);
-        assertThat(maritLage.getEffectiveToughness()).isEqualTo(20);
+        assertThat(gqs.getEffectivePower(gd, maritLage)).isEqualTo(20);
+        assertThat(gqs.getEffectiveToughness(gd, maritLage)).isEqualTo(20);
         assertThat(maritLage.hasKeyword(Keyword.FLYING)).isTrue();
         assertThat(maritLage.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(maritLage.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);

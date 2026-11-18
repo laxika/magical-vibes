@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -31,8 +32,8 @@ class AuriokBladewardenTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -45,8 +46,8 @@ class AuriokBladewardenTest extends BaseCardTest {
         bladewarden.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -57,15 +58,15 @@ class AuriokBladewardenTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -77,8 +78,8 @@ class AuriokBladewardenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -90,8 +91,8 @@ class AuriokBladewardenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -104,8 +105,8 @@ class AuriokBladewardenTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(bladewarden);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -126,22 +127,22 @@ class AuriokBladewardenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bladewarden.getId());
         harness.passBothPriorities();
 
-        assertThat(bladewarden.getEffectivePower()).isEqualTo(2);
-        assertThat(bladewarden.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bladewarden)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bladewarden)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Zero source power gives no boost")
     void zeroPowerGivesNoBoost() {
         Permanent bladewarden = addReadyBladewarden(player1);
-        bladewarden.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, bladewarden, -1);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -180,8 +181,8 @@ class AuriokBladewardenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bladewarden);
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     private Permanent addReadyBladewarden(Player player) {

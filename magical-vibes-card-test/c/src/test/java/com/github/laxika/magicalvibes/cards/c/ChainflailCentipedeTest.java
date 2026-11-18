@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.MarchOfOtherworldlyLight;
 import com.github.laxika.magicalvibes.cards.n.NezumiBladeblesser;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -24,8 +25,8 @@ class ChainflailCentipedeTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(centipede.getPowerModifier()).isEqualTo(2);
-        assertThat(centipede.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, centipede)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, centipede)).isZero();
     }
 
     @Test
@@ -37,9 +38,9 @@ class ChainflailCentipedeTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(centipede.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, centipede)).isZero();
     }
 
     @Test
@@ -78,13 +79,13 @@ class ChainflailCentipedeTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        assertThat(centipede.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, centipede)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(centipede.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, centipede)).isZero();
     }
 
     @Test
@@ -101,8 +102,8 @@ class ChainflailCentipedeTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Chainflail Centipede");
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -121,7 +122,7 @@ class ChainflailCentipedeTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Nezumi Bladeblesser");
         assertThat(centipede.getAttachedTo()).isNull();
         assertThat(gqs.isCreature(gd, centipede)).isTrue();
-        assertThat(centipede.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, centipede)).isZero();
     }
 
     @Test

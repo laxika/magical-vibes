@@ -41,8 +41,8 @@ class AfiyaGroveTest extends BaseCardTest {
 
         assertThat(grove.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(falcon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(falcon.getEffectivePower()).isEqualTo(2);
-        assertThat(falcon.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, falcon)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, falcon)).isEqualTo(2);
     }
 
     @Test

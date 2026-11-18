@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessIndefinitelyEffect;
-import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -29,7 +29,7 @@ public class XathridGorgon extends Card {
                 "{2}{B}",
                 List.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PETRIFICATION, 1),
-                        new BuffTargetCreatureIndefinitelyEffect(0, 0, Set.of(Keyword.DEFENDER)),
+                        new PowerToughnessBoostEffect(0, 0, Set.of(Keyword.DEFENDER)),
                         new AddCardTypeToTargetPermanentEffect(CardType.ARTIFACT, true),
                         new BecomeColorlessIndefinitelyEffect(true),
                         new LockTargetPermanentEffect(false, false, true, Duration.PERMANENT)

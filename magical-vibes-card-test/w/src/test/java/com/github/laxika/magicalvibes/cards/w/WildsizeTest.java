@@ -32,8 +32,8 @@ class WildsizeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.TRAMPLE);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
@@ -51,8 +51,8 @@ class WildsizeTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.TRAMPLE);
     }
 
@@ -97,8 +97,8 @@ class WildsizeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, opponentCreature.getId());
 
-        assertThat(opponentCreature.getPowerModifier()).isEqualTo(2);
-        assertThat(opponentCreature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, opponentCreature)).contains(Keyword.TRAMPLE);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
@@ -115,8 +115,8 @@ class WildsizeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(4);
-        assertThat(creature.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.TRAMPLE);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
@@ -126,8 +126,8 @@ class WildsizeTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.TRAMPLE);
     }
 }

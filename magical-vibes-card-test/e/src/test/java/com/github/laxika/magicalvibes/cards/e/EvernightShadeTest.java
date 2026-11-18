@@ -28,8 +28,8 @@ class EvernightShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(3);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(3);
     }
 
     @Test
@@ -45,8 +45,8 @@ class EvernightShadeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(1);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(1);
     }
 
     @Test
@@ -61,7 +61,7 @@ class EvernightShadeTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Evernight Shade");
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(returned.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
         harness.assertNotInGraveyard(player1, "Evernight Shade");
     }
 
@@ -94,8 +94,8 @@ class EvernightShadeTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Evernight Shade");
         assertThat(returned.getId()).isNotEqualTo(shade.getId());
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(returned.getEffectivePower()).isEqualTo(2);
-        assertThat(returned.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(2);
         harness.assertNotInGraveyard(player1, "Evernight Shade");
     }
 
@@ -114,7 +114,7 @@ class EvernightShadeTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Evernight Shade");
         assertThat(returned.getId()).isNotEqualTo(shade.getId());
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(returned.getEffectivePower()).isEqualTo(2);
-        assertThat(returned.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(2);
     }
 }

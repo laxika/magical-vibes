@@ -30,8 +30,8 @@ class EagerFirstYearTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(firstYear.getEffectivePower()).isEqualTo(3);
-        assertThat(firstYear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, firstYear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firstYear)).isEqualTo(2);
     }
 
     @Test
@@ -64,7 +64,7 @@ class EagerFirstYearTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        assertThat(firstYear.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, firstYear)).isEqualTo(2);
     }
 
     @Test
@@ -80,8 +80,8 @@ class EagerFirstYearTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
-        assertThat(firstYear.getEffectivePower()).isEqualTo(2);
-        assertThat(firstYear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, firstYear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstYear)).isEqualTo(2);
     }
 
     @Test

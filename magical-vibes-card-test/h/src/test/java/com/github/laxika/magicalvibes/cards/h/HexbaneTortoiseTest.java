@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -36,8 +37,8 @@ class HexbaneTortoiseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(supporter.isTapped()).isTrue();
-        assertThat(tortoise.getPowerModifier()).isEqualTo(2);
-        assertThat(tortoise.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tortoise)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tortoise)).isZero();
     }
 
     @Test
@@ -71,7 +72,7 @@ class HexbaneTortoiseTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(supporter.isTapped()).isFalse();
-        assertThat(tortoise.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tortoise)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -101,26 +102,26 @@ class HexbaneTortoiseTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
-        assertThat(tortoise.getPowerModifier()).isZero();
-        supporter.setPowerModifier(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, tortoise)).isZero();
+        PermanentGrants.setPowerBoost(gd, supporter, 3);
         harness.passBothPriorities();
 
-        assertThat(tortoise.getPowerModifier()).isEqualTo(5);
-        assertThat(tortoise.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tortoise)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tortoise)).isZero();
     }
 
     @Test
     void enlistWithNegativePowerGivesNoBonus() {
         Permanent tortoise = addCreatureReady(player1, new HexbaneTortoise());
         Permanent supporter = addCreatureReady(player1, new GrizzlyBears());
-        supporter.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, supporter, -3);
 
         declareAttackers(List.of(0));
         harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
         harness.passBothPriorities();
 
         assertThat(supporter.isTapped()).isTrue();
-        assertThat(tortoise.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tortoise)).isZero();
     }
 
     @Test
@@ -137,8 +138,8 @@ class HexbaneTortoiseTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         resolveAllTriggers();
 
-        assertThat(tortoise.getPowerModifier()).isEqualTo(2);
-        assertThat(tortoise.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tortoise)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tortoise)).isZero();
     }
 
     @Test

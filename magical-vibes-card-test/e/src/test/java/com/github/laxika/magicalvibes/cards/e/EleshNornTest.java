@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.ArcTrail;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -114,8 +115,8 @@ class EleshNornTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, bears, com.github.laxika.magicalvibes.model.Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
@@ -232,8 +233,8 @@ class EleshNornTest extends BaseCardTest {
         advanceSagaToNextChapter();
         harness.passBothPriorities();
 
-        assertThat(saga.getPowerModifier()).isEqualTo(1);
-        assertThat(saga.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, saga)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, saga)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, saga,
                 com.github.laxika.magicalvibes.model.Keyword.DOUBLE_STRIKE)).isTrue();
     }
@@ -249,13 +250,13 @@ class EleshNornTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent laterCreature = addCreatureReady(player1, new GrizzlyBears());
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ownCreature,
                 com.github.laxika.magicalvibes.model.Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(opposingCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isZero();
         assertThat(gqs.hasKeyword(gd, opposingCreature,
                 com.github.laxika.magicalvibes.model.Keyword.DOUBLE_STRIKE)).isFalse();
-        assertThat(laterCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, laterCreature)).isZero();
         assertThat(gqs.hasKeyword(gd, laterCreature,
                 com.github.laxika.magicalvibes.model.Keyword.DOUBLE_STRIKE)).isFalse();
     }

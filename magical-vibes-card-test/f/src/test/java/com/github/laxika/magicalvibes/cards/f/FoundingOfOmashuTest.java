@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -60,14 +61,14 @@ class FoundingOfOmashuTest extends BaseCardTest {
         advanceToNextChapter();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(ownCreature.getToughnessModifier()).isZero();
-        assertThat(opponentCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
     }
 
     @Test
@@ -139,15 +140,15 @@ class FoundingOfOmashuTest extends BaseCardTest {
         advanceToNextChapter();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
-        assertThat(existingCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, existingCreature)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(existingCreature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, existingCreature)).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Founding of Omashu");
         harness.assertInGraveyard(player1, "Founding of Omashu");
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new FrogSquirrels());
-        assertThat(laterCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, laterCreature)).isZero();
     }
 
     private Permanent addSagaWithLore(int loreCounters) {

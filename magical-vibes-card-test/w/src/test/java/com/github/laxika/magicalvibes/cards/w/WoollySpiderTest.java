@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PaleBears;
 import com.github.laxika.magicalvibes.cards.s.Seraph;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -32,8 +33,8 @@ class WoollySpiderTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(spider.getPowerModifier()).isEqualTo(0);
-        assertThat(spider.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spider)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(5);
     }
@@ -48,7 +49,7 @@ class WoollySpiderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(spider.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spider)).isEqualTo(0);
     }
 
     @Test
@@ -61,13 +62,13 @@ class WoollySpiderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(spider.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spider)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(spider.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spider)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(3);
     }
 

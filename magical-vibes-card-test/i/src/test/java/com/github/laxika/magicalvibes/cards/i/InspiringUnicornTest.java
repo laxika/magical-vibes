@@ -25,12 +25,12 @@ class InspiringUnicornTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(unicorn.getEffectivePower()).isEqualTo(3);
-        assertThat(unicorn.getEffectiveToughness()).isEqualTo(3);
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(3);
-        assertThat(nonAttacker.getEffectivePower()).isEqualTo(3);
-        assertThat(nonAttacker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, unicorn)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, unicorn)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nonAttacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, nonAttacker)).isEqualTo(3);
     }
 
     @Test
@@ -42,8 +42,8 @@ class InspiringUnicornTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -54,14 +54,14 @@ class InspiringUnicornTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -73,10 +73,10 @@ class InspiringUnicornTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
 
-        assertThat(unicorn.getEffectivePower()).isEqualTo(3);
-        assertThat(unicorn.getEffectiveToughness()).isEqualTo(3);
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, unicorn)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, unicorn)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
     }
 
     @Test
@@ -88,10 +88,10 @@ class InspiringUnicornTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
     }
 
     @Test
@@ -99,18 +99,18 @@ class InspiringUnicornTest extends BaseCardTest {
     void creaturesAreDeterminedAtResolution() {
         Permanent attacker = addCreatureReady(player1, new InspiringUnicorn());
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
         Permanent beforeResolution = addCreatureReady(player1, new InspiringUnicorn());
 
         resolveAllTriggers();
         Permanent afterResolution = addCreatureReady(player1, new InspiringUnicorn());
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(3);
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(3);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(3);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
     }
 
     @Test
@@ -124,7 +124,7 @@ class InspiringUnicornTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(teammate.getEffectivePower()).isEqualTo(3);
-        assertThat(teammate.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, teammate)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, teammate)).isEqualTo(3);
     }
 }

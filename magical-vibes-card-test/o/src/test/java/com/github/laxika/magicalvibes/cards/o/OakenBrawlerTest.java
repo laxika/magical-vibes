@@ -62,8 +62,8 @@ class OakenBrawlerTest extends BaseCardTest {
         Permanent brawler = castOakenBrawler();
 
         assertThat(brawler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(brawler.getEffectivePower()).isEqualTo(3);
-        assertThat(brawler.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, brawler)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, brawler)).isEqualTo(5);
     }
 
     @Test
@@ -76,8 +76,8 @@ class OakenBrawlerTest extends BaseCardTest {
         Permanent brawler = castOakenBrawler();
 
         assertThat(brawler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
-        assertThat(brawler.getEffectivePower()).isEqualTo(2);
-        assertThat(brawler.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, brawler)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, brawler)).isEqualTo(4);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrystalVein;
 import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
@@ -69,8 +70,8 @@ class BarrelingAttackTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -89,8 +90,8 @@ class BarrelingAttackTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -105,15 +106,15 @@ class BarrelingAttackTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -127,7 +128,7 @@ class BarrelingAttackTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -143,7 +144,7 @@ class BarrelingAttackTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
 
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -159,8 +160,8 @@ class BarrelingAttackTest extends BaseCardTest {
         castBarrelingAttack(target);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -180,8 +181,8 @@ class BarrelingAttackTest extends BaseCardTest {
         harness.castInstant(player1, 0, blocker.getId());
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -199,8 +200,8 @@ class BarrelingAttackTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
         assertThat(gd.stack.getFirst().getCard()).isInstanceOf(BarrelingAttack.class);
         resolveAllTriggers();
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -218,11 +219,11 @@ class BarrelingAttackTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         resolveAllTriggers();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -243,8 +244,8 @@ class BarrelingAttackTest extends BaseCardTest {
         harness.castInstant(player1, 0, blocker.getId());
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -263,8 +264,8 @@ class BarrelingAttackTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -282,8 +283,8 @@ class BarrelingAttackTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 

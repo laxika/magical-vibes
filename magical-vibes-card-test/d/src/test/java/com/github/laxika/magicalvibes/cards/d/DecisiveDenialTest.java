@@ -86,7 +86,7 @@ class DecisiveDenialTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Giant Growth");
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -180,7 +180,7 @@ class DecisiveDenialTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, gd.playerBattlefields.get(player2.getId()).getFirst())).isEqualTo(5);
         harness.assertInGraveyard(player2, "Giant Growth");
     }
 }

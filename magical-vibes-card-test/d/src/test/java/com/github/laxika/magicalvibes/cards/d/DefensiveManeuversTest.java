@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
@@ -26,12 +27,12 @@ class DefensiveManeuversTest extends BaseCardTest {
         castDefensiveManeuvers(player1);
         harness.handleListChoice(player1, "ELF");
 
-        assertThat(ownElf.getPowerModifier()).isZero();
-        assertThat(ownElf.getToughnessModifier()).isEqualTo(4);
-        assertThat(opposingElf.getPowerModifier()).isZero();
-        assertThat(opposingElf.getToughnessModifier()).isEqualTo(4);
-        assertThat(ownSoldier.getPowerModifier()).isZero();
-        assertThat(ownSoldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownElf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownElf)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingElf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingElf)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownSoldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownSoldier)).isZero();
     }
 
     @Test
@@ -44,8 +45,8 @@ class DefensiveManeuversTest extends BaseCardTest {
         castDefensiveManeuvers(player1);
         harness.handleListChoice(player1, "ELF");
 
-        assertThat(changeling.getToughnessModifier()).isEqualTo(4);
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, changeling)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
     }
 
     @Test
@@ -67,14 +68,14 @@ class DefensiveManeuversTest extends BaseCardTest {
 
         castDefensiveManeuvers(player1);
         harness.handleListChoice(player1, "ELF");
-        assertThat(elf.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elf.getPowerModifier()).isZero();
-        assertThat(elf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isZero();
     }
 
     @Test
@@ -88,7 +89,7 @@ class DefensiveManeuversTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(7);
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
     }
 
     @Test

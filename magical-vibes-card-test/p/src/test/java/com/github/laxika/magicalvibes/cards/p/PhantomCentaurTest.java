@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CabalTrainee;
 import com.github.laxika.magicalvibes.cards.c.Cagemail;
 import com.github.laxika.magicalvibes.cards.e.Excruciator;
@@ -140,7 +141,7 @@ class PhantomCentaurTest extends BaseCardTest {
     void unpreventableDamageStillRemovesOneCounter() {
         Permanent centaur = harness.addToBattlefieldAndReturn(player2, new PhantomCentaur());
         centaur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        centaur.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, centaur, 3);
 
         harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
         harness.passBothPriorities();
@@ -156,7 +157,7 @@ class PhantomCentaurTest extends BaseCardTest {
     void simultaneousCombatDamageFromMultipleSourcesRemovesOnlyOneCounter() {
         Permanent centaur = addCreatureReady(player1, new PhantomCentaur());
         centaur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        centaur.setToughnessModifier(10);
+        PermanentGrants.setToughnessBoost(gd, centaur, 10);
         Permanent firstBlocker = addCreatureReady(player2, new GiantWarthog());
         Permanent secondBlocker = addCreatureReady(player2, new GiantWarthog());
 

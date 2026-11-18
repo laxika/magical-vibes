@@ -24,10 +24,10 @@ class NauseaTest extends BaseCardTest {
         harness.castFromHand(player1, new Nausea(), "{1}{B}");
         harness.passBothPriorities();
 
-        assertThat(own.getEffectivePower()).isEqualTo(1);
-        assertThat(own.getEffectiveToughness()).isEqualTo(1);
-        assertThat(theirs.getEffectivePower()).isEqualTo(1);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(1);
     }
 
     @Test
@@ -40,8 +40,8 @@ class NauseaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -55,10 +55,10 @@ class NauseaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent newBears = findPermanent(player1, "Grizzly Bears");
-        assertThat(newBears.getEffectivePower()).isEqualTo(2);
-        assertThat(newBears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(existingBears.getEffectivePower()).isEqualTo(1);
-        assertThat(existingBears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, newBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newBears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, existingBears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, existingBears)).isEqualTo(1);
     }
 
     @Test
@@ -114,12 +114,12 @@ class NauseaTest extends BaseCardTest {
         harness.castFromHand(player1, new Nausea(), "{1}{B}");
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -26,8 +27,8 @@ class SugarRushTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawnCard));
         castOn(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
     }
 
@@ -41,8 +42,8 @@ class SugarRushTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -66,8 +67,8 @@ class SugarRushTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         castOn(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Sugar Rush");

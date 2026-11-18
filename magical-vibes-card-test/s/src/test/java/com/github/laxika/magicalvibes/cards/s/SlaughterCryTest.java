@@ -33,8 +33,8 @@ class SlaughterCryTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearId);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE);
     }
 
@@ -53,7 +53,7 @@ class SlaughterCryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
@@ -68,7 +68,7 @@ class SlaughterCryTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearId);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE);
     }
 
@@ -101,7 +101,7 @@ class SlaughterCryTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(otherBear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherBear)).isZero();
         assertThat(gqs.hasKeyword(gd, otherBear, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -124,7 +124,7 @@ class SlaughterCryTest extends BaseCardTest {
         harness.assertInHand(player1, "Runeclaw Bear");
         harness.assertInGraveyard(player1, "Slaughter Cry");
         assertThat(gd.stack).isEmpty();
-        assertThat(otherBear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherBear)).isZero();
         assertThat(gqs.hasKeyword(gd, otherBear, Keyword.FIRST_STRIKE)).isFalse();
     }
 }

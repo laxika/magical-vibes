@@ -30,8 +30,8 @@ class TurnInsideOutTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();
@@ -76,8 +76,8 @@ class TurnInsideOutTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getId().equals(manifestedCard.getId()))
                 .findFirst().orElseThrow();
         assertThat(manifested.isManifested()).isTrue();
-        assertThat(manifested.getEffectivePower()).isEqualTo(2);
-        assertThat(manifested.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, manifested)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, manifested)).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardCard);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsLibraryCard);
     }
@@ -109,11 +109,11 @@ class TurnInsideOutTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TurnInsideOut(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());
-        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());
 

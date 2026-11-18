@@ -34,8 +34,8 @@ class SelesnyaGuildmageTest extends BaseCardTest {
         assertThat(tokens.getFirst().getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(tokens.getFirst().getCard().getColors()).containsExactly(CardColor.GREEN);
         assertThat(tokens.getFirst().getCard().getSubtypes()).containsExactly(CardSubtype.SAPROLING);
-        assertThat(tokens.getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tokens.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tokens.getFirst())).isEqualTo(1);
     }
 
     @Test

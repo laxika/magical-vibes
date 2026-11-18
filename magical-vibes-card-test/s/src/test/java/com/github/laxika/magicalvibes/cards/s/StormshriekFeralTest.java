@@ -30,15 +30,15 @@ class StormshriekFeralTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(feral.getEffectivePower()).isEqualTo(4);
-        assertThat(feral.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, feral)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, feral)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(feral.getEffectivePower()).isEqualTo(3);
-        assertThat(feral.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, feral)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, feral)).isEqualTo(3);
     }
 
     @Test
@@ -99,8 +99,8 @@ class StormshriekFeralTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(feral.getEffectivePower()).isEqualTo(5);
-        assertThat(feral.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, feral)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, feral)).isEqualTo(3);
     }
 
     private Permanent addReadyFeral(Player player) {

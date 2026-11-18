@@ -31,10 +31,10 @@ class RollickOfAbandonTest extends BaseCardTest {
         Permanent own = findPermanent(player1, "Giant Spider");
         Permanent theirs = findPermanent(player2, "Giant Spider");
 
-        assertThat(own.getEffectivePower()).isEqualTo(4);
-        assertThat(own.getEffectiveToughness()).isEqualTo(2);
-        assertThat(theirs.getEffectivePower()).isEqualTo(4);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 
     @Test
@@ -62,15 +62,15 @@ class RollickOfAbandonTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         Permanent spider = findPermanent(player2, "Giant Spider");
-        assertThat(spider.getEffectivePower()).isEqualTo(4);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(spider.getEffectivePower()).isEqualTo(2);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(4);
     }
 
     @Test
@@ -87,9 +87,9 @@ class RollickOfAbandonTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Fugitive Wizard");
         Permanent wizard = findPermanent(player1, "Fugitive Wizard");
-        assertThat(wizard.getEffectivePower()).isEqualTo(1);
-        assertThat(wizard.getEffectiveToughness()).isEqualTo(1);
-        assertThat(spider.getEffectivePower()).isEqualTo(4);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wizard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wizard)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(2);
     }
 }

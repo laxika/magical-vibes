@@ -29,8 +29,8 @@ class StolenVitalityTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
     }
@@ -48,8 +48,8 @@ class StolenVitalityTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
@@ -67,8 +67,8 @@ class StolenVitalityTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -95,8 +95,8 @@ class StolenVitalityTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
     }
@@ -114,8 +114,8 @@ class StolenVitalityTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
 
@@ -123,8 +123,8 @@ class StolenVitalityTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }

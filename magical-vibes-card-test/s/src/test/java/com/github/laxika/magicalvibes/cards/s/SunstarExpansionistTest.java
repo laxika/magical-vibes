@@ -48,15 +48,15 @@ class SunstarExpansionistTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(expansionist.getEffectivePower()).isEqualTo(3);
-        assertThat(expansionist.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, expansionist)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, expansionist)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(expansionist.getEffectivePower()).isEqualTo(2);
-        assertThat(expansionist.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, expansionist)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, expansionist)).isEqualTo(3);
     }
 
     @Test
@@ -92,7 +92,7 @@ class SunstarExpansionistTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(expansionist.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, expansionist)).isEqualTo(2);
     }
 
     @Test
@@ -103,8 +103,8 @@ class SunstarExpansionistTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         resolveAllTriggers();
 
-        assertThat(expansionist.getEffectivePower()).isEqualTo(4);
-        assertThat(expansionist.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, expansionist)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, expansionist)).isEqualTo(3);
     }
 
     @Test
@@ -129,7 +129,7 @@ class SunstarExpansionistTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1)
                 .allMatch(card -> card instanceof SunstarExpansionist);
-        assertThat(findPermanent(player1, "Sunstar Expansionist").getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Sunstar Expansionist"))).isEqualTo(3);
     }
 
     @Test

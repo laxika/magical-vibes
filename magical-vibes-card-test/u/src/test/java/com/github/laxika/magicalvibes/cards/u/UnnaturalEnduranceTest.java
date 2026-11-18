@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -28,8 +29,8 @@ class UnnaturalEnduranceTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
     }
 
@@ -62,8 +63,8 @@ class UnnaturalEnduranceTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.regenerationShieldCount(target.getId())).isZero();
     }
 
@@ -88,8 +89,8 @@ class UnnaturalEnduranceTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.regenerationShieldCount(target.getId())).isEqualTo(1);
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
@@ -133,7 +134,7 @@ class UnnaturalEnduranceTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Unnatural Endurance");
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(gd.regenerationShieldCount(target.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }

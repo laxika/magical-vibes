@@ -22,10 +22,10 @@ class DesperateChargeTest extends BaseCardTest {
         harness.castFromHand(player1, new DesperateCharge(), "{2}{B}");
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(2);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
     }
 
     @Test
@@ -36,8 +36,8 @@ class DesperateChargeTest extends BaseCardTest {
         harness.castFromHand(player1, new DesperateCharge(), "{2}{B}");
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -51,8 +51,8 @@ class DesperateChargeTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -65,10 +65,10 @@ class DesperateChargeTest extends BaseCardTest {
 
         Permanent creatureEnteringLater = harness.addToBattlefieldAndReturn(player1, new ShuCavalry());
 
-        assertThat(creatureAlreadyOnBattlefield.getEffectivePower()).isEqualTo(4);
-        assertThat(creatureAlreadyOnBattlefield.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creatureEnteringLater.getEffectivePower()).isEqualTo(2);
-        assertThat(creatureEnteringLater.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creatureAlreadyOnBattlefield)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creatureAlreadyOnBattlefield)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creatureEnteringLater)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creatureEnteringLater)).isEqualTo(2);
     }
 
     @Test
@@ -79,8 +79,8 @@ class DesperateChargeTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new ShuCavalry());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -93,13 +93,13 @@ class DesperateChargeTest extends BaseCardTest {
         harness.castFromHand(player1, new DesperateCharge(), "{2}{B}");
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(6);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }

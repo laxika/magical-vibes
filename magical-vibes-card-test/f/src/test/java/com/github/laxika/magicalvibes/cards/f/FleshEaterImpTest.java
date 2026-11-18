@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianRager;
 import com.github.laxika.magicalvibes.cards.t.ThopterAssembly;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -60,8 +61,8 @@ class FleshEaterImpTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         Permanent imp = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(imp.getCard().getName()).isEqualTo("Flesh-Eater Imp");
-        assertThat(imp.getPowerModifier()).isEqualTo(1);
-        assertThat(imp.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, imp)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, imp)).isEqualTo(1);
     }
 
     @Test
@@ -83,8 +84,8 @@ class FleshEaterImpTest extends BaseCardTest {
 
         Permanent imp = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(imp.getCard().getName()).isEqualTo("Flesh-Eater Imp");
-        assertThat(imp.getPowerModifier()).isEqualTo(2);
-        assertThat(imp.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, imp)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, imp)).isEqualTo(2);
     }
 
     @Test
@@ -115,16 +116,16 @@ class FleshEaterImpTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent imp = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(imp.getPowerModifier()).isEqualTo(1);
-        assertThat(imp.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, imp)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, imp)).isEqualTo(1);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(imp.getPowerModifier()).isEqualTo(0);
-        assertThat(imp.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, imp)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, imp)).isEqualTo(0);
     }
 
     @Test
@@ -231,8 +232,8 @@ class FleshEaterImpTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(other);
         harness.assertInGraveyard(player1, "Flesh-Eater Imp");
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
 }

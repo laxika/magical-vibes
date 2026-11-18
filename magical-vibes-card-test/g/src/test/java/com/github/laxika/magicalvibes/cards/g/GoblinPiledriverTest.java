@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AphettoAlchemist;
 import com.github.laxika.magicalvibes.cards.c.ChokingTethers;
 import com.github.laxika.magicalvibes.cards.c.CrownOfAscension;
@@ -44,8 +45,8 @@ class GoblinPiledriverTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(piledriver.getPowerModifier()).isEqualTo(4);
-        assertThat(piledriver.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, piledriver)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, piledriver)).isEqualTo(0);
     }
 
     @Test
@@ -56,7 +57,7 @@ class GoblinPiledriverTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(piledriver.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, piledriver)).isEqualTo(0);
     }
 
     @Test
@@ -69,7 +70,7 @@ class GoblinPiledriverTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(piledriver.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, piledriver)).isEqualTo(2);
     }
 
     @Test
@@ -81,7 +82,7 @@ class GoblinPiledriverTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(piledriver.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, piledriver)).isEqualTo(0);
     }
 
     @Test
@@ -93,8 +94,8 @@ class GoblinPiledriverTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(4);
-        assertThat(second.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(4);
     }
 
     @Test
@@ -110,7 +111,7 @@ class GoblinPiledriverTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Goblin Sledder");
-        assertThat(piledriver.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, piledriver)).isZero();
     }
 
     @Test
@@ -123,12 +124,12 @@ class GoblinPiledriverTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0, 1));
             resolveAllTriggers();
-            assertThat(piledriver.getPowerModifier()).isEqualTo(2);
+            assertThat(PermanentGrants.powerBoostOf(gd, piledriver)).isEqualTo(2);
             harness.castAndResolveInstant(player2, 0, goblin.getId());
         });
 
         harness.assertInGraveyard(player1, "Goblin Sledder");
-        assertThat(piledriver.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, piledriver)).isEqualTo(2);
     }
 
     @Test
@@ -140,15 +141,15 @@ class GoblinPiledriverTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(piledriver.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, piledriver)).isEqualTo(2);
 
         piledriver.setAttacking(false);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(piledriver.getPowerModifier()).isZero();
-        assertThat(piledriver.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, piledriver)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, piledriver)).isZero();
     }
 
     @Test

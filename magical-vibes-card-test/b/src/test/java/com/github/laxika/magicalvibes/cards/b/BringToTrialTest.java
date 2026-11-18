@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -54,7 +55,7 @@ class BringToTrialTest extends BaseCardTest {
     @DisplayName("Can exile your own creature whose modified power reaches 4")
     void exilesOwnCreatureWithIncreasedPower() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.setHand(player1, List.of(new BringToTrial()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -76,7 +77,7 @@ class BringToTrialTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castSorcery(player1, 0, target.getId());
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Air Elemental");
@@ -89,7 +90,7 @@ class BringToTrialTest extends BaseCardTest {
     @DisplayName("Cannot target a creature whose modified power is below 4")
     void cannotTargetCreatureWithReducedPower() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         harness.setHand(player1, List.of(new BringToTrial()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

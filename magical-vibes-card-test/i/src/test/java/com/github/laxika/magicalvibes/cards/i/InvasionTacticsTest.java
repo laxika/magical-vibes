@@ -26,10 +26,10 @@ class InvasionTacticsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
     }
 
     @Test
@@ -40,14 +40,14 @@ class InvasionTacticsTest extends BaseCardTest {
         cast();
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test
@@ -91,10 +91,10 @@ class InvasionTacticsTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = addCreatureReady(player1, new KyoshiWarriors());
 
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(5);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(5);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(3);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(3);
     }
 
     @Test

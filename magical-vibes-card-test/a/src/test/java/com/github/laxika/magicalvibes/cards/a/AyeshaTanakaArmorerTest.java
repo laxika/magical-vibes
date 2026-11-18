@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BlackManaBattery;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
@@ -111,7 +112,7 @@ class AyeshaTanakaArmorerTest extends BaseCardTest {
         BlackManaBattery battery = new BlackManaBattery();
         harness.setLibrary(player1, List.of(battery));
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
-        ayesha.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, ayesha, 2);
 
         harness.passBothPriorities();
         PendingInteraction.LibraryRevealChoice choice =
@@ -145,7 +146,7 @@ class AyeshaTanakaArmorerTest extends BaseCardTest {
     @DisplayName("The attack trigger uses Ayesha's last known power after she leaves the battlefield")
     void usesLastKnownPowerAfterLeavingBattlefield() {
         Permanent ayesha = addReadyAyesha();
-        ayesha.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, ayesha, 2);
         BlackManaBattery battery = new BlackManaBattery();
         harness.setLibrary(player1, List.of(battery));
         harness.setHand(player1, List.of(new Unsummon()));

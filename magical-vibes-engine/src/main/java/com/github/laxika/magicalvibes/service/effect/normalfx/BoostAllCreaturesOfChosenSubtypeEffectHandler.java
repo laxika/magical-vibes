@@ -81,8 +81,7 @@ public class BoostAllCreaturesOfChosenSubtypeEffectHandler implements NormalEffe
             if (gameQueryService.isCreature(gameData, permanent)
                     && predicateEvaluationService.matchesPermanentPredicate(
                     permanent, subtypePredicate, filterContext)) {
-                permanent.setPowerModifier(permanent.getPowerModifier() + powerBoost);
-                permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
+                gameData.addPowerToughnessBoost(entry, permanent.getId(), powerBoost, toughnessBoost);
                 Set<Keyword> grantableKeywords = boost.keywords().stream()
                         .filter(keyword -> !gameQueryService.cantHaveOrGainKeyword(gameData, permanent, keyword))
                         .collect(Collectors.toSet());

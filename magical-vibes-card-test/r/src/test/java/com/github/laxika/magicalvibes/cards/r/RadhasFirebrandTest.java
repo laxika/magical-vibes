@@ -60,8 +60,8 @@ class RadhasFirebrandTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
-        assertThat(firebrand.getEffectivePower()).isEqualTo(5);
-        assertThat(firebrand.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firebrand)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, firebrand)).isEqualTo(3);
     }
 
     @Test
@@ -75,8 +75,8 @@ class RadhasFirebrandTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(firebrand.getEffectivePower()).isEqualTo(5);
-        assertThat(firebrand.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firebrand)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, firebrand)).isEqualTo(3);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once each turn");
@@ -85,8 +85,8 @@ class RadhasFirebrandTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(firebrand.getEffectivePower()).isEqualTo(3);
-        assertThat(firebrand.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, firebrand)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firebrand)).isEqualTo(1);
     }
 
     @Test
@@ -139,8 +139,8 @@ class RadhasFirebrandTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
-        assertThat(firebrand.getEffectivePower()).isEqualTo(5);
-        assertThat(firebrand.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firebrand)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, firebrand)).isEqualTo(3);
     }
 
     @Test
@@ -155,7 +155,7 @@ class RadhasFirebrandTest extends BaseCardTest {
                 .hasMessageContaining("only once each turn");
 
         harness.passBothPriorities();
-        assertThat(firebrand.getEffectivePower()).isEqualTo(5);
-        assertThat(firebrand.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firebrand)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, firebrand)).isEqualTo(3);
     }
 }

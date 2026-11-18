@@ -74,8 +74,8 @@ class KasminaEnigmaticMentorTest extends BaseCardTest {
 
         Permanent wizard = findPermanent(player1, "Wizard");
         assertThat(wizard.getCard().isToken()).isTrue();
-        assertThat(wizard.getEffectivePower()).isEqualTo(2);
-        assertThat(wizard.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wizard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wizard)).isEqualTo(2);
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Island");
         assertThat(kasmina.getCounterCount(CounterType.LOYALTY)).isZero();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class BoldImpalerTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(impaler), null, null);
         harness.passBothPriorities();
 
-        assertThat(impaler.getPowerModifier()).isEqualTo(2);
-        assertThat(impaler.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, impaler)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, impaler)).isEqualTo(0);
     }
 
     @Test
@@ -38,7 +39,7 @@ class BoldImpalerTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(impaler), null, null);
         harness.passBothPriorities();
 
-        assertThat(impaler.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, impaler)).isEqualTo(4);
     }
 
     @Test
@@ -54,8 +55,8 @@ class BoldImpalerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(impaler.getPowerModifier()).isEqualTo(0);
-        assertThat(impaler.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, impaler)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, impaler)).isEqualTo(0);
     }
 
     @Test
@@ -70,8 +71,8 @@ class BoldImpalerTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(impaler), null, null);
         harness.passBothPriorities();
 
-        assertThat(impaler.getPowerModifier()).isEqualTo(2);
-        assertThat(impaler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, impaler)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, impaler)).isZero();
         assertThat(impaler.isTapped()).isTrue();
     }
 
@@ -85,7 +86,7 @@ class BoldImpalerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(impaler.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, impaler)).isZero();
     }
 
     @Test
@@ -98,14 +99,14 @@ class BoldImpalerTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(impaler), null, null);
         harness.activateAbility(player1, battlefieldIndex(impaler), null, null);
 
-        assertThat(impaler.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, impaler)).isZero();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(impaler.getPowerModifier()).isEqualTo(4);
-        assertThat(impaler.getToughnessModifier()).isZero();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, impaler)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, impaler)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
     private int battlefieldIndex(Permanent permanent) {

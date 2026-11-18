@@ -43,8 +43,8 @@ class SliversmithTest extends BaseCardTest {
         assertThat(tokens).hasSize(1);
         Permanent token = tokens.getFirst();
         assertThat(token.getCard().getName()).isEqualTo("Metallic Sliver");
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.getCard().getColors()).isEmpty();
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SLIVER);
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);

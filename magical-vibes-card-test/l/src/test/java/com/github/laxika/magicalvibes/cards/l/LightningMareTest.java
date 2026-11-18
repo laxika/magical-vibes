@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -89,16 +90,16 @@ class LightningMareTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mare.getPowerModifier()).isEqualTo(2);
-        assertThat(mare.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mare)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mare)).isZero();
         assertThat(mare.isTapped()).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mare.getPowerModifier()).isZero();
-        assertThat(mare.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mare)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mare)).isZero();
     }
 
     @Test
@@ -110,13 +111,13 @@ class LightningMareTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mare.getPowerModifier()).isEqualTo(1);
-        assertThat(mare.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mare)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mare)).isEqualTo(0);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mare.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mare)).isEqualTo(0);
     }
 }

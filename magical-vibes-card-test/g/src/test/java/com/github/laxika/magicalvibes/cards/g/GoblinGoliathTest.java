@@ -33,8 +33,8 @@ class GoblinGoliathTest extends BaseCardTest {
         assertThat(goblins).hasSize(1);
         assertThat(goblins.getFirst().getCard().getColors()).containsExactly(CardColor.RED);
         assertThat(goblins.getFirst().getCard().getSubtypes()).contains(CardSubtype.GOBLIN);
-        assertThat(goblins.getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(goblins.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, goblins.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblins.getFirst())).isEqualTo(1);
     }
 
     @Test

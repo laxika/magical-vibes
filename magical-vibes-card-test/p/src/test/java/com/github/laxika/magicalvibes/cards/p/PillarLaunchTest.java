@@ -26,8 +26,8 @@ class PillarLaunchTest extends BaseCardTest {
         Permanent target = addTappedCreature();
         cast(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.REACH);
         assertThat(target.isTapped()).isFalse();
     }
@@ -42,8 +42,8 @@ class PillarLaunchTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.REACH);
     }
 
@@ -67,12 +67,12 @@ class PillarLaunchTest extends BaseCardTest {
 
         cast(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.REACH);
         assertThat(target.isTapped()).isFalse();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.REACH);
         assertThat(other.isTapped()).isTrue();
     }
@@ -85,8 +85,8 @@ class PillarLaunchTest extends BaseCardTest {
 
         cast(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.REACH);
         assertThat(target.isTapped()).isFalse();
     }
@@ -107,8 +107,8 @@ class PillarLaunchTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Pillar Launch");
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.REACH);
         assertThat(other.isTapped()).isTrue();
     }

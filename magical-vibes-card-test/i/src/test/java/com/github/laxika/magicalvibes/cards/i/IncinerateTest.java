@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.Fireball;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -103,7 +104,7 @@ class IncinerateTest extends BaseCardTest {
         // We need a creature with toughness > 3 to survive
         // Hill Giant 3/3 takes exactly 3, so it is destroyed. Let's boost a creature instead.
         Permanent hillGiant = addCreatureReady(player2, new HillGiant());
-        hillGiant.setToughnessModifier(1); // effectively 3/4
+        PermanentGrants.setToughnessBoost(gd, hillGiant, 1); // effectively 3/4
 
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -117,7 +118,7 @@ class IncinerateTest extends BaseCardTest {
     @DisplayName("Nonlethal Incinerate damage still prevents regeneration this turn")
     void nonlethalDamageStillPreventsRegeneration() {
         Permanent skelePerm = addCreatureReady(player2, new DrudgeSkeletons());
-        skelePerm.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, skelePerm, 3);
         gd.addRegenerationShields(skelePerm.getId(), 1);
 
         harness.setHand(player1, List.of(new Incinerate()));
@@ -280,7 +281,7 @@ class IncinerateTest extends BaseCardTest {
     @DisplayName("Incinerate's regeneration restriction ends with the turn")
     void regenerationIsAllowedAgainNextTurn() {
         Permanent skeleton = addCreatureReady(player2, new DrudgeSkeletons());
-        skeleton.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, skeleton, 3);
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);

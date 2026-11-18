@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.IcatianPhalanx;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,8 +28,8 @@ class OrcishCaptainTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        boolean won = target.getPowerModifier() == 2 && target.getToughnessModifier() == 0;
-        boolean lost = target.getPowerModifier() == 0 && target.getToughnessModifier() == -2;
+        boolean won = PermanentGrants.powerBoostOf(gd, target) == 2 && PermanentGrants.toughnessBoostOf(gd, target) == 0;
+        boolean lost = PermanentGrants.powerBoostOf(gd, target) == 0 && PermanentGrants.toughnessBoostOf(gd, target) == -2;
         assertThat(won != lost)
                 .as("target must have exactly one of the +2/+0 (win) or -0/-2 (loss) branches")
                 .isTrue();
@@ -55,8 +56,8 @@ class OrcishCaptainTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -70,8 +71,8 @@ class OrcishCaptainTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        boolean won = target.getPowerModifier() == 2 && target.getToughnessModifier() == 0;
-        boolean lost = target.getPowerModifier() == 0 && target.getToughnessModifier() == -2;
+        boolean won = PermanentGrants.powerBoostOf(gd, target) == 2 && PermanentGrants.toughnessBoostOf(gd, target) == 0;
+        boolean lost = PermanentGrants.powerBoostOf(gd, target) == 0 && PermanentGrants.toughnessBoostOf(gd, target) == -2;
         assertThat(won || lost).isTrue();
     }
 
@@ -121,8 +122,8 @@ class OrcishCaptainTest extends BaseCardTest {
 
         if (gameLogContains("wins the coin flip")) {
             assertThat(gd.playerBattlefields.get(player1.getId())).contains(captain);
-            assertThat(captain.getPowerModifier()).isEqualTo(2);
-            assertThat(captain.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isZero();
         } else {
             assertThat(gameLogContains("loses the coin flip")).isTrue();
             assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(captain);
@@ -138,7 +139,7 @@ class OrcishCaptainTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        target.setToughnessModifier(-1);
+        PermanentGrants.setToughnessBoost(gd, target, -1);
         harness.runStateBasedActions();
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         harness.passBothPriorities();
@@ -158,13 +159,13 @@ class OrcishCaptainTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        captain.setToughnessModifier(-1);
+        PermanentGrants.setToughnessBoost(gd, captain, -1);
         harness.runStateBasedActions();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(captain);
         harness.passBothPriorities();
 
-        boolean won = target.getPowerModifier() == 2 && target.getToughnessModifier() == 0;
-        boolean lost = target.getPowerModifier() == 0 && target.getToughnessModifier() == -2;
+        boolean won = PermanentGrants.powerBoostOf(gd, target) == 2 && PermanentGrants.toughnessBoostOf(gd, target) == 0;
+        boolean lost = PermanentGrants.powerBoostOf(gd, target) == 0 && PermanentGrants.toughnessBoostOf(gd, target) == -2;
         assertThat(won != lost).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }

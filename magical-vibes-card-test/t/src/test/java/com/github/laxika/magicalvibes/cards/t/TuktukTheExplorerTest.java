@@ -28,8 +28,8 @@ class TuktukTheExplorerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Tuktuk the Explorer");
         Permanent token = findPermanent(player1, "Tuktuk the Returned");
-        assertThat(token.getEffectivePower()).isEqualTo(5);
-        assertThat(token.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(5);
         assertThat(token.getCard().getColor()).isNull();
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);

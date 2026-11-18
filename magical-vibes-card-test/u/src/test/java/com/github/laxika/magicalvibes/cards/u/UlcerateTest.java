@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -45,15 +46,15 @@ class UlcerateTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
-        assertThat(target.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -80,8 +81,8 @@ class UlcerateTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
 
         harness.assertLife(player1, 20);
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
 
         harness.passBothPriorities();
 

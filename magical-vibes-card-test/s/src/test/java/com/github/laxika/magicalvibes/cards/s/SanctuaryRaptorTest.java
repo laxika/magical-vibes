@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.u.UnholyHeat;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -30,8 +31,8 @@ class SanctuaryRaptorTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(raptor.getPowerModifier()).isEqualTo(2);
-        assertThat(raptor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raptor)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raptor)).isZero();
         assertThat(gqs.hasKeyword(gd, raptor, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -45,7 +46,7 @@ class SanctuaryRaptorTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(raptor.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raptor)).isZero();
         assertThat(gqs.hasKeyword(gd, raptor, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -64,7 +65,7 @@ class SanctuaryRaptorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(raptor.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raptor)).isZero();
         assertThat(gqs.hasKeyword(gd, raptor, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -87,7 +88,7 @@ class SanctuaryRaptorTest extends BaseCardTest {
         });
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(thirdToken);
-        assertThat(raptor.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raptor)).isZero();
         assertThat(gqs.hasKeyword(gd, raptor, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -105,7 +106,7 @@ class SanctuaryRaptorTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(raptor.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raptor)).isZero();
         assertThat(gqs.hasKeyword(gd, raptor, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -122,7 +123,7 @@ class SanctuaryRaptorTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(raptor.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raptor)).isZero();
         assertThat(gqs.hasKeyword(gd, raptor, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -141,7 +142,7 @@ class SanctuaryRaptorTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(raptor.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, raptor)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, raptor, Keyword.FIRST_STRIKE)).isTrue();
     }
 

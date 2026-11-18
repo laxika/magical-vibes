@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,16 +26,16 @@ class ViashivanDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.activateAbility(player1, 0, 1, null, null);
 
-        assertThat(dragon.getPowerModifier()).isZero();
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
 
         harness.passBothPriorities();
-        assertThat(dragon.getPowerModifier()).isZero();
-        assertThat(dragon.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(1);
 
         harness.passBothPriorities();
-        assertThat(dragon.getPowerModifier()).isEqualTo(1);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(1);
         assertThat(dragon.isTapped()).isTrue();
     }
 
@@ -47,8 +48,8 @@ class ViashivanDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(1);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(0);
     }
 
     @Test
@@ -60,8 +61,8 @@ class ViashivanDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(0);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(1);
     }
 
     @Test
@@ -74,10 +75,10 @@ class ViashivanDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isZero();
-        assertThat(otherDragon.getPowerModifier()).isZero();
-        assertThat(otherDragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherDragon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherDragon)).isZero();
     }
 
     @Test
@@ -96,8 +97,8 @@ class ViashivanDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(2);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(2);
     }
 
     @Test
@@ -112,14 +113,14 @@ class ViashivanDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(1);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(0);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(0);
     }
 }

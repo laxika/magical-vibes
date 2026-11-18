@@ -32,7 +32,7 @@ class CatharsisTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Kithkin")).hasSize(2);
-        assertThat(findPermanent(player1, "Catharsis").getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Catharsis"))).isEqualTo(3);
     }
 
     @Test
@@ -46,12 +46,12 @@ class CatharsisTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(elf.getEffectivePower()).isEqualTo(4);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, elf, Keyword.HASTE)).isTrue();
         Permanent catharsis = findPermanent(player1, "Catharsis");
-        assertThat(catharsis.getEffectivePower()).isEqualTo(4);
-        assertThat(catharsis.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, catharsis)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, catharsis)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, catharsis, Keyword.HASTE)).isTrue();
     }
 
@@ -68,7 +68,7 @@ class CatharsisTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Kithkin")).isEmpty();
-        assertThat(elf.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, elf, Keyword.HASTE)).isFalse();
     }
 
@@ -85,7 +85,7 @@ class CatharsisTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Kithkin")).hasSize(2);
-        assertThat(elf.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, elf, Keyword.HASTE)).isTrue();
     }
 
@@ -116,8 +116,8 @@ class CatharsisTest extends BaseCardTest {
             assertThat(token.getCard().getName()).isEqualTo("Kithkin");
             assertThat(token.getCard().getColors()).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.KITHKIN);
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         }
     }
 
@@ -142,21 +142,21 @@ class CatharsisTest extends BaseCardTest {
         harness.castCreatureWithEvoke(player1, 0, null);
         resolveEvokeTriggers();
 
-        assertThat(own.getEffectivePower()).isEqualTo(4);
-        assertThat(own.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, own, Keyword.HASTE)).isTrue();
-        assertThat(opposing.getEffectivePower()).isEqualTo(3);
-        assertThat(opposing.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, opposing, Keyword.HASTE)).isFalse();
         harness.assertInGraveyard(player1, "Catharsis");
         harness.assertNotOnBattlefield(player1, "Catharsis");
 
         Permanent later = harness.addToBattlefieldAndReturn(player1, new IronShieldElf());
-        assertThat(later.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, later, Keyword.HASTE)).isFalse();
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(own.getEffectivePower()).isEqualTo(3);
-        assertThat(own.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, own, Keyword.HASTE)).isFalse();
     }
 

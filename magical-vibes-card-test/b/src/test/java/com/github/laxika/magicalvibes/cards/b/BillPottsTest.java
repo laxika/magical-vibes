@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
@@ -30,23 +31,23 @@ class BillPottsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        assertThat(bill.getPowerModifier()).isEqualTo(6);
-        assertThat(bill.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, bill)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bill)).isEqualTo(6);
 
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castInstant(player1, 0, bill.getId());
         resolveAllTriggers();
 
-        assertThat(bill.getPowerModifier()).isEqualTo(9);
-        assertThat(bill.getToughnessModifier()).isEqualTo(9);
+        assertThat(PermanentGrants.powerBoostOf(gd, bill)).isEqualTo(9);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bill)).isEqualTo(9);
 
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castInstant(player1, 0, otherCreature.getId());
         resolveAllTriggers();
 
-        assertThat(otherCreature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isEqualTo(3);
     }
 
     @Test
@@ -80,7 +81,7 @@ class BillPottsTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, bill.getId());
         resolveAllTriggers();
 
-        assertThat(bill.getPowerModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, bill)).isEqualTo(6);
         assertThat(bill.getMarkedDamage()).isEqualTo(1);
     }
 
@@ -98,7 +99,7 @@ class BillPottsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bill.getId());
 
         assertThat(bill.getMarkedDamage()).isEqualTo(2);
-        assertThat(bill.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bill)).isEqualTo(3);
     }
 
     @Test
@@ -114,8 +115,8 @@ class BillPottsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, otherCreature.getId());
         resolveAllTriggers();
 
-        assertThat(bill.getPowerModifier()).isEqualTo(3);
-        assertThat(otherCreature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bill)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isEqualTo(3);
     }
 
     @Test
@@ -141,7 +142,7 @@ class BillPottsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.castAndResolveInstant(player2, 0, bill.getId());
 
-        assertThat(bill.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bill)).isEqualTo(3);
 
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -150,7 +151,7 @@ class BillPottsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        assertThat(bill.getPowerModifier()).isEqualTo(9);
+        assertThat(PermanentGrants.powerBoostOf(gd, bill)).isEqualTo(9);
     }
 
     @Test
@@ -175,8 +176,8 @@ class BillPottsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0,
                 List.of(bill.getId(), bill.getId(), otherCreature.getId()));
 
-        assertThat(bill.getPowerModifier()).isEqualTo(2);
-        assertThat(otherCreature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bill)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isEqualTo(1);
 
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -185,6 +186,6 @@ class BillPottsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        assertThat(bill.getPowerModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, bill)).isEqualTo(8);
     }
 }

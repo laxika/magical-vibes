@@ -28,8 +28,8 @@ class SteadyTortoiseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent rabbit = findPermanent(player1, "Rabbit");
-        assertThat(rabbit.getEffectivePower()).isEqualTo(1);
-        assertThat(rabbit.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, rabbit)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, rabbit)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, rabbit, Keyword.HASTE)).isTrue();
     }
 

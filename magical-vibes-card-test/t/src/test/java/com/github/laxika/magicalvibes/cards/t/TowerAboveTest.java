@@ -37,8 +37,8 @@ class TowerAboveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(4);
-        assertThat(bear.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.TRAMPLE, Keyword.WITHER);
     }
 
@@ -58,7 +58,7 @@ class TowerAboveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.TRAMPLE, Keyword.WITHER);
     }
 

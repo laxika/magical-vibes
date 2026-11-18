@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 
 /**
  * "Target spell or permanent becomes {@link #color}." A one-shot effect that sets the target's
- * color indefinitely (CR 105.3 / CR 611.2b — no stated duration, so the continuous effect lasts as
+ * color indefinitely (CR 105.3 / CR 611.2a — no stated duration, so the continuous effect lasts as
  * long as the affected object exists), replacing all its previous colors (layer 5 setter). Used by the
  * "lace" instants (Purelace → white). A {@code null} color means the target becomes <em>colorless</em>
  * (the empty replacement color set of CR 105.3) — Ersatz Gnomes' "target spell becomes colorless".

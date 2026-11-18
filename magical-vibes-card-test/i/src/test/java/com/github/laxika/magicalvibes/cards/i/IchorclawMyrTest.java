@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
 import com.github.laxika.magicalvibes.cards.w.WallOfTanglecord;
@@ -50,10 +51,10 @@ class IchorclawMyrTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(myrPerm.getPowerModifier()).isEqualTo(2);
-        assertThat(myrPerm.getToughnessModifier()).isEqualTo(2);
-        assertThat(myrPerm.getEffectivePower()).isEqualTo(3);
-        assertThat(myrPerm.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, myrPerm)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myrPerm)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, myrPerm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, myrPerm)).isEqualTo(3);
     }
 
     @Test
@@ -81,8 +82,8 @@ class IchorclawMyrTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only +2/+2, not +4/+4
-        assertThat(myrPerm.getPowerModifier()).isEqualTo(2);
-        assertThat(myrPerm.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, myrPerm)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myrPerm)).isEqualTo(2);
     }
 
     @Test
@@ -99,16 +100,16 @@ class IchorclawMyrTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(myrPerm.getPowerModifier()).isEqualTo(2);
-        assertThat(myrPerm.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, myrPerm)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myrPerm)).isEqualTo(2);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(myrPerm.getPowerModifier()).isEqualTo(0);
-        assertThat(myrPerm.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, myrPerm)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myrPerm)).isEqualTo(0);
     }
 
     @Test
@@ -122,8 +123,8 @@ class IchorclawMyrTest extends BaseCardTest {
 
         harness.assertLife(player2, 20);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
-        assertThat(myr.getPowerModifier()).isZero();
-        assertThat(myr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, myr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myr)).isZero();
     }
 
     @Test
@@ -156,8 +157,8 @@ class IchorclawMyrTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         resolveCombat();
-        assertThat(myr.getPowerModifier()).isZero();
-        assertThat(myr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, myr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myr)).isZero();
         assertThat(attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         harness.assertInGraveyard(player2, "Ichorclaw Myr");
     }

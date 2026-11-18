@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.b.BrazenBuccaneers;
@@ -43,8 +44,8 @@ class LurkingChupacabraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Opponent's creature should have -2/-2
-        assertThat(opponentCreature.getPowerModifier()).isEqualTo(-2);
-        assertThat(opponentCreature.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isEqualTo(-2);
     }
 
 
@@ -69,8 +70,8 @@ class LurkingChupacabraTest extends BaseCardTest {
         // Resolve the triggered ability
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getPowerModifier()).isEqualTo(-2);
-        assertThat(opponentCreature.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isEqualTo(-2);
     }
 
     @Test
@@ -92,8 +93,8 @@ class LurkingChupacabraTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getPowerModifier()).isEqualTo(-2);
-        assertThat(opponentCreature.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isEqualTo(-2);
     }
 
 
@@ -185,11 +186,11 @@ class LurkingChupacabraTest extends BaseCardTest {
         castExplorerAndResolveExplore();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -202,8 +203,8 @@ class LurkingChupacabraTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(target);
         gd.playerBattlefields.get(player1.getId()).add(target);
         harness.passBothPriorities();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test

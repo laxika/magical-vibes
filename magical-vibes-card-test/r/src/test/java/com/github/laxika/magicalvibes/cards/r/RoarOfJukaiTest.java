@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FirstVolley;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -32,10 +33,10 @@ class RoarOfJukaiTest extends BaseCardTest {
 
         castRoar();
 
-        assertThat(blocked.getEffectivePower()).isEqualTo(4);
-        assertThat(blocked.getEffectiveToughness()).isEqualTo(4);
-        assertThat(unblocked.getPowerModifier()).isZero();
-        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, blocked)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocked)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, unblocked)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
         harness.assertLife(player2, 20);
     }
 
@@ -49,8 +50,8 @@ class RoarOfJukaiTest extends BaseCardTest {
 
         castRoar();
 
-        assertThat(blocked.getPowerModifier()).isZero();
-        assertThat(blocked.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocked)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocked)).isZero();
         harness.assertLife(player2, 20);
     }
 
@@ -66,9 +67,9 @@ class RoarOfJukaiTest extends BaseCardTest {
 
         castRoar();
 
-        assertThat(player2Blocked.getEffectivePower()).isEqualTo(4);
-        assertThat(player2Blocked.getEffectiveToughness()).isEqualTo(4);
-        assertThat(player1Blocker.getPowerModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, player2Blocked)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, player2Blocked)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, player1Blocker)).isZero();
     }
 
     @Test
@@ -81,16 +82,16 @@ class RoarOfJukaiTest extends BaseCardTest {
         blocker.addBlockingTargetId(blocked.getId());
 
         castRoar();
-        assertThat(blocked.getEffectivePower()).isEqualTo(4);
-        assertThat(blocked.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocked)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocked)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(blocked.getPowerModifier()).isZero();
-        assertThat(blocked.getToughnessModifier()).isZero();
-        assertThat(blocked.getEffectivePower()).isEqualTo(2);
-        assertThat(blocked.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocked)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocked)).isZero();
+        assertThat(gqs.getEffectivePower(gd, blocked)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocked)).isEqualTo(2);
     }
 
     @Test
@@ -112,8 +113,8 @@ class RoarOfJukaiTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 14);
-        assertThat(blocked.getEffectivePower()).isEqualTo(4);
-        assertThat(blocked.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocked)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocked)).isEqualTo(4);
         harness.assertInHand(player1, "Roar of Jukai");
     }
 
@@ -136,8 +137,8 @@ class RoarOfJukaiTest extends BaseCardTest {
 
         harness.assertLife(player2, 14);
         assertThat(firstVolleyTarget.getMarkedDamage()).isEqualTo(1);
-        assertThat(blocked.getEffectivePower()).isEqualTo(4);
-        assertThat(blocked.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocked)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocked)).isEqualTo(4);
         harness.assertInHand(player1, "Roar of Jukai");
     }
 
@@ -174,7 +175,7 @@ class RoarOfJukaiTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player2, 14);
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -186,8 +187,8 @@ class RoarOfJukaiTest extends BaseCardTest {
 
         castRoar();
 
-        assertThat(blocked.getPowerModifier()).isZero();
-        assertThat(blocked.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocked)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocked)).isZero();
     }
 
     @Test
@@ -217,8 +218,8 @@ class RoarOfJukaiTest extends BaseCardTest {
 
         castRoar();
 
-        assertThat(blocked.getEffectivePower()).isEqualTo(4);
-        assertThat(blocked.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocked)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocked)).isEqualTo(4);
     }
 
     @Test
@@ -232,8 +233,8 @@ class RoarOfJukaiTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(blocked.getPowerModifier()).isZero();
-        assertThat(blocked.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocked)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocked)).isZero();
     }
 
     @Test

@@ -36,8 +36,8 @@ class PreacherOfTheSchismTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, token, Keyword.LIFELINK)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);

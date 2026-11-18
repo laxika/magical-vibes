@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ShamanEnKor;
@@ -52,7 +53,7 @@ class CarbonizeTest extends BaseCardTest {
     @DisplayName("Exiles the targeted creature if it dies later that turn")
     void exilesCreatureThatDiesLaterThatTurn() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, target, 2);
 
         harness.setHand(player1, List.of(new Carbonize()));
         harness.addMana(player1, ManaColor.RED, 3);

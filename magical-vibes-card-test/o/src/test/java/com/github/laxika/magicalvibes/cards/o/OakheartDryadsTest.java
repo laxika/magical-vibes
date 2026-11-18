@@ -28,8 +28,8 @@ class OakheartDryadsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -47,8 +47,8 @@ class OakheartDryadsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -88,12 +88,12 @@ class OakheartDryadsTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
 
     @Test
@@ -124,8 +124,8 @@ class OakheartDryadsTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(dryads.getEffectivePower()).isEqualTo(3);
-        assertThat(dryads.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, dryads)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, dryads)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -142,8 +142,8 @@ class OakheartDryadsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
     }
 

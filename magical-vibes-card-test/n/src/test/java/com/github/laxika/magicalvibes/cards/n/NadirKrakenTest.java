@@ -38,8 +38,8 @@ class NadirKrakenTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
 
         Permanent tentacle = findPermanent(player1, "Tentacle");
-        assertThat(tentacle.getEffectivePower()).isEqualTo(1);
-        assertThat(tentacle.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tentacle)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tentacle)).isEqualTo(1);
         assertThat(tentacle.getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(tentacle.getCard().getSubtypes()).containsExactly(CardSubtype.TENTACLE);
     }

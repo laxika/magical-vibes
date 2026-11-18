@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,8 +25,8 @@ class OranRiefInvokerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(invoker.getPowerModifier()).isEqualTo(5);
-        assertThat(invoker.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, invoker)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, invoker)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, invoker, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -41,8 +42,8 @@ class OranRiefInvokerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(invoker.getPowerModifier()).isEqualTo(0);
-        assertThat(invoker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, invoker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, invoker)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, invoker, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -70,12 +71,12 @@ class OranRiefInvokerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(invoker.getPowerModifier()).isEqualTo(10);
-        assertThat(invoker.getToughnessModifier()).isEqualTo(10);
+        assertThat(PermanentGrants.powerBoostOf(gd, invoker)).isEqualTo(10);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, invoker)).isEqualTo(10);
         assertThat(gqs.hasKeyword(gd, invoker, Keyword.TRAMPLE)).isTrue();
         for (Permanent unaffected : new Permanent[]{otherInvoker, opposingInvoker}) {
-            assertThat(unaffected.getPowerModifier()).isZero();
-            assertThat(unaffected.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, unaffected)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, unaffected)).isZero();
             assertThat(gqs.hasKeyword(gd, unaffected, Keyword.TRAMPLE)).isFalse();
         }
     }
@@ -91,8 +92,8 @@ class OranRiefInvokerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(invoker.getPowerModifier()).isEqualTo(5);
-        assertThat(invoker.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, invoker)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, invoker)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, invoker, Keyword.TRAMPLE)).isTrue();
         assertThat(invoker.isTapped()).isTrue();
     }
@@ -109,8 +110,8 @@ class OranRiefInvokerTest extends BaseCardTest {
         Permanent replacement = harness.addToBattlefieldAndReturn(player1, new OranRiefInvoker());
         harness.passBothPriorities();
 
-        assertThat(replacement.getPowerModifier()).isZero();
-        assertThat(replacement.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, replacement)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, replacement)).isZero();
         assertThat(gqs.hasKeyword(gd, replacement, Keyword.TRAMPLE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }

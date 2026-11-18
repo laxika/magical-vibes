@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +21,7 @@ class VivVisionTeenSynthezoidTest extends BaseCardTest {
     @DisplayName("Draws a card when Viv Vision attacks with power 4 or greater")
     void drawsWhenAttackingWithHighPower() {
         Permanent viv = addCreatureReady(player1, new VivVisionTeenSynthezoid());
-        viv.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, viv, 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new VivVisionTeenSynthezoid()));
 
@@ -95,13 +96,13 @@ class VivVisionTeenSynthezoidTest extends BaseCardTest {
     @DisplayName("Does not draw if power falls below four before resolution")
     void checksPowerAgainOnResolution() {
         Permanent viv = addCreatureReady(player1, new VivVisionTeenSynthezoid());
-        viv.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, viv, 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new VivVisionTeenSynthezoid()));
 
         declareAttackers(List.of(0));
         assertThat(gd.stack).hasSize(1);
-        viv.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, viv, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -112,13 +113,13 @@ class VivVisionTeenSynthezoidTest extends BaseCardTest {
     @DisplayName("Uses Viv's power immediately before leaving the battlefield")
     void drawsUsingLastKnownPower() {
         Permanent viv = addCreatureReady(player1, new VivVisionTeenSynthezoid());
-        viv.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, viv, 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new VivVisionTeenSynthezoid()));
 
         declareAttackers(List.of(0));
         assertThat(gd.stack).hasSize(1);
-        viv.setToughnessModifier(-2);
+        PermanentGrants.setToughnessBoost(gd, viv, -2);
         harness.runStateBasedActions();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(viv);
         harness.passBothPriorities();
@@ -130,14 +131,14 @@ class VivVisionTeenSynthezoidTest extends BaseCardTest {
     @DisplayName("Does not draw if Viv's last-known power was below four")
     void doesNotDrawUsingEarlierAttackPower() {
         Permanent viv = addCreatureReady(player1, new VivVisionTeenSynthezoid());
-        viv.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, viv, 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new VivVisionTeenSynthezoid()));
 
         declareAttackers(List.of(0));
         assertThat(gd.stack).hasSize(1);
-        viv.setPowerModifier(0);
-        viv.setToughnessModifier(-2);
+        PermanentGrants.setPowerBoost(gd, viv, 0);
+        PermanentGrants.setToughnessBoost(gd, viv, -2);
         harness.runStateBasedActions();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(viv);
         harness.passBothPriorities();

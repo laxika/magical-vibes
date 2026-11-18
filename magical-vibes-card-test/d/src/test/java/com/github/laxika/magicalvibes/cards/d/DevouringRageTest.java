@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.k.KamiOfOldStone;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -42,9 +43,9 @@ class DevouringRageTest extends BaseCardTest {
                 List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(9);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
-        assertThat(target.getEffectivePower()).isEqualTo(10);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(9);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(10);
         harness.assertInGraveyard(player1, "Kami of Old Stone");
     }
 
@@ -58,8 +59,8 @@ class DevouringRageTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -76,8 +77,8 @@ class DevouringRageTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -90,8 +91,8 @@ class DevouringRageTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -121,7 +122,7 @@ class DevouringRageTest extends BaseCardTest {
                 List.of(target.getId(), target.getId())))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
         harness.assertOnBattlefield(player1, "Kami of Old Stone");
     }
 
@@ -150,7 +151,7 @@ class DevouringRageTest extends BaseCardTest {
                 List.of(forest.getId())))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
         harness.assertOnBattlefield(player1, "Kami of Old Stone");
     }
 
@@ -168,13 +169,13 @@ class DevouringRageTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spirit);
         harness.assertInGraveyard(player1, "Kami of Old Stone");
-        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(6);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -196,8 +197,8 @@ class DevouringRageTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Devouring Rage");
-        assertThat(survivor.getPowerModifier()).isEqualTo(0);
-        assertThat(survivor.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isEqualTo(0);
     }
 
     @Test

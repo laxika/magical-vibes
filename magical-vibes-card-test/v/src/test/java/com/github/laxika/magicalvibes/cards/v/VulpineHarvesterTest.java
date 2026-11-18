@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MyrRetriever;
@@ -108,7 +109,7 @@ class VulpineHarvesterTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
-        attacker.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, attacker, -2);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Myr Retriever");

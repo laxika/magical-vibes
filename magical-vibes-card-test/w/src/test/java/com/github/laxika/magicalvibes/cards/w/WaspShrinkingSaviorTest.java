@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -22,7 +23,7 @@ class WaspShrinkingSaviorTest extends BaseCardTest {
         addCreatureReady(player1, new WaspShrinkingSavior());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         Permanent zeroPowerCreature = addCreatureReady(player1, new GrizzlyBears());
-        zeroPowerCreature.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, zeroPowerCreature, -2);
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -89,9 +90,9 @@ class WaspShrinkingSaviorTest extends BaseCardTest {
     @DisplayName("Choosing no target still draws for negative-power creatures on both battlefields, including Wasp")
     void noTargetDrawsForAllNegativePowerCreatures() {
         Permanent wasp = addCreatureReady(player1, new WaspShrinkingSavior());
-        wasp.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, wasp, -2);
         Permanent opposingWasp = addCreatureReady(player2, new WaspShrinkingSavior());
-        opposingWasp.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, opposingWasp, -2);
         harness.setLibrary(player1, List.of(new WaspShrinkingSavior(), new WaspShrinkingSavior()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -108,7 +109,7 @@ class WaspShrinkingSaviorTest extends BaseCardTest {
     void zeroPowerAfterShrinkDoesNotDraw() {
         addCreatureReady(player1, new WaspShrinkingSavior());
         Permanent target = addCreatureReady(player2, new WaspShrinkingSavior());
-        target.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, 2);
         harness.setLibrary(player1, List.of(new WaspShrinkingSavior()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -125,7 +126,7 @@ class WaspShrinkingSaviorTest extends BaseCardTest {
     @DisplayName("Losing the only chosen target prevents drawing even with a negative-power creature remaining")
     void removedTargetPreventsDraw() {
         Permanent wasp = addCreatureReady(player1, new WaspShrinkingSavior());
-        wasp.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, wasp, -2);
         Permanent target = addCreatureReady(player2, new WaspShrinkingSavior());
         harness.setLibrary(player1, List.of(new WaspShrinkingSavior()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();

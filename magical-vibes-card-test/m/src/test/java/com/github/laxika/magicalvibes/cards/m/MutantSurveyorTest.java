@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -43,14 +44,14 @@ class MutantSurveyorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(surveyor.getPowerModifier()).isEqualTo(1);
-        assertThat(surveyor.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, surveyor)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, surveyor)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(surveyor.getPowerModifier()).isZero();
-        assertThat(surveyor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, surveyor)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, surveyor)).isZero();
     }
 
     @Test
@@ -118,8 +119,8 @@ class MutantSurveyorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(surveyor.getPowerModifier()).isEqualTo(2);
-        assertThat(surveyor.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, surveyor)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, surveyor)).isEqualTo(2);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -54,7 +55,7 @@ class IkraShidiqiTheUsurperTest extends BaseCardTest {
 
         resolveCombat();
         assertThat(gd.stack).hasSize(1);
-        elder.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, elder, 3);
         resolveAllTriggers();
 
         harness.assertLife(player1, 24);
@@ -66,7 +67,7 @@ class IkraShidiqiTheUsurperTest extends BaseCardTest {
     void usesLastKnownToughnessAfterSacrifice() {
         addCreatureReady(player1, new IkraShidiqiTheUsurper());
         Permanent elder = addCreatureReady(player1, new SakuraTribeElder());
-        elder.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, elder, 3);
         elder.setAttacking(true);
         harness.setLibrary(player1, List.of());
 
@@ -115,7 +116,7 @@ class IkraShidiqiTheUsurperTest extends BaseCardTest {
     void zeroPowerDoesNotTrigger() {
         addCreatureReady(player1, new IkraShidiqiTheUsurper());
         Permanent elder = addCreatureReady(player1, new SakuraTribeElder());
-        elder.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, elder, -1);
         elder.setAttacking(true);
 
         resolveCombat();

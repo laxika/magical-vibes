@@ -30,8 +30,8 @@ class KujarSeedsculptorTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(elemental.getEffectivePower()).isEqualTo(5);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(5);
     }
 
     @Test

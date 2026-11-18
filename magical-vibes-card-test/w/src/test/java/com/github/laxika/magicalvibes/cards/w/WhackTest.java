@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EagerCadet;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
@@ -42,8 +43,8 @@ class WhackTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(target.getPowerModifier()).isEqualTo(-4);
-        assertThat(target.getToughnessModifier()).isEqualTo(-4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-4);
     }
 
     @Test
@@ -59,8 +60,8 @@ class WhackTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -102,7 +103,7 @@ class WhackTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test

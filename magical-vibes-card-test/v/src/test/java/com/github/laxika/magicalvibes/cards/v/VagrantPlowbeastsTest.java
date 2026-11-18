@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.d.DarkTemper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -88,7 +89,7 @@ class VagrantPlowbeastsTest extends BaseCardTest {
     @DisplayName("Exactly five effective power is enough, even when the source is tapped and summoning sick")
     void canRegenerateSelfAtPowerFive() {
         Permanent plowbeasts = harness.addToBattlefieldAndReturn(player1, new VagrantPlowbeasts());
-        plowbeasts.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, plowbeasts, -1);
         plowbeasts.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -104,7 +105,7 @@ class VagrantPlowbeastsTest extends BaseCardTest {
         Permanent plowbeasts = harness.addToBattlefieldAndReturn(player1, new VagrantPlowbeasts());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, 0, null, plowbeasts.getId());
-        plowbeasts.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, plowbeasts, -2);
 
         harness.passBothPriorities();
 

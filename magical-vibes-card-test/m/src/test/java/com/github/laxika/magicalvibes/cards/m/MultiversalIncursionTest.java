@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.b.BaronHelmutZemo;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -88,8 +89,8 @@ class MultiversalIncursionTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(original.getPowerModifier()).isEqualTo(2);
-        assertThat(copy.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, original)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, copy)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 

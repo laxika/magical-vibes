@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.g.GlassGolem;
 import com.github.laxika.magicalvibes.cards.g.GolgariThug;
@@ -30,8 +31,8 @@ class UndercityShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getPowerModifier()).isEqualTo(1);
-        assertThat(shade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(1);
     }
 
     @Test
@@ -45,8 +46,8 @@ class UndercityShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getPowerModifier()).isEqualTo(2);
-        assertThat(shade.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(2);
     }
 
     @Test
@@ -61,8 +62,8 @@ class UndercityShadeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shade.getPowerModifier()).isZero();
-        assertThat(shade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isZero();
     }
 
     @Test
@@ -114,8 +115,8 @@ class UndercityShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getPowerModifier()).isEqualTo(1);
-        assertThat(shade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(1);
         assertThat(shade.isTapped()).isTrue();
     }
 
@@ -131,16 +132,16 @@ class UndercityShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.activateAbility(player1, 1, null, null);
 
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
         resolveAllTriggers();
 
-        assertThat(source.getPowerModifier()).isEqualTo(2);
-        assertThat(source.getToughnessModifier()).isEqualTo(2);
-        assertThat(otherShade.getPowerModifier()).isZero();
-        assertThat(otherShade.getToughnessModifier()).isZero();
-        assertThat(opposingShade.getPowerModifier()).isZero();
-        assertThat(opposingShade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherShade)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherShade)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingShade)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingShade)).isZero();
     }
 
     @Test
@@ -154,8 +155,8 @@ class UndercityShadeTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(shade.getPowerModifier()).isZero();
-        assertThat(shade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isZero();
     }
 
     private Permanent addReadyShade(Player player) {

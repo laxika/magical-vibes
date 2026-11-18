@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,10 +30,10 @@ class FlunkTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-4);
-        assertThat(target.getToughnessModifier()).isEqualTo(-4);
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -47,8 +48,8 @@ class FlunkTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -65,10 +66,10 @@ class FlunkTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
     }
 
     @Test
@@ -96,13 +97,13 @@ class FlunkTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-4);
-        assertThat(target.getToughnessModifier()).isEqualTo(-4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-4);
 
         harness.setHand(player2, List.of());
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Mahamoti Djinn");
     }
 
@@ -116,9 +117,9 @@ class FlunkTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-5);
-        assertThat(target.getToughnessModifier()).isEqualTo(-5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Mahamoti Djinn");
     }
 
@@ -148,8 +149,8 @@ class FlunkTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         harness.assertOnBattlefield(player2, "Mahamoti Djinn");
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -42,14 +43,14 @@ class VampireHoundsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
-        assertThat(hounds.getPowerModifier()).isEqualTo(2);
-        assertThat(hounds.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, hounds)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hounds)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(hounds.getPowerModifier()).isZero();
-        assertThat(hounds.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hounds)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hounds)).isZero();
     }
 
     @Test

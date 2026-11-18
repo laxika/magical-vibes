@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -70,8 +71,8 @@ class HeraldOfAnguishTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Ornithopter");
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
     }
 
     @Test
@@ -154,7 +155,7 @@ class HeraldOfAnguishTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Ornithopter");
         harness.assertNotOnBattlefield(player1, "Ornithopter");
-        assertThat(herald.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, herald)).isZero();
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, herald)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, herald)).isEqualTo(3);
@@ -162,8 +163,8 @@ class HeraldOfAnguishTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(herald.getPowerModifier()).isZero();
-        assertThat(herald.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, herald)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, herald)).isZero();
     }
 
     @Test

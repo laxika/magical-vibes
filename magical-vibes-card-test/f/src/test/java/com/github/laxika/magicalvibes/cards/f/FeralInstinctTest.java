@@ -33,8 +33,8 @@ class FeralInstinctTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, walkerId);
 
         Permanent walker = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(walker.getEffectivePower()).isEqualTo(1);
-        assertThat(walker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, walker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, walker)).isEqualTo(4);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
         List<TemporaryGlobalTriggeredAbility> scheduled = gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP);
@@ -79,8 +79,8 @@ class FeralInstinctTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent walker = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(walker.getEffectivePower()).isEqualTo(0);
-        assertThat(walker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, walker)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, walker)).isEqualTo(3);
     }
 
     @Test
@@ -129,8 +129,8 @@ class FeralInstinctTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Phyrexian Walker"));
         Permanent walker = findPermanent(player2, "Phyrexian Walker");
-        assertThat(walker.getEffectivePower()).isEqualTo(1);
-        assertThat(walker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, walker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, walker)).isEqualTo(4);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
         gd.playerBattlefields.get(player2.getId()).clear();

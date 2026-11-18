@@ -28,8 +28,8 @@ class UltronDroneTest extends BaseCardTest {
         assertThat(robot.getCard().hasType(CardType.ARTIFACT)).isTrue();
         assertThat(robot.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(robot.getCard().getSubtypes()).containsExactly(CardSubtype.ROBOT, CardSubtype.VILLAIN);
-        assertThat(robot.getEffectivePower()).isEqualTo(2);
-        assertThat(robot.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, robot)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, robot)).isEqualTo(2);
     }
 
     @Test

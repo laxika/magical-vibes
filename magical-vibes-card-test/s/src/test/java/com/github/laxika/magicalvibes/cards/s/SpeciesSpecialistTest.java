@@ -126,9 +126,9 @@ class SpeciesSpecialistTest extends BaseCardTest {
         Permanent secondBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
-        specialist.setMarkedDamage(specialist.getEffectiveToughness());
-        firstBear.setMarkedDamage(firstBear.getEffectiveToughness());
-        secondBear.setMarkedDamage(secondBear.getEffectiveToughness());
+        specialist.setMarkedDamage(gqs.getEffectiveToughness(gd, specialist));
+        firstBear.setMarkedDamage(gqs.getEffectiveToughness(gd, firstBear));
+        secondBear.setMarkedDamage(gqs.getEffectiveToughness(gd, secondBear));
 
         harness.runStateBasedActions();
         resolveAllTriggers();
@@ -153,7 +153,7 @@ class SpeciesSpecialistTest extends BaseCardTest {
     }
 
     private void kill(Permanent creature) {
-        creature.setMarkedDamage(creature.getEffectiveToughness());
+        creature.setMarkedDamage(gqs.getEffectiveToughness(gd, creature));
         harness.runStateBasedActions();
         resolveAllTriggers();
     }

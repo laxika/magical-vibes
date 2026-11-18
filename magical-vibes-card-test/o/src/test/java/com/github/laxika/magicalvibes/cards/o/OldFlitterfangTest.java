@@ -66,15 +66,15 @@ class OldFlitterfangTest extends BaseCardTest {
         });
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(flitterfang.getEffectivePower()).isEqualTo(5);
-        assertThat(flitterfang.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, flitterfang)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, flitterfang)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(flitterfang.getEffectivePower()).isEqualTo(3);
-        assertThat(flitterfang.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, flitterfang)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, flitterfang)).isEqualTo(4);
     }
 
     @Test
@@ -92,8 +92,8 @@ class OldFlitterfangTest extends BaseCardTest {
         });
 
         harness.assertInGraveyard(player1, "Spellbook");
-        assertThat(flitterfang.getEffectivePower()).isEqualTo(5);
-        assertThat(flitterfang.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, flitterfang)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, flitterfang)).isEqualTo(6);
     }
 
     @Test

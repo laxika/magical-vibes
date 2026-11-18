@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WallOfVines;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -71,14 +72,14 @@ class AssaultFormationTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(player1, formation), 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test
@@ -86,7 +87,7 @@ class AssaultFormationTest extends BaseCardTest {
     void combatUsesToughnessWhenPowerIsGreater() {
         addFormation();
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, bears, 3);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> declareAttackers(player1, List.of(battlefieldIndex(player1, bears))));
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,10 +31,10 @@ class FinalRevelsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(mine.getPowerModifier()).isEqualTo(2);
-        assertThat(mine.getToughnessModifier()).isEqualTo(0);
-        assertThat(theirs.getPowerModifier()).isEqualTo(2);
-        assertThat(theirs.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mine)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mine)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, theirs)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, theirs)).isEqualTo(0);
     }
 
     @Test
@@ -47,12 +48,12 @@ class FinalRevelsTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-        assertThat(mine.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, mine)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(mine.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mine)).isEqualTo(0);
     }
 
     @Test
@@ -69,8 +70,8 @@ class FinalRevelsTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Hill Giant");
-        assertThat(giant.getPowerModifier()).isEqualTo(0);
-        assertThat(giant.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(-2);
     }
 
     @Test
@@ -85,14 +86,14 @@ class FinalRevelsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 1);
         harness.passBothPriorities();
 
-        assertThat(mine.getToughnessModifier()).isEqualTo(-2);
-        assertThat(theirs.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mine)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, theirs)).isEqualTo(-2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(mine.getToughnessModifier()).isZero();
-        assertThat(theirs.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mine)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, theirs)).isZero();
         harness.assertOnBattlefield(player1, "Hill Giant");
         harness.assertOnBattlefield(player2, "Hill Giant");
     }
@@ -106,17 +107,17 @@ class FinalRevelsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
         Permanent afterBoost = harness.enterBattlefieldAndReturn(player1, new HillGiant());
-        assertThat(afterBoost.getPowerModifier()).isZero();
-        assertThat(afterBoost.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, afterBoost)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterBoost)).isZero();
 
         harness.castSorcery(player1, 0, 1);
         harness.passBothPriorities();
-        assertThat(afterBoost.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterBoost)).isEqualTo(-2);
 
         Permanent afterReduction = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.runStateBasedActions();
-        assertThat(afterReduction.getPowerModifier()).isZero();
-        assertThat(afterReduction.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, afterReduction)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterReduction)).isZero();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 

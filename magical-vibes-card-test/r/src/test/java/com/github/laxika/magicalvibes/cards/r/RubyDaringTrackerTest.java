@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ConsulateDreadnought;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.h.HerosDownfall;
@@ -29,8 +30,8 @@ class RubyDaringTrackerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(ruby.getPowerModifier()).isZero();
-        assertThat(ruby.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ruby)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ruby)).isZero();
     }
 
     @Test
@@ -42,8 +43,8 @@ class RubyDaringTrackerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(ruby.getPowerModifier()).isEqualTo(2);
-        assertThat(ruby.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ruby)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ruby)).isEqualTo(2);
     }
 
     @Test
@@ -83,8 +84,8 @@ class RubyDaringTrackerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(juggernaut);
         resolveAllTriggers();
 
-        assertThat(ruby.getPowerModifier()).isEqualTo(2);
-        assertThat(ruby.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ruby)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ruby)).isEqualTo(2);
     }
 
     @Test
@@ -97,8 +98,8 @@ class RubyDaringTrackerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         resolveAllTriggers();
-        assertThat(ruby.getPowerModifier()).isZero();
-        assertThat(ruby.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ruby)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ruby)).isZero();
     }
 
     @Test
@@ -110,8 +111,8 @@ class RubyDaringTrackerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(ruby.getPowerModifier()).isZero();
-        assertThat(ruby.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ruby)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ruby)).isZero();
     }
 
     @Test
@@ -123,8 +124,8 @@ class RubyDaringTrackerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(ruby.getPowerModifier()).isEqualTo(2);
-        assertThat(ruby.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ruby)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ruby)).isEqualTo(2);
     }
 
     @Test
@@ -136,7 +137,7 @@ class RubyDaringTrackerTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(ruby.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ruby)).isZero();
     }
 
     @Test
@@ -151,8 +152,8 @@ class RubyDaringTrackerTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, ruby.getId());
         resolveAllTriggers();
 
-        assertThat(ruby.getPowerModifier()).isEqualTo(3);
-        assertThat(ruby.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, ruby)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ruby)).isEqualTo(3);
     }
 
     @Test
@@ -176,13 +177,13 @@ class RubyDaringTrackerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
         assertThat(ruby.isTapped()).isTrue();
-        assertThat(ruby.getPowerModifier()).isEqualTo(2);
-        assertThat(ruby.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ruby)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ruby)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ruby.getPowerModifier()).isZero();
-        assertThat(ruby.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ruby)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ruby)).isZero();
     }
 }

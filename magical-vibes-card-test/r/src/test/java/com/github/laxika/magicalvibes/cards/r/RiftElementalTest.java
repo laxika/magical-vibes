@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArcBlade;
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -30,8 +31,8 @@ class RiftElementalTest extends BaseCardTest {
         activate(source);
 
         assertThat(target.getCounterCount(CounterType.TIME)).isZero();
-        assertThat(source.getPowerModifier()).isEqualTo(2);
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
     }
 
     @Test
@@ -43,7 +44,7 @@ class RiftElementalTest extends BaseCardTest {
         activate(source);
 
         assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
-        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
     }
 
     @Test
@@ -64,7 +65,7 @@ class RiftElementalTest extends BaseCardTest {
 
         assertThat(permanent.getCounterCount(CounterType.TIME)).isEqualTo(1);
         assertThat(gd.exiledCardTimeCounters).containsEntry(suspended.getId(), 1);
-        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
     }
 
     @Test
@@ -76,13 +77,13 @@ class RiftElementalTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(source), null, null);
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
-        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
         assertThat(gd.findExiledCard(target.getId())).isNotNull();
     }
 
@@ -150,7 +151,7 @@ class RiftElementalTest extends BaseCardTest {
         activate(source);
 
         assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
-        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
     }
 
     @Test
@@ -168,7 +169,7 @@ class RiftElementalTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Ravaging Riftwurm");
         harness.assertNotOnBattlefield(player1, "Ravaging Riftwurm");
         harness.passBothPriorities();
-        assertThat(source.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(4);
     }
 
     @Test
@@ -183,10 +184,10 @@ class RiftElementalTest extends BaseCardTest {
         activate(source);
 
         assertThat(target.getCounterCount(CounterType.TIME)).isZero();
-        assertThat(source.getPowerModifier()).isEqualTo(4);
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
         harness.passUntil(TurnStep.CLEANUP);
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
     }
 
     private Permanent readySource() {

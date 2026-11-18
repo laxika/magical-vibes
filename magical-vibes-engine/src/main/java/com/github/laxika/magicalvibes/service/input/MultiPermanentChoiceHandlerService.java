@@ -75,6 +75,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 /**
  * Handles multi-permanent choice inputs where the player selects
@@ -3371,7 +3373,7 @@ public class MultiPermanentChoiceHandlerService {
             // Boost source permanent +X/+0 (only if still on battlefield)
             Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
             if (sourcePermanent != null) {
-                sourcePermanent.setPowerModifier(sourcePermanent.getPowerModifier() + count);
+                gameData.addPowerToughnessBoost(sourcePermanent, count, 0);
                 gameLogService.append(gameData,
                         GameLog.cardThen(sourcePermanent.getCard(), " gets +" + count + "/+0 until end of turn."));
                 log.info("Game {} - {} gets +{}/+0", gameData.id, sourcePermanent.getCard().getName(), count);
@@ -3419,8 +3421,7 @@ public class MultiPermanentChoiceHandlerService {
             if (source != null) {
                 int powerBoost = context.powerPerPermanent() * tappedCount;
                 int toughnessBoost = context.toughnessPerPermanent() * tappedCount;
-                source.setPowerModifier(source.getPowerModifier() + powerBoost);
-                source.setToughnessModifier(source.getToughnessModifier() + toughnessBoost);
+                gameData.addPowerToughnessBoost(source, powerBoost, toughnessBoost);
                 gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                         " gets +" + powerBoost + "/+" + toughnessBoost + " until end of turn."));
                 log.info("Game {} - {} gets +{}/+{}", gameData.id, source.getCard().getName(),
@@ -3469,8 +3470,7 @@ public class MultiPermanentChoiceHandlerService {
 
         Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
         if (source != null && tappedCount > 0) {
-            source.setPowerModifier(source.getPowerModifier() + tappedCount);
-            source.setToughnessModifier(source.getToughnessModifier() + tappedCount);
+            gameData.addPowerToughnessBoost(source, tappedCount, tappedCount);
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                     " gets +" + tappedCount + "/+" + tappedCount + " until end of turn."));
         }
@@ -3726,12 +3726,9 @@ public class MultiPermanentChoiceHandlerService {
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         if (entering != null) {
-            entering.setBasePowerOverriddenPermanently(true);
-            entering.setPermanentBasePowerOverride(totalPower);
-            entering.setPermanentBasePowerOverrideTimestamp(gameData.nextTimestamp());
-            entering.setBaseToughnessOverriddenPermanently(true);
-            entering.setPermanentBaseToughnessOverride(totalToughness);
-            entering.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
+            gameData.addEffectOnPermanent(context.card().getName(), entering.getId(), context.controllerId(),
+                    new SetBasePowerToughnessEffect(totalPower, totalToughness, GrantScope.TARGET, Duration.PERMANENT),
+                    entering.getId(), Duration.PERMANENT);
             gameLogService.append(gameData, GameLog.cardThen(context.card(),
                     " becomes " + totalPower + "/" + totalToughness + "."));
         }
@@ -3756,13 +3753,9 @@ public class MultiPermanentChoiceHandlerService {
             // Oracle: "power and toughness are each equal to the number of Forests sacrificed" is a
             // characteristic-defining ability (CR 613.4a, layer 7a), so any layer 7b setter wins;
             // timestamp 0 orders this entry before every real 7b effect.
-            long timestamp = 0L;
-            entering.setBasePowerOverriddenPermanently(true);
-            entering.setPermanentBasePowerOverride(sacrificed);
-            entering.setPermanentBasePowerOverrideTimestamp(timestamp);
-            entering.setBaseToughnessOverriddenPermanently(true);
-            entering.setPermanentBaseToughnessOverride(sacrificed);
-            entering.setPermanentBaseToughnessOverrideTimestamp(timestamp);
+            gameData.putFloatingEffect(FloatingContinuousEffect.onPermanent(context.card().getName(), entering.getId(),
+                    context.controllerId(), new SetBasePowerToughnessEffect(sacrificed, sacrificed, GrantScope.TARGET,
+                            Duration.PERMANENT), entering.getId(), Duration.PERMANENT));
             gameLogService.append(gameData, GameLog.cardThen(context.card(),
                     " becomes " + sacrificed + "/" + sacrificed + "."));
         }

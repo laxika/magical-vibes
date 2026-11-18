@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.Backlash;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -97,7 +98,7 @@ class KjeldoranGargoyleTest extends BaseCardTest {
         harness.setLife(player1, 15);
         harness.setLife(player2, 20);
         Permanent gargoyle = addCreatureReady(player1, new KjeldoranGargoyle());
-        gargoyle.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, gargoyle, 2);
 
         declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(gargoyle)));
         harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
@@ -108,7 +109,7 @@ class KjeldoranGargoyleTest extends BaseCardTest {
         harness.assertLife(player2, 15);
         harness.assertLife(player1, 15);
 
-        gargoyle.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, gargoyle, 0);
         resolveAllTriggers();
 
         harness.assertLife(player1, 20);

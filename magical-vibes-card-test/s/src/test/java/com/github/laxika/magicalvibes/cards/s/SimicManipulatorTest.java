@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.b.BurstOfStrength;
 import com.github.laxika.magicalvibes.cards.d.DutifulThrull;
@@ -74,7 +75,7 @@ class SimicManipulatorTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 2, target.getId());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);

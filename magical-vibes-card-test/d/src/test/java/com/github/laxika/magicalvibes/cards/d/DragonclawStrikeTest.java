@@ -32,8 +32,8 @@ class DragonclawStrikeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of(bearId));
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -51,8 +51,8 @@ class DragonclawStrikeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Hill Giant");
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -67,8 +67,8 @@ class DragonclawStrikeTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -117,8 +117,8 @@ class DragonclawStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
         assertThat(bear.getMarkedDamage()).isZero();
         harness.assertInHand(player2, "Hill Giant");
         harness.assertInGraveyard(player1, "Dragonclaw Strike");
@@ -141,8 +141,8 @@ class DragonclawStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent giant = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(giant.getEffectivePower()).isEqualTo(3);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
         assertThat(giant.getMarkedDamage()).isZero();
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Dragonclaw Strike");
@@ -159,16 +159,16 @@ class DragonclawStrikeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(bear.getId()));
 
-        assertThat(bear.getEffectivePower()).isEqualTo(6);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(6);
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         bear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        assertThat(bear.getEffectivePower()).isEqualTo(7);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(7);
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }

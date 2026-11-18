@@ -71,8 +71,7 @@ public class ChooseTwoCreaturesByPowerDifferenceEffectHandler implements NormalE
         GrantKeywordEffect trampleGrant = new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET);
         String sourceCardName = entry.getCard() != null ? entry.getCard().getName() : "Spry and Mighty";
         for (Permanent permanent : chosen) {
-            permanent.setPowerModifier(permanent.getPowerModifier() + x);
-            permanent.setToughnessModifier(permanent.getToughnessModifier() + x);
+            gameData.addPowerToughnessBoost(entry, permanent.getId(), x, x);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceCardName, null,
                     entry.getControllerId(), trampleGrant, permanent.getId(), null, null,
                     Duration.UNTIL_END_OF_TURN, 0));

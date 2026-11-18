@@ -97,8 +97,8 @@ class WurmweaverCoilTest extends BaseCardTest {
                     assertThat(token.getCard().getName()).isEqualTo("Wurm");
                     assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
                     assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.WURM);
-                    assertThat(token.getEffectivePower()).isEqualTo(6);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(6);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(6);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(6);
                 });
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);

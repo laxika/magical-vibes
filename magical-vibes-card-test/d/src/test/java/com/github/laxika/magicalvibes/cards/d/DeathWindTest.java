@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.AngelicWall;
@@ -33,10 +34,10 @@ class DeathWindTest extends BaseCardTest {
         harness.castInstant(player1, 0, 1, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(-1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(-1);
-        assertThat(bear.getEffectivePower()).isEqualTo(1);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(1);
     }
 
     @Test
@@ -63,8 +64,8 @@ class DeathWindTest extends BaseCardTest {
         harness.castInstant(player1, 0, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -81,8 +82,8 @@ class DeathWindTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test

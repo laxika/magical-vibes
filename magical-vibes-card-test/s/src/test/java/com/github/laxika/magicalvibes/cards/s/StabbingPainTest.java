@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -33,8 +34,8 @@ class StabbingPainTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, giantId);
 
         Permanent giant = findPermanent(player2, "Hill Giant");
-        assertThat(giant.getPowerModifier()).isEqualTo(-1);
-        assertThat(giant.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(-1);
         assertThat(giant.isTapped()).isTrue();
     }
 
@@ -50,8 +51,8 @@ class StabbingPainTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getPowerModifier()).isEqualTo(-1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(-1);
         assertThat(bears.isTapped()).isTrue();
     }
 
@@ -108,8 +109,8 @@ class StabbingPainTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(1);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
         assertThat(bears.isTapped()).isTrue();
     }
 
@@ -121,15 +122,15 @@ class StabbingPainTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(1);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(bears.isTapped()).isTrue();
     }
 

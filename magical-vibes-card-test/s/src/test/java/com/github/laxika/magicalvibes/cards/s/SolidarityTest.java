@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -28,10 +29,10 @@ class SolidarityTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
-                assertThat(p.getToughnessModifier()).isEqualTo(5);
-                assertThat(p.getEffectivePower()).isEqualTo(2);
-                assertThat(p.getEffectiveToughness()).isEqualTo(7);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(5);
+                assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(2);
+                assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(7);
             }
         }
     }
@@ -47,8 +48,8 @@ class SolidarityTest extends BaseCardTest {
         List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
         for (Permanent p : p2Battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
-                assertThat(p.getToughnessModifier()).isEqualTo(0);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
             }
         }
     }
@@ -61,14 +62,14 @@ class SolidarityTest extends BaseCardTest {
         harness.castFromHand(player1, new Solidarity(), "{3}{W}");
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isEqualTo(5);
-        assertThat(plains.getPowerModifier()).isZero();
-        assertThat(plains.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, plains)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, plains)).isZero();
 
         Permanent laterBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        assertThat(laterBear.getPowerModifier()).isZero();
-        assertThat(laterBear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, laterBear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterBear)).isZero();
     }
 
     @Test
@@ -89,8 +90,8 @@ class SolidarityTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(7);
         harness.assertInGraveyard(player1, "Solidarity");
     }
 
@@ -103,14 +104,14 @@ class SolidarityTest extends BaseCardTest {
         harness.castFromHand(player1, new Solidarity(), "{3}{W}");
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(12);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -126,8 +127,8 @@ class SolidarityTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getToughnessModifier()).isEqualTo(0);
-                assertThat(p.getEffectiveToughness()).isEqualTo(2);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
+                assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(2);
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KothOfTheHammer;
@@ -26,13 +27,13 @@ class LonelyEndTest extends BaseCardTest {
 
         cast(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(-3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(-3);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         harness.assertLife(player1, 20);
     }
 
@@ -55,7 +56,7 @@ class LonelyEndTest extends BaseCardTest {
 
         cast(player2, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(-3);
         harness.assertLife(player2, 23);
     }
 

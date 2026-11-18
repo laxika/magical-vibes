@@ -65,14 +65,14 @@ class TyvarThePummelerTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(tyvar), 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(tyvar.getEffectivePower()).isEqualTo(6);
-        assertThat(tyvar.getEffectiveToughness()).isEqualTo(6);
-        assertThat(hillGiant.getEffectivePower()).isEqualTo(6);
-        assertThat(hillGiant.getEffectiveToughness()).isEqualTo(6);
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, tyvar)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, tyvar)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, hillGiant)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, hillGiant)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -84,15 +84,15 @@ class TyvarThePummelerTest extends BaseCardTest {
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(tyvar), 1, null, null);
         harness.passBothPriorities();
-        assertThat(tyvar.getEffectivePower()).isEqualTo(6);
-        assertThat(tyvar.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, tyvar)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, tyvar)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(tyvar.getEffectivePower()).isEqualTo(3);
-        assertThat(tyvar.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, tyvar)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, tyvar)).isEqualTo(3);
     }
 
     @Test
@@ -149,9 +149,9 @@ class TyvarThePummelerTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent laterBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(tyvar.getEffectivePower()).isEqualTo(6);
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(laterBears.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, tyvar)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, laterBears)).isEqualTo(2);
     }
 
     @Test
@@ -165,9 +165,9 @@ class TyvarThePummelerTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(tyvar), 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(tyvar.getEffectivePower()).isEqualTo(12);
-        assertThat(tyvar.getEffectiveToughness()).isEqualTo(12);
-        assertThat(bears.getEffectivePower()).isEqualTo(11);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(11);
+        assertThat(gqs.getEffectivePower(gd, tyvar)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, tyvar)).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(11);
     }
 }

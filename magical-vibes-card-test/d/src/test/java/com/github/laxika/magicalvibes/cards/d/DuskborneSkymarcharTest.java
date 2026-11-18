@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
 import com.github.laxika.magicalvibes.cards.s.SkymarchBloodletter;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -46,8 +47,8 @@ class DuskborneSkymarcharTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
     }
 
     @Test
@@ -106,8 +107,8 @@ class DuskborneSkymarcharTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentAttacker.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentAttacker.getPowerModifier()).isEqualTo(1);
-        assertThat(opponentAttacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentAttacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentAttacker)).isEqualTo(1);
     }
 
     @Test
@@ -120,15 +121,15 @@ class DuskborneSkymarcharTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(0);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(0);
     }
 
     @Test
@@ -159,8 +160,8 @@ class DuskborneSkymarcharTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -175,8 +176,8 @@ class DuskborneSkymarcharTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
     }
 
     @Test

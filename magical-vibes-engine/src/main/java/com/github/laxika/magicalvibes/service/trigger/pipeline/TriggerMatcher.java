@@ -391,7 +391,7 @@ final class TriggerMatcher {
                 }
                 Boolean stats = departed.getLastKnownToughness() == null ? null
                         : matchesDyingStats(predicate, departed.getLastKnownPower() != null
-                        ? departed.getLastKnownPower() : departed.getEffectivePower(),
+                        ? departed.getLastKnownPower() : predicates.ownPower(context.gameData(), departed),
                         departed.getLastKnownToughness());
                 yield stats != null ? stats : predicates.matchesPermanentPredicate(departed, predicate, context);
             }
@@ -471,7 +471,8 @@ final class TriggerMatcher {
             default -> {
                 Boolean stats = moved.getLastKnownToughness() == null ? null
                         : matchesDyingStats(predicate, moved.getLastKnownPower() != null
-                        ? moved.getLastKnownPower() : moved.getEffectivePower(), moved.getLastKnownToughness());
+                        ? moved.getLastKnownPower() : predicates.ownPower(context.gameData(), moved),
+                        moved.getLastKnownToughness());
                 yield stats != null ? stats : predicates.matchesPermanentPredicate(moved, predicate, context);
             }
         };

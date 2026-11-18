@@ -41,8 +41,8 @@ class DivineVisitationTest extends BaseCardTest {
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ANGEL);
         assertThat(token.getCard().getKeywords()).containsExactlyInAnyOrder(Keyword.FLYING, Keyword.VIGILANCE);
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
     }
 
     @Test
@@ -67,8 +67,8 @@ class DivineVisitationTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Angel")).hasSize(2).allSatisfy(token -> {
             assertThat(token.getCard().getKeywords())
                     .containsExactlyInAnyOrder(Keyword.FLYING, Keyword.VIGILANCE);
-            assertThat(token.getEffectivePower()).isEqualTo(4);
-            assertThat(token.getEffectiveToughness()).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         });
     }
 
@@ -122,8 +122,8 @@ class DivineVisitationTest extends BaseCardTest {
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ANGEL);
             assertThat(token.getCard().getKeywords())
                     .containsExactlyInAnyOrder(Keyword.FLYING, Keyword.VIGILANCE);
-            assertThat(token.getEffectivePower()).isEqualTo(4);
-            assertThat(token.getEffectiveToughness()).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         });
     }
 
@@ -147,8 +147,8 @@ class DivineVisitationTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Angel")).hasSize(2);
         assertThat(findPermanents(player1, "Soldier")).hasSize(1).allSatisfy(soldier -> {
             assertThat(soldier.getCard().getKeywords()).doesNotContain(Keyword.LIFELINK);
-            assertThat(soldier.getEffectivePower()).isEqualTo(1);
-            assertThat(soldier.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
         });
     }
 
@@ -176,8 +176,8 @@ class DivineVisitationTest extends BaseCardTest {
                 .allSatisfy(bears -> assertThat(bears.getCard().isToken()).isFalse());
         assertThat(findPermanents(player1, "Angel")).hasSize(1).allSatisfy(angel -> {
             assertThat(angel.getCard().isToken()).isTrue();
-            assertThat(angel.getEffectivePower()).isEqualTo(4);
-            assertThat(angel.getEffectiveToughness()).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
         });
     }
 
@@ -204,8 +204,8 @@ class DivineVisitationTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Angel")).hasSize(1);
         assertThat(findPermanents(player1, "Soldier")).hasSize(1).allSatisfy(soldier -> {
-            assertThat(soldier.getEffectivePower()).isEqualTo(1);
-            assertThat(soldier.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
         });
         assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
     }

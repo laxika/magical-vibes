@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HeartlessSummoning;
 import com.github.laxika.magicalvibes.cards.l.LeatherbackBaloth;
@@ -98,7 +99,7 @@ class VaultbornTyrantTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VaultbornTyrant());
 
         Permanent entering = harness.enterBattlefieldAndReturn(player1, new LeatherbackBaloth());
-        entering.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, entering, -2);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 23);

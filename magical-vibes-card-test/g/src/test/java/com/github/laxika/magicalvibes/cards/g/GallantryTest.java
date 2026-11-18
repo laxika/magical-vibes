@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvenFlock;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,8 +30,8 @@ class GallantryTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, blocker.getId());
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(4);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(4);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
         harness.assertInHand(player1, "Forest");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -45,8 +46,8 @@ class GallantryTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, blocker.getId());
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(4);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(4);
     }
 
     @Test
@@ -79,8 +80,8 @@ class GallantryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(0);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(0);
     }
 
     @Test
@@ -118,8 +119,8 @@ class GallantryTest extends BaseCardTest {
         blocker.setBlocking(false);
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(0);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(0);
         harness.assertNotInHand(player1, "Forest");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }

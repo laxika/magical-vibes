@@ -26,8 +26,8 @@ class LoxodonStalwartTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent stalwart = findPermanent(player1, "Loxodon Stalwart");
-        assertThat(stalwart.getEffectivePower()).isEqualTo(3);
-        assertThat(stalwart.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, stalwart)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, stalwart)).isEqualTo(4);
     }
 
     @Test
@@ -42,8 +42,8 @@ class LoxodonStalwartTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent stalwart = findPermanent(player1, "Loxodon Stalwart");
-        assertThat(stalwart.getEffectivePower()).isEqualTo(3);
-        assertThat(stalwart.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, stalwart)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, stalwart)).isEqualTo(5);
     }
 
     @Test
@@ -57,7 +57,7 @@ class LoxodonStalwartTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(stalwart.isTapped()).isTrue();
-        assertThat(stalwart.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, stalwart)).isEqualTo(4);
     }
 
     @Test
@@ -70,13 +70,13 @@ class LoxodonStalwartTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent stalwart = findPermanent(player1, "Loxodon Stalwart");
-        assertThat(stalwart.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, stalwart)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(stalwart.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, stalwart)).isEqualTo(3);
     }
 
     @Test
@@ -90,7 +90,7 @@ class LoxodonStalwartTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(stalwart.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, stalwart)).isEqualTo(3);
         assertThat(harness.getGameData().stack).isEmpty();
     }
 
@@ -136,8 +136,8 @@ class LoxodonStalwartTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(stalwart.isTapped()).isFalse();
-        assertThat(stalwart.getEffectivePower()).isEqualTo(3);
-        assertThat(stalwart.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, stalwart)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, stalwart)).isEqualTo(4);
     }
 
     @Test
@@ -148,7 +148,7 @@ class LoxodonStalwartTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(stalwart.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, stalwart)).isEqualTo(3);
         assertThat(gd.stack).hasSize(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -156,7 +156,7 @@ class LoxodonStalwartTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(stalwart.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, stalwart)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -171,8 +171,8 @@ class LoxodonStalwartTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectiveToughness()).isEqualTo(4);
-        assertThat(other.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opposing.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(3);
     }
 }

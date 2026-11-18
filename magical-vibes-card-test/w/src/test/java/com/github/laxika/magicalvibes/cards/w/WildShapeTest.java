@@ -24,8 +24,8 @@ class WildShapeTest extends BaseCardTest {
     void turnsTargetIntoAHexproofTurtle() {
         Permanent target = cast(0);
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.TURTLE);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
     }
@@ -34,8 +34,8 @@ class WildShapeTest extends BaseCardTest {
     void turnsTargetIntoAReachSpider() {
         Permanent target = cast(1);
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.SPIDER);
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
     }
@@ -44,8 +44,8 @@ class WildShapeTest extends BaseCardTest {
     void turnsTargetIntoATrampleElephant() {
         Permanent target = cast(2);
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.ELEPHANT);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
@@ -56,8 +56,8 @@ class WildShapeTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(7);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.GIANT);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
     }
@@ -100,16 +100,16 @@ class WildShapeTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 2, List.of(target.getId()));
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.ELEPHANT);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(7);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.GIANT);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();

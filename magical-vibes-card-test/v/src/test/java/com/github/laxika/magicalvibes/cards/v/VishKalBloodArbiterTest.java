@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -96,7 +97,7 @@ class VishKalBloodArbiterTest extends BaseCardTest {
         Permanent vishKal = addCreatureReady(player1, new VishKalBloodArbiter());
         vishKal.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, bears, -2);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -112,7 +113,7 @@ class VishKalBloodArbiterTest extends BaseCardTest {
         Permanent vishKal = addCreatureReady(player1, new VishKalBloodArbiter());
         vishKal.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, bears, -3);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handlePermanentChosen(player1, bears.getId());

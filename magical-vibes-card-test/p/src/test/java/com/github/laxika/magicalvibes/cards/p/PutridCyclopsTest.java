@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.t.Tarmogoyf;
 import com.github.laxika.magicalvibes.model.Card;
@@ -34,10 +35,10 @@ class PutridCyclopsTest extends BaseCardTest {
                 gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         Permanent cyclops = findPermanent(player1, "Putrid Cyclops");
-        assertThat(cyclops.getEffectivePower()).isEqualTo(1);
-        assertThat(cyclops.getEffectiveToughness()).isEqualTo(1);
-        assertThat(cyclops.getPowerModifier()).isEqualTo(-2);
-        assertThat(cyclops.getToughnessModifier()).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, cyclops)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, cyclops)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cyclops)).isEqualTo(-2);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
     }
 
@@ -54,8 +55,8 @@ class PutridCyclopsTest extends BaseCardTest {
                 gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
         Permanent cyclops = findPermanent(player1, "Putrid Cyclops");
-        assertThat(cyclops.getEffectivePower()).isEqualTo(1);
-        assertThat(cyclops.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, cyclops)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, cyclops)).isEqualTo(1);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(revealedCard);
         assertThat(gd.playerDecks.get(player1.getId()).getLast()).isSameAs(scriedCard);
         assertThat(gameLogContains("reveals Tarmogoyf from the top of their library.")).isTrue();
@@ -72,15 +73,15 @@ class PutridCyclopsTest extends BaseCardTest {
                 gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         Permanent cyclops = findPermanent(player1, "Putrid Cyclops");
-        assertThat(cyclops.getEffectivePower()).isEqualTo(1);
-        assertThat(cyclops.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, cyclops)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, cyclops)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(cyclops.getEffectivePower()).isEqualTo(3);
-        assertThat(cyclops.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, cyclops)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cyclops)).isEqualTo(3);
     }
 
     @Test
@@ -95,10 +96,10 @@ class PutridCyclopsTest extends BaseCardTest {
                 gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         Permanent cyclops = findPermanent(player1, "Putrid Cyclops");
-        assertThat(cyclops.getEffectivePower()).isEqualTo(3);
-        assertThat(cyclops.getEffectiveToughness()).isEqualTo(3);
-        assertThat(cyclops.getPowerModifier()).isZero();
-        assertThat(cyclops.getToughnessModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, cyclops)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cyclops)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cyclops)).isZero();
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
     }
 
@@ -111,8 +112,8 @@ class PutridCyclopsTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         Permanent cyclops = findPermanent(player1, "Putrid Cyclops");
-        assertThat(cyclops.getEffectivePower()).isEqualTo(3);
-        assertThat(cyclops.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, cyclops)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cyclops)).isEqualTo(3);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,10 +27,10 @@ class TacticalAdvantageTest extends BaseCardTest {
 
         castAt(blocker.getId());
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(2);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
-        assertThat(blocker.getEffectivePower()).isEqualTo(4);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
     }
 
     @Test
@@ -39,8 +40,8 @@ class TacticalAdvantageTest extends BaseCardTest {
 
         castAt(blocked.getId());
 
-        assertThat(blocked.getPowerModifier()).isEqualTo(2);
-        assertThat(blocked.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocked)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocked)).isEqualTo(2);
     }
 
     @Test
@@ -54,8 +55,8 @@ class TacticalAdvantageTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
     }
 
     @Test
@@ -103,8 +104,8 @@ class TacticalAdvantageTest extends BaseCardTest {
 
         castAt(attacker.getId());
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -119,8 +120,8 @@ class TacticalAdvantageTest extends BaseCardTest {
         harness.runStateBasedActions();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -134,8 +135,8 @@ class TacticalAdvantageTest extends BaseCardTest {
         blocker.getBlockingTargetIds().clear();
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Tactical Advantage");
     }

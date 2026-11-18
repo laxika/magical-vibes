@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.CopperHostCrusher;
 import com.github.laxika.magicalvibes.cards.k.KhenraSpellspear;
@@ -78,8 +79,8 @@ class InvasionOfMuragandaTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(target.isLosesAllAbilitiesUntilEndOfTurn()).isTrue();
         assertThat(plasm.isLosesAllAbilitiesUntilEndOfTurn()).isFalse();
     }
@@ -164,7 +165,7 @@ class InvasionOfMuragandaTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(target.isLosesAllAbilitiesUntilEndOfTurn()).isFalse();
     }
 

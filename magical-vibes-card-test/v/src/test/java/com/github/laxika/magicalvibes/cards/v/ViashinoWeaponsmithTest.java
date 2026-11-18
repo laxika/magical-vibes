@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DazzlingBeauty;
 import com.github.laxika.magicalvibes.cards.f.FlashFoliage;
 import com.github.laxika.magicalvibes.cards.g.Guma;
@@ -30,8 +31,8 @@ class ViashinoWeaponsmithTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(weaponsmith.getPowerModifier()).isEqualTo(2);
-        assertThat(weaponsmith.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, weaponsmith)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weaponsmith)).isEqualTo(2);
     }
 
     @Test
@@ -44,8 +45,8 @@ class ViashinoWeaponsmithTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(weaponsmith.getPowerModifier()).isZero();
-        assertThat(weaponsmith.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, weaponsmith)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weaponsmith)).isZero();
     }
 
     @Test
@@ -63,8 +64,8 @@ class ViashinoWeaponsmithTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
-        assertThat(weaponsmith.getPowerModifier()).isEqualTo(4);
-        assertThat(weaponsmith.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, weaponsmith)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weaponsmith)).isEqualTo(4);
     }
 
     @Test
@@ -83,8 +84,8 @@ class ViashinoWeaponsmithTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(weaponsmith.isBlockedWithoutBlockers()).isTrue();
-        assertThat(weaponsmith.getPowerModifier()).isZero();
-        assertThat(weaponsmith.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, weaponsmith)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weaponsmith)).isZero();
     }
 
     @Test
@@ -103,8 +104,8 @@ class ViashinoWeaponsmithTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, weaponsmith.getId());
         resolveAllTriggers();
 
-        assertThat(weaponsmith.getPowerModifier()).isEqualTo(2);
-        assertThat(weaponsmith.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, weaponsmith)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weaponsmith)).isEqualTo(2);
     }
 
     @Test
@@ -123,8 +124,8 @@ class ViashinoWeaponsmithTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, weaponsmith.getId());
         resolveAllTriggers();
 
-        assertThat(weaponsmith.getPowerModifier()).isEqualTo(4);
-        assertThat(weaponsmith.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, weaponsmith)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weaponsmith)).isEqualTo(4);
     }
 
     @Test
@@ -142,8 +143,8 @@ class ViashinoWeaponsmithTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(weaponsmith.getPowerModifier()).isZero();
-        assertThat(weaponsmith.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, weaponsmith)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weaponsmith)).isZero();
     }
 
 }

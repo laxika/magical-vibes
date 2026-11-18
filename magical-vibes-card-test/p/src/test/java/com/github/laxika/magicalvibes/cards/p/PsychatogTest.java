@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvenFisher;
 import com.github.laxika.magicalvibes.cards.f.Firebolt;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,8 +27,8 @@ class PsychatogTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(psychatog.getPowerModifier()).isEqualTo(1);
-        assertThat(psychatog.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, psychatog)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, psychatog)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Aven Fisher");
     }
 
@@ -39,8 +40,8 @@ class PsychatogTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(psychatog.getPowerModifier()).isEqualTo(1);
-        assertThat(psychatog.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, psychatog)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, psychatog)).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
     }
@@ -67,8 +68,8 @@ class PsychatogTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(psychatog.getPowerModifier()).isZero();
-        assertThat(psychatog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, psychatog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, psychatog)).isZero();
     }
 
     @Test
@@ -78,8 +79,8 @@ class PsychatogTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(psychatog.getPowerModifier()).isZero();
-        assertThat(psychatog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, psychatog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, psychatog)).isZero();
     }
 
     @Test
@@ -97,8 +98,8 @@ class PsychatogTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
-        assertThat(psychatog.getPowerModifier()).isEqualTo(1);
-        assertThat(psychatog.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, psychatog)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, psychatog)).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactlyInAnyOrder(first, second);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(remaining);
@@ -131,28 +132,28 @@ class PsychatogTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
-        assertThat(psychatog.getPowerModifier()).isZero();
-        assertThat(psychatog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, psychatog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, psychatog)).isZero();
 
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, second);
-        assertThat(psychatog.getPowerModifier()).isZero();
-        assertThat(psychatog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, psychatog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, psychatog)).isZero();
 
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(psychatog.getPowerModifier()).isEqualTo(3);
-        assertThat(psychatog.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, psychatog)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, psychatog)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(psychatog.getPowerModifier()).isZero();
-        assertThat(psychatog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, psychatog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, psychatog)).isZero();
     }
 
     @Test
@@ -164,9 +165,9 @@ class PsychatogTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isEqualTo(1);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 }

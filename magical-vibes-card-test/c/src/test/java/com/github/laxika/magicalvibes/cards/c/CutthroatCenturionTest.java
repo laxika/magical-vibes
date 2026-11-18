@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class CutthroatCenturionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(centurion.getPowerModifier()).isEqualTo(2);
-        assertThat(centurion.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, centurion)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, centurion)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Prophetic Prism");
     }
 
@@ -37,8 +38,8 @@ class CutthroatCenturionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(centurion.getPowerModifier()).isEqualTo(2);
-        assertThat(centurion.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, centurion)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, centurion)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Copper Longlegs");
     }
 
@@ -79,8 +80,8 @@ class CutthroatCenturionTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(centurion.getPowerModifier()).isZero();
-        assertThat(centurion.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, centurion)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, centurion)).isZero();
     }
 
     @Test
@@ -92,11 +93,11 @@ class CutthroatCenturionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.assertInGraveyard(player1, "Prophetic Prism");
-        assertThat(centurion.getPowerModifier()).isZero();
-        assertThat(centurion.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, centurion)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, centurion)).isZero();
         harness.passBothPriorities();
-        assertThat(centurion.getPowerModifier()).isEqualTo(2);
-        assertThat(centurion.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, centurion)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, centurion)).isEqualTo(2);
     }
 
     @Test
@@ -124,8 +125,8 @@ class CutthroatCenturionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(centurion.getPowerModifier()).isEqualTo(2);
-        assertThat(centurion.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, centurion)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, centurion)).isEqualTo(2);
     }
 
 }

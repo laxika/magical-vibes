@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -127,7 +128,7 @@ class PhantasmalMountTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(mount), 0, null, bears.getId());
         harness.passBothPriorities();
 
-        bears.setToughnessModifier(bears.getToughnessModifier() + 1);
+        PermanentGrants.setToughnessBoost(gd, bears, PermanentGrants.toughnessBoostOf(gd, bears) + 1);
 
         Permanent after = gqs.findPermanentById(gd, bears.getId());
         assertThat(gqs.getEffectivePower(gd, after)).isEqualTo(3);
@@ -146,7 +147,7 @@ class PhantasmalMountTest extends BaseCardTest {
 
         enterMain();
         harness.activateAbility(player1, indexOf(mount), 0, null, bears.getId());
-        bears.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, bears, 1);
         harness.passBothPriorities();
 
         Permanent after = gqs.findPermanentById(gd, bears.getId());
@@ -196,7 +197,7 @@ class PhantasmalMountTest extends BaseCardTest {
     void cannotTargetToughnessAboveTwo() {
         Permanent mount = addMountReady();
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
-        bears.setToughnessModifier(1); // effective toughness 3
+        PermanentGrants.setToughnessBoost(gd, bears, 1); // effective toughness 3
 
         enterMain();
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(mount), 0, null, bears.getId()))

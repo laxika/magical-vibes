@@ -29,17 +29,17 @@ class ThorinsLastStandTest extends BaseCardTest {
 
         Permanent ownBears = findPermanent(player1, "Grizzly Bears");
         Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
-        assertThat(ownBears.getEffectivePower()).isEqualTo(4);
-        assertThat(ownBears.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponentBears.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentBears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownBears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownBears.getEffectivePower()).isEqualTo(2);
-        assertThat(ownBears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownBears)).isEqualTo(2);
     }
 
     @Test
@@ -85,8 +85,8 @@ class ThorinsLastStandTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         harness.assertLife(player1, 20);
         harness.assertInGraveyard(player1, "Thorin's Last Stand");
     }

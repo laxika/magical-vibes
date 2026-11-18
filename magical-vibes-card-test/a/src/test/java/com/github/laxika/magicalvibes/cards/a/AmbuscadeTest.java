@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.r.RuinRat;
@@ -34,7 +35,7 @@ class AmbuscadeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(bearId, elvesId));
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
@@ -53,7 +54,7 @@ class AmbuscadeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(bearId, elementalId));
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
 
         harness.assertOnBattlefield(player2, "Air Elemental");
     }
@@ -111,8 +112,8 @@ class AmbuscadeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -229,7 +230,7 @@ class AmbuscadeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(elemental.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Air Elemental");
     }
@@ -247,7 +248,7 @@ class AmbuscadeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
         assertThat(elemental.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player1, "Air Elemental");
     }

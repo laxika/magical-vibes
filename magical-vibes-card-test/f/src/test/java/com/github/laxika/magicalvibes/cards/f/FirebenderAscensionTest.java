@@ -182,7 +182,7 @@ class FirebenderAscensionTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_OF_COMBAT);
 
         // Enlist's "when you do" triggers on the enlist tap (CR 702.154a), not on the creature attacking.
-        assertThat(warbrute.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, warbrute)).isEqualTo(2);
         assertThat(ascension.getCounterCount(CounterType.QUEST)).isZero();
     }
 }

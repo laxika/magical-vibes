@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -82,7 +83,7 @@ class TenderizeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
-        source.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, source, 1);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Hill Giant");
@@ -96,7 +97,7 @@ class TenderizeTest extends BaseCardTest {
     void negativePowerDealsNoDamage() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        source.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, source, -3);
         harness.setHand(player1, List.of(new Tenderize()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 

@@ -29,8 +29,8 @@ class KrenkosCommandTest extends BaseCardTest {
         List<Permanent> tokens = findPermanents(player1, "Goblin");
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allSatisfy(t -> {
-            assertThat(t.getEffectivePower()).isEqualTo(1);
-            assertThat(t.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, t)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, t)).isEqualTo(1);
         });
     }
 
@@ -54,8 +54,8 @@ class KrenkosCommandTest extends BaseCardTest {
             assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.GOBLIN);
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
             assertThat(token.isTapped()).isFalse();
             assertThat(token.isSummoningSick()).isTrue();
         });

@@ -66,8 +66,8 @@ class RhoxVeteranTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -90,14 +90,14 @@ class RhoxVeteranTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(veteran.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(nonattacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, veteran)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(2);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -129,7 +129,7 @@ class RhoxVeteranTest extends BaseCardTest {
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
     }
 

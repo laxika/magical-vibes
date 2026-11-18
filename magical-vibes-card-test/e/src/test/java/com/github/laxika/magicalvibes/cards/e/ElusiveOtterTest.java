@@ -90,8 +90,8 @@ class ElusiveOtterTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(otter.getEffectivePower()).isEqualTo(2);
-        assertThat(otter.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(2);
     }
 
     @Test
@@ -134,8 +134,8 @@ class ElusiveOtterTest extends BaseCardTest {
         harness.castAdventure(player1, 0, 0, Map.of());
         harness.passBothPriorities();
 
-        assertThat(otter.getEffectivePower()).isEqualTo(2);
-        assertThat(otter.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(2);
     }
 
     @Test
@@ -147,8 +147,8 @@ class ElusiveOtterTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(otter.getEffectivePower()).isEqualTo(1);
-        assertThat(otter.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(1);
     }
 
     @Test
@@ -161,8 +161,8 @@ class ElusiveOtterTest extends BaseCardTest {
         harness.castAdventure(player2, 0, 0, Map.of());
         harness.passBothPriorities();
 
-        assertThat(otter.getEffectivePower()).isEqualTo(1);
-        assertThat(otter.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(1);
     }
 
     @Test
@@ -227,14 +227,14 @@ class ElusiveOtterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castAdventure(player1, 0, 0, Map.of());
         resolveAllTriggers();
-        assertThat(otter.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(otter.getEffectivePower()).isEqualTo(1);
-        assertThat(otter.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(1);
     }
 
     @Test

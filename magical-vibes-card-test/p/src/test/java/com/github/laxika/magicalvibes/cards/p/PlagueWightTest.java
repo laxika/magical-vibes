@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.CoralCommando;
 import com.github.laxika.magicalvibes.cards.g.GrotesqueDemise;
@@ -29,8 +30,8 @@ class PlagueWightTest extends BaseCardTest {
         declareBlockers(wight, List.of(blocker));
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(-1);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(-1);
     }
 
     @Test
@@ -44,10 +45,10 @@ class PlagueWightTest extends BaseCardTest {
         declareBlockers(wight, List.of(firstBlocker, secondBlocker));
         resolveAllTriggers();
 
-        assertThat(firstBlocker.getPowerModifier()).isEqualTo(-1);
-        assertThat(firstBlocker.getToughnessModifier()).isEqualTo(-1);
-        assertThat(secondBlocker.getPowerModifier()).isEqualTo(-1);
-        assertThat(secondBlocker.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstBlocker)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstBlocker)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondBlocker)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondBlocker)).isEqualTo(-1);
     }
 
     @Test
@@ -64,8 +65,8 @@ class PlagueWightTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
     }
 
     @Test
@@ -93,14 +94,14 @@ class PlagueWightTest extends BaseCardTest {
         declareBlockers(wight, List.of(firstBlocker, secondBlocker));
         harness.passBothPriorities();
 
-        assertThat(firstBlocker.getPowerModifier()).isEqualTo(-1);
-        assertThat(firstBlocker.getToughnessModifier()).isEqualTo(-1);
-        assertThat(secondBlocker.getPowerModifier()).isEqualTo(-1);
-        assertThat(secondBlocker.getToughnessModifier()).isEqualTo(-1);
-        assertThat(bystander.getPowerModifier()).isZero();
-        assertThat(bystander.getToughnessModifier()).isZero();
-        assertThat(wight.getPowerModifier()).isZero();
-        assertThat(wight.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstBlocker)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstBlocker)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondBlocker)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondBlocker)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bystander)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bystander)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wight)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wight)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -137,8 +138,8 @@ class PlagueWightTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(wight);
         resolveAllTriggers();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(-1);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(-1);
     }
 
     private void declareBlockers(Permanent wight, List<Permanent> blockers) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -38,8 +39,8 @@ class FestivalCrasherTest extends BaseCardTest {
         // Cast trigger sits on the stack above Shock.
         harness.passBothPriorities(); // resolve the cast trigger (pump)
 
-        assertThat(crasher.getPowerModifier()).isEqualTo(2);
-        assertThat(crasher.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, crasher)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crasher)).isEqualTo(0);
     }
 
     @Test
@@ -52,8 +53,8 @@ class FestivalCrasherTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(crasher.getPowerModifier()).isEqualTo(0);
-        assertThat(crasher.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, crasher)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crasher)).isEqualTo(0);
     }
 
     @Test
@@ -71,8 +72,8 @@ class FestivalCrasherTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities(); // pump
 
-        assertThat(crasher.getPowerModifier()).isEqualTo(4);
-        assertThat(crasher.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, crasher)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crasher)).isEqualTo(0);
     }
 
     @Test
@@ -85,12 +86,12 @@ class FestivalCrasherTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities(); // resolve the cast trigger (pump)
 
-        assertThat(crasher.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, crasher)).isEqualTo(2);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(crasher.getPowerModifier()).isEqualTo(0);
-        assertThat(crasher.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, crasher)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crasher)).isEqualTo(0);
     }
 
     @Test
@@ -102,11 +103,11 @@ class FestivalCrasherTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(crasher.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, crasher)).isZero();
         harness.passBothPriorities();
 
-        assertThat(crasher.getPowerModifier()).isEqualTo(2);
-        assertThat(crasher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, crasher)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crasher)).isZero();
         harness.assertLife(player2, 20);
         harness.passBothPriorities();
         harness.assertLife(player2, 15);
@@ -120,8 +121,8 @@ class FestivalCrasherTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(crasher.getPowerModifier()).isZero();
-        assertThat(crasher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, crasher)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crasher)).isZero();
         harness.assertLife(player1, 18);
     }
 
@@ -138,10 +139,10 @@ class FestivalCrasherTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
         harness.assertLife(player2, 20);
     }
 }

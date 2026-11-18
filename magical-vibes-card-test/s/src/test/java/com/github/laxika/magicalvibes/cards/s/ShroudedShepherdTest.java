@@ -29,15 +29,15 @@ class ShroudedShepherdTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -72,8 +72,8 @@ class ShroudedShepherdTest extends BaseCardTest {
         assertThat(gd.findExiledCard(shepherd.getId())).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(shepherd.getId()));
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -87,10 +87,10 @@ class ShroudedShepherdTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent later = harness.addToBattlefieldAndReturn(player2, new ShroudedShepherd());
 
-        assertThat(existing.getEffectivePower()).isEqualTo(1);
-        assertThat(existing.getEffectiveToughness()).isEqualTo(1);
-        assertThat(later.getEffectivePower()).isEqualTo(2);
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
     }
 
     @Test
@@ -105,17 +105,17 @@ class ShroudedShepherdTest extends BaseCardTest {
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
         assertThat(gd.findExiledCard(shepherd.getId())).isNotNull();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 }

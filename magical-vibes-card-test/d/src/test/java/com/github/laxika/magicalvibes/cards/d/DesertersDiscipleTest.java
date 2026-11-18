@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -115,7 +116,7 @@ class DesertersDiscipleTest extends BaseCardTest {
         Permanent target = addDisciple(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -143,7 +144,7 @@ class DesertersDiscipleTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
 
         assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }

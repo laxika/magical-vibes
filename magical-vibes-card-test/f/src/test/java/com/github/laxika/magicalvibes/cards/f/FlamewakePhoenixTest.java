@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.cards.b.BallistaCharger;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -90,7 +91,7 @@ class FlamewakePhoenixTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         advanceToCombat(player1);
-        ferociousCreature.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, ferociousCreature, -2);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -133,7 +134,7 @@ class FlamewakePhoenixTest extends BaseCardTest {
     @Test
     void opponentsCreatureDoesNotEnableFerocious() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new BearCub());
-        creature.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, creature, 2);
         harness.setGraveyard(player1, List.of(new FlamewakePhoenix()));
 
         advanceToCombat(player1);
@@ -170,7 +171,7 @@ class FlamewakePhoenixTest extends BaseCardTest {
     }
     private Permanent addFerociousCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new BearCub());
-        creature.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, creature, 2);
         return creature;
     }
 

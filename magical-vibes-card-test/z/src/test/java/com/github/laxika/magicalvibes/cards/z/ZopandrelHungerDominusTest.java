@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PredationSteward;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -134,7 +135,7 @@ class ZopandrelHungerDominusTest extends BaseCardTest {
     @Test
     void doublesNegativePowerRatherThanClampingItToZero() {
         Permanent own = harness.addToBattlefieldAndReturn(player1, new PredationSteward());
-        own.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, own, -4);
         harness.addToBattlefield(player1, new ZopandrelHungerDominus());
 
         advanceToCombatAndResolve(player1);

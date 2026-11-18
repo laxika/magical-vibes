@@ -48,17 +48,17 @@ class GladiolusAmicitiaTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(gladiolus.getEffectivePower()).isEqualTo(6);
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, gladiolus)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -91,8 +91,8 @@ class GladiolusAmicitiaTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bear.getId());
         resolveAllTriggers();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
@@ -122,7 +122,7 @@ class GladiolusAmicitiaTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -136,7 +136,7 @@ class GladiolusAmicitiaTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gladiolus.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, gladiolus)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, gladiolus, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -164,8 +164,8 @@ class GladiolusAmicitiaTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(gladiolus.getCard());
         resolveAllTriggers();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 }

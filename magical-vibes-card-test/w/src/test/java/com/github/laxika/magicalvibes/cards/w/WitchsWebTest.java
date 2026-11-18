@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.Abrade;
 import com.github.laxika.magicalvibes.cards.b.BloodFountain;
 import com.github.laxika.magicalvibes.cards.s.SnarlingWolf;
@@ -32,8 +33,8 @@ class WitchsWebTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
     }
 
@@ -52,8 +53,8 @@ class WitchsWebTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
     }
 
@@ -83,12 +84,12 @@ class WitchsWebTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
         assertThat(other.isTapped()).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
         harness.assertInGraveyard(player1, "Witch's Web");
     }
@@ -112,8 +113,8 @@ class WitchsWebTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Witch's Web");

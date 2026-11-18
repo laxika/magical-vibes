@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArtificialEvolution;
 import com.github.laxika.magicalvibes.cards.b.BoundInSilence;
 import com.github.laxika.magicalvibes.cards.d.DarajaGriffin;
@@ -44,8 +45,8 @@ class GriffinCanyonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(griffin.isTapped()).isFalse();
-        assertThat(griffin.getPowerModifier()).isEqualTo(1);
-        assertThat(griffin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, griffin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, griffin)).isEqualTo(1);
         assertThat(findPermanent(player1, "Griffin Canyon").isTapped()).isTrue();
     }
 
@@ -59,8 +60,8 @@ class GriffinCanyonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(griffin.isTapped()).isFalse();
-        assertThat(griffin.getPowerModifier()).isEqualTo(1);
-        assertThat(griffin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, griffin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, griffin)).isEqualTo(1);
         assertThat(findPermanent(player1, "Griffin Canyon").isTapped()).isTrue();
     }
 
@@ -86,8 +87,8 @@ class GriffinCanyonTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(griffin.getPowerModifier()).isEqualTo(0);
-        assertThat(griffin.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, griffin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, griffin)).isEqualTo(0);
     }
 
     @Test
@@ -112,8 +113,8 @@ class GriffinCanyonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(aura.isTapped()).isFalse();
-        assertThat(aura.getPowerModifier()).isZero();
-        assertThat(aura.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, aura)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, aura)).isZero();
     }
 
     @Test
@@ -126,7 +127,7 @@ class GriffinCanyonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 0, 1, null, griffin.getId());
         assertThat(griffin.isTapped()).isTrue();
-        assertThat(griffin.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, griffin)).isZero();
 
         harness.castAndResolveInstant(player1, 0, griffin.getId());
         harness.handleListChoice(player1, "GRIFFIN");
@@ -135,8 +136,8 @@ class GriffinCanyonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(griffin.isTapped()).isTrue();
-        assertThat(griffin.getPowerModifier()).isZero();
-        assertThat(griffin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, griffin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, griffin)).isZero();
         assertThat(canyon.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
     }

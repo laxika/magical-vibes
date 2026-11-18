@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.e.EdgewallPack;
 import com.github.laxika.magicalvibes.cards.a.AshiokWickedManipulator;
@@ -26,11 +27,11 @@ class StonesplitterBoltTest extends BaseCardTest {
     @Test
     void dealsXDamageWithoutBargain() {
         Permanent target = addCreatureReady(player2, new HillGiant());
-        target.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, target, 2);
         castBolt(target.getId());
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
@@ -38,7 +39,7 @@ class StonesplitterBoltTest extends BaseCardTest {
     void dealsTwiceXDamageWhenBargained() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
         Permanent target = addCreatureReady(player2, new HillGiant());
-        target.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, target, 2);
         harness.setHand(player1, List.of(new StonesplitterBolt()));
         addMana();
 
@@ -65,7 +66,7 @@ class StonesplitterBoltTest extends BaseCardTest {
     @Test
     void marksExactlyXDamageWithoutBargain() {
         Permanent target = addCreatureReady(player2, new HillGiant());
-        target.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, target, 2);
         castBolt(target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);

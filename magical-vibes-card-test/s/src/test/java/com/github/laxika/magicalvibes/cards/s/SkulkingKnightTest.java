@@ -74,8 +74,8 @@ class SkulkingKnightTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
     }
 
     @Test
@@ -89,8 +89,8 @@ class SkulkingKnightTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -104,15 +104,15 @@ class SkulkingKnightTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -147,10 +147,10 @@ class SkulkingKnightTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(1);
-        assertThat(first.getEffectiveToughness()).isEqualTo(1);
-        assertThat(second.getEffectivePower()).isEqualTo(1);
-        assertThat(second.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Skulking Knight");
     }
 
@@ -165,8 +165,8 @@ class SkulkingKnightTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Skulking Knight");
     }
 }

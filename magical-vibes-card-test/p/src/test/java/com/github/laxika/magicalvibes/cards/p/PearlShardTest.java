@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Frogmite;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -137,7 +138,7 @@ class PearlShardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent attacker = addCreatureReady(player2, new Frogmite());
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         attacker.setAttacking(true);
         resolveCombat(player2);
 

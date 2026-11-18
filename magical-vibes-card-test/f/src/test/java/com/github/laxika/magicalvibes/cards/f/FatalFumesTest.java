@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArmoredWolfRider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KraulWarrior;
@@ -48,19 +49,19 @@ class FatalFumesTest extends BaseCardTest {
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        bear.setToughnessModifier(5);
+        PermanentGrants.setToughnessBoost(gd, bear, 5);
 
         harness.castAndResolveInstant(player1, 0, bearId);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(-2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test

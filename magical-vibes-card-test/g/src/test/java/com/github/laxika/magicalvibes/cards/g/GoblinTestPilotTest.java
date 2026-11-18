@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -88,7 +89,7 @@ class GoblinTestPilotTest extends BaseCardTest {
         Permanent pilot = addCreatureReady(player1, new GoblinTestPilot());
         Permanent enemy = addCreatureReady(player2, new AvatarOfMight());
         // The 0/2 pilot is itself in the pool; pad its toughness so a self-hit doesn't end the loop.
-        pilot.setToughnessModifier(5);
+        PermanentGrants.setToughnessBoost(gd, pilot, 5);
 
         Set<UUID> recipients = new HashSet<>();
         for (int i = 0; i < 40; i++) {

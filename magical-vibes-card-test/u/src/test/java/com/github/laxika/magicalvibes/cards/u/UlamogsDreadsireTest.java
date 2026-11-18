@@ -31,8 +31,8 @@ class UlamogsDreadsireTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(10);
-        assertThat(token.getEffectiveToughness()).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(10);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ELDRAZI);
     }
 

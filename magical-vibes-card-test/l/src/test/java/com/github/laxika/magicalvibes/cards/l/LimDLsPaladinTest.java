@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.s.Skullcrack;
@@ -28,7 +29,7 @@ class LimDLsPaladinTest extends BaseCardTest {
     @DisplayName("Attacking unblocked drains the defending player for 4 and prevents its combat damage")
     void unblockedDrainsFourAndAssignsNoDamage() {
         Permanent paladin = addAttackingPaladin(player1, player2);
-        paladin.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, paladin, 1);
         int startingLife = gd.getLife(player2.getId());
 
         prepareDeclareBlockers();
@@ -54,8 +55,8 @@ class LimDLsPaladinTest extends BaseCardTest {
                 blocker.getId(), 3,
                 player2.getId(), 3));
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(6);
-        assertThat(paladin.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(3);
         assertThat(Prevention.preventedFromDealingCombat(gd)).doesNotContain(paladin.getId());
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 3);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
@@ -79,8 +80,8 @@ class LimDLsPaladinTest extends BaseCardTest {
                 firstBlocker.getId(), 3,
                 secondBlocker.getId(), 3));
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(6);
-        assertThat(paladin.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(3);
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .doesNotContain(firstBlocker, secondBlocker);
@@ -173,7 +174,7 @@ class LimDLsPaladinTest extends BaseCardTest {
     @Test
     void assignsNoCombatDamageEvenWhenDamageCannotBePrevented() {
         Permanent paladin = addAttackingPaladin(player1, player2);
-        paladin.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, paladin, 1);
         harness.setHand(player1, List.of(new Skullcrack()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

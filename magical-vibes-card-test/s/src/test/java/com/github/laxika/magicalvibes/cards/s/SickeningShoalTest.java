@@ -46,8 +46,8 @@ class SickeningShoalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent mass = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(mass.getEffectivePower()).isEqualTo(1);
-        assertThat(mass.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, mass)).isEqualTo(1);
     }
 
     @Test
@@ -66,8 +66,8 @@ class SickeningShoalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent mass = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(mass.getEffectivePower()).isEqualTo(3);
-        assertThat(mass.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mass)).isEqualTo(3);
     }
 
     @Test
@@ -83,8 +83,8 @@ class SickeningShoalTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Gnarled Mass");
         Permanent mass = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(mass.getEffectivePower()).isEqualTo(1);
-        assertThat(mass.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, mass)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -124,8 +124,8 @@ class SickeningShoalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent mass = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(mass.getEffectivePower()).isEqualTo(3);
-        assertThat(mass.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mass)).isEqualTo(3);
     }
 
     @Test
@@ -152,8 +152,8 @@ class SickeningShoalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent mass = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(mass.getEffectivePower()).isEqualTo(1);
-        assertThat(mass.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, mass)).isEqualTo(1);
     }
 
     @Test
@@ -183,12 +183,12 @@ class SickeningShoalTest extends BaseCardTest {
                 .containsExactly(payment.getId());
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         Permanent mass = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(mass.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mass)).isEqualTo(3);
 
         harness.passBothPriorities();
 
-        assertThat(mass.getEffectivePower()).isEqualTo(1);
-        assertThat(mass.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, mass)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Sickening Shoal");
         assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
                 .containsExactly(payment.getId());

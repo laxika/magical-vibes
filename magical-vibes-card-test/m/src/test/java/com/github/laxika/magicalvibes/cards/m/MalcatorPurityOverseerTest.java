@@ -38,8 +38,8 @@ class MalcatorPurityOverseerTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.GOLEM);
         assertThat(golem.getCard().hasType(CardType.ARTIFACT)).isTrue();
         assertThat(golem.getCard().hasType(CardType.CREATURE)).isTrue();
-        assertThat(golem.getEffectivePower()).isEqualTo(3);
-        assertThat(golem.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(3);
     }
 
     @Test

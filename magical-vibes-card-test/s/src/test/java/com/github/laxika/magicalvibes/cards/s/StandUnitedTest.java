@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AgadeemOccultist;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -28,8 +29,8 @@ class StandUnitedTest extends BaseCardTest {
 
         castStandUnited(ally);
 
-        assertThat(ally.getPowerModifier()).isEqualTo(2);
-        assertThat(ally.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ally)).isEqualTo(2);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(2);
 
@@ -43,8 +44,8 @@ class StandUnitedTest extends BaseCardTest {
 
         castStandUnited(creature);
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -58,8 +59,8 @@ class StandUnitedTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -84,8 +85,8 @@ class StandUnitedTest extends BaseCardTest {
 
         castStandUnited(ally);
 
-        assertThat(ally.getPowerModifier()).isEqualTo(2);
-        assertThat(ally.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ally)).isEqualTo(2);
         PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(scry.playerId()).isEqualTo(player1.getId());
         assertThat(scry.libraryOwnerId()).isEqualTo(player1.getId());

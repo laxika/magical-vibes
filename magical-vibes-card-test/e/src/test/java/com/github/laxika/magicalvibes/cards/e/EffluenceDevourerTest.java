@@ -48,8 +48,8 @@ class EffluenceDevourerTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(ooze.getEffectivePower()).isEqualTo(4);
-        assertThat(ooze.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(4);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(devourer);
     }
 

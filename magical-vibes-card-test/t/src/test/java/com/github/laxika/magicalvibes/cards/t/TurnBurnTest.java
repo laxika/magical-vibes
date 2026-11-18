@@ -47,8 +47,8 @@ class TurnBurnTest extends BaseCardTest {
         harness.castInstant(player1, 0, TURN, angel.getId());
         harness.passBothPriorities();
 
-        assertThat(angel.getEffectivePower()).isZero();
-        assertThat(angel.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, angel)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(1);
         assertThat(gqs.hasColor(gd, angel, CardColor.RED)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isFalse();
         assertThat(gqs.effectiveCreatureSubtypes(gd, angel)).containsExactly(CardSubtype.WEIRD);
@@ -106,7 +106,7 @@ class TurnBurnTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, FUSE, List.of(angel.getId(), player2.getId()));
         harness.passBothPriorities();
 
-        assertThat(angel.getEffectivePower()).isZero();
+        assertThat(gqs.getEffectivePower(gd, angel)).isZero();
         assertThat(gqs.effectiveCreatureSubtypes(gd, angel)).containsExactly(CardSubtype.WEIRD);
         harness.assertLife(player2, 18);
     }
@@ -159,8 +159,8 @@ class TurnBurnTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(angel.getEffectivePower()).isEqualTo(4);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.RED)).isFalse();
         assertThat(gd.floatingEffectsOnPermanent(angel.getId(), GrantSubtypeEffect.class)).isEmpty();
@@ -227,8 +227,8 @@ class TurnBurnTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
         assertThat(bears.getMarkedDamage()).isEqualTo(2);
     }
 }

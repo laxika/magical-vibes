@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class BalshanCollaboratorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(collaborator.getPowerModifier()).isEqualTo(1);
-        assertThat(collaborator.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, collaborator)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, collaborator)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 
@@ -39,8 +40,8 @@ class BalshanCollaboratorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(collaborator.getPowerModifier()).isEqualTo(2);
-        assertThat(collaborator.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, collaborator)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, collaborator)).isEqualTo(2);
     }
 
     @Test
@@ -53,8 +54,8 @@ class BalshanCollaboratorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(collaborator.getPowerModifier()).isEqualTo(1);
-        assertThat(collaborator.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, collaborator)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, collaborator)).isEqualTo(1);
         assertThat(collaborator.isTapped()).isTrue();
     }
 
@@ -81,8 +82,8 @@ class BalshanCollaboratorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(collaborator.getPowerModifier()).isZero();
-        assertThat(collaborator.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, collaborator)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, collaborator)).isZero();
     }
 
     @Test
@@ -95,8 +96,8 @@ class BalshanCollaboratorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(collaborator.getPowerModifier()).isEqualTo(1);
-        assertThat(collaborator.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, collaborator)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, collaborator)).isEqualTo(1);
         assertThat(collaborator.isTapped()).isFalse();
     }
 
@@ -110,16 +111,16 @@ class BalshanCollaboratorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(collaborator.getPowerModifier()).isZero();
-        assertThat(collaborator.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, collaborator)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, collaborator)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(collaborator.getPowerModifier()).isEqualTo(1);
-        assertThat(collaborator.getToughnessModifier()).isEqualTo(1);
-        assertThat(otherCollaborator.getPowerModifier()).isZero();
-        assertThat(otherCollaborator.getToughnessModifier()).isZero();
-        assertThat(opposingCollaborator.getPowerModifier()).isZero();
-        assertThat(opposingCollaborator.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, collaborator)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, collaborator)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCollaborator)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCollaborator)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCollaborator)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingCollaborator)).isZero();
     }
 }

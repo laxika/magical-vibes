@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DarksteelBrute;
 import com.github.laxika.magicalvibes.cards.p.PteronGhost;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -35,8 +36,8 @@ class HungerOfTheNimTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         Permanent target = findPermanent(player2, "Pteron Ghost");
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -54,8 +55,8 @@ class HungerOfTheNimTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player1, "Pteron Ghost");
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -71,13 +72,13 @@ class HungerOfTheNimTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         Permanent target = findPermanent(player1, "Pteron Ghost");
-        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -105,8 +106,8 @@ class HungerOfTheNimTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Pteron Ghost"));
 
         Permanent target = findPermanent(player1, "Pteron Ghost");
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         harness.assertInGraveyard(player1, "Hunger of the Nim");
     }
 
@@ -123,8 +124,8 @@ class HungerOfTheNimTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DarksteelBrute());
 
         Permanent target = findPermanent(player1, "Pteron Ghost");
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -141,7 +142,7 @@ class HungerOfTheNimTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, harness.getPermanentId(player1, "Darksteel Brute"));
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         harness.assertNotOnBattlefield(player1, "Pteron Ghost");
         harness.assertInGraveyard(player1, "Pteron Ghost");
         harness.assertInGraveyard(player1, "Hunger of the Nim");

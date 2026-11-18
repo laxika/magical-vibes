@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
@@ -23,8 +24,8 @@ class ExponentialGrowthTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         cast(target, 0, 2, 0);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -32,8 +33,8 @@ class ExponentialGrowthTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         cast(target, 1, 2, 2);
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -41,8 +42,8 @@ class ExponentialGrowthTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         cast(target, 2, 2, 4);
 
-        assertThat(target.getEffectivePower()).isEqualTo(8);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -54,7 +55,7 @@ class ExponentialGrowthTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -70,23 +71,23 @@ class ExponentialGrowthTest extends BaseCardTest {
     @Test
     void doublesNegativePowerWithoutChangingToughness() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, target, -3);
 
         cast(target, 2, 2, 4);
 
-        assertThat(target.getEffectivePower()).isEqualTo(-4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
     void zeroPowerRemainsZero() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, target, -2);
 
         cast(target, 3, 2, 6);
 
-        assertThat(target.getEffectivePower()).isZero();
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -100,13 +101,13 @@ class ExponentialGrowthTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(20);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(20);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(23);
-        assertThat(target.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(23);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
     }
 
     @Test
@@ -126,19 +127,19 @@ class ExponentialGrowthTest extends BaseCardTest {
 
         cast(target, 40, 2, 80);
 
-        assertThat(target.getEffectivePower()).isEqualTo(Integer.MAX_VALUE);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(Integer.MAX_VALUE);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
     void largeXSaturatesNegativePowerInsteadOfWrappingPositive() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, target, -3);
 
         cast(target, 40, 2, 80);
 
         // The power modifier saturates at Integer.MIN_VALUE; the Bears' base power of 2 still adds on top.
-        assertThat(target.getEffectivePower()).isEqualTo(Integer.MIN_VALUE + 2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(Integer.MIN_VALUE + 2);
     }
 
     @Test

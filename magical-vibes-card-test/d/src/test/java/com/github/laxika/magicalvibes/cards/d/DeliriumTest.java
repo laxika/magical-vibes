@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -124,7 +125,7 @@ class DeliriumTest extends BaseCardTest {
         prepareCast();
         harness.castInstant(player1, 0, target.getId());
 
-        target.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, target, 3);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 16);
@@ -137,7 +138,7 @@ class DeliriumTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.setLife(player2, 20);
         Permanent target = addCreatureReady(player2, new FemerefScouts());
-        target.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, target, -2);
 
         castDelirium(target);
 

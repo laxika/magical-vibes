@@ -67,8 +67,8 @@ class RiftmarkedKnightTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isZero();
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
     }
 
     @Test

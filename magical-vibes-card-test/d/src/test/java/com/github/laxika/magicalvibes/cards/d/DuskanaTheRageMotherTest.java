@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -90,11 +91,11 @@ class DuskanaTheRageMotherTest extends BaseCardTest {
     void drawsForModifiedBaseTwoTwoCreature() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        bear.setPowerModifier(3);
-        bear.setToughnessModifier(3);
+        PermanentGrants.setPowerBoost(gd, bear, 3);
+        PermanentGrants.setToughnessBoost(gd, bear, 3);
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
-        giant.setPowerModifier(-1);
-        giant.setToughnessModifier(-1);
+        PermanentGrants.setPowerBoost(gd, giant, -1);
+        PermanentGrants.setToughnessBoost(gd, giant, -1);
         GrizzlyBears drawn = new GrizzlyBears();
         HillGiant undrawn = new HillGiant();
         harness.setLibrary(player1, List.of(drawn, undrawn));

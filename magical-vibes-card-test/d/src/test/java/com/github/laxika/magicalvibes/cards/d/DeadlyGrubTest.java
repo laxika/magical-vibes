@@ -107,8 +107,8 @@ class DeadlyGrubTest extends BaseCardTest {
 
         List<Permanent> insects = findPermanents(player1, "Insect");
         assertThat(insects).hasSize(1);
-        assertThat(insects.getFirst().getEffectivePower()).isEqualTo(6);
-        assertThat(insects.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, insects.getFirst())).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, insects.getFirst())).isEqualTo(1);
         assertThat(insects.getFirst().getCard().hasKeyword(Keyword.SHROUD)).isTrue();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.IronGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
@@ -37,8 +38,8 @@ class HasteMagicTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
         assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
@@ -56,8 +57,8 @@ class HasteMagicTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
         assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
     }
@@ -87,8 +88,8 @@ class HasteMagicTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
     }
@@ -119,7 +120,7 @@ class HasteMagicTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromExile(player1, topCard.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
 
@@ -136,7 +137,7 @@ class HasteMagicTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissionHolders()).containsEntry(topCard.getId(), player1.getId());
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(topCard.getId());
@@ -151,8 +152,8 @@ class HasteMagicTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
@@ -204,8 +205,8 @@ class HasteMagicTest extends BaseCardTest {
         harness.castFromExile(player1, topCard.getId(), creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(6);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(topCard);
     }
 

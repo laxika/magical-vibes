@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -50,10 +51,10 @@ class MightOfOaksTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, cockroach.getId());
 
-        assertThat(cockroach.getEffectivePower()).isEqualTo(11);
-        assertThat(cockroach.getEffectiveToughness()).isEqualTo(9);
-        assertThat(cockroach.getPowerModifier()).isEqualTo(7);
-        assertThat(cockroach.getToughnessModifier()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, cockroach)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, cockroach)).isEqualTo(9);
+        assertThat(PermanentGrants.powerBoostOf(gd, cockroach)).isEqualTo(7);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cockroach)).isEqualTo(7);
     }
 
     @Test
@@ -68,10 +69,10 @@ class MightOfOaksTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(cockroach.getPowerModifier()).isEqualTo(0);
-        assertThat(cockroach.getToughnessModifier()).isEqualTo(0);
-        assertThat(cockroach.getEffectivePower()).isEqualTo(4);
-        assertThat(cockroach.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, cockroach)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cockroach)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, cockroach)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, cockroach)).isEqualTo(2);
     }
 
     @Test
@@ -160,8 +161,8 @@ class MightOfOaksTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, cockroach.getId());
 
-        assertThat(cockroach.getEffectivePower()).isEqualTo(18);
-        assertThat(cockroach.getEffectiveToughness()).isEqualTo(16);
+        assertThat(gqs.getEffectivePower(gd, cockroach)).isEqualTo(18);
+        assertThat(gqs.getEffectiveToughness(gd, cockroach)).isEqualTo(16);
     }
 
     @Test
@@ -197,8 +198,8 @@ class MightOfOaksTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, cockroach.getId());
 
-        assertThat(cockroach.getPowerModifier()).isEqualTo(7);
-        assertThat(cockroach.getToughnessModifier()).isEqualTo(7);
+        assertThat(PermanentGrants.powerBoostOf(gd, cockroach)).isEqualTo(7);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cockroach)).isEqualTo(7);
     }
 
     @Test
@@ -210,12 +211,12 @@ class MightOfOaksTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(11);
-        assertThat(target.getEffectiveToughness()).isEqualTo(9);
-        assertThat(ally.getEffectivePower()).isEqualTo(4);
-        assertThat(ally.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponent.getEffectivePower()).isEqualTo(4);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Might of Oaks");
     }
 

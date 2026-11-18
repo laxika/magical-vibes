@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -53,9 +54,9 @@ class ArabellaAbandonedDollTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
-        arabella.setPowerModifier(2);
-        bears.setPowerModifier(1);
-        giant.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, arabella, 2);
+        PermanentGrants.setPowerBoost(gd, bears, 1);
+        PermanentGrants.setPowerBoost(gd, giant, -4);
         resolveAllTriggers();
 
         harness.assertLife(player1, 11);
@@ -86,7 +87,7 @@ class ArabellaAbandonedDollTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
-        arabella.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, arabella, 2);
         resolveAllTriggers();
 
         harness.assertLife(player1, 10);

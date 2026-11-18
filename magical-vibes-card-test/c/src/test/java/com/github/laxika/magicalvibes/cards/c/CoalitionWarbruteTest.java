@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -36,8 +37,8 @@ class CoalitionWarbruteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(supporter.isTapped()).isTrue();
-        assertThat(warbrute.getPowerModifier()).isEqualTo(2);
-        assertThat(warbrute.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warbrute)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warbrute)).isZero();
     }
 
     @Test
@@ -49,7 +50,7 @@ class CoalitionWarbruteTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
-        assertThat(warbrute.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warbrute)).isZero();
     }
 
     @Test
@@ -63,15 +64,15 @@ class CoalitionWarbruteTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
-        assertThat(warbrute.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warbrute)).isZero();
 
         harness.castInstant(player1, 0, supporter.getId());
         harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(supporter.getPowerModifier()).isEqualTo(3);
-        assertThat(warbrute.getPowerModifier()).isEqualTo(6);
-        assertThat(warbrute.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, supporter)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, warbrute)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warbrute)).isZero();
     }
 
     @Test
@@ -84,7 +85,7 @@ class CoalitionWarbruteTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(supporter.isTapped()).isFalse();
-        assertThat(warbrute.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warbrute)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -115,14 +116,14 @@ class CoalitionWarbruteTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
         resolveAllTriggers();
-        assertThat(warbrute.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, warbrute)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(warbrute.getPowerModifier()).isZero();
-        assertThat(warbrute.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warbrute)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warbrute)).isZero();
     }
 
     @Test

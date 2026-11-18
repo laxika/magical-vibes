@@ -22,7 +22,7 @@ class DevourInShadowTest extends BaseCardTest {
     void destroysCreatureAndLosesLifeEqualToToughness() {
         harness.setLife(player1, 20);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
-        target.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, target, 2);
         prepareDevourInShadow();
         harness.castAndResolveInstant(player1, 0, target.getId());
 
@@ -104,7 +104,7 @@ class DevourInShadowTest extends BaseCardTest {
         prepareDevourInShadow();
         harness.castInstant(player1, 0, target.getId());
 
-        target.setToughnessModifier(4);
+        PermanentGrants.setToughnessBoost(gd, target, 4);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Dross Crocodile");

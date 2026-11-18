@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -30,10 +31,10 @@ class DownwindAmbusherTest extends BaseCardTest {
 
         cast(MINUS_ONE_MODE, bears.getId());
 
-        assertThat(bears.getPowerModifier()).isEqualTo(-1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(-1);
-        assertThat(bears.getEffectivePower()).isEqualTo(1);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
 
     @Test
@@ -103,8 +104,8 @@ class DownwindAmbusherTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
@@ -116,7 +117,7 @@ class DownwindAmbusherTest extends BaseCardTest {
         cast(MINUS_ONE_MODE, bears.getId());
 
         harness.assertOnBattlefield(player1, "Downwind Ambusher");
-        assertThat(bears.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(-1);
     }
 
     @Test

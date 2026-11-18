@@ -51,11 +51,11 @@ class MarshFlitterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.assertNotOnBattlefield(player1, "Squeaking Pie Sneak");
         harness.assertInGraveyard(player1, "Squeaking Pie Sneak");
-        assertThat(flitter.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, flitter)).isEqualTo(1);
         harness.passBothPriorities();
 
-        assertThat(flitter.getEffectivePower()).isEqualTo(3);
-        assertThat(flitter.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, flitter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, flitter)).isEqualTo(3);
     }
 
     @Test
@@ -66,14 +66,14 @@ class MarshFlitterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(flitter.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, flitter)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(flitter.getEffectivePower()).isEqualTo(1);
-        assertThat(flitter.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, flitter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, flitter)).isEqualTo(1);
     }
 
     @Test
@@ -97,8 +97,8 @@ class MarshFlitterTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Boggart Shenanigans");
         harness.passBothPriorities();
 
-        assertThat(flitter.getEffectivePower()).isEqualTo(3);
-        assertThat(flitter.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, flitter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, flitter)).isEqualTo(3);
     }
 
     @Test
@@ -122,8 +122,8 @@ class MarshFlitterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(flitter.isTapped()).isFalse();
-        assertThat(flitter.getEffectivePower()).isEqualTo(3);
-        assertThat(flitter.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, flitter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, flitter)).isEqualTo(3);
     }
 
     private Permanent addMarshFlitterReady(Player player) {

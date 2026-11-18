@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -54,7 +55,7 @@ class DragonsFireTest extends BaseCardTest {
         addMana();
 
         harness.castInstantWithBehold(player1, 0, target.getId(), List.of(dragon.getId()), List.of());
-        dragon.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, dragon, 1);
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(6);
@@ -84,7 +85,7 @@ class DragonsFireTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.castInstantWithBehold(player1, 0, target.getId(), List.of(dragon.getId()), List.of());
-        dragon.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, dragon, 1);
         harness.castAndResolveInstant(player2, 0, dragon.getId());
         resolveAllTriggers();
 
@@ -101,7 +102,7 @@ class DragonsFireTest extends BaseCardTest {
         addMana();
 
         harness.castInstantWithBehold(player1, 0, target.getId(), List.of(dragon.getId()), List.of());
-        dragon.setPowerModifier(-5);
+        PermanentGrants.setPowerBoost(gd, dragon, -5);
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();

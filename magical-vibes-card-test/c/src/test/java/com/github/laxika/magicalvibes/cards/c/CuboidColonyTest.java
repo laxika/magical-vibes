@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -158,7 +159,7 @@ class CuboidColonyTest extends BaseCardTest {
         @Test
         void manaGreaterThanOnlyToughnessStillIncrements() {
             Permanent colony = addColony(player1);
-            colony.setPowerModifier(2);
+            PermanentGrants.setPowerBoost(gd, colony, 2);
             setUpMainPhase(player1);
 
             harness.castFromHand(player1, new CuboidColony(), "{G}{U}");
@@ -170,7 +171,7 @@ class CuboidColonyTest extends BaseCardTest {
         @Test
         void manaGreaterThanOnlyPowerStillIncrements() {
             Permanent colony = addColony(player1);
-            colony.setToughnessModifier(2);
+            PermanentGrants.setToughnessBoost(gd, colony, 2);
             setUpMainPhase(player1);
 
             harness.castFromHand(player1, new CuboidColony(), "{G}{U}");

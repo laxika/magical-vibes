@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -21,7 +22,7 @@ class SteelgazeGriffinTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new SteelgazeGriffin(), new SteelgazeGriffin(), new SteelgazeGriffin()));
 
         drawCard();
-        assertThat(griffin.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, griffin)).isZero();
 
         drawCard();
         assertThat(gd.stack).hasSize(1);
@@ -30,8 +31,8 @@ class SteelgazeGriffinTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(griffin.getPowerModifier()).isEqualTo(2);
-        assertThat(griffin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, griffin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, griffin)).isZero();
     }
 
     @Test
@@ -46,8 +47,8 @@ class SteelgazeGriffinTest extends BaseCardTest {
         });
 
         assertThat(gd.stack).isEmpty();
-        assertThat(griffin.getPowerModifier()).isZero();
-        assertThat(griffin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, griffin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, griffin)).isZero();
     }
 
     @Test
@@ -61,8 +62,8 @@ class SteelgazeGriffinTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(griffin.getPowerModifier()).isEqualTo(2);
-        assertThat(griffin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, griffin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, griffin)).isZero();
     }
 
     @Test
@@ -77,7 +78,7 @@ class SteelgazeGriffinTest extends BaseCardTest {
         drawCard();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(griffin.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, griffin)).isZero();
     }
 
     @Test
@@ -90,12 +91,12 @@ class SteelgazeGriffinTest extends BaseCardTest {
         drawCard();
         drawCard();
         harness.passBothPriorities();
-        assertThat(griffin.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, griffin)).isEqualTo(2);
 
         harness.setHand(player1, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(griffin.getPowerModifier()).isZero();
-        assertThat(griffin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, griffin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, griffin)).isZero();
 
         drawCard();
         assertThat(gd.stack).isEmpty();
@@ -103,8 +104,8 @@ class SteelgazeGriffinTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(griffin.getPowerModifier()).isEqualTo(2);
-        assertThat(griffin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, griffin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, griffin)).isZero();
     }
 
     private void drawCard() {

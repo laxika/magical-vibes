@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CoralSword;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -42,7 +43,7 @@ class RaubahnBullOfAlaMhigoTest extends BaseCardTest {
     @DisplayName("Ward uses Raubahn's power when it resolves")
     void wardUsesCurrentPower() {
         Permanent raubahn = addReadyRaubahn(player1);
-        raubahn.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, raubahn, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -113,7 +114,7 @@ class RaubahnBullOfAlaMhigoTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
 
         harness.castInstant(player2, 0, raubahn.getId());
-        raubahn.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, raubahn, 2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();

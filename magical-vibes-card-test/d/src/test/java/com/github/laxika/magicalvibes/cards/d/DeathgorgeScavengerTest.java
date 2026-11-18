@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.a.AncientBrontodon;
@@ -67,8 +68,8 @@ class DeathgorgeScavengerTest extends BaseCardTest {
             assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getName().equals("Lightning Strike"))).isTrue();
 
             Permanent scavenger = findPermanent(player1, "Deathgorge Scavenger");
-            assertThat(scavenger.getPowerModifier()).isEqualTo(1);
-            assertThat(scavenger.getToughnessModifier()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, scavenger)).isEqualTo(1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, scavenger)).isEqualTo(1);
         }
 
         @Test
@@ -139,8 +140,8 @@ class DeathgorgeScavengerTest extends BaseCardTest {
 
             // Noncreature card exiled: source gets +1/+1
             assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-            assertThat(scavenger.getPowerModifier()).isEqualTo(1);
-            assertThat(scavenger.getToughnessModifier()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, scavenger)).isEqualTo(1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, scavenger)).isEqualTo(1);
         }
 
         @Test
@@ -210,8 +211,8 @@ class DeathgorgeScavengerTest extends BaseCardTest {
             assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
 
             Permanent scavenger = findPermanent(player1, "Deathgorge Scavenger");
-            assertThat(scavenger.getPowerModifier()).isEqualTo(1);
-            assertThat(scavenger.getToughnessModifier()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, scavenger)).isEqualTo(1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, scavenger)).isEqualTo(1);
         }
     }
 
@@ -258,8 +259,8 @@ class DeathgorgeScavengerTest extends BaseCardTest {
 
             assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getName().equals("Lightning Strike"))).isTrue();
             assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-            assertThat(scavenger.getPowerModifier()).isEqualTo(1);
-            assertThat(scavenger.getToughnessModifier()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, scavenger)).isEqualTo(1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, scavenger)).isEqualTo(1);
         }
     }
 
@@ -295,8 +296,8 @@ class DeathgorgeScavengerTest extends BaseCardTest {
         assertThat(gd.exiledCards).isEmpty();
         harness.assertLife(player1, 20);
         Permanent scavenger = findPermanent(player1, "Deathgorge Scavenger");
-        assertThat(scavenger.getPowerModifier()).isZero();
-        assertThat(scavenger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, scavenger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scavenger)).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -335,14 +336,14 @@ class DeathgorgeScavengerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         Permanent scavenger = findPermanent(player1, "Deathgorge Scavenger");
-        assertThat(scavenger.getPowerModifier()).isEqualTo(1);
-        assertThat(scavenger.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, scavenger)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scavenger)).isEqualTo(1);
         harness.assertLife(player1, 20);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(scavenger.getPowerModifier()).isZero();
-        assertThat(scavenger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, scavenger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scavenger)).isZero();
     }
 
     @Test

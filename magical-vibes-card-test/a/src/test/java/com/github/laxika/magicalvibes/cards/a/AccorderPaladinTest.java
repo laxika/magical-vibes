@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LeoninSkyhunter;
 import com.github.laxika.magicalvibes.cards.g.GoForTheThroat;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -59,10 +60,10 @@ class AccorderPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Leonin Skyhunter should get +1/+0 from battle cry
-        assertThat(skyhunter.getPowerModifier()).isEqualTo(1);
-        assertThat(skyhunter.getToughnessModifier()).isEqualTo(0);
-        assertThat(skyhunter.getEffectivePower()).isEqualTo(3); // 2 base + 1 battle cry
-        assertThat(skyhunter.getEffectiveToughness()).isEqualTo(2); // unchanged
+        assertThat(PermanentGrants.powerBoostOf(gd, skyhunter)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skyhunter)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, skyhunter)).isEqualTo(3); // 2 base + 1 battle cry
+        assertThat(gqs.getEffectiveToughness(gd, skyhunter)).isEqualTo(2); // unchanged
     }
 
     @Test
@@ -83,8 +84,8 @@ class AccorderPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Accorder Paladin should NOT get its own battle cry boost
-        assertThat(paladin.getPowerModifier()).isEqualTo(0);
-        assertThat(paladin.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(0);
     }
 
     @Test
@@ -106,8 +107,8 @@ class AccorderPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Skyhunter should NOT get battle cry boost (not attacking)
-        assertThat(skyhunter.getPowerModifier()).isEqualTo(0);
-        assertThat(skyhunter.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, skyhunter)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skyhunter)).isEqualTo(0);
     }
 
     @Test
@@ -128,8 +129,8 @@ class AccorderPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Opponent's creature should NOT be affected
-        assertThat(oppSkyhunter.getPowerModifier()).isEqualTo(0);
-        assertThat(oppSkyhunter.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, oppSkyhunter)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, oppSkyhunter)).isEqualTo(0);
     }
 
     @Test
@@ -156,13 +157,13 @@ class AccorderPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Leonin Skyhunter gets +1/+0 from each paladin = +2/+0
-        assertThat(skyhunter.getPowerModifier()).isEqualTo(2);
-        assertThat(skyhunter.getToughnessModifier()).isEqualTo(0);
-        assertThat(skyhunter.getEffectivePower()).isEqualTo(4); // 2 base + 2
+        assertThat(PermanentGrants.powerBoostOf(gd, skyhunter)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skyhunter)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, skyhunter)).isEqualTo(4); // 2 base + 2
 
         // Each paladin gets +1/+0 from the OTHER paladin only
-        assertThat(paladin1.getPowerModifier()).isEqualTo(1);
-        assertThat(paladin2.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin1)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin2)).isEqualTo(1);
     }
 
     @Test
@@ -183,7 +184,7 @@ class AccorderPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Verify boost is applied
-        assertThat(skyhunter.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, skyhunter)).isEqualTo(1);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
@@ -191,8 +192,8 @@ class AccorderPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Boost should be gone
-        assertThat(skyhunter.getPowerModifier()).isEqualTo(0);
-        assertThat(skyhunter.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, skyhunter)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, skyhunter)).isEqualTo(2);
     }
 
     @Test
@@ -215,8 +216,8 @@ class AccorderPaladinTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(skyhunter.getPowerModifier()).isEqualTo(1);
-        assertThat(skyhunter.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skyhunter)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skyhunter)).isZero();
     }
 
     @Test
@@ -234,7 +235,7 @@ class AccorderPaladinTest extends BaseCardTest {
         skyhunter.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(skyhunter.getPowerModifier()).isZero();
-        assertThat(skyhunter.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skyhunter)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skyhunter)).isZero();
     }
 }

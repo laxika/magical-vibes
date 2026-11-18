@@ -32,7 +32,7 @@ class TandemTakedownTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(victim.getId(), source.getId()));
 
-        assertThat(source.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(4);
         assertThat(victim.getMarkedDamage()).isEqualTo(4);
     }
 
@@ -47,8 +47,8 @@ class TandemTakedownTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(victim.getId(), firstSource.getId(), secondSource.getId()));
 
         harness.assertInGraveyard(player2, "Craw Wurm");
-        assertThat(firstSource.getEffectivePower()).isEqualTo(4);
-        assertThat(secondSource.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firstSource)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, secondSource)).isEqualTo(3);
     }
 
     @Test
@@ -82,7 +82,7 @@ class TandemTakedownTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(victim.getId()));
 
-        assertThat(victim.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, victim)).isEqualTo(3);
         assertThat(victim.getMarkedDamage()).isZero();
         harness.assertInGraveyard(player1, "Tandem Takedown");
     }
@@ -98,7 +98,7 @@ class TandemTakedownTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(victim.getId(), source.getId()));
 
         assertThat(victim.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
-        assertThat(source.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
     }
 
     @Test
@@ -113,7 +113,7 @@ class TandemTakedownTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(firstSource);
         harness.passBothPriorities();
 
-        assertThat(secondSource.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondSource)).isEqualTo(3);
         assertThat(victim.getMarkedDamage()).isEqualTo(3);
         harness.assertOnBattlefield(player2, "Air Elemental");
     }
@@ -130,8 +130,8 @@ class TandemTakedownTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(source);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(2);
-        assertThat(victim.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, victim)).isEqualTo(4);
         assertThat(victim.getMarkedDamage()).isZero();
     }
 
@@ -146,7 +146,7 @@ class TandemTakedownTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(victim);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
         assertThat(source.getMarkedDamage()).isZero();
     }
 
@@ -158,10 +158,10 @@ class TandemTakedownTest extends BaseCardTest {
         addMana();
 
         harness.castAndResolveInstant(player1, 0, List.of(victim.getId(), source.getId()));
-        assertThat(source.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(source.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
     }
 
     @Test

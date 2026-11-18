@@ -37,8 +37,8 @@ class GoblinBurrowsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, goblin.getId());
         harness.passBothPriorities();
 
-        assertThat(goblin.getEffectivePower()).isEqualTo(4);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
         assertThat(burrows.isTapped()).isTrue();
     }
 
@@ -52,7 +52,7 @@ class GoblinBurrowsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, goblin.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(goblin.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
         assertThat(burrows.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
@@ -68,14 +68,14 @@ class GoblinBurrowsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, goblin.getId());
         harness.passBothPriorities();
-        assertThat(goblin.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(goblin.getEffectivePower()).isEqualTo(2);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
     }
 
     @Test
@@ -118,7 +118,7 @@ class GoblinBurrowsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(burrows.isTapped()).isTrue();
-        assertThat(goblin.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -135,8 +135,8 @@ class GoblinBurrowsTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(burrows.getCard());
         harness.passBothPriorities();
 
-        assertThat(goblin.getEffectivePower()).isEqualTo(4);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -71,7 +72,7 @@ class SpotterThopterTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        gd.playerBattlefields.get(player1.getId()).getFirst().setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, gd.playerBattlefields.get(player1.getId()).getFirst(), 2);
         harness.passBothPriorities();
 
         PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
@@ -87,7 +88,7 @@ class SpotterThopterTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        gd.playerBattlefields.get(player1.getId()).getFirst().setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, gd.playerBattlefields.get(player1.getId()).getFirst(), -4);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();

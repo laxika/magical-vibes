@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BraidwoodCup;
 import com.github.laxika.magicalvibes.cards.w.WildColos;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,10 +24,10 @@ class MagnifyTest extends BaseCardTest {
         harness.castFromHand(player1, new Magnify(), "{G}");
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(3);
     }
 
     @Test
@@ -37,14 +38,14 @@ class MagnifyTest extends BaseCardTest {
         harness.castFromHand(player1, new Magnify(), "{G}");
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -55,12 +56,12 @@ class MagnifyTest extends BaseCardTest {
         harness.castFromHand(player1, new Magnify(), "{G}");
         harness.passBothPriorities();
 
-        assertThat(artifact.getPowerModifier()).isZero();
-        assertThat(artifact.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, artifact)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, artifact)).isZero();
 
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player2, new WildColos());
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
     }
 
     @Test
@@ -71,8 +72,8 @@ class MagnifyTest extends BaseCardTest {
         Permanent creature = harness.enterBattlefieldAndReturn(player2, new WildColos());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -85,13 +86,13 @@ class MagnifyTest extends BaseCardTest {
         harness.castFromHand(player1, new Magnify(), "{G}");
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }

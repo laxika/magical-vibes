@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Censor;
 import com.github.laxika.magicalvibes.cards.c.Compulsion;
 import com.github.laxika.magicalvibes.cards.g.GoForBlood;
@@ -32,8 +33,8 @@ class PricklyMarmosetTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(marmoset.getEffectivePower()).isEqualTo(4);
-        assertThat(marmoset.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, marmoset)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, marmoset)).isEqualTo(3);
         harness.assertInGraveyard(player1, "Censor");
         harness.assertInHand(player1, "Grizzly Bears");
     }
@@ -51,8 +52,8 @@ class PricklyMarmosetTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(marmoset.getEffectivePower()).isEqualTo(2);
-        assertThat(marmoset.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, marmoset)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, marmoset)).isEqualTo(3);
         harness.assertInGraveyard(player1, "Censor");
         harness.assertInHand(player1, "Grizzly Bears");
     }
@@ -68,15 +69,15 @@ class PricklyMarmosetTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(marmoset.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, marmoset)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(marmoset.getPowerModifier()).isZero();
-        assertThat(marmoset.getToughnessModifier()).isZero();
-        assertThat(marmoset.getEffectivePower()).isEqualTo(2);
-        assertThat(marmoset.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, marmoset)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marmoset)).isZero();
+        assertThat(gqs.getEffectivePower(gd, marmoset)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, marmoset)).isEqualTo(3);
     }
 
     @Test
@@ -106,8 +107,8 @@ class PricklyMarmosetTest extends BaseCardTest {
         harness.activateHandAbility(player2, 0, null);
         harness.passBothPriorities();
 
-        assertThat(marmoset.getEffectivePower()).isEqualTo(2);
-        assertThat(marmoset.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, marmoset)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, marmoset)).isEqualTo(3);
         harness.assertInGraveyard(player2, "Go for Blood");
         harness.assertInHand(player2, "Prickly Marmoset");
         assertThat(gd.stack).isEmpty();
@@ -127,10 +128,10 @@ class PricklyMarmosetTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.passBothPriorities();
 
-            assertThat(first.getEffectivePower()).isEqualTo(2 + 2 * cycle);
-            assertThat(second.getEffectivePower()).isEqualTo(2 + 2 * cycle);
-            assertThat(first.getEffectiveToughness()).isEqualTo(3);
-            assertThat(second.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2 + 2 * cycle);
+            assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2 + 2 * cycle);
+            assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
             assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
             harness.passBothPriorities();

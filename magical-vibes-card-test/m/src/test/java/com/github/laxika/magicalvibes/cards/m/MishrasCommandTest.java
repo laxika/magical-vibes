@@ -60,7 +60,7 @@ class MishrasCommandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
@@ -95,7 +95,7 @@ class MishrasCommandTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(undrawn);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
 
@@ -120,7 +120,7 @@ class MishrasCommandTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
 
@@ -141,7 +141,7 @@ class MishrasCommandTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(undrawn);
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
 
@@ -159,13 +159,13 @@ class MishrasCommandTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
     }
 
@@ -199,10 +199,10 @@ class MishrasCommandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(damaged.getMarkedDamage()).isEqualTo(1);
-        assertThat(damaged.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, damaged)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, damaged, Keyword.HASTE)).isFalse();
         assertThat(pumped.getMarkedDamage()).isZero();
-        assertThat(pumped.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, pumped)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, pumped, Keyword.HASTE)).isTrue();
     }
 }

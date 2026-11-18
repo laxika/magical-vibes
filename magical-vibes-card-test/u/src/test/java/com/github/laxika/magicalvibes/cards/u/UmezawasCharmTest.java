@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChangelingOutcast;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -31,8 +32,8 @@ class UmezawasCharmTest extends BaseCardTest {
 
             cast(0, bear.getId());
 
-            assertThat(bear.getPowerModifier()).isEqualTo(2);
-            assertThat(bear.getToughnessModifier()).isEqualTo(2);
+            assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
         }
 
         @Test
@@ -43,8 +44,8 @@ class UmezawasCharmTest extends BaseCardTest {
             harness.forceStep(TurnStep.END_STEP);
             harness.passBothPriorities();
 
-            assertThat(bear.getPowerModifier()).isZero();
-            assertThat(bear.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         }
 
         @Test
@@ -54,8 +55,8 @@ class UmezawasCharmTest extends BaseCardTest {
 
             cast(0, bear.getId());
 
-            assertThat(bear.getPowerModifier()).isEqualTo(2);
-            assertThat(bear.getToughnessModifier()).isEqualTo(2);
+            assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
             harness.assertLife(player1, 15);
         }
     }
@@ -71,8 +72,8 @@ class UmezawasCharmTest extends BaseCardTest {
 
             cast(1, bear.getId());
 
-            assertThat(bear.getPowerModifier()).isEqualTo(-1);
-            assertThat(bear.getToughnessModifier()).isEqualTo(-1);
+            assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(-1);
         }
 
         @Test
@@ -95,8 +96,8 @@ class UmezawasCharmTest extends BaseCardTest {
             harness.forceStep(TurnStep.END_STEP);
             harness.passBothPriorities();
 
-            assertThat(bear.getPowerModifier()).isZero();
-            assertThat(bear.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
             harness.assertOnBattlefield(player2, "Grizzly Bears");
         }
 
@@ -116,8 +117,8 @@ class UmezawasCharmTest extends BaseCardTest {
 
             cast(1, bear.getId());
 
-            assertThat(bear.getPowerModifier()).isEqualTo(-1);
-            assertThat(bear.getToughnessModifier()).isEqualTo(-1);
+            assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(-1);
         }
     }
 

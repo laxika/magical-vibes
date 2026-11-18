@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,8 +31,8 @@ class JunkbladeBruiserTest extends BaseCardTest {
         }
 
         Permanent bruiser = findPermanent(player1, "Junkblade Bruiser");
-        assertThat(bruiser.getPowerModifier()).isEqualTo(2);
-        assertThat(bruiser.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bruiser)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bruiser)).isEqualTo(1);
     }
 
     @Test
@@ -48,8 +49,8 @@ class JunkbladeBruiserTest extends BaseCardTest {
         }
 
         Permanent bruiser = findPermanent(player1, "Junkblade Bruiser");
-        assertThat(bruiser.getPowerModifier()).isZero();
-        assertThat(bruiser.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bruiser)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bruiser)).isZero();
     }
 
     @Test
@@ -66,14 +67,14 @@ class JunkbladeBruiserTest extends BaseCardTest {
         }
 
         Permanent bruiser = findPermanent(player1, "Junkblade Bruiser");
-        assertThat(bruiser.getPowerModifier()).isEqualTo(2);
-        assertThat(bruiser.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bruiser)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bruiser)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bruiser.getPowerModifier()).isZero();
-        assertThat(bruiser.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bruiser)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bruiser)).isZero();
     }
 
     @Test
@@ -86,24 +87,24 @@ class JunkbladeBruiserTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 10);
 
         harness.castCreature(player1, 0);
-        assertThat(bruiser.getPowerModifier()).isZero();
-        assertThat(bruiser.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bruiser)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bruiser)).isZero();
         harness.passBothPriorities();
-        assertThat(bruiser.getPowerModifier()).isEqualTo(2);
-        assertThat(bruiser.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bruiser)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bruiser)).isEqualTo(1);
         harness.passBothPriorities();
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(bruiser.getPowerModifier()).isEqualTo(2);
-        assertThat(bruiser.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bruiser)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bruiser)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent != bruiser)
                 .allSatisfy(permanent -> {
-                    assertThat(permanent.getPowerModifier()).isZero();
-                    assertThat(permanent.getToughnessModifier()).isZero();
+                    assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isZero();
+                    assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isZero();
                 });
     }
 
@@ -119,8 +120,8 @@ class JunkbladeBruiserTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(bruiser.getPowerModifier()).isZero();
-        assertThat(bruiser.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bruiser)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bruiser)).isZero();
     }
 
     @Test
@@ -134,13 +135,13 @@ class JunkbladeBruiserTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         Permanent bruiser = findPermanent(player1, "Junkblade Bruiser");
-        assertThat(bruiser.getPowerModifier()).isZero();
-        assertThat(bruiser.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bruiser)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bruiser)).isZero();
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(bruiser.getPowerModifier()).isZero();
-        assertThat(bruiser.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bruiser)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bruiser)).isZero();
     }
 
     @Test
@@ -156,7 +157,7 @@ class JunkbladeBruiserTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0, player2.getId());
         }
 
-        assertThat(bruiser.getPowerModifier()).isEqualTo(2);
-        assertThat(bruiser.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bruiser)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bruiser)).isEqualTo(1);
     }
 }

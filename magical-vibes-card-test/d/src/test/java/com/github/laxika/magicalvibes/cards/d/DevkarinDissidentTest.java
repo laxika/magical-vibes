@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class DevkarinDissidentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dissident.getPowerModifier()).isEqualTo(2);
-        assertThat(dissident.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dissident)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dissident)).isEqualTo(2);
     }
 
     @Test
@@ -39,8 +40,8 @@ class DevkarinDissidentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dissident.getPowerModifier()).isEqualTo(4);
-        assertThat(dissident.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, dissident)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dissident)).isEqualTo(4);
     }
 
     @Test
@@ -56,8 +57,8 @@ class DevkarinDissidentTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dissident.getPowerModifier()).isZero();
-        assertThat(dissident.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dissident)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dissident)).isZero();
     }
 
     @Test
@@ -70,14 +71,14 @@ class DevkarinDissidentTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(dissident.getPowerModifier()).isZero();
-        assertThat(dissident.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dissident)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dissident)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(dissident.getPowerModifier()).isEqualTo(2);
-        assertThat(dissident.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dissident)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dissident)).isEqualTo(2);
         assertThat(dissident.isTapped()).isTrue();
     }
 
@@ -92,13 +93,13 @@ class DevkarinDissidentTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(2);
-        assertThat(source.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(2);
         assertThat(source.isTapped()).isFalse();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -111,8 +112,8 @@ class DevkarinDissidentTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(dissident.getPowerModifier()).isZero();
-        assertThat(dissident.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dissident)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dissident)).isZero();
     }
 
     @Test
@@ -126,8 +127,8 @@ class DevkarinDissidentTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(dissident.getPowerModifier()).isZero();
-        assertThat(dissident.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dissident)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dissident)).isZero();
     }
     private Permanent addReadyDissident() {
         return addCreatureReady(player1, new DevkarinDissident());

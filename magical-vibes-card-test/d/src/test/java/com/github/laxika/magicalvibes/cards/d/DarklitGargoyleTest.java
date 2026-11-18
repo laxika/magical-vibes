@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -38,8 +39,8 @@ class DarklitGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getPowerModifier()).isEqualTo(2);
-        assertThat(gargoyle.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, gargoyle)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isEqualTo(-1);
     }
 
     @Test
@@ -67,15 +68,15 @@ class DarklitGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getPowerModifier()).isEqualTo(2);
-        assertThat(gargoyle.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, gargoyle)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getPowerModifier()).isEqualTo(0);
-        assertThat(gargoyle.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, gargoyle)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isEqualTo(0);
     }
 
     @Test
@@ -103,8 +104,8 @@ class DarklitGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getPowerModifier()).isEqualTo(2);
-        assertThat(gargoyle.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, gargoyle)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isEqualTo(-1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(gargoyle);
     }
 
@@ -130,9 +131,9 @@ class DarklitGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(2);
-        assertThat(source.getToughnessModifier()).isEqualTo(-1);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 }

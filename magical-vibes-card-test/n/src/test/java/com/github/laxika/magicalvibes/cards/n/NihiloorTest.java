@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalefulStrix;
 import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -96,7 +97,7 @@ class NihiloorTest extends BaseCardTest {
         Permanent tapper = addCreatureReady(player1, new BalefulStrix());
         Permanent withinPower = harness.addToBattlefieldAndReturn(player2, new BalefulStrix());
         Permanent tooBig = harness.addToBattlefieldAndReturn(player2, new BalefulStrix());
-        tooBig.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, tooBig, 3);
         Permanent ownCreature = addCreatureReady(player1, new BalefulStrix());
         castNihiloor();
 
@@ -115,13 +116,13 @@ class NihiloorTest extends BaseCardTest {
     @Test
     void targetBecomesIllegalWhenTappedCreaturesPowerDrops() {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new BalefulStrix());
-        opponentCreature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, opponentCreature, 1);
         castNihiloor();
         Permanent nihiloor = findPermanent(player1, "Nihiloor");
         harness.handleMultiplePermanentsChosen(player1, List.of(nihiloor.getId()));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
-        nihiloor.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, nihiloor, -3);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
@@ -136,7 +137,7 @@ class NihiloorTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(tapper.getId()));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
-        opponentCreature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, opponentCreature, 1);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
@@ -150,8 +151,8 @@ class NihiloorTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(tapper.getId()));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
-        tapper.setPowerModifier(1);
-        opponentCreature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, tapper, 1);
+        PermanentGrants.setPowerBoost(gd, opponentCreature, 1);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(opponentCreature);
@@ -174,14 +175,14 @@ class NihiloorTest extends BaseCardTest {
     @Test
     void theftUsesTappedCreaturesLastPowerWhenItLeaves() {
         Permanent tapper = addCreatureReady(player1, new BalefulStrix());
-        tapper.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, tapper, 2);
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new BalefulStrix());
-        opponentCreature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, opponentCreature, 1);
         castNihiloor();
         harness.handleMultiplePermanentsChosen(player1, List.of(tapper.getId()));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
-        tapper.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, tapper, 0);
         exileCreature(tapper);
         resolveAllTriggers();
 

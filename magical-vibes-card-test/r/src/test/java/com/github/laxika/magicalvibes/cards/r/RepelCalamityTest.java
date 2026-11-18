@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -58,7 +59,7 @@ class RepelCalamityTest extends BaseCardTest {
     @Test
     void destroysCreatureWithOnlyPowerAtThreshold() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        target.setToughnessModifier(-1);
+        PermanentGrants.setToughnessBoost(gd, target, -1);
 
         cast(target);
 
@@ -77,7 +78,7 @@ class RepelCalamityTest extends BaseCardTest {
     @Test
     void usesModifiedStatsWhenChoosingTarget() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, 2);
 
         cast(target);
 
@@ -89,8 +90,8 @@ class RepelCalamityTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         setUpSpell();
         harness.castInstant(player1, 0, target.getId());
-        target.setPowerModifier(-1);
-        target.setToughnessModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
+        PermanentGrants.setToughnessBoost(gd, target, -1);
 
         harness.passBothPriorities();
 
@@ -104,7 +105,7 @@ class RepelCalamityTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         setUpSpell();
         harness.castInstant(player1, 0, target.getId());
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
 
         harness.passBothPriorities();
 

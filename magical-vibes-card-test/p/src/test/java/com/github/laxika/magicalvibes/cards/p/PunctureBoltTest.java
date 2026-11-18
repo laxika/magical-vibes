@@ -64,8 +64,8 @@ class PunctureBoltTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
 

@@ -178,7 +178,7 @@ class SeethingSkitterPriestTest extends BaseCardTest {
     }
 
     private void kill(Permanent permanent) {
-        permanent.setMarkedDamage(permanent.getEffectiveToughness());
+        permanent.setMarkedDamage(gqs.getEffectiveToughness(gd, permanent));
         harness.runStateBasedActions();
     }
 }

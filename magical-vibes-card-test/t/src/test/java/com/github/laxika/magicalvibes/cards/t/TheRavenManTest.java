@@ -39,8 +39,8 @@ class TheRavenManTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bird = findPermanent(player1, "Bird");
-        assertThat(bird.getEffectivePower()).isEqualTo(1);
-        assertThat(bird.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, bird, Keyword.FLYING)).isTrue();
     }
 

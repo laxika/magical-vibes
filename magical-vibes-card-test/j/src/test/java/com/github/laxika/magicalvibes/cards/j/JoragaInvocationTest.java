@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 
 import com.github.laxika.magicalvibes.cards.c.Cobblebrute;
@@ -28,8 +29,8 @@ class JoragaInvocationTest extends BaseCardTest {
         castInvocation();
 
         for (Permanent bears : gd.playerBattlefields.get(player1.getId())) {
-            assertThat(bears.getEffectivePower()).isEqualTo(8);
-            assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+            assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
+            assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
             assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
         }
     }
@@ -42,7 +43,7 @@ class JoragaInvocationTest extends BaseCardTest {
         castInvocation();
 
         Permanent theirs = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(theirs.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(5);
         assertThat(gd.hasFloatingEffectOnPermanent(theirs.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
@@ -79,8 +80,8 @@ class JoragaInvocationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
@@ -143,8 +144,8 @@ class JoragaInvocationTest extends BaseCardTest {
 
         Permanent later = harness.enterBattlefieldAndReturn(player1, new Cobblebrute());
 
-        assertThat(later.getEffectivePower()).isEqualTo(5);
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
     }
 
     @Test

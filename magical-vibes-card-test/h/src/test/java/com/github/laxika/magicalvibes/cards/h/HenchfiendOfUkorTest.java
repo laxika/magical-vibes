@@ -23,8 +23,8 @@ class HenchfiendOfUkorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(henchfiend.getEffectivePower()).isEqualTo(4);
-        assertThat(henchfiend.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, henchfiend)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, henchfiend)).isEqualTo(2);
     }
 
     @Test
@@ -36,7 +36,7 @@ class HenchfiendOfUkorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(henchfiend.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, henchfiend)).isEqualTo(4);
     }
 
     @Test
@@ -52,7 +52,7 @@ class HenchfiendOfUkorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(henchfiend.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, henchfiend)).isEqualTo(3);
     }
 
     @Test
@@ -133,8 +133,8 @@ class HenchfiendOfUkorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(henchfiend.getEffectivePower()).isEqualTo(5);
-        assertThat(henchfiend.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, henchfiend)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, henchfiend)).isEqualTo(2);
         assertThat(henchfiend.isTapped()).isFalse();
     }
 

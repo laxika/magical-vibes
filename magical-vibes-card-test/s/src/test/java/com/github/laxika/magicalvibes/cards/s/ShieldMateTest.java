@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CityOfTraitors;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -25,8 +26,8 @@ class ShieldMateTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(shieldMate);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(shieldMate.getCard());
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -39,14 +40,14 @@ class ShieldMateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -70,7 +71,7 @@ class ShieldMateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(shieldMate);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -86,7 +87,7 @@ class ShieldMateTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(shieldMate);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(shieldMate.getCard());
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -103,7 +104,7 @@ class ShieldMateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(shieldMate.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shieldMate)).isZero();
     }
 
     @Test
@@ -117,13 +118,13 @@ class ShieldMateTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(shieldMate);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(shieldMate.getCard());
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
     }
 }

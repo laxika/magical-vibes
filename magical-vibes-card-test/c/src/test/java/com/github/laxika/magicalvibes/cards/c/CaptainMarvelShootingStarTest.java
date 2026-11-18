@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.UltimateNullification;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,7 +22,7 @@ class CaptainMarvelShootingStarTest extends BaseCardTest {
     @DisplayName("ETB exiles up to one creature and both life-gain abilities use its power")
     void etbExilesCreatureAndBothAbilitiesUseItsPower() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, target, 3);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new CaptainMarvelShootingStar()));
@@ -107,7 +108,7 @@ class CaptainMarvelShootingStarTest extends BaseCardTest {
     void gainsLifeForCreatureExiledSimultaneouslyWithSelf() {
         addCreatureReady(player1, new CaptainMarvelShootingStar());
         Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
-        otherCreature.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, otherCreature, 3);
         Permanent sacrifice = addCreatureReady(player2, new CaptainMarvelShootingStar());
         harness.setLife(player1, 20);
         harness.setHand(player2, List.of(new UltimateNullification()));

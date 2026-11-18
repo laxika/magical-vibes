@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LavaSpike;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -35,11 +36,11 @@ class MercurialGeistsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(geists.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, geists)).isEqualTo(3);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(geists.getPowerModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, geists)).isEqualTo(6);
     }
 
     @Test
@@ -53,7 +54,7 @@ class MercurialGeistsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(geists.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, geists)).isEqualTo(0);
     }
 
     @Test
@@ -65,7 +66,7 @@ class MercurialGeistsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new Shock()));
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(geists.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, geists)).isEqualTo(3);
 
         harness.passBothPriorities();
         assertThat(gd.stack).isEmpty();
@@ -73,7 +74,7 @@ class MercurialGeistsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(geists.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, geists)).isEqualTo(0);
     }
 
     @Test
@@ -86,8 +87,8 @@ class MercurialGeistsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(geists.getPowerModifier()).isZero();
-        assertThat(geists.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, geists)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, geists)).isZero();
         harness.assertLife(player1, 18);
     }
 
@@ -100,11 +101,11 @@ class MercurialGeistsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
 
         harness.castInstant(player1, 0, player2.getId());
-        assertThat(geists.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, geists)).isZero();
         harness.passBothPriorities();
 
-        assertThat(geists.getPowerModifier()).isEqualTo(3);
-        assertThat(geists.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, geists)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, geists)).isZero();
         harness.assertLife(player2, 20);
         harness.passBothPriorities();
         harness.assertLife(player2, 18);
@@ -125,10 +126,10 @@ class MercurialGeistsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(3);
-        assertThat(second.getPowerModifier()).isEqualTo(3);
-        assertThat(opposing.getPowerModifier()).isZero();
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -28,10 +29,10 @@ class InspiringCaptainTest extends BaseCardTest {
 
         Permanent captain = findPermanent(player1, "Inspiring Captain");
 
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(1);
-        assertThat(captain.getPowerModifier()).isEqualTo(1);
-        assertThat(captain.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(1);
     }
 
     @Test
@@ -42,8 +43,8 @@ class InspiringCaptainTest extends BaseCardTest {
         castCaptain();
         resolveAllTriggers();
 
-        assertThat(opponentBears.getPowerModifier()).isEqualTo(0);
-        assertThat(opponentBears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentBears)).isEqualTo(0);
     }
 
     @Test
@@ -58,8 +59,8 @@ class InspiringCaptainTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -69,13 +70,13 @@ class InspiringCaptainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(1);
     }
 
     @Test
@@ -86,9 +87,9 @@ class InspiringCaptainTest extends BaseCardTest {
 
         Permanent bears = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(findPermanent(player1, "Inspiring Captain").getPowerModifier()).isEqualTo(1);
-        assertThat(findPermanent(player1, "Inspiring Captain").getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Inspiring Captain"))).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player1, "Inspiring Captain"))).isEqualTo(1);
     }
 }

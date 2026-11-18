@@ -32,8 +32,8 @@ class WurmcallingTest extends BaseCardTest {
         assertThat(tokens).hasSize(1).allSatisfy(token -> {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.WURM);
-            assertThat(token.getEffectivePower()).isEqualTo(3);
-            assertThat(token.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         });
     }
 
@@ -65,8 +65,8 @@ class WurmcallingTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(token -> {
             assertThat(token.getCard().isToken()).isTrue();
-            assertThat(token.getEffectivePower()).isEqualTo(2);
-            assertThat(token.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
             assertThat(token.isTapped()).isFalse();
         });
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
@@ -100,8 +100,8 @@ class WurmcallingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(token -> {
-            assertThat(token.getEffectivePower()).isEqualTo(3);
-            assertThat(token.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         });
         harness.assertInHand(player1, "Wurmcalling");
         harness.assertNotInGraveyard(player1, "Wurmcalling");
@@ -112,9 +112,9 @@ class WurmcallingTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 1);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .extracting(Permanent::getEffectivePower).containsExactlyInAnyOrder(3, 1);
+                .extracting(p -> gqs.getEffectivePower(gd, p)).containsExactlyInAnyOrder(3, 1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .extracting(Permanent::getEffectiveToughness).containsExactlyInAnyOrder(3, 1);
+                .extracting(p -> gqs.getEffectiveToughness(gd, p)).containsExactlyInAnyOrder(3, 1);
         harness.assertInGraveyard(player1, "Wurmcalling");
         harness.assertNotInHand(player1, "Wurmcalling");
     }

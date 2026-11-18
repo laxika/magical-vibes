@@ -27,8 +27,8 @@ class OldOneEyeTest extends BaseCardTest {
         castOldOneEye();
 
         Permanent token = findPermanent(player1, "Tyranid");
-        assertThat(token.getEffectivePower()).isEqualTo(5);
-        assertThat(token.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, token, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();

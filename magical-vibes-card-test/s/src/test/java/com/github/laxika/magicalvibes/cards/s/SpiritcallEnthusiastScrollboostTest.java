@@ -61,15 +61,15 @@ class SpiritcallEnthusiastScrollboostTest extends BaseCardTest {
 
         assertThat(spiritcall.isPrepared()).isFalse();
         assertThat(spiritcall.getPreparedSpellCardId()).isNull();
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -150,10 +150,10 @@ class SpiritcallEnthusiastScrollboostTest extends BaseCardTest {
         new PlayCardRequestDispatchService(gs).dispatch(gd, player1, request);
         harness.passBothPriorities();
 
-        assertThat(spiritcall.getEffectivePower()).isEqualTo(5);
-        assertThat(spiritcall.getEffectiveToughness()).isEqualTo(5);
-        assertThat(other.getEffectivePower()).isEqualTo(5);
-        assertThat(other.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, spiritcall)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, spiritcall)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(5);
         assertThat(spiritcall.isPrepared()).isFalse();
     }
 

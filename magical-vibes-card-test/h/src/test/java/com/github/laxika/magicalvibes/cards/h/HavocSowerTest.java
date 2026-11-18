@@ -23,8 +23,8 @@ class HavocSowerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sower.getEffectivePower()).isEqualTo(5);
-        assertThat(sower.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, sower)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, sower)).isEqualTo(4);
     }
 
     @Test
@@ -38,8 +38,8 @@ class HavocSowerTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(sower.getEffectivePower()).isEqualTo(3);
-        assertThat(sower.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sower)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sower)).isEqualTo(3);
     }
 
     @Test
@@ -52,8 +52,8 @@ class HavocSowerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("mana");
 
-        assertThat(sower.getEffectivePower()).isEqualTo(3);
-        assertThat(sower.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sower)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sower)).isEqualTo(3);
     }
 
     @Test
@@ -66,8 +66,8 @@ class HavocSowerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sower.getEffectivePower()).isEqualTo(5);
-        assertThat(sower.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, sower)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, sower)).isEqualTo(4);
     }
 
     @Test
@@ -82,10 +82,10 @@ class HavocSowerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(sower.getEffectivePower()).isEqualTo(7);
-        assertThat(sower.getEffectiveToughness()).isEqualTo(5);
-        assertThat(other.getEffectivePower()).isEqualTo(3);
-        assertThat(other.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sower)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, sower)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
     }
 
     @Test
@@ -99,8 +99,8 @@ class HavocSowerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sower.getEffectivePower()).isEqualTo(5);
-        assertThat(sower.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, sower)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, sower)).isEqualTo(4);
         assertThat(sower.isTapped()).isTrue();
     }
 
@@ -114,7 +114,7 @@ class HavocSowerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("mana");
 
-        assertThat(sower.getEffectivePower()).isEqualTo(3);
-        assertThat(sower.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sower)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sower)).isEqualTo(3);
     }
 }

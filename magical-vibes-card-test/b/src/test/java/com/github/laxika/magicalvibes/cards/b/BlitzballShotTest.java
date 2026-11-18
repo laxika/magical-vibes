@@ -26,8 +26,8 @@ class BlitzballShotTest extends BaseCardTest {
         castBlitzballShotOnBears();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -41,8 +41,8 @@ class BlitzballShotTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -77,8 +77,8 @@ class BlitzballShotTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
         harness.assertInGraveyard(player1, "Blitzball Shot");
     }
@@ -93,16 +93,16 @@ class BlitzballShotTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(8);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -49,15 +50,15 @@ class SuperSkrullTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(superSkrull.getPowerModifier()).isEqualTo(4);
-        assertThat(superSkrull.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, superSkrull)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, superSkrull)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(superSkrull.getPowerModifier()).isZero();
-        assertThat(superSkrull.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, superSkrull)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, superSkrull)).isZero();
     }
 
     @Test

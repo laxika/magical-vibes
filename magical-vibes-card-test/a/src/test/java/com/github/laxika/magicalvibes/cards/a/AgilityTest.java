@@ -80,15 +80,15 @@ class AgilityTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isZero();
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
     }
 
     @Test

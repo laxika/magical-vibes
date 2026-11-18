@@ -30,8 +30,8 @@ class BarbedBackWurmTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -49,8 +49,8 @@ class BarbedBackWurmTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(3);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
     }
 
     @Test
@@ -121,8 +121,8 @@ class BarbedBackWurmTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         resolveAllTriggers();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Wild Elephant");
     }
 
@@ -157,8 +157,8 @@ class BarbedBackWurmTest extends BaseCardTest {
         blocker.getBlockingTargetIds().clear();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(3);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
     }
 

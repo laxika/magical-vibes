@@ -57,15 +57,15 @@ class InfusedArrowsTest extends BaseCardTest {
 
         assertThat(arrows.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
         assertThat(arrows.isTapped()).isTrue();
-        assertThat(salvagers.getEffectivePower()).isEqualTo(1);
-        assertThat(salvagers.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, salvagers)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, salvagers)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(salvagers.getEffectivePower()).isEqualTo(2);
-        assertThat(salvagers.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, salvagers)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, salvagers)).isEqualTo(4);
     }
 
     @Test
@@ -79,8 +79,8 @@ class InfusedArrowsTest extends BaseCardTest {
 
         assertThat(arrows.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
         assertThat(arrows.isTapped()).isTrue();
-        assertThat(salvagers.getEffectivePower()).isEqualTo(2);
-        assertThat(salvagers.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, salvagers)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, salvagers)).isEqualTo(4);
     }
 
     @Test
@@ -136,8 +136,8 @@ class InfusedArrowsTest extends BaseCardTest {
 
         assertThat(arrows.isTapped()).isTrue();
         assertThat(arrows.getCounterCount(CounterType.CHARGE)).isZero();
-        assertThat(salvagers.getEffectivePower()).isEqualTo(2);
-        assertThat(salvagers.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, salvagers)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, salvagers)).isEqualTo(4);
     }
 
     @Test
@@ -149,7 +149,7 @@ class InfusedArrowsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 4, salvagers.getId());
 
         assertThat(arrows.getCounterCount(CounterType.CHARGE)).isZero();
-        assertThat(salvagers.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, salvagers)).isEqualTo(4);
 
         harness.passBothPriorities();
 

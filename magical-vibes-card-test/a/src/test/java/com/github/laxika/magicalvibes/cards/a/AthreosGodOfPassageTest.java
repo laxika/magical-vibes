@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -117,7 +118,7 @@ class AthreosGodOfPassageTest extends BaseCardTest {
     void doesNotTriggerForItsOwnDeath() {
         Permanent athreos = harness.addToBattlefieldAndReturn(player1, new AthreosGodOfPassage());
         addBlackPermanents(5);
-        athreos.setToughnessModifier(-4);
+        PermanentGrants.setToughnessBoost(gd, athreos, -4);
 
         harness.runStateBasedActions();
         harness.passBothPriorities();
@@ -134,8 +135,8 @@ class AthreosGodOfPassageTest extends BaseCardTest {
         Permanent athreos = harness.addToBattlefieldAndReturn(player1, new AthreosGodOfPassage());
         addBlackPermanents(5);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        athreos.setToughnessModifier(-4);
-        bears.setToughnessModifier(-2);
+        PermanentGrants.setToughnessBoost(gd, athreos, -4);
+        PermanentGrants.setToughnessBoost(gd, bears, -2);
 
         harness.runStateBasedActions();
         harness.passBothPriorities();

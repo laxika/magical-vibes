@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AngelicCurator;
 import com.github.laxika.magicalvibes.cards.s.Scrapheap;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,11 +29,11 @@ class HopeAndGloryTest extends BaseCardTest {
         castHopeAndGlory(first, second);
 
         assertThat(first.isTapped()).isFalse();
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
         assertThat(second.isTapped()).isFalse();
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(1);
     }
 
     @Test
@@ -42,11 +43,11 @@ class HopeAndGloryTest extends BaseCardTest {
         castHopeAndGlory(own, opponent);
 
         assertThat(own.isTapped()).isFalse();
-        assertThat(own.getPowerModifier()).isEqualTo(1);
-        assertThat(own.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, own)).isEqualTo(1);
         assertThat(opponent.isTapped()).isFalse();
-        assertThat(opponent.getPowerModifier()).isEqualTo(1);
-        assertThat(opponent.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isEqualTo(1);
     }
 
     @Test
@@ -58,14 +59,14 @@ class HopeAndGloryTest extends BaseCardTest {
         castHopeAndGlory(first, second);
 
         assertThat(first.isTapped()).isFalse();
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
         assertThat(second.isTapped()).isFalse();
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(1);
         assertThat(unchosen.isTapped()).isTrue();
-        assertThat(unchosen.getPowerModifier()).isZero();
-        assertThat(unchosen.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, unchosen)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, unchosen)).isZero();
     }
 
     @Test
@@ -78,10 +79,10 @@ class HopeAndGloryTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getPowerModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 
     @Test
@@ -130,8 +131,8 @@ class HopeAndGloryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(remaining.isTapped()).isFalse();
-        assertThat(remaining.getPowerModifier()).isEqualTo(1);
-        assertThat(remaining.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, remaining)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, remaining)).isEqualTo(1);
     }
 
     private Permanent addTappedCreature() {

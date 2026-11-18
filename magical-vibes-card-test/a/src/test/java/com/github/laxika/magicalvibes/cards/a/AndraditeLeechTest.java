@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Duskwalker;
 import com.github.laxika.magicalvibes.cards.g.GoblinSpy;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -72,8 +73,8 @@ class AndraditeLeechTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(leech.getPowerModifier()).isEqualTo(1);
-        assertThat(leech.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, leech)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, leech)).isEqualTo(1);
     }
 
     @Test
@@ -88,8 +89,8 @@ class AndraditeLeechTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(leech.getPowerModifier()).isZero();
-        assertThat(leech.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, leech)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, leech)).isZero();
     }
     @Test
     @DisplayName("Multiple Leeches each add one black mana to black spells")
@@ -129,13 +130,13 @@ class AndraditeLeechTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(leech.getPowerModifier()).isZero();
-        assertThat(leech.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, leech)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, leech)).isZero();
 
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(leech.getPowerModifier()).isEqualTo(2);
-        assertThat(leech.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, leech)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, leech)).isEqualTo(2);
     }
 }

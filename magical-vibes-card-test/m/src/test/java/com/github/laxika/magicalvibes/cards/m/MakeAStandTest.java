@@ -31,8 +31,8 @@ class MakeAStandTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         for (Permanent p : creaturesOf(player1.getId())) {
-            assertThat(p.getEffectivePower()).isEqualTo(3);
-            assertThat(p.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(2);
             assertThat(PermanentGrants.keywordsOf(gd, p)).contains(Keyword.INDESTRUCTIBLE);
         }
     }
@@ -48,7 +48,7 @@ class MakeAStandTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         for (Permanent p : creaturesOf(player2.getId())) {
-            assertThat(p.getEffectivePower()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(2);
             assertThat(PermanentGrants.keywordsOf(gd, p)).doesNotContain(Keyword.INDESTRUCTIBLE);
         }
     }
@@ -83,7 +83,7 @@ class MakeAStandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         for (Permanent p : creaturesOf(player1.getId())) {
-            assertThat(p.getPowerModifier()).isEqualTo(0);
+            assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
             assertThat(PermanentGrants.keywordsOf(gd, p)).doesNotContain(Keyword.INDESTRUCTIBLE);
         }
     }
@@ -100,10 +100,10 @@ class MakeAStandTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GreenwoodSentinel());
         Permanent newcomer = creaturesOf(player1.getId()).getLast();
 
-        assertThat(original.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
         assertThat(PermanentGrants.keywordsOf(gd, original)).contains(Keyword.INDESTRUCTIBLE);
-        assertThat(newcomer.getEffectivePower()).isEqualTo(2);
-        assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, newcomer)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
@@ -118,8 +118,8 @@ class MakeAStandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent creature = creaturesOf(player1.getId()).getFirst();
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.INDESTRUCTIBLE);
     }
 
@@ -135,7 +135,7 @@ class MakeAStandTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Make a Stand");
         harness.addToBattlefield(player1, new GreenwoodSentinel());
         Permanent creature = creaturesOf(player1.getId()).getFirst();
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 

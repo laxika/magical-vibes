@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HulkingCyclops;
 import com.github.laxika.magicalvibes.cards.h.Hushbringer;
 import com.github.laxika.magicalvibes.cards.p.Python;
@@ -162,7 +163,7 @@ class DeathWatchTest extends BaseCardTest {
     @DisplayName("Negative power causes no life loss but positive toughness still grants life")
     void negativePowerDoesNotReverseLifeLoss() {
         Permanent python = harness.addToBattlefieldAndReturn(player2, new Python());
-        python.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, python, -4);
         Permanent deathWatch = harness.addToBattlefieldAndReturn(player1, new DeathWatch());
         deathWatch.setAttachedTo(python.getId());
 
@@ -180,7 +181,7 @@ class DeathWatchTest extends BaseCardTest {
         Permanent python = harness.addToBattlefieldAndReturn(player2, new Python());
         Permanent deathWatch = harness.addToBattlefieldAndReturn(player1, new DeathWatch());
         deathWatch.setAttachedTo(python.getId());
-        python.setToughnessModifier(-3);
+        PermanentGrants.setToughnessBoost(gd, python, -3);
 
         harness.runStateBasedActions();
         resolveAllTriggers();

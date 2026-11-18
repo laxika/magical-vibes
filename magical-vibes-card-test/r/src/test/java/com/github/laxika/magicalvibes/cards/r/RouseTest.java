@@ -25,8 +25,8 @@ class RouseTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
         castForMana(creature.getId());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -38,7 +38,7 @@ class RouseTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -53,7 +53,7 @@ class RouseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -102,7 +102,7 @@ class RouseTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -125,8 +125,8 @@ class RouseTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
         castForMana(creature.getId());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -142,8 +142,8 @@ class RouseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test

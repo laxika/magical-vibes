@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -57,7 +58,7 @@ class HumbleTheBruteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castInstant(player1, 0, target.getId());
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Air Elemental");

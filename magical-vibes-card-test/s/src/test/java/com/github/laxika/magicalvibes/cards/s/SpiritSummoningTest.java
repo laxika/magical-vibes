@@ -26,8 +26,8 @@ class SpiritSummoningTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         Permanent spirit = findPermanent(player1, "Spirit");
-        assertThat(spirit.getEffectivePower()).isEqualTo(3);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
         assertThat(spirit.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(spirit.getCard().getColors())
                 .containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);
@@ -52,8 +52,8 @@ class SpiritSummoningTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(spirit -> {
             assertThat(spirit.getCard().isToken()).isTrue();
             assertThat(spirit.isTapped()).isFalse();
-            assertThat(spirit.getEffectivePower()).isEqualTo(3);
-            assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
             assertThat(spirit.getCard().getColors())
                     .containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);
             assertThat(spirit.getCard().getSubtypes()).containsExactly(CardSubtype.SPIRIT);

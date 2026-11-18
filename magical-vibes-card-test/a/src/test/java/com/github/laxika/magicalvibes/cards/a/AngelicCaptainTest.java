@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ExpeditionEnvoy;
 import com.github.laxika.magicalvibes.cards.g.GideonsReproach;
 import com.github.laxika.magicalvibes.cards.k.KorBladewhirl;
@@ -30,8 +31,8 @@ class AngelicCaptainTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(2);
-        assertThat(captain.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(2);
     }
 
     @Test
@@ -42,8 +43,8 @@ class AngelicCaptainTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isZero();
-        assertThat(captain.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isZero();
     }
 
     @Test
@@ -57,8 +58,8 @@ class AngelicCaptainTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 3));
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(1);
-        assertThat(captain.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(1);
     }
 
     @Test
@@ -75,8 +76,8 @@ class AngelicCaptainTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Expedition Envoy");
-        assertThat(captain.getPowerModifier()).isZero();
-        assertThat(captain.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isZero();
     }
 
     @Test
@@ -89,21 +90,21 @@ class AngelicCaptainTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
-        assertThat(captain.getPowerModifier()).isEqualTo(1);
-        assertThat(captain.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(1);
 
         harness.castInstant(player2, 0, ally.getId());
         resolveAllTriggers();
         harness.assertInGraveyard(player1, "Expedition Envoy");
-        assertThat(captain.getPowerModifier()).isEqualTo(1);
-        assertThat(captain.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(1);
 
         harness.passUntil(TurnStep.END_STEP);
-        assertThat(captain.getPowerModifier()).isEqualTo(1);
-        assertThat(captain.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(1);
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(captain.getPowerModifier()).isZero();
-        assertThat(captain.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isZero();
     }
 
     @Test
@@ -115,7 +116,7 @@ class AngelicCaptainTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isZero();
-        assertThat(captain.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isZero();
     }
 }

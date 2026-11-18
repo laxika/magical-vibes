@@ -28,8 +28,8 @@ class PterafractylTest extends BaseCardTest {
 
         Permanent pterafractyl = findPermanent(player1, "Pterafractyl");
         assertThat(pterafractyl.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(pterafractyl.getEffectivePower()).isEqualTo(4);
-        assertThat(pterafractyl.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, pterafractyl)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, pterafractyl)).isEqualTo(3);
         harness.assertLife(player1, 22);
     }
 

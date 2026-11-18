@@ -27,8 +27,8 @@ class StartYourEnginesTest extends BaseCardTest {
         cast();
 
         assertThat(gqs.isCreature(gd, ownVehicle)).isTrue();
-        assertThat(ownVehicle.getEffectivePower()).isEqualTo(6);
-        assertThat(ownVehicle.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, ownVehicle)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, ownVehicle)).isEqualTo(6);
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.isCreature(gd, opponentVehicle)).isFalse();

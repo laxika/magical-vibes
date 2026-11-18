@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DragonEgg;
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -101,17 +102,17 @@ class LathlissDragonQueenTest extends BaseCardTest {
         harness.activateAbility(player1, sourceIndex, null, null);
         harness.passBothPriorities();
 
-        assertThat(lathliss.getPowerModifier()).isEqualTo(1);
-        assertThat(dragon.getPowerModifier()).isEqualTo(1);
-        assertThat(ownBears.getPowerModifier()).isEqualTo(0);
-        assertThat(opponentDragon.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, lathliss)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownBears)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentDragon)).isEqualTo(0);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(lathliss.getPowerModifier()).isEqualTo(0);
-        assertThat(dragon.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, lathliss)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(0);
     }
 
     @Test
@@ -129,9 +130,9 @@ class LathlissDragonQueenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(lathliss.getPowerModifier()).isEqualTo(2);
-        assertThat(token.getPowerModifier()).isEqualTo(2);
-        assertThat(token.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, lathliss)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, token)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, token)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -146,13 +147,13 @@ class LathlissDragonQueenTest extends BaseCardTest {
 
         castDragonEgg(player1);
 
-        assertThat(lathliss.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, lathliss)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent != lathliss)
                 .hasSize(2)
                 .allSatisfy(permanent -> {
-                    assertThat(permanent.getPowerModifier()).isZero();
-                    assertThat(permanent.getToughnessModifier()).isZero();
+                    assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isZero();
+                    assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isZero();
                 });
     }
 
@@ -171,8 +172,8 @@ class LathlissDragonQueenTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3)
                 .allSatisfy(permanent -> {
-                    assertThat(permanent.getPowerModifier()).isEqualTo(1);
-                    assertThat(permanent.getToughnessModifier()).isZero();
+                    assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isEqualTo(1);
+                    assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isZero();
                 });
     }
 

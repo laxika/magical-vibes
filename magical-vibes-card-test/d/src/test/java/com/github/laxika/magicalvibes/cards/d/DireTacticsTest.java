@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EssenceSymbiote;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.w.WhisperSquad;
@@ -49,7 +50,7 @@ class DireTacticsTest extends BaseCardTest {
     void usesEffectiveToughness() {
         harness.setLife(player1, 20);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new EssenceSymbiote());
-        target.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, target, 3);
 
         castDireTactics(target);
 

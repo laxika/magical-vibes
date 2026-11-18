@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -22,8 +23,8 @@ class WatercourserTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(courser.getPowerModifier()).isEqualTo(1);
-        assertThat(courser.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, courser)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, courser)).isEqualTo(-1);
     }
 
     @Test
@@ -52,15 +53,15 @@ class WatercourserTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(courser.getPowerModifier()).isEqualTo(2);
-        assertThat(courser.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, courser)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, courser)).isEqualTo(-2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(courser.getPowerModifier()).isEqualTo(0);
-        assertThat(courser.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, courser)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, courser)).isEqualTo(0);
     }
 
     @Test
@@ -73,14 +74,14 @@ class WatercourserTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(courser.getPowerModifier()).isZero();
-        assertThat(courser.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, courser)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, courser)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(courser.getPowerModifier()).isEqualTo(1);
-        assertThat(courser.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, courser)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, courser)).isEqualTo(-1);
         assertThat(courser.isTapped()).isTrue();
     }
 
@@ -100,8 +101,8 @@ class WatercourserTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(other);
         harness.assertInGraveyard(player1, "Watercourser");
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

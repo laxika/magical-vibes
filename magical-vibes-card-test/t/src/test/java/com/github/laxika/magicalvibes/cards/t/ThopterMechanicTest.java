@@ -137,8 +137,8 @@ class ThopterMechanicTest extends BaseCardTest {
             assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();
             assertThat(token.getCard().getColors()).isEmpty();
             assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         }
     }
 

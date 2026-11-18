@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LightningMauler;
 import com.github.laxika.magicalvibes.cards.p.PeelFromReality;
 import com.github.laxika.magicalvibes.cards.s.ScrollOfAvacyn;
@@ -29,8 +30,8 @@ class JointAssaultTest extends BaseCardTest {
 
         castJointAssault(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -41,10 +42,10 @@ class JointAssaultTest extends BaseCardTest {
 
         castJointAssault(wolf);
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(2);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(2);
-        assertThat(mauler.getPowerModifier()).isEqualTo(2);
-        assertThat(mauler.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mauler)).isEqualTo(2);
     }
 
     @Test
@@ -59,10 +60,10 @@ class JointAssaultTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isZero();
-        assertThat(wolf.getToughnessModifier()).isZero();
-        assertThat(mauler.getPowerModifier()).isZero();
-        assertThat(mauler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mauler)).isZero();
     }
 
     @Test
@@ -87,10 +88,10 @@ class JointAssaultTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, wolf.getId());
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(2);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(2);
-        assertThat(mauler.getPowerModifier()).isEqualTo(2);
-        assertThat(mauler.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mauler)).isEqualTo(2);
     }
 
     @Test
@@ -101,10 +102,10 @@ class JointAssaultTest extends BaseCardTest {
 
         castJointAssault(mauler);
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(2);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(2);
-        assertThat(mauler.getPowerModifier()).isEqualTo(2);
-        assertThat(mauler.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mauler)).isEqualTo(2);
     }
 
     @Test
@@ -123,8 +124,8 @@ class JointAssaultTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Wandering Wolf");
         harness.assertInGraveyard(player1, "Joint Assault");
-        assertThat(mauler.getPowerModifier()).isZero();
-        assertThat(mauler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mauler)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -143,8 +144,8 @@ class JointAssaultTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Lightning Mauler");
-        assertThat(wolf.getPowerModifier()).isEqualTo(2);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -161,8 +162,8 @@ class JointAssaultTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(wolf.getId(), opponent.getId()));
 
         assertThat(mauler.getPairedWithId()).isNull();
-        assertThat(mauler.getPowerModifier()).isEqualTo(2);
-        assertThat(mauler.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mauler)).isEqualTo(2);
     }
 
     @Test
@@ -178,10 +179,10 @@ class JointAssaultTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, wolf.getId());
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(2);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(2);
-        assertThat(mauler.getPowerModifier()).isEqualTo(2);
-        assertThat(mauler.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mauler)).isEqualTo(2);
     }
 
     @Test
@@ -198,10 +199,10 @@ class JointAssaultTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, wolf.getId());
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isZero();
-        assertThat(wolf.getToughnessModifier()).isZero();
-        assertThat(mauler.getPowerModifier()).isZero();
-        assertThat(mauler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mauler)).isZero();
         harness.assertInGraveyard(player2, "Joint Assault");
         assertThat(gd.stack).isEmpty();
     }

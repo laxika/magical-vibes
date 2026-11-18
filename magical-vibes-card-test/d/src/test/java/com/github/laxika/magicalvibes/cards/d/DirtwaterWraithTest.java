@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class DirtwaterWraithTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wraith.getEffectivePower()).isEqualTo(2);
-        assertThat(wraith.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wraith)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wraith)).isEqualTo(3);
     }
 
     @Test
@@ -44,8 +45,8 @@ class DirtwaterWraithTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wraith.getEffectivePower()).isEqualTo(4);
-        assertThat(wraith.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wraith)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wraith)).isEqualTo(3);
     }
 
     @Test
@@ -61,9 +62,9 @@ class DirtwaterWraithTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wraith.getPowerModifier()).isEqualTo(0);
-        assertThat(wraith.getEffectivePower()).isEqualTo(1);
-        assertThat(wraith.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, wraith)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, wraith)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wraith)).isEqualTo(3);
     }
 
     @Test
@@ -121,8 +122,8 @@ class DirtwaterWraithTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wraith.getEffectivePower()).isEqualTo(2);
-        assertThat(wraith.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wraith)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wraith)).isEqualTo(3);
         assertThat(wraith.isTapped()).isTrue();
     }
 
@@ -137,9 +138,9 @@ class DirtwaterWraithTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(1);
-        assertThat(second.getEffectivePower()).isEqualTo(2);
-        assertThat(opposing.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(1);
     }
 
     @Test

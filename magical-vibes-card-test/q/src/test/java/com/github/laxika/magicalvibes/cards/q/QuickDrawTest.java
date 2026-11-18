@@ -29,8 +29,8 @@ class QuickDrawTest extends BaseCardTest {
 
         castQuickDraw(ownCreature, player2.getId());
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, firstStrikeCreature, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, doubleStrikeCreature, Keyword.FIRST_STRIKE)).isFalse();
@@ -47,8 +47,8 @@ class QuickDrawTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.DOUBLE_STRIKE)).isTrue();
     }

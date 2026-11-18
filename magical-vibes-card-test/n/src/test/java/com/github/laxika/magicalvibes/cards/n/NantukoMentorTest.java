@@ -30,8 +30,8 @@ class NantukoMentorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(mentor.isTapped()).isTrue();
-        assertThat(disciple.getEffectivePower()).isEqualTo(4);
-        assertThat(disciple.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, disciple)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, disciple)).isEqualTo(4);
     }
 
     @Test
@@ -43,14 +43,14 @@ class NantukoMentorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, 1, null, mentor.getId());
         harness.passBothPriorities();
-        assertThat(mentor.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(3);
 
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.activateAbility(player1, 0, null, mentor.getId());
         harness.passBothPriorities();
 
-        assertThat(mentor.getEffectivePower()).isEqualTo(6);
-        assertThat(mentor.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, mentor)).isEqualTo(6);
         assertThat(disciple.isTapped()).isTrue();
     }
 
@@ -63,14 +63,14 @@ class NantukoMentorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, disciple.getId());
         harness.passBothPriorities();
-        assertThat(disciple.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, disciple)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(disciple.getEffectivePower()).isEqualTo(2);
-        assertThat(disciple.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, disciple)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, disciple)).isEqualTo(2);
     }
 
     @Test
@@ -93,18 +93,18 @@ class NantukoMentorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, mentor.getId());
         harness.activateAbility(player1, 1, null, mentor.getId());
         harness.passBothPriorities();
-        assertThat(mentor.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(3);
         harness.passBothPriorities();
-        assertThat(mentor.getEffectivePower()).isEqualTo(6);
-        assertThat(mentor.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, mentor)).isEqualTo(6);
 
         harness.setHand(player1, List.of(new Afflict()));
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castAndResolveInstant(player1, 0, mentor.getId());
 
-        assertThat(mentor.getEffectivePower()).isEqualTo(5);
-        assertThat(mentor.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, mentor)).isEqualTo(5);
     }
 
     @Test
@@ -115,15 +115,15 @@ class NantukoMentorTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castAndResolveInstant(player1, 0, wall.getId());
-        assertThat(wall.getEffectivePower()).isEqualTo(-1);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
 
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.activateAbility(player1, 0, null, wall.getId());
         harness.passBothPriorities();
 
-        assertThat(wall.getEffectivePower()).isEqualTo(-1);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
     }
 
     @Test
@@ -144,7 +144,7 @@ class NantukoMentorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, mentor.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.passBothPriorities();
-        assertThat(mentor.getEffectivePower()).isEqualTo(2);
-        assertThat(mentor.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mentor)).isEqualTo(2);
     }
 }

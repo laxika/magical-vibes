@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class KillerBeesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bees.getEffectivePower()).isEqualTo(1);
-        assertThat(bees.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bees)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bees)).isEqualTo(2);
     }
 
     @Test
@@ -40,8 +41,8 @@ class KillerBeesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bees.getEffectivePower()).isEqualTo(3);
-        assertThat(bees.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bees)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bees)).isEqualTo(4);
     }
 
     @Test
@@ -53,8 +54,8 @@ class KillerBeesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bees.getEffectivePower()).isEqualTo(1);
-        assertThat(bees.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bees)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bees)).isEqualTo(2);
     }
 
     @Test
@@ -66,15 +67,15 @@ class KillerBeesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bees.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bees)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bees.getPowerModifier()).isEqualTo(0);
-        assertThat(bees.getToughnessModifier()).isEqualTo(0);
-        assertThat(bees.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bees)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bees)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, bees)).isEqualTo(1);
     }
 
     @Test
@@ -107,18 +108,18 @@ class KillerBeesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(bees.getEffectivePower()).isZero();
-        assertThat(bees.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bees)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, bees)).isEqualTo(1);
 
         harness.passBothPriorities();
 
-        assertThat(bees.getEffectivePower()).isEqualTo(1);
-        assertThat(bees.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bees)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bees)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(bees.getEffectivePower()).isEqualTo(2);
-        assertThat(bees.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bees)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bees)).isEqualTo(3);
     }
 
     @Test
@@ -132,8 +133,8 @@ class KillerBeesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bees.isTapped()).isTrue();
-        assertThat(bees.getEffectivePower()).isEqualTo(1);
-        assertThat(bees.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bees)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bees)).isEqualTo(2);
     }
 
     @Test
@@ -147,12 +148,12 @@ class KillerBeesTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(sourceBees.getEffectivePower()).isEqualTo(1);
-        assertThat(sourceBees.getEffectiveToughness()).isEqualTo(2);
-        assertThat(otherBees.getEffectivePower()).isZero();
-        assertThat(otherBees.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opposingBees.getEffectivePower()).isZero();
-        assertThat(opposingBees.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sourceBees)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, sourceBees)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherBees)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, otherBees)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingBees)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, opposingBees)).isEqualTo(1);
     }
 
 }

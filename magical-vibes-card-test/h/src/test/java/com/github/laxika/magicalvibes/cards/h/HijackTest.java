@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.c.CobbledWings;
@@ -178,9 +179,9 @@ class HijackTest extends BaseCardTest {
         harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(ownThrasher.getPowerModifier()).isEqualTo(1);
-        assertThat(ownThrasher.getToughnessModifier()).isEqualTo(1);
-        assertThat(opposingThrasher.getPowerModifier()).isZero();
-        assertThat(opposingThrasher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownThrasher)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownThrasher)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingThrasher)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingThrasher)).isZero();
     }
 }

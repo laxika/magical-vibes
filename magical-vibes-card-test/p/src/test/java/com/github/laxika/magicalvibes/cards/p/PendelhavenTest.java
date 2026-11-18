@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FlyingMen;
 import com.github.laxika.magicalvibes.cards.s.SpittingSlug;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -120,8 +121,8 @@ class PendelhavenTest extends BaseCardTest {
     void cannotTargetCreatureWithOnlyOneStatEqualToOne(int powerModifier, int toughnessModifier) {
         Permanent pendelhaven = addPendelhavenReady(player1);
         Permanent flyingMen = addCreatureReady(player1, new FlyingMen());
-        flyingMen.setPowerModifier(powerModifier);
-        flyingMen.setToughnessModifier(toughnessModifier);
+        PermanentGrants.setPowerBoost(gd, flyingMen, powerModifier);
+        PermanentGrants.setToughnessBoost(gd, flyingMen, toughnessModifier);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, flyingMen.getId()))
                 .isInstanceOf(IllegalStateException.class)

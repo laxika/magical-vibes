@@ -40,19 +40,19 @@ class ReturnOfTheWildspeakerTest extends BaseCardTest {
 
         cast(player1, 1);
 
-        assertThat(ownNonHuman.getEffectivePower()).isEqualTo(5);
-        assertThat(ownNonHuman.getEffectiveToughness()).isEqualTo(5);
-        assertThat(ownHuman.getEffectivePower()).isEqualTo(3);
-        assertThat(ownHuman.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opponentNonHuman.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentNonHuman.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownNonHuman)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ownNonHuman)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ownHuman)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownHuman)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponentNonHuman)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentNonHuman)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownNonHuman.getEffectivePower()).isEqualTo(2);
-        assertThat(ownNonHuman.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownNonHuman)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownNonHuman)).isEqualTo(2);
     }
 
     @Test

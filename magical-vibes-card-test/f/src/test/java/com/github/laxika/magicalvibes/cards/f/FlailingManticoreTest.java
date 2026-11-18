@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class FlailingManticoreTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(manticore.getPowerModifier()).isEqualTo(1);
-        assertThat(manticore.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, manticore)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manticore)).isEqualTo(1);
     }
 
     @Test
@@ -36,8 +37,8 @@ class FlailingManticoreTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(manticore.getPowerModifier()).isEqualTo(-1);
-        assertThat(manticore.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, manticore)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manticore)).isEqualTo(-1);
     }
 
     @Test
@@ -48,14 +49,14 @@ class FlailingManticoreTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(manticore.getPowerModifier()).isEqualTo(1);
-        assertThat(manticore.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, manticore)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manticore)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(manticore.getPowerModifier()).isZero();
-        assertThat(manticore.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, manticore)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manticore)).isZero();
     }
 
     @Test
@@ -69,8 +70,8 @@ class FlailingManticoreTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(manticore.getPowerModifier()).isEqualTo(2);
-        assertThat(manticore.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, manticore)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manticore)).isEqualTo(2);
     }
 
     @Test
@@ -82,14 +83,14 @@ class FlailingManticoreTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(manticore.getPowerModifier()).isEqualTo(-1);
-        assertThat(manticore.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, manticore)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manticore)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(manticore.getPowerModifier()).isZero();
-        assertThat(manticore.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, manticore)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manticore)).isZero();
     }
 
     @Test
@@ -120,8 +121,8 @@ class FlailingManticoreTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(manticore.getPowerModifier()).isZero();
-        assertThat(manticore.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, manticore)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manticore)).isZero();
     }
 
     @Test
@@ -134,13 +135,13 @@ class FlailingManticoreTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(manticore.getPowerModifier()).isEqualTo(1);
-        assertThat(manticore.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, manticore)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manticore)).isEqualTo(1);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        assertThat(manticore.getPowerModifier()).isZero();
-        assertThat(manticore.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, manticore)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manticore)).isZero();
         assertThat(manticore.isTapped()).isTrue();
     }
 }

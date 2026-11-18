@@ -35,8 +35,8 @@ class MischievousMysticTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
         assertThat(token.getCard().getColors()).containsExactly(CardColor.BLUE);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.FAERIE);

@@ -29,14 +29,14 @@ class SummonFatChocoboTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bird = findBird();
-        assertThat(bird.getEffectivePower()).isEqualTo(2);
-        assertThat(bird.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(bird.getEffectivePower()).isEqualTo(3);
-        assertThat(bird.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
     }
 
     @Test
@@ -97,8 +97,8 @@ class SummonFatChocoboTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .hasSize(1);
-        assertThat(findBird().getEffectivePower()).isEqualTo(2);
-        assertThat(findBird().getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findBird())).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findBird())).isEqualTo(2);
     }
 
     @Test
@@ -113,13 +113,13 @@ class SummonFatChocoboTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.passBothPriorities();
 
-        assertThat(bird.getEffectivePower()).isEqualTo(4);
-        assertThat(bird.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(bird.getEffectivePower()).isEqualTo(2);
-        assertThat(bird.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
     }
 
     @Test
@@ -132,8 +132,8 @@ class SummonFatChocoboTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player2, new Forest());
         harness.passBothPriorities();
 
-        assertThat(bird.getEffectivePower()).isEqualTo(2);
-        assertThat(bird.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
     }
 
     @Test

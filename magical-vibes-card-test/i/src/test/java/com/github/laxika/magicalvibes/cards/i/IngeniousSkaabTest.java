@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,8 +29,8 @@ class IngeniousSkaabTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(skaab.getPowerModifier()).isEqualTo(1);
-        assertThat(skaab.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, skaab)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skaab)).isEqualTo(1);
     }
 
     @Test
@@ -41,8 +42,8 @@ class IngeniousSkaabTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
 
-        assertThat(skaab.getPowerModifier()).isEqualTo(0);
-        assertThat(skaab.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, skaab)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skaab)).isEqualTo(0);
     }
 
     @Test
@@ -54,15 +55,15 @@ class IngeniousSkaabTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(skaab.getPowerModifier()).isEqualTo(1);
-        assertThat(skaab.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, skaab)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skaab)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(skaab.getPowerModifier()).isEqualTo(0);
-        assertThat(skaab.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, skaab)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skaab)).isEqualTo(0);
     }
 
     @Test
@@ -73,13 +74,13 @@ class IngeniousSkaabTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        assertThat(skaab.getPowerModifier()).isZero();
-        assertThat(skaab.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skaab)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skaab)).isZero();
         assertThat(gd.stack).hasSize(2);
 
         harness.passBothPriorities();
-        assertThat(skaab.getPowerModifier()).isEqualTo(1);
-        assertThat(skaab.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, skaab)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skaab)).isEqualTo(1);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
 
@@ -88,8 +89,8 @@ class IngeniousSkaabTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(skaab.getPowerModifier()).isZero();
-        assertThat(skaab.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skaab)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skaab)).isZero();
     }
 
     @Test
@@ -104,8 +105,8 @@ class IngeniousSkaabTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(skaab.getPowerModifier()).isEqualTo(2);
-        assertThat(skaab.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, skaab)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skaab)).isEqualTo(2);
     }
 
     @Test
@@ -120,8 +121,8 @@ class IngeniousSkaabTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(skaab.getPowerModifier()).isZero();
-        assertThat(skaab.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skaab)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skaab)).isZero();
     }
 
     @Test
@@ -137,8 +138,8 @@ class IngeniousSkaabTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(skaab.getPowerModifier()).isEqualTo(2);
-        assertThat(skaab.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, skaab)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skaab)).isEqualTo(-2);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(skaab);
         assertThat(gd.stack).isEmpty();
     }

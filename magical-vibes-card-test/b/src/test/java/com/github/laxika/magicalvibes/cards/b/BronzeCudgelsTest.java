@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FangOfShigeki;
 import com.github.laxika.magicalvibes.cards.m.MagneticTheft;
 import com.github.laxika.magicalvibes.cards.m.MarchOfOtherworldlyLight;
@@ -27,11 +28,11 @@ class BronzeCudgelsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -45,12 +46,12 @@ class BronzeCudgelsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -66,7 +67,7 @@ class BronzeCudgelsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -91,16 +92,16 @@ class BronzeCudgelsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -111,12 +112,12 @@ class BronzeCudgelsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.activateAbility(player1, 0, 0, null, null);
         harness.activateAbility(player1, 0, 0, null, null);
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
 
         harness.passBothPriorities();
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
         harness.passBothPriorities();
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -131,8 +132,8 @@ class BronzeCudgelsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(cudgels.getAttachedTo()).isEqualTo(creature.getId());
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -151,7 +152,7 @@ class BronzeCudgelsTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -169,8 +170,8 @@ class BronzeCudgelsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
     }
 
     @Test
@@ -186,8 +187,8 @@ class BronzeCudgelsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(cudgels.getId(), second.getId()));
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
     }
 
     @Test
@@ -212,7 +213,7 @@ class BronzeCudgelsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
     }
 
     @Test
@@ -235,8 +236,8 @@ class BronzeCudgelsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(cudgels);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
     }
 
     @Test

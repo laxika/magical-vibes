@@ -50,14 +50,14 @@ class JackedRabbitTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(rabbit.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rabbit)).isEqualTo(3);
         List<Permanent> tokens = findPermanents(player1, "Rabbit");
         assertThat(tokens).hasSize(3);
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.RABBIT);
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         });
     }
 

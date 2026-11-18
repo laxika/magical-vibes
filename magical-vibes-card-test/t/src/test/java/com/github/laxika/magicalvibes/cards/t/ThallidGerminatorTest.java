@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArtificialEvolution;
 import com.github.laxika.magicalvibes.cards.b.Bitterblossom;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -58,8 +59,8 @@ class ThallidGerminatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -98,8 +99,8 @@ class ThallidGerminatorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -140,12 +141,12 @@ class ThallidGerminatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, thallid.getId());
 
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
-        assertThat(thallid.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, thallid)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(thallid.getPowerModifier()).isEqualTo(1);
-        assertThat(thallid.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, thallid)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thallid)).isEqualTo(1);
     }
 
     @Test
@@ -163,8 +164,8 @@ class ThallidGerminatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(thallid.getPowerModifier()).isZero();
-        assertThat(thallid.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, thallid)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thallid)).isZero();
     }
 
     @Test
@@ -198,8 +199,8 @@ class ThallidGerminatorTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Bitterblossom")).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card instanceof Bitterblossom);
-        assertThat(thallid.getPowerModifier()).isEqualTo(1);
-        assertThat(thallid.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, thallid)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thallid)).isEqualTo(1);
     }
 
     private Permanent addThallid() {

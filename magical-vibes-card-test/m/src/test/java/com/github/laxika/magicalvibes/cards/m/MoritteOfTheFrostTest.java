@@ -38,8 +38,8 @@ class MoritteOfTheFrostTest extends BaseCardTest {
                 .contains(CardSupertype.LEGENDARY, CardSupertype.SNOW);
         assertThat(copy.getCard().getKeywords()).contains(Keyword.CHANGELING);
         assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(copy.getEffectivePower()).isEqualTo(4);
-        assertThat(copy.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(4);
     }
 
     @Test
@@ -97,8 +97,8 @@ class MoritteOfTheFrostTest extends BaseCardTest {
 
         Permanent copy = morittePermanent();
         assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(copy.getEffectivePower()).isEqualTo(8);
-        assertThat(copy.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(8);
         assertThat(copy.isTapped()).isFalse();
         assertThat(original.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
         assertThat(original.isTapped()).isTrue();

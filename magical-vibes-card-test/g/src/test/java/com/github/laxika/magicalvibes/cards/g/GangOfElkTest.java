@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,8 +29,8 @@ class GangOfElkTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(gang.getPowerModifier()).isEqualTo(2);
-        assertThat(gang.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gang)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gang)).isEqualTo(2);
     }
 
     @Test
@@ -47,8 +48,8 @@ class GangOfElkTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(gang.getPowerModifier()).isEqualTo(4);
-        assertThat(gang.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, gang)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gang)).isEqualTo(4);
     }
 
     @Test
@@ -70,8 +71,8 @@ class GangOfElkTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, bouncedBlocker.getId());
         harness.passBothPriorities();
 
-        assertThat(gang.getPowerModifier()).isEqualTo(2);
-        assertThat(gang.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gang)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gang)).isEqualTo(2);
     }
 
     @Test
@@ -84,8 +85,8 @@ class GangOfElkTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gang.getPowerModifier()).isZero();
-        assertThat(gang.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gang)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gang)).isZero();
     }
 
     @Test
@@ -104,8 +105,8 @@ class GangOfElkTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInHand(player2, "Grizzly Bears");
-        assertThat(gang.getPowerModifier()).isZero();
-        assertThat(gang.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gang)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gang)).isZero();
     }
 
     @Test
@@ -124,8 +125,8 @@ class GangOfElkTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, blocker.getId());
 
         harness.assertInHand(player2, "Grizzly Bears");
-        assertThat(gang.getPowerModifier()).isEqualTo(2);
-        assertThat(gang.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gang)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gang)).isEqualTo(2);
     }
 
     @Test
@@ -139,8 +140,8 @@ class GangOfElkTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gang.getPowerModifier()).isZero();
-        assertThat(gang.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gang)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gang)).isZero();
     }
 
     @Test
@@ -154,14 +155,14 @@ class GangOfElkTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(gang.getPowerModifier()).isEqualTo(2);
-        assertThat(gang.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gang)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gang)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(gang.getPowerModifier()).isZero();
-        assertThat(gang.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gang)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gang)).isZero();
     }
 }

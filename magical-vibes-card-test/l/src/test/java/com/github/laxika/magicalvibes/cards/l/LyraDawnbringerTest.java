@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CabalEvangel;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -127,10 +130,10 @@ class LyraDawnbringerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LyraDawnbringer());
         Permanent serra = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
 
-        serra.setPowerModifier(serra.getPowerModifier() + 5);
+        PermanentGrants.setPowerBoost(gd, serra, PermanentGrants.powerBoostOf(gd, serra) + 5);
         assertThat(gqs.getEffectivePower(gd, serra)).isEqualTo(10); // 4 base + 5 spell + 1 static
 
-        serra.resetModifiers();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThat(gqs.getEffectivePower(gd, serra)).isEqualTo(5); // 4 base + 1 static
         assertThat(gqs.getEffectiveToughness(gd, serra)).isEqualTo(5);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.Galvanize;
 import com.github.laxika.magicalvibes.cards.s.SanitationAutomaton;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -26,8 +27,8 @@ class OffenderAtLargeTest extends BaseCardTest {
         harness.castCreature(player1, 0, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -63,8 +64,8 @@ class OffenderAtLargeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(offender.isFaceDown()).isFalse();
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -77,7 +78,7 @@ class OffenderAtLargeTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Offender at Large").isFaceDown()).isTrue();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }
@@ -98,8 +99,8 @@ class OffenderAtLargeTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(offender.isFaceDown()).isFalse();
-        assertThat(offender.getPowerModifier()).isZero();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, offender)).isZero();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }
@@ -114,13 +115,13 @@ class OffenderAtLargeTest extends BaseCardTest {
         harness.castCreature(player1, 0, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test

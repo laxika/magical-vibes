@@ -77,17 +77,16 @@ public class BoostTargetCreaturePerChosenTypeCountEffectHandler implements Norma
         int toughnessBoost = count * boost.toughnessPer();
 
         for (UUID targetId : entry.targetsForEffect(effect)) {
-            applyBoost(gameData, targetId, powerBoost, toughnessBoost);
+            applyBoost(gameData, entry, targetId, powerBoost, toughnessBoost);
         }
     }
 
-    private void applyBoost(GameData gameData, UUID targetId, int powerBoost, int toughnessBoost) {
+    private void applyBoost(GameData gameData, StackEntry entry, UUID targetId, int powerBoost, int toughnessBoost) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return; // Target left the battlefield before resolution.
         }
-        target.setPowerModifier(target.getPowerModifier() + powerBoost);
-        target.setToughnessModifier(target.getToughnessModifier() + toughnessBoost);
+        gameData.addPowerToughnessBoost(entry, target.getId(), powerBoost, toughnessBoost);
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.AltarOfThePantheon;
 import com.github.laxika.magicalvibes.cards.n.NyxbornColossus;
@@ -89,8 +90,8 @@ class KlothyssDesignTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(11);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(12);
-        assertThat(enchantment.getPowerModifier()).isZero();
-        assertThat(enchantment.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, enchantment)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enchantment)).isZero();
     }
 
     @Test

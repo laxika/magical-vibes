@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,8 +28,8 @@ class CaptainsDefenseTest extends BaseCardTest {
 
         castAt(blocker);
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(2);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(2);
         harness.assertInHand(player1, "Forest");
     }
 
@@ -44,8 +45,8 @@ class CaptainsDefenseTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
     }
 
     @Test
@@ -72,8 +73,8 @@ class CaptainsDefenseTest extends BaseCardTest {
         blocker.setBlocking(false);
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
         harness.assertInGraveyard(player1, "Captain's Defense");

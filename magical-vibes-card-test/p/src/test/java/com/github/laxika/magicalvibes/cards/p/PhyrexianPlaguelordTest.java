@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AladdinsRing;
 import com.github.laxika.magicalvibes.cards.b.BogImp;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,10 +32,10 @@ class PhyrexianPlaguelordTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Phyrexian Plaguelord");
         harness.assertInGraveyard(player1, "Phyrexian Plaguelord");
 
-        assertThat(target.getPowerModifier()).isEqualTo(-4);
-        assertThat(target.getToughnessModifier()).isEqualTo(-4);
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -77,13 +78,13 @@ class PhyrexianPlaguelordTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-4);
 
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
-        assertThat(target.getEffectivePower()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
     }
 
     @Test
@@ -105,10 +106,10 @@ class PhyrexianPlaguelordTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Bog Imp");
         harness.assertOnBattlefield(player1, "Phyrexian Plaguelord");
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -139,8 +140,8 @@ class PhyrexianPlaguelordTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Phyrexian Plaguelord");
         harness.assertInGraveyard(player1, "Phyrexian Plaguelord");
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -237,14 +238,14 @@ class PhyrexianPlaguelordTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
 
-        assertThat(plaguelord.getPowerModifier()).isEqualTo(-1);
-        assertThat(plaguelord.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, plaguelord)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, plaguelord)).isEqualTo(-1);
         harness.assertOnBattlefield(player1, "Phyrexian Plaguelord");
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(plaguelord.getPowerModifier()).isZero();
-        assertThat(plaguelord.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, plaguelord)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, plaguelord)).isZero();
     }
 
 }

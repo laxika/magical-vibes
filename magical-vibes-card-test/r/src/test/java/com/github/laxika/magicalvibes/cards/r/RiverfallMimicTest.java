@@ -36,12 +36,12 @@ class RiverfallMimicTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castCreature(player1, 0);
-        assertThat(mimic.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(2);
         assertThat(gqs.hasCantBeBlocked(gd, mimic)).isFalse();
         harness.passBothPriorities(); // resolve the triggered ability
 
-        assertThat(mimic.getEffectivePower()).isEqualTo(3);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(3);
         assertThat(gqs.hasCantBeBlocked(gd, mimic)).isTrue();
     }
 
@@ -55,15 +55,15 @@ class RiverfallMimicTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        assertThat(mimic.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(3);
         resolveAllTriggers();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mimic.getEffectivePower()).isEqualTo(2);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, mimic)).isFalse();
     }
 
@@ -75,8 +75,8 @@ class RiverfallMimicTest extends BaseCardTest {
         harness.castFromHand(player1, new MerrowLevitator(), "{3}{U}");
         harness.passBothPriorities();
 
-        assertThat(mimic.getEffectivePower()).isEqualTo(2);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, mimic)).isFalse();
     }
 
@@ -87,8 +87,8 @@ class RiverfallMimicTest extends BaseCardTest {
         harness.castFromHand(player1, new CinderPyromancer(), "{2}{R}");
         harness.passBothPriorities();
 
-        assertThat(mimic.getEffectivePower()).isEqualTo(2);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, mimic)).isFalse();
     }
 
@@ -102,8 +102,8 @@ class RiverfallMimicTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(mimic.getEffectivePower()).isEqualTo(2);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, mimic)).isFalse();
     }
 
@@ -114,15 +114,15 @@ class RiverfallMimicTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
         harness.castCreature(player1, 0);
         resolveAllTriggers();
-        assertThat(mimic.getEffectivePower()).isEqualTo(3);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(3);
         assertThat(gqs.hasCantBeBlocked(gd, mimic)).isTrue();
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(mimic.getEffectivePower()).isEqualTo(3);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(3);
         assertThat(gqs.hasCantBeBlocked(gd, mimic)).isTrue();
     }
 

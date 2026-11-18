@@ -26,8 +26,8 @@ class RavenousLeucrocotaTest extends BaseCardTest {
 
         assertThat(leucrocota.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(leucrocota.isMonstrous()).isTrue();
-        assertThat(leucrocota.getEffectivePower()).isEqualTo(5);
-        assertThat(leucrocota.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, leucrocota)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, leucrocota)).isEqualTo(7);
     }
 
     @Test

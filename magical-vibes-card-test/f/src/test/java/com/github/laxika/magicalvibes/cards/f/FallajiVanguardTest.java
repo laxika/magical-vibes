@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArgothianSprite;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,10 +30,10 @@ class FallajiVanguardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent boostedTarget = findPermanent(player2, target.getId());
-        assertThat(boostedTarget.getPowerModifier()).isEqualTo(2);
-        assertThat(boostedTarget.getToughnessModifier()).isZero();
-        assertThat(boostedTarget.getEffectivePower()).isEqualTo(4);
-        assertThat(boostedTarget.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, boostedTarget)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, boostedTarget)).isZero();
+        assertThat(gqs.getEffectivePower(gd, boostedTarget)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, boostedTarget)).isEqualTo(2);
     }
 
     @Test
@@ -49,8 +50,8 @@ class FallajiVanguardTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -63,18 +64,18 @@ class FallajiVanguardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent boostedTarget = findPermanent(player2, target.getId());
-        assertThat(boostedTarget.getPowerModifier()).isEqualTo(2);
-        assertThat(boostedTarget.getEffectivePower()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, boostedTarget)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, boostedTarget)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         boostedTarget = findPermanent(player2, target.getId());
-        assertThat(boostedTarget.getPowerModifier()).isZero();
-        assertThat(boostedTarget.getToughnessModifier()).isZero();
-        assertThat(boostedTarget.getEffectivePower()).isEqualTo(2);
-        assertThat(boostedTarget.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, boostedTarget)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, boostedTarget)).isZero();
+        assertThat(gqs.getEffectivePower(gd, boostedTarget)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, boostedTarget)).isEqualTo(2);
     }
 
     private Permanent findPermanent(Player player, UUID id) {
@@ -106,7 +107,7 @@ class FallajiVanguardTest extends BaseCardTest {
 
         assertThat(gd.interaction.permanentChoiceContext()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(vanguard.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, vanguard)).isZero();
     }
 
     @Test

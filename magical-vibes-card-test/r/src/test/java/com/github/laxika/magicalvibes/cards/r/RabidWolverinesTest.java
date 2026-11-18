@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -27,8 +28,8 @@ class RabidWolverinesTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(wolverines.getPowerModifier()).isEqualTo(1);
-        assertThat(wolverines.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverines)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolverines)).isEqualTo(1);
     }
 
     @Test
@@ -46,8 +47,8 @@ class RabidWolverinesTest extends BaseCardTest {
         ));
         resolveAllTriggers();
 
-        assertThat(wolverines.getPowerModifier()).isEqualTo(2);
-        assertThat(wolverines.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverines)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolverines)).isEqualTo(2);
     }
 
     @Test
@@ -61,15 +62,15 @@ class RabidWolverinesTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(wolverines.getPowerModifier()).isEqualTo(1);
-        assertThat(wolverines.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverines)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolverines)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wolverines.getPowerModifier()).isZero();
-        assertThat(wolverines.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverines)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolverines)).isZero();
     }
 
     @Test
@@ -82,8 +83,8 @@ class RabidWolverinesTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(wolverines.getPowerModifier()).isZero();
-        assertThat(wolverines.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverines)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolverines)).isZero();
     }
 
     @Test
@@ -97,14 +98,14 @@ class RabidWolverinesTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(wolverines.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverines)).isZero();
         blocker.setMarkedDamage(1);
         harness.runStateBasedActions();
         harness.assertInGraveyard(player2, "Raging Goblin");
         resolveAllTriggers();
 
-        assertThat(wolverines.getPowerModifier()).isEqualTo(1);
-        assertThat(wolverines.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverines)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolverines)).isEqualTo(1);
     }
 
     @Test
@@ -118,8 +119,8 @@ class RabidWolverinesTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(wolverines.getPowerModifier()).isZero();
-        assertThat(wolverines.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverines)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolverines)).isZero();
     }
 
     private Permanent addWolverinesReady(Player player) {

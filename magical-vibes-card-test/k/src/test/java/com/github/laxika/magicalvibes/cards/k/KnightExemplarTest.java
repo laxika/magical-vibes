@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BlackKnight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -154,10 +157,10 @@ class KnightExemplarTest extends BaseCardTest {
 
         Permanent knight = findPermanent(player1, "Black Knight");
 
-        knight.setPowerModifier(knight.getPowerModifier() + 5);
+        PermanentGrants.setPowerBoost(gd, knight, PermanentGrants.powerBoostOf(gd, knight) + 5);
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(8); // 2 base + 5 spell + 1 static
 
-        knight.resetModifiers();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3); // 2 base + 1 static
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);

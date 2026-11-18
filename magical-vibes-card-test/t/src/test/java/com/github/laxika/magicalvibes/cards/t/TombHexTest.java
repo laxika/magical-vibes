@@ -25,8 +25,8 @@ class TombHexTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         castTombHex(creature);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -62,16 +62,16 @@ class TombHexTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         castTombHex(creature);
 
-        assertThat(creature.getEffectivePower()).isZero();
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Leatherback Baloth");
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 
     @Test
@@ -81,8 +81,8 @@ class TombHexTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player2, new Forest());
         castTombHex(creature);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -96,8 +96,8 @@ class TombHexTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isZero();
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -108,8 +108,8 @@ class TombHexTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         castTombHex(creature);
 
-        assertThat(creature.getEffectivePower()).isZero();
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -119,8 +119,8 @@ class TombHexTest extends BaseCardTest {
         castTombHex(creature);
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -134,14 +134,14 @@ class TombHexTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         castTombHex(creature);
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 
     private void castTombHex(Permanent target) {

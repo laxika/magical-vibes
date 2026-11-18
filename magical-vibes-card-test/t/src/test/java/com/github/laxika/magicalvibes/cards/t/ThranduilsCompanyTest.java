@@ -43,8 +43,8 @@ class ThranduilsCompanyTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
@@ -52,8 +52,8 @@ class ThranduilsCompanyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, bear, Keyword.VIGILANCE)).isFalse();
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     private void addCompany() {
@@ -93,8 +93,8 @@ class ThranduilsCompanyTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, company.getId());
         harness.passBothPriorities();
 
-        assertThat(company.getEffectivePower()).isEqualTo(5);
-        assertThat(company.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, company)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, company)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, company, Keyword.VIGILANCE)).isTrue();
     }
 
@@ -109,7 +109,7 @@ class ThranduilsCompanyTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(company.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, company)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, company, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -129,8 +129,8 @@ class ThranduilsCompanyTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())
                 .stream().filter(p -> p.getCard() instanceof Forest)).hasSize(2);
-        assertThat(company.getEffectivePower()).isEqualTo(7);
-        assertThat(company.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, company)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, company)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, company, Keyword.VIGILANCE)).isTrue();
     }
 }

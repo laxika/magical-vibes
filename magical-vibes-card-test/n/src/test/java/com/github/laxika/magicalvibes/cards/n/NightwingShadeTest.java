@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -63,10 +64,10 @@ class NightwingShadeTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent shade = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(shade.getEffectivePower()).isEqualTo(3);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
-        assertThat(shade.getPowerModifier()).isEqualTo(1);
-        assertThat(shade.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(1);
     }
 
     @Test
@@ -83,10 +84,10 @@ class NightwingShadeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent shade = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(shade.getEffectivePower()).isEqualTo(5);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(5);
-        assertThat(shade.getPowerModifier()).isEqualTo(3);
-        assertThat(shade.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(3);
     }
 
     @Test
@@ -101,18 +102,18 @@ class NightwingShadeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent shade = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(shade.getEffectivePower()).isEqualTo(4);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(4);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances from END to CLEANUP
 
-        assertThat(shade.getPowerModifier()).isEqualTo(0);
-        assertThat(shade.getToughnessModifier()).isEqualTo(0);
-        assertThat(shade.getEffectivePower()).isEqualTo(2);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
     }
 
     @Test
@@ -139,8 +140,8 @@ class NightwingShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(3);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(3);
         assertThat(shade.isTapped()).isTrue();
     }
 
@@ -166,14 +167,14 @@ class NightwingShadeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
-        assertThat(source.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
 
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(4);
-        assertThat(source.getEffectiveToughness()).isEqualTo(4);
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FearlessPup;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,10 +30,10 @@ class WarhornBlastTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(ownPup.getPowerModifier()).isEqualTo(2);
-        assertThat(ownPup.getToughnessModifier()).isEqualTo(1);
-        assertThat(opponentPup.getPowerModifier()).isZero();
-        assertThat(opponentPup.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownPup)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownPup)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentPup)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentPup)).isZero();
     }
 
     @Test
@@ -48,8 +49,8 @@ class WarhornBlastTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownPup.getPowerModifier()).isZero();
-        assertThat(ownPup.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownPup)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownPup)).isZero();
     }
 
     @Test
@@ -72,8 +73,8 @@ class WarhornBlastTest extends BaseCardTest {
         harness.castFromExile(player1, blast.getId());
         harness.passBothPriorities();
 
-        assertThat(ownPup.getPowerModifier()).isEqualTo(2);
-        assertThat(ownPup.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownPup)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownPup)).isEqualTo(1);
     }
 
     @Test
@@ -88,10 +89,10 @@ class WarhornBlastTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new FearlessPup());
 
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(2);
-        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
     }
 
     @Test
@@ -105,8 +106,8 @@ class WarhornBlastTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         harness.assertInGraveyard(player1, "Warhorn Blast");
-        assertThat(opponentPup.getPowerModifier()).isZero();
-        assertThat(opponentPup.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentPup)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentPup)).isZero();
     }
 
     @Test
@@ -158,10 +159,10 @@ class WarhornBlastTest extends BaseCardTest {
         harness.castFromExile(player1, blast.getId());
         harness.passBothPriorities();
 
-        assertThat(firstPup.getPowerModifier()).isEqualTo(2);
-        assertThat(firstPup.getToughnessModifier()).isEqualTo(1);
-        assertThat(secondPup.getPowerModifier()).isEqualTo(2);
-        assertThat(secondPup.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstPup)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstPup)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondPup)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondPup)).isEqualTo(1);
         assertThat(gd.findExiledCard(blast.getId())).isNull();
         harness.assertInGraveyard(player1, "Warhorn Blast");
     }

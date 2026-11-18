@@ -31,8 +31,8 @@ class HuatlisSpurringTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent("Bishop's Soldier");
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -47,8 +47,8 @@ class HuatlisSpurringTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent("Bishop's Soldier");
-        assertThat(bear.getEffectivePower()).isEqualTo(6);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -69,8 +69,8 @@ class HuatlisSpurringTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent("Bishop's Soldier");
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -85,8 +85,8 @@ class HuatlisSpurringTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent("Bishop's Soldier");
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -104,8 +104,8 @@ class HuatlisSpurringTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent("Bishop's Soldier");
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -137,8 +137,8 @@ class HuatlisSpurringTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent("Bishop's Soldier");
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -153,8 +153,8 @@ class HuatlisSpurringTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent target = findPermanent(player2, "Bishop's Soldier");
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -171,15 +171,15 @@ class HuatlisSpurringTest extends BaseCardTest {
                 .removeIf(p -> p.getCard() instanceof HuatliDinosaurKnight);
 
         Permanent target = findPermanent("Bishop's Soldier");
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     private Permanent findPermanent(String cardName) {

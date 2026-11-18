@@ -161,8 +161,8 @@ class AtrisOracleOfHalfTruthsTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(forest, swamp);
-        assertThat(devourer.getEffectivePower()).isEqualTo(3);
-        assertThat(devourer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, devourer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, devourer)).isEqualTo(2);
         assertThat(gqs.hasCantBeBlocked(gd, devourer)).isTrue();
     }
 

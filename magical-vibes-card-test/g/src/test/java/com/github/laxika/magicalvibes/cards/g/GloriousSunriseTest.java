@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DawnhartDisciple;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.SporeCrawler;
@@ -152,7 +153,7 @@ class GloriousSunriseTest extends BaseCardTest {
             advanceToCombat(player1);
             harness.handleListChoice(player1, DRAW_MODE);
             assertThat(gd.stack).hasSize(1);
-            creature.setPowerModifier(1);
+            PermanentGrants.setPowerBoost(gd, creature, 1);
             harness.passBothPriorities();
         });
 
@@ -170,7 +171,7 @@ class GloriousSunriseTest extends BaseCardTest {
             advanceToCombat(player1);
             harness.handleListChoice(player1, DRAW_MODE);
             assertThat(gd.stack).hasSize(1);
-            creature.setPowerModifier(-1);
+            PermanentGrants.setPowerBoost(gd, creature, -1);
             harness.passBothPriorities();
         });
 

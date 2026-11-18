@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JacesIngenuity;
 import com.github.laxika.magicalvibes.cards.d.DuskdaleWurm;
@@ -31,8 +32,8 @@ class LeeringEmblemTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -46,14 +47,14 @@ class LeeringEmblemTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(0);
-        assertThat(creature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(0);
     }
 
     @Test
@@ -68,8 +69,8 @@ class LeeringEmblemTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(0);
-        assertThat(creature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(0);
     }
 
     @Test
@@ -98,8 +99,8 @@ class LeeringEmblemTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
         assertThat(countPermanents(player1, "Duskdale Wurm")).isEqualTo(1);
     }
 
@@ -117,8 +118,8 @@ class LeeringEmblemTest extends BaseCardTest {
         harness.castInstant(player1, 0, player1.getId());
         resolveAllTriggers();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(4);
-        assertThat(creature.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -138,10 +139,10 @@ class LeeringEmblemTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(emblem.getAttachedTo()).isEqualTo(nextCreature.getId());
-        assertThat(originalCreature.getPowerModifier()).isEqualTo(2);
-        assertThat(originalCreature.getToughnessModifier()).isEqualTo(2);
-        assertThat(nextCreature.getPowerModifier()).isZero();
-        assertThat(nextCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, originalCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, originalCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, nextCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nextCreature)).isZero();
     }
 
     @Test
@@ -158,7 +159,7 @@ class LeeringEmblemTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 }

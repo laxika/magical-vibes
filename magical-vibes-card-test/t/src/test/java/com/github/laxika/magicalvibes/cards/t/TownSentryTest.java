@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.v.VolunteerMilitia;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -50,10 +51,10 @@ class TownSentryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(sentry.getPowerModifier()).isEqualTo(0);
-        assertThat(sentry.getToughnessModifier()).isEqualTo(2);
-        assertThat(sentry.getEffectivePower()).isEqualTo(2);
-        assertThat(sentry.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentry)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(4);
     }
 
     @Test
@@ -69,15 +70,15 @@ class TownSentryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(sentry.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(sentry.getPowerModifier()).isEqualTo(0);
-        assertThat(sentry.getToughnessModifier()).isEqualTo(0);
-        assertThat(sentry.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentry)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(2);
     }
 
     @Test
@@ -106,8 +107,8 @@ class TownSentryTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
-        assertThat(sentry.getPowerModifier()).isZero();
-        assertThat(sentry.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentry)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry)).isEqualTo(2);
     }
 
     @Test
@@ -121,15 +122,15 @@ class TownSentryTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(blockingSentry.getToughnessModifier()).isZero();
-        assertThat(otherSentry.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blockingSentry)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherSentry)).isZero();
         resolveAllTriggers();
 
-        assertThat(blockingSentry.getPowerModifier()).isZero();
-        assertThat(blockingSentry.getToughnessModifier()).isEqualTo(2);
-        assertThat(otherSentry.getPowerModifier()).isZero();
-        assertThat(otherSentry.getToughnessModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blockingSentry)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blockingSentry)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherSentry)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherSentry)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -143,7 +144,7 @@ class TownSentryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(sentry.getPowerModifier()).isZero();
-        assertThat(sentry.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sentry)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry)).isZero();
     }
 }

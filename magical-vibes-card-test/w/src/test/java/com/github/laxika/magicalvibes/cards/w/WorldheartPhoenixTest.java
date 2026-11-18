@@ -58,8 +58,8 @@ class WorldheartPhoenixTest extends BaseCardTest {
         Permanent phoenix = phoenixOnBattlefield();
         assertThat(phoenix.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         // 2/2 base + two +1/+1 counters = 4/4
-        assertThat(phoenix.getEffectivePower()).isEqualTo(4);
-        assertThat(phoenix.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, phoenix)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, phoenix)).isEqualTo(4);
     }
 
     @Test

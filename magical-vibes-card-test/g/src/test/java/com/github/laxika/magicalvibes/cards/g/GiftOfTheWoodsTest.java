@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.s.SchoolOfTheUnseen;
@@ -37,8 +38,8 @@ class GiftOfTheWoodsTest extends BaseCardTest {
         declareBlockers(List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(3);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(21);
     }
 
@@ -56,8 +57,8 @@ class GiftOfTheWoodsTest extends BaseCardTest {
         declareBlockers(List.of(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
         resolveAllTriggers();
 
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(3);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(21);
     }
 
@@ -74,7 +75,7 @@ class GiftOfTheWoodsTest extends BaseCardTest {
         declareBlockers(List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(attacker.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(3);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
     }
 
@@ -92,7 +93,7 @@ class GiftOfTheWoodsTest extends BaseCardTest {
         declareBlockers(List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(attacker.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(3);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
     }
 
@@ -124,13 +125,13 @@ class GiftOfTheWoodsTest extends BaseCardTest {
 
         declareBlockers(List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
-        assertThat(blocker.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
     }
 
     @Test
@@ -179,7 +180,7 @@ class GiftOfTheWoodsTest extends BaseCardTest {
         declareBlockers(List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(3);
         harness.assertLife(player1, 21);
         harness.assertLife(player2, 20);
     }
@@ -199,7 +200,7 @@ class GiftOfTheWoodsTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Gift of the Woods");
-        assertThat(blocker.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(3);
         harness.assertLife(player2, 21);
     }
 

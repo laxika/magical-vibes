@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class FlameSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities(); // resolve ability
 
-        assertThat(flameSpirit.getPowerModifier()).isEqualTo(1);
-        assertThat(flameSpirit.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, flameSpirit)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, flameSpirit)).isEqualTo(0);
     }
 
     @Test
@@ -41,7 +42,7 @@ class FlameSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(flameSpirit.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, flameSpirit)).isEqualTo(3);
     }
 
     @Test
@@ -63,13 +64,13 @@ class FlameSpiritTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
-        assertThat(flameSpirit.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, flameSpirit)).isZero();
 
         harness.passBothPriorities();
-        assertThat(flameSpirit.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, flameSpirit)).isEqualTo(1);
         harness.passBothPriorities();
-        assertThat(flameSpirit.getPowerModifier()).isEqualTo(2);
-        assertThat(flameSpirit.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, flameSpirit)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, flameSpirit)).isZero();
     }
 
     @Test
@@ -83,10 +84,10 @@ class FlameSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isZero();
-        assertThat(opposing.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isZero();
     }
 
     @Test
@@ -99,7 +100,7 @@ class FlameSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(flameSpirit.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, flameSpirit)).isEqualTo(1);
         assertThat(flameSpirit.isTapped()).isTrue();
     }
 
@@ -113,7 +114,7 @@ class FlameSpiritTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(flameSpirit.isSummoningSick()).isTrue();
-        assertThat(flameSpirit.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, flameSpirit)).isEqualTo(1);
     }
 
     @Test
@@ -124,11 +125,11 @@ class FlameSpiritTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(flameSpirit.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, flameSpirit)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(flameSpirit.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, flameSpirit)).isEqualTo(0);
     }
 }

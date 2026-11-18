@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -24,8 +25,8 @@ class CompoundFractureTest extends BaseCardTest {
         Permanent target = addCreature();
         castCompoundFracture(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -35,8 +36,8 @@ class CompoundFractureTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new CompoundFracture(), new CompoundFracture(), new FountainOfYouth()));
         castCompoundFracture(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(0);
-        assertThat(target.getEffectiveToughness()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -46,8 +47,8 @@ class CompoundFractureTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new CompoundFracture(), new CompoundFracture()));
         castCompoundFracture(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -58,8 +59,8 @@ class CompoundFractureTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -85,16 +86,16 @@ class CompoundFractureTest extends BaseCardTest {
         harness.castInstant(player1, 0, secondTarget.getId());
         harness.passBothPriorities();
 
-        assertThat(secondTarget.getEffectivePower()).isEqualTo(2);
-        assertThat(secondTarget.getEffectiveToughness()).isEqualTo(2);
-        assertThat(firstTarget.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondTarget)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondTarget)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstTarget)).isEqualTo(3);
 
         harness.passBothPriorities();
 
-        assertThat(firstTarget.getEffectivePower()).isEqualTo(1);
-        assertThat(firstTarget.getEffectiveToughness()).isEqualTo(1);
-        assertThat(secondTarget.getEffectivePower()).isEqualTo(2);
-        assertThat(secondTarget.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, firstTarget)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, firstTarget)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, secondTarget)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondTarget)).isEqualTo(2);
     }
 
     @Test
@@ -104,13 +105,13 @@ class CompoundFractureTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new CompoundFracture()));
         castCompoundFracture(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
 
         harness.setGraveyard(player1, List.of());
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test

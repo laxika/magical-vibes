@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.CheckpointOfficer;
 import com.github.laxika.magicalvibes.cards.s.SolidFooting;
@@ -24,10 +25,10 @@ class ExuberantWolfbearTest extends BaseCardTest {
     void setsHumanBasePowerAndToughnessToActualSourceValues() {
         Permanent wolfbear = addCreatureReady(player1, new ExuberantWolfbear());
         Permanent human = addCreatureReady(player1, new EliteVanguard());
-        wolfbear.setPowerModifier(2);
-        wolfbear.setToughnessModifier(-1);
-        human.setPowerModifier(1);
-        human.setToughnessModifier(1);
+        PermanentGrants.setPowerBoost(gd, wolfbear, 2);
+        PermanentGrants.setToughnessBoost(gd, wolfbear, -1);
+        PermanentGrants.setPowerBoost(gd, human, 1);
+        PermanentGrants.setToughnessBoost(gd, human, 1);
 
         resolveAttackTrigger(human, true);
 
@@ -108,15 +109,15 @@ class ExuberantWolfbearTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, human.getId());
-        wolfbear.setPowerModifier(2);
-        wolfbear.setToughnessModifier(1);
+        PermanentGrants.setPowerBoost(gd, wolfbear, 2);
+        PermanentGrants.setToughnessBoost(gd, wolfbear, 1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(5);
-        wolfbear.setPowerModifier(3);
-        wolfbear.setToughnessModifier(2);
+        PermanentGrants.setPowerBoost(gd, wolfbear, 3);
+        PermanentGrants.setToughnessBoost(gd, wolfbear, 2);
         assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(5);
     }

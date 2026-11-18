@@ -33,8 +33,8 @@ class FlowerfootSwordmasterTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(1);
-        assertThat(tokens.getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tokens.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tokens.getFirst())).isEqualTo(1);
     }
 
     @Test
@@ -46,15 +46,15 @@ class FlowerfootSwordmasterTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, swordmaster.getId());
         harness.passBothPriorities();
-        int powerAfterFirstSpell = swordmaster.getEffectivePower();
+        int powerAfterFirstSpell = gqs.getEffectivePower(gd, swordmaster);
 
         assertThat(powerAfterFirstSpell).isEqualTo(5);
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
 
         harness.castAndResolveInstant(player1, 0, swordmaster.getId());
         harness.passBothPriorities();
 
-        assertThat(swordmaster.getEffectivePower()).isEqualTo(powerAfterFirstSpell + 3);
+        assertThat(gqs.getEffectivePower(gd, swordmaster)).isEqualTo(powerAfterFirstSpell + 3);
     }
 
     @Test
@@ -65,7 +65,7 @@ class FlowerfootSwordmasterTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, swordmaster.getId());
 
-        assertThat(swordmaster.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, swordmaster)).isEqualTo(4);
     }
 
     @Test
@@ -92,8 +92,8 @@ class FlowerfootSwordmasterTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(goblin.getEffectivePower()).isEqualTo(2);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
     }
 
     @Test
@@ -106,18 +106,18 @@ class FlowerfootSwordmasterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, swordmaster.getId());
         harness.passBothPriorities();
 
-        assertThat(swordmaster.getEffectivePower()).isEqualTo(2);
-        assertThat(swordmaster.getEffectiveToughness()).isEqualTo(2);
-        assertThat(duo.getEffectivePower()).isEqualTo(2);
-        assertThat(duo.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opposingMouse.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, swordmaster)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, swordmaster)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, duo)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, duo)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingMouse)).isEqualTo(1);
 
         harness.passBothPriorities();
 
-        assertThat(swordmaster.getEffectivePower()).isEqualTo(3);
-        assertThat(swordmaster.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, swordmaster)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, swordmaster)).isEqualTo(3);
         Permanent lateMouse = harness.addToBattlefieldAndReturn(player1, new FlowerfootSwordmaster());
-        assertThat(lateMouse.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, lateMouse)).isEqualTo(1);
     }
 
     @Test
@@ -132,8 +132,8 @@ class FlowerfootSwordmasterTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, swordmaster.getId());
         harness.passBothPriorities();
 
-        assertThat(swordmaster.getEffectivePower()).isEqualTo(8);
-        assertThat(swordmaster.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, swordmaster)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, swordmaster)).isEqualTo(8);
     }
 
     @Test
@@ -155,14 +155,14 @@ class FlowerfootSwordmasterTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, original.getId());
         harness.passBothPriorities();
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         harness.castAndResolveInstant(player1, 0, token.getId());
         harness.passBothPriorities();
 
-        assertThat(original.getEffectivePower()).isEqualTo(6);
-        assertThat(token.getEffectivePower()).isEqualTo(6);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
     }
 
     @Test
@@ -174,13 +174,13 @@ class FlowerfootSwordmasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(swordmaster.getEffectivePower()).isEqualTo(1);
-        assertThat(swordmaster.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, swordmaster)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, swordmaster)).isEqualTo(2);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castAndResolveInstant(player1, 0, swordmaster.getId());
         harness.passBothPriorities();
 
-        assertThat(swordmaster.getEffectivePower()).isEqualTo(5);
-        assertThat(swordmaster.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, swordmaster)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, swordmaster)).isEqualTo(5);
     }
 }

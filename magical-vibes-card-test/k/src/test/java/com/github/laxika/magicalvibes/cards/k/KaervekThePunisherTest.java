@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BogRats;
 import com.github.laxika.magicalvibes.cards.d.DrainLife;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -144,8 +145,8 @@ class KaervekThePunisherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBeforeCopy - 2);
-        assertThat(creature.getPowerModifier()).isEqualTo(-1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(-1);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(graveyardCard.getId()));
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();

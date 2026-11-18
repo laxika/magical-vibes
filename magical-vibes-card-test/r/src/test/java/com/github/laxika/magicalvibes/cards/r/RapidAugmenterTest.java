@@ -33,7 +33,7 @@ class RapidAugmenterTest extends BaseCardTest {
 
         Permanent elves = findPermanent(player1, "Llanowar Elves");
         assertThat(gqs.hasKeyword(gd, elves, Keyword.HASTE)).isTrue();
-        assertThat(augmenter.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, augmenter)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, augmenter)).isFalse();
     }
 
@@ -50,7 +50,7 @@ class RapidAugmenterTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
-        assertThat(augmenter.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, augmenter)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, augmenter)).isFalse();
     }
 
@@ -69,14 +69,14 @@ class RapidAugmenterTest extends BaseCardTest {
         List<Permanent> tokens = findPermanents(player1, "Goblin");
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allSatisfy(token -> assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue());
-        assertThat(augmenter.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, augmenter)).isEqualTo(3);
         assertThat(gqs.hasCantBeBlocked(gd, augmenter)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(augmenter.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, augmenter)).isEqualTo(3);
         assertThat(gqs.hasCantBeBlocked(gd, augmenter)).isFalse();
         assertThat(tokens).allSatisfy(token -> assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse());
     }

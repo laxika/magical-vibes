@@ -96,8 +96,8 @@ class PhenomenonInvestigatorsTest extends BaseCardTest {
         assertThat(horror.getCard().getAdditionalTypes()).contains(CardType.ENCHANTMENT);
         assertThat(horror.getCard().getColors()).containsExactly(CardColor.BLACK);
         assertThat(horror.getCard().getSubtypes()).containsExactly(CardSubtype.HORROR);
-        assertThat(horror.getEffectivePower()).isEqualTo(2);
-        assertThat(horror.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, horror)).isEqualTo(2);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .destroyPermanentToGraveyard(gd, horror));

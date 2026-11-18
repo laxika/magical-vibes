@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.t.TundraWolves;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -22,7 +23,7 @@ class SentinelTest extends BaseCardTest {
     void setsBaseToughnessFromCreatureItBlocks() {
         Permanent sentinel = addCreatureReady(player1, new Sentinel());
         Permanent attacker = addCreatureReady(player2, new TundraWolves());
-        attacker.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, attacker, 2);
         attacker.setAttacking(true);
 
         prepareDeclareBlockers(player2);
@@ -34,7 +35,7 @@ class SentinelTest extends BaseCardTest {
 
         assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(4);
 
-        attacker.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, attacker, 0);
         assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(4);
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
@@ -50,7 +51,7 @@ class SentinelTest extends BaseCardTest {
         Permanent sentinel = addCreatureReady(player1, new Sentinel());
         sentinel.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new TundraWolves());
-        blocker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, blocker, 1);
 
         prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
@@ -77,7 +78,7 @@ class SentinelTest extends BaseCardTest {
     @DisplayName("Uses target power at resolution and preserves toughness modifiers")
     void usesPowerAtResolutionWithToughnessModifiers() {
         Permanent sentinel = addCreatureReady(player1, new Sentinel());
-        sentinel.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, sentinel, 2);
         Permanent attacker = addCreatureReady(player2, new Sentinel());
         attacker.setAttacking(true);
         prepareDeclareBlockers(player2);
@@ -85,7 +86,7 @@ class SentinelTest extends BaseCardTest {
                 indexOf(player1, sentinel), indexOf(player2, attacker))));
 
         harness.activateAbility(player1, indexOf(player1, sentinel), null, attacker.getId());
-        attacker.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, attacker, 3);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(7);
@@ -98,7 +99,7 @@ class SentinelTest extends BaseCardTest {
         Permanent sentinel = addCreatureReady(player1, new Sentinel());
         Permanent attacker = addCreatureReady(player2, new Sentinel());
         attacker.setAttacking(true);
-        attacker.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, attacker, 3);
         prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 indexOf(player1, sentinel), indexOf(player2, attacker))));
@@ -107,7 +108,7 @@ class SentinelTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(5);
 
-        attacker.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, attacker, 0);
         harness.activateAbility(player1, indexOf(player1, sentinel), null, attacker.getId());
         harness.passBothPriorities();
         assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(2);
@@ -119,7 +120,7 @@ class SentinelTest extends BaseCardTest {
         Permanent sentinel = addCreatureReady(player1, new Sentinel());
         Permanent attacker = addCreatureReady(player2, new Sentinel());
         attacker.setAttacking(true);
-        attacker.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, attacker, 3);
         prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 indexOf(player1, sentinel), indexOf(player2, attacker))));

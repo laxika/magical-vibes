@@ -30,8 +30,8 @@ class TeferisHonorGuardTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
     }
 
     @Test
@@ -45,8 +45,8 @@ class TeferisHonorGuardTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -63,10 +63,10 @@ class TeferisHonorGuardTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker1.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker1.getEffectiveToughness()).isEqualTo(1);
-        assertThat(blocker2.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker2.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker1)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker1)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker2)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker2)).isEqualTo(1);
     }
 
     @Test
@@ -80,15 +80,15 @@ class TeferisHonorGuardTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(3);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -150,14 +150,14 @@ class TeferisHonorGuardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(guard);
-        assertThat(blocker.getEffectivePower()).isEqualTo(3);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
 
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
     }
 
     @Test

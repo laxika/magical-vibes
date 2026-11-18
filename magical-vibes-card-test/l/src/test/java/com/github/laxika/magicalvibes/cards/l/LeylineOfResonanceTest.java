@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrumbAndGetIt;
 import com.github.laxika.magicalvibes.cards.d.DualShot;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
@@ -50,8 +51,8 @@ class LeylineOfResonanceTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isEqualTo(6);
-        assertThat(target.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(6);
     }
 
     @Test
@@ -66,7 +67,7 @@ class LeylineOfResonanceTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(target.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -126,10 +127,10 @@ class LeylineOfResonanceTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, newTarget.getId());
         resolveAllTriggers();
 
-        assertThat(originalTarget.getPowerModifier()).isEqualTo(3);
-        assertThat(originalTarget.getToughnessModifier()).isEqualTo(3);
-        assertThat(newTarget.getPowerModifier()).isEqualTo(3);
-        assertThat(newTarget.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, originalTarget)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, originalTarget)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, newTarget)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newTarget)).isEqualTo(3);
     }
 
     @Test
@@ -143,8 +144,8 @@ class LeylineOfResonanceTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -159,8 +160,8 @@ class LeylineOfResonanceTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
         assertThat(countPermanents(player2, "Food")).isEqualTo(2);
     }
 }

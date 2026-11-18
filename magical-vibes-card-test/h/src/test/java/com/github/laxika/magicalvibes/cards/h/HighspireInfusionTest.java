@@ -24,8 +24,8 @@ class HighspireInfusionTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         cast(bears);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
     }
 
@@ -39,8 +39,8 @@ class HighspireInfusionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
     }
 
@@ -79,8 +79,8 @@ class HighspireInfusionTest extends BaseCardTest {
 
         cast(bears);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
         assertThat(gd.playerEnergyCounters.getOrDefault(player2.getId(), 0)).isZero();
     }
@@ -93,8 +93,8 @@ class HighspireInfusionTest extends BaseCardTest {
         cast(bears);
         cast(bears);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(8);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(8);
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(4);
     }
 

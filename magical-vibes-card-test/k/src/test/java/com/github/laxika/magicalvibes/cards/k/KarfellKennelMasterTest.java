@@ -27,8 +27,8 @@ class KarfellKennelMasterTest extends BaseCardTest {
 
         castKarfellKennelMaster(List.of(ownBear.getId(), opposingBear.getId()));
 
-        assertThat(ownBear.getEffectivePower()).isEqualTo(3);
-        assertThat(opposingBear.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opposingBear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, opposingBear, Keyword.INDESTRUCTIBLE)).isTrue();
     }
@@ -48,14 +48,14 @@ class KarfellKennelMasterTest extends BaseCardTest {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castKarfellKennelMaster(List.of(bear.getId()));
 
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -108,10 +108,10 @@ class KarfellKennelMasterTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(removed.getCard()));
         harness.passBothPriorities();
 
-        assertThat(remaining.getEffectivePower()).isEqualTo(5);
-        assertThat(remaining.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, remaining)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, remaining)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, remaining, Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(untargeted.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, untargeted)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, untargeted, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 

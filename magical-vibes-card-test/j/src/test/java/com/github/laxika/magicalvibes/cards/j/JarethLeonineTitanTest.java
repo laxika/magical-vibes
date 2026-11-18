@@ -32,8 +32,8 @@ class JarethLeonineTitanTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(jareth.getEffectivePower()).isEqualTo(11);
-        assertThat(jareth.getEffectiveToughness()).isEqualTo(14);
+        assertThat(gqs.getEffectivePower(gd, jareth)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, jareth)).isEqualTo(14);
     }
 
     @Test
@@ -47,15 +47,15 @@ class JarethLeonineTitanTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(jareth.getEffectivePower()).isEqualTo(11);
-        assertThat(jareth.getEffectiveToughness()).isEqualTo(14);
+        assertThat(gqs.getEffectivePower(gd, jareth)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, jareth)).isEqualTo(14);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(jareth.getEffectivePower()).isEqualTo(4);
-        assertThat(jareth.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, jareth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, jareth)).isEqualTo(7);
     }
 
     @Test
@@ -76,8 +76,8 @@ class JarethLeonineTitanTest extends BaseCardTest {
                 new BlockerAssignment(defenderBattlefield.indexOf(jareth), attackerBattlefield.indexOf(secondAttacker))));
         resolveAllTriggers();
 
-        assertThat(jareth.getEffectivePower()).isEqualTo(11);
-        assertThat(jareth.getEffectiveToughness()).isEqualTo(14);
+        assertThat(gqs.getEffectivePower(gd, jareth)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, jareth)).isEqualTo(14);
     }
 
     @Test

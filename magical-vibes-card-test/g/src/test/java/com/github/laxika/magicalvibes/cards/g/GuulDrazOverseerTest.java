@@ -27,9 +27,9 @@ class GuulDrazOverseerTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(overseer.getEffectivePower()).isEqualTo(3);
-        assertThat(otherCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(otherCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, overseer)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
     }
 
     @Test
@@ -42,9 +42,9 @@ class GuulDrazOverseerTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(overseer.getEffectivePower()).isEqualTo(3);
-        assertThat(otherCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(otherCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, overseer)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
     }
 
     @Test
@@ -58,8 +58,8 @@ class GuulDrazOverseerTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(overseer.getEffectivePower()).isEqualTo(3);
-        assertThat(otherCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, overseer)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
     }
 
     @Test
@@ -71,11 +71,11 @@ class GuulDrazOverseerTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        assertThat(otherCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(4);
 
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(otherCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
     }
 
     @Test
@@ -94,9 +94,9 @@ class GuulDrazOverseerTest extends BaseCardTest {
         harness.handleListChoice(player1, "SWAMP");
         harness.passBothPriorities();
 
-        assertThat(overseer.getEffectivePower()).isEqualTo(3);
-        assertThat(otherCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(otherCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, overseer)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
     }
 
     @Test
@@ -115,8 +115,8 @@ class GuulDrazOverseerTest extends BaseCardTest {
         harness.handleListChoice(player1, "FOREST");
         harness.passBothPriorities();
 
-        assertThat(otherCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(otherCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
     }
 
     @Test
@@ -131,9 +131,9 @@ class GuulDrazOverseerTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent creatureAfterResolution = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(creatureBeforeResolution.getEffectivePower()).isEqualTo(4);
-        assertThat(creatureAfterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creatureBeforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creatureAfterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -145,7 +145,7 @@ class GuulDrazOverseerTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Swamp());
         harness.passBothPriorities();
 
-        assertThat(otherCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(otherCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
     }
 }

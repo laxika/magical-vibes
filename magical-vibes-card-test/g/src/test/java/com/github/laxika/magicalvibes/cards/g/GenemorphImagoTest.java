@@ -25,8 +25,8 @@ class GenemorphImagoTest extends BaseCardTest {
 
         triggerLandfall(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -41,8 +41,8 @@ class GenemorphImagoTest extends BaseCardTest {
 
         triggerLandfall(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
     }
 
     @Test
@@ -59,8 +59,8 @@ class GenemorphImagoTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
     }
 
     @Test
@@ -73,8 +73,8 @@ class GenemorphImagoTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -99,8 +99,8 @@ class GenemorphImagoTest extends BaseCardTest {
 
         triggerLandfall(imago);
 
-        assertThat(imago.getEffectivePower()).isEqualTo(3);
-        assertThat(imago.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, imago)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, imago)).isEqualTo(3);
     }
 
     @Test
@@ -125,8 +125,8 @@ class GenemorphImagoTest extends BaseCardTest {
 
         triggerLandfall(imago);
 
-        assertThat(imago.getEffectivePower()).isEqualTo(3);
-        assertThat(imago.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, imago)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, imago)).isEqualTo(3);
     }
 
     @Test
@@ -145,8 +145,8 @@ class GenemorphImagoTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(land.getCard());
         harness.passBothPriorities();
 
-        assertThat(imago.getEffectivePower()).isEqualTo(3);
-        assertThat(imago.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, imago)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, imago)).isEqualTo(3);
     }
 
     private Permanent addImagoAndTarget() {

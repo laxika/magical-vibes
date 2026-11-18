@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HypervoltGrasp;
 import com.github.laxika.magicalvibes.cards.s.StreetbreakerWurm;
 import com.github.laxika.magicalvibes.model.Card;
@@ -66,8 +67,8 @@ class BeastmastersMagemarkTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(9);
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(7);
     }
@@ -84,8 +85,8 @@ class BeastmastersMagemarkTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(6);
 
@@ -93,8 +94,8 @@ class BeastmastersMagemarkTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(5);
     }
@@ -113,8 +114,8 @@ class BeastmastersMagemarkTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, attackerIndex)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(unenchantedAttacker.getPowerModifier()).isZero();
-        assertThat(unenchantedAttacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, unenchantedAttacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, unenchantedAttacker)).isZero();
     }
 
     private Permanent addReadyCreature(Player player) {

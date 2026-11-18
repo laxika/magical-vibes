@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AnkleBiter;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -51,15 +52,15 @@ class GreatTrainHeistTest extends BaseCardTest {
 
         cast(new int[]{1}, List.of(), 3, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(opponentCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FIRST_STRIKE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         gs.advanceStep(gd);
 
-        assertThat(ownCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -110,9 +111,9 @@ class GreatTrainHeistTest extends BaseCardTest {
         cast(new int[]{1}, List.of(), 3, TurnStep.PRECOMBAT_MAIN);
         Permanent later = addCreature(player1);
 
-        assertThat(existing.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, existing)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, existing, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(later.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, later)).isZero();
         assertThat(gqs.hasKeyword(gd, later, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -151,7 +152,7 @@ class GreatTrainHeistTest extends BaseCardTest {
         cast(new int[]{0, 1, 2}, List.of(player2.getId()), 7, TurnStep.BEGINNING_OF_COMBAT);
 
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
 

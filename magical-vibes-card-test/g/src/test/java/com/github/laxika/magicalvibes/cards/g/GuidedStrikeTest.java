@@ -32,8 +32,8 @@ class GuidedStrikeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.FIRST_STRIKE);
 
         List<Card> hand = harness.getGameData().playerHands.get(player1.getId());
@@ -54,7 +54,7 @@ class GuidedStrikeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
@@ -81,7 +81,7 @@ class GuidedStrikeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.FIRST_STRIKE);
     }
 

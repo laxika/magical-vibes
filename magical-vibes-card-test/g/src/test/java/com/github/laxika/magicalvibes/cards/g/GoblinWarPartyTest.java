@@ -26,8 +26,8 @@ class GoblinWarPartyTest extends BaseCardTest {
         List<Permanent> tokens = findPermanents(player1, "Goblin");
         assertThat(tokens).hasSize(3);
         assertThat(tokens).allSatisfy(token -> {
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         });
     }
 
@@ -39,11 +39,11 @@ class GoblinWarPartyTest extends BaseCardTest {
 
         cast(new int[]{1}, false);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isTrue();
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.HASTE)).isFalse();
     }
 
@@ -55,8 +55,8 @@ class GoblinWarPartyTest extends BaseCardTest {
         cast(new int[]{0, 1}, true);
 
         assertThat(findPermanents(player1, "Goblin")).hasSize(3);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
@@ -83,8 +83,8 @@ class GoblinWarPartyTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isFalse();
     }
 
@@ -96,8 +96,8 @@ class GoblinWarPartyTest extends BaseCardTest {
         List<Permanent> tokens = findPermanents(player1, "Goblin");
         assertThat(tokens).hasSize(3);
         assertThat(tokens).allSatisfy(token -> {
-            assertThat(token.getEffectivePower()).isEqualTo(2);
-            assertThat(token.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
             assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         });
         assertThat(findPermanents(player2, "Goblin")).isEmpty();
@@ -113,8 +113,8 @@ class GoblinWarPartyTest extends BaseCardTest {
         List<Permanent> tokens = findPermanents(player1, "Goblin");
         assertThat(tokens).hasSize(3);
         assertThat(tokens).allSatisfy(token -> {
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
             assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
         });
     }

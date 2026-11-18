@@ -66,8 +66,8 @@ class ZoeticCavernTest extends BaseCardTest {
 
         Permanent faceDownCavern = findPermanent(player1, "Zoetic Cavern");
         assertThat(faceDownCavern.isFaceDown()).isTrue();
-        assertThat(faceDownCavern.getEffectivePower()).isEqualTo(2);
-        assertThat(faceDownCavern.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, faceDownCavern)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, faceDownCavern)).isEqualTo(2);
         assertThat(gd.landsPlayedThisTurn.getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
 

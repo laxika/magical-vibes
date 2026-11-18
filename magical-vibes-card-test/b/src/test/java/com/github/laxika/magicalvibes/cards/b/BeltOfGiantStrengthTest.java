@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -85,7 +86,7 @@ class BeltOfGiantStrengthTest extends BaseCardTest {
     void negativePowerDoesNotIncreaseEquipCost() {
         Permanent belt = addBeltReady(player1);
         Permanent creature = addCreatureReady(player1, new Ornithopter());
-        creature.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, creature, -2);
         harness.addMana(player1, ManaColor.COLORLESS, 10);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -167,7 +168,7 @@ class BeltOfGiantStrengthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 
         harness.activateAbility(player1, 0, null, creature.getId());
-        creature.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, creature, -2);
         harness.passBothPriorities();
 
         assertThat(belt.getAttachedTo()).isEqualTo(creature.getId());

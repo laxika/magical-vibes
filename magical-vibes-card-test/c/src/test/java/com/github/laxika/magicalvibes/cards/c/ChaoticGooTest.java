@@ -27,8 +27,8 @@ class ChaoticGooTest extends BaseCardTest {
 
         Permanent goo = findPermanent(player1, "Chaotic Goo");
         assertThat(goo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(goo.getEffectivePower()).isEqualTo(3);
-        assertThat(goo.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, goo)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, goo)).isEqualTo(3);
     }
 
     @Test

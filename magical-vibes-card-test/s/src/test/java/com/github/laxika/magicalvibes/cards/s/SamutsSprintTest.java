@@ -30,8 +30,8 @@ class SamutsSprintTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(topCard));
         castSamutsSprint(bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.HASTE);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
 
@@ -52,8 +52,8 @@ class SamutsSprintTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.HASTE);
     }
 
@@ -93,8 +93,8 @@ class SamutsSprintTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(opponentsCard));
         castSamutsSprint(creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
 
         gs.handleInteractionAnswer(gd, player1,

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -50,8 +51,8 @@ class ThistledownDuoTest extends BaseCardTest {
         castWhiteSpell();
         harness.passBothPriorities(); // resolve the trigger
 
-        assertThat(duo().getPowerModifier()).isEqualTo(1);
-        assertThat(duo().getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo())).isEqualTo(1);
     }
 
     @Test
@@ -73,7 +74,7 @@ class ThistledownDuoTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(duo().getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, duo(), Keyword.FLYING)).isFalse();
     }
 
@@ -82,13 +83,13 @@ class ThistledownDuoTest extends BaseCardTest {
     void boostWearsOff() {
         castWhiteSpell();
         harness.passBothPriorities();
-        assertThat(duo().getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isEqualTo(1);
 
         resolveAllTriggers();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(duo().getPowerModifier()).isEqualTo(0);
-        assertThat(duo().getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo())).isEqualTo(0);
     }
 
     @Test
@@ -122,22 +123,22 @@ class ThistledownDuoTest extends BaseCardTest {
         harness.addMana(player1, paymentColor, 3);
         harness.castCreature(player1, 0);
 
-        assertThat(original.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, original)).isZero();
         assertThat(gqs.hasKeyword(gd, original, Keyword.FLYING)).isFalse();
         resolveAllTriggers();
 
-        assertThat(original.getPowerModifier()).isEqualTo(1);
-        assertThat(original.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, original)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, original)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, original, Keyword.FLYING)).isTrue();
         Permanent newlyCast = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> !permanent.getId().equals(original.getId()))
                 .findFirst().orElseThrow();
-        assertThat(newlyCast.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, newlyCast)).isZero();
         assertThat(gqs.hasKeyword(gd, newlyCast, Keyword.FLYING)).isFalse();
 
         harness.passUntil(TurnStep.CLEANUP);
-        assertThat(original.getPowerModifier()).isZero();
-        assertThat(original.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, original)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, original)).isZero();
         assertThat(gqs.hasKeyword(gd, original, Keyword.FLYING)).isFalse();
     }
 
@@ -149,8 +150,8 @@ class ThistledownDuoTest extends BaseCardTest {
         castWhiteSpell();
         resolveAllTriggers();
 
-        assertThat(duo().getPowerModifier()).isEqualTo(2);
-        assertThat(duo().getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo())).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, duo(), Keyword.FLYING)).isFalse();
     }
 
@@ -163,8 +164,8 @@ class ThistledownDuoTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         resolveAllTriggers();
 
-        assertThat(duo().getPowerModifier()).isZero();
-        assertThat(duo().getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo())).isZero();
         assertThat(gqs.hasKeyword(gd, duo(), Keyword.FLYING)).isFalse();
     }
 
@@ -174,7 +175,7 @@ class ThistledownDuoTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ThistledownDuo());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(duo().getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, duo())).isZero();
         assertThat(gqs.hasKeyword(gd, duo(), Keyword.FLYING)).isFalse();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -34,10 +35,10 @@ class GaeasMightTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isEqualTo(3);
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(5);
     }
 
     @Test
@@ -52,8 +53,8 @@ class GaeasMightTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
     }
 
     @Test
@@ -70,8 +71,8 @@ class GaeasMightTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -83,10 +84,10 @@ class GaeasMightTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -101,10 +102,10 @@ class GaeasMightTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -119,8 +120,8 @@ class GaeasMightTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Plains());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
     }
 
     @Test

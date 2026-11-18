@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
@@ -63,8 +64,8 @@ class UntamedMightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(3);
     }
 
     @Test
@@ -79,10 +80,10 @@ class UntamedMightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(5);
-        assertThat(bear.getToughnessModifier()).isEqualTo(5);
-        assertThat(bear.getEffectivePower()).isEqualTo(7);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(7);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(7);
     }
 
     @Test
@@ -97,8 +98,8 @@ class UntamedMightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -113,8 +114,8 @@ class UntamedMightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -132,10 +133,10 @@ class UntamedMightTest extends BaseCardTest {
         harness.passUntil(TurnStep.CLEANUP);
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -197,17 +198,17 @@ class UntamedMightTest extends BaseCardTest {
         harness.castInstant(player1, 0, 5, secondTarget);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Carapace Forger").getPowerModifier()).isZero();
-        assertThat(findPermanent(player1, "Carapace Forger").getToughnessModifier()).isZero();
-        assertThat(findPermanent(player2, "Carapace Forger").getPowerModifier()).isEqualTo(5);
-        assertThat(findPermanent(player2, "Carapace Forger").getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Carapace Forger"))).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player1, "Carapace Forger"))).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player2, "Carapace Forger"))).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player2, "Carapace Forger"))).isEqualTo(5);
 
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Carapace Forger").getPowerModifier()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Carapace Forger").getToughnessModifier()).isEqualTo(2);
-        assertThat(findPermanent(player2, "Carapace Forger").getPowerModifier()).isEqualTo(5);
-        assertThat(findPermanent(player2, "Carapace Forger").getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Carapace Forger"))).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player1, "Carapace Forger"))).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player2, "Carapace Forger"))).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player2, "Carapace Forger"))).isEqualTo(5);
         assertThat(gd.stack).isEmpty();
     }
 }

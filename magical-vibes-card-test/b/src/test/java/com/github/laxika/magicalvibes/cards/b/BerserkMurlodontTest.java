@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvenEnvoy;
 import com.github.laxika.magicalvibes.cards.h.Hundroog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,8 +32,8 @@ class BerserkMurlodontTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(murlodont.getPowerModifier()).isEqualTo(2);
-        assertThat(murlodont.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, murlodont)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, murlodont)).isEqualTo(2);
     }
 
     @Test
@@ -46,8 +47,8 @@ class BerserkMurlodontTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(beast.getPowerModifier()).isEqualTo(1);
-        assertThat(beast.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, beast)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beast)).isEqualTo(1);
     }
 
     @Test
@@ -61,8 +62,8 @@ class BerserkMurlodontTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(nonBeast.getPowerModifier()).isZero();
-        assertThat(nonBeast.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonBeast)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonBeast)).isZero();
     }
 
     @Test
@@ -74,8 +75,8 @@ class BerserkMurlodontTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(murlodont.getPowerModifier()).isZero();
-        assertThat(murlodont.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, murlodont)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, murlodont)).isZero();
     }
 
     @Test
@@ -88,15 +89,15 @@ class BerserkMurlodontTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(murlodont.getPowerModifier()).isEqualTo(1);
-        assertThat(murlodont.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, murlodont)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, murlodont)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(murlodont.getPowerModifier()).isZero();
-        assertThat(murlodont.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, murlodont)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, murlodont)).isZero();
     }
 
     @Test
@@ -115,12 +116,12 @@ class BerserkMurlodontTest extends BaseCardTest {
         ));
         resolveAllTriggers();
 
-        assertThat(beast.getPowerModifier()).isEqualTo(4);
-        assertThat(beast.getToughnessModifier()).isEqualTo(4);
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getPowerModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, beast)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beast)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 
     @Test
@@ -140,9 +141,9 @@ class BerserkMurlodontTest extends BaseCardTest {
         ));
         resolveAllTriggers();
 
-        assertThat(murlodont.getPowerModifier()).isEqualTo(1);
-        assertThat(murlodont.getToughnessModifier()).isEqualTo(1);
-        assertThat(beast.getPowerModifier()).isEqualTo(2);
-        assertThat(beast.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, murlodont)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, murlodont)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, beast)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beast)).isEqualTo(2);
     }
 }

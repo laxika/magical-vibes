@@ -30,14 +30,14 @@ class StromkirkCondemnedTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(condemned.getEffectivePower()).isEqualTo(3);
-        assertThat(condemned.getEffectiveToughness()).isEqualTo(3);
-        assertThat(ownVampire.getEffectivePower()).isEqualTo(3);
-        assertThat(ownVampire.getEffectiveToughness()).isEqualTo(3);
-        assertThat(ownBear.getEffectivePower()).isEqualTo(2);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponentVampire.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentVampire.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, condemned)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, condemned)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownVampire)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownVampire)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentVampire)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentVampire)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
@@ -64,13 +64,13 @@ class StromkirkCondemnedTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
-        assertThat(condemned.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, condemned)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(condemned.getEffectivePower()).isEqualTo(2);
-        assertThat(condemned.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, condemned)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, condemned)).isEqualTo(2);
     }
 
     @Test
@@ -95,15 +95,15 @@ class StromkirkCondemnedTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Stromkirk Condemned");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(condemned.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, condemned)).isEqualTo(2);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once each turn");
 
         harness.passBothPriorities();
 
-        assertThat(condemned.getEffectivePower()).isEqualTo(3);
-        assertThat(condemned.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, condemned)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, condemned)).isEqualTo(3);
     }
 
     @Test
@@ -118,12 +118,12 @@ class StromkirkCondemnedTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new StromkirkCondemned());
 
-        assertThat(condemned.getEffectivePower()).isEqualTo(3);
-        assertThat(condemned.getEffectiveToughness()).isEqualTo(3);
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(3);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(3);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, condemned)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, condemned)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
     }
 
     @Test
@@ -140,10 +140,10 @@ class StromkirkCondemnedTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
     }
 
     @Test
@@ -158,15 +158,15 @@ class StromkirkCondemnedTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(condemned.getEffectivePower()).isEqualTo(2);
-        assertThat(condemned.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, condemned)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, condemned)).isEqualTo(2);
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(condemned.getEffectivePower()).isEqualTo(3);
-        assertThat(condemned.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, condemned)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, condemned)).isEqualTo(3);
     }
 
 }

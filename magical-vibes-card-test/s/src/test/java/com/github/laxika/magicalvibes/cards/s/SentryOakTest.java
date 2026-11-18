@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CloudgoatRanger;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -58,7 +59,7 @@ class SentryOakTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownNextCard, winningCard);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingNextCard, losingCard);
-        assertThat(sentryOak().getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentryOak())).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, sentryOak(), Keyword.DEFENDER)).isFalse();
     }
 
@@ -74,7 +75,7 @@ class SentryOakTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
-        assertThat(sentryOak().getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentryOak())).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, sentryOak(), Keyword.DEFENDER)).isFalse();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -91,7 +92,7 @@ class SentryOakTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player2,
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
-        assertThat(sentryOak().getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentryOak())).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, sentryOak(), Keyword.DEFENDER)).isTrue();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -108,8 +109,8 @@ class SentryOakTest extends BaseCardTest {
         keepBothRevealedCardsOnTop();
 
         Permanent oak = sentryOak();
-        assertThat(oak.getPowerModifier()).isEqualTo(2);
-        assertThat(oak.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, oak)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, oak, Keyword.DEFENDER)).isFalse();
     }
 
@@ -125,7 +126,7 @@ class SentryOakTest extends BaseCardTest {
         keepBothRevealedCardsOnTop();
 
         Permanent oak = sentryOak();
-        assertThat(oak.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, oak, Keyword.DEFENDER)).isTrue();
     }
 
@@ -141,7 +142,7 @@ class SentryOakTest extends BaseCardTest {
         keepBothRevealedCardsOnTop();
 
         Permanent oak = sentryOak();
-        assertThat(oak.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, oak, Keyword.DEFENDER)).isTrue();
     }
 
@@ -156,7 +157,7 @@ class SentryOakTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         Permanent oak = sentryOak();
-        assertThat(oak.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, oak, Keyword.DEFENDER)).isTrue();
     }
 
@@ -185,13 +186,13 @@ class SentryOakTest extends BaseCardTest {
         keepBothRevealedCardsOnTop();
 
         Permanent oak = sentryOak();
-        assertThat(oak.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, oak, Keyword.DEFENDER)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player1, TurnStep.CLEANUP);
 
-        assertThat(oak.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, oak, Keyword.DEFENDER)).isTrue();
     }
 }

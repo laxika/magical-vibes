@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,34 +20,34 @@ class CanyonJerboaTest extends BaseCardTest {
     void landfallBoostsAllCreaturesYouControl() {
         Permanent jerboa = addCreatureReady(player1, new CanyonJerboa());
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        int jerboaPower = jerboa.getEffectivePower();
-        int bearPower = bear.getEffectivePower();
-        int jerboaToughness = jerboa.getEffectiveToughness();
-        int bearToughness = bear.getEffectiveToughness();
+        int jerboaPower = gqs.getEffectivePower(gd, jerboa);
+        int bearPower = gqs.getEffectivePower(gd, bear);
+        int jerboaToughness = gqs.getEffectiveToughness(gd, jerboa);
+        int bearToughness = gqs.getEffectiveToughness(gd, bear);
         harness.setHand(player1, List.of(new Forest()));
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(jerboa.getEffectivePower()).isEqualTo(jerboaPower + 1);
-        assertThat(jerboa.getEffectiveToughness()).isEqualTo(jerboaToughness + 1);
-        assertThat(bear.getEffectivePower()).isEqualTo(bearPower + 1);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(bearToughness + 1);
+        assertThat(gqs.getEffectivePower(gd, jerboa)).isEqualTo(jerboaPower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, jerboa)).isEqualTo(jerboaToughness + 1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(bearPower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(bearToughness + 1);
     }
 
     @Test
     void opponentsLandDoesNotTriggerLandfall() {
         Permanent jerboa = addCreatureReady(player1, new CanyonJerboa());
-        int jerboaPower = jerboa.getEffectivePower();
-        int jerboaToughness = jerboa.getEffectiveToughness();
+        int jerboaPower = gqs.getEffectivePower(gd, jerboa);
+        int jerboaToughness = gqs.getEffectiveToughness(gd, jerboa);
         harness.setHand(player2, List.of(new Forest()));
         harness.forceActivePlayer(player2);
 
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(jerboa.getEffectivePower()).isEqualTo(jerboaPower);
-        assertThat(jerboa.getEffectiveToughness()).isEqualTo(jerboaToughness);
+        assertThat(gqs.getEffectivePower(gd, jerboa)).isEqualTo(jerboaPower);
+        assertThat(gqs.getEffectiveToughness(gd, jerboa)).isEqualTo(jerboaToughness);
     }
 
     @Test
@@ -56,15 +57,15 @@ class CanyonJerboaTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        assertThat(jerboa.getPowerModifier()).isEqualTo(1);
-        assertThat(jerboa.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, jerboa)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, jerboa)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(jerboa.getPowerModifier()).isZero();
-        assertThat(jerboa.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, jerboa)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, jerboa)).isZero();
     }
 
     @Test
@@ -76,13 +77,13 @@ class CanyonJerboaTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(jerboa.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, jerboa)).isZero();
         resolveAllTriggers();
 
-        assertThat(jerboa.getPowerModifier()).isEqualTo(2);
-        assertThat(jerboa.getToughnessModifier()).isEqualTo(2);
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, jerboa)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, jerboa)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -95,12 +96,12 @@ class CanyonJerboaTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent afterResolution = harness.enterBattlefieldAndReturn(player1, new CanyonJerboa());
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
     }
 
     @Test
@@ -110,12 +111,12 @@ class CanyonJerboaTest extends BaseCardTest {
         harness.playLand(player1, 0);
         Permanent survivor = harness.enterBattlefieldAndReturn(player1, new CanyonJerboa());
 
-        source.setToughnessModifier(-2);
+        PermanentGrants.setToughnessBoost(gd, source, -2);
         harness.runStateBasedActions();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
         resolveAllTriggers();
 
-        assertThat(survivor.getPowerModifier()).isEqualTo(1);
-        assertThat(survivor.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isEqualTo(1);
     }
 }

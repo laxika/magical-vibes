@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -23,8 +24,8 @@ class AntagonizeTest extends BaseCardTest {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castAntagonize(bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(4);
-        assertThat(bear.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(3);
     }
 
     @Test
@@ -36,8 +37,8 @@ class AntagonizeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -75,12 +76,12 @@ class AntagonizeTest extends BaseCardTest {
 
         castAntagonize(target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getToughnessModifier()).isZero();
-        assertThat(otherCreature.getPowerModifier()).isZero();
-        assertThat(otherCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreature)).isZero();
     }
 
     @Test
@@ -90,15 +91,15 @@ class AntagonizeTest extends BaseCardTest {
         castAntagonize(bear.getId());
         castAntagonize(bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(8);
-        assertThat(bear.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(8);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     private void castAntagonize(UUID targetId) {

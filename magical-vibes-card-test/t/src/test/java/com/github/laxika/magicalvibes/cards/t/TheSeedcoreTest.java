@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.c.CrawlingChorus;
@@ -178,7 +179,7 @@ class TheSeedcoreTest extends BaseCardTest {
     void corruptedRejectsCreatureWithOnlyOnePower() {
         harness.addToBattlefield(player1, new TheSeedcore());
         Permanent target = addCreatureReady(player1, new CrawlingChorus());
-        target.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, target, 1);
         gd.playerPoisonCounters.put(player2.getId(), 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, target.getId()))
@@ -190,7 +191,7 @@ class TheSeedcoreTest extends BaseCardTest {
     void corruptedRejectsCreatureWithOnlyOneToughness() {
         harness.addToBattlefield(player1, new TheSeedcore());
         Permanent target = addCreatureReady(player1, new CrawlingChorus());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         gd.playerPoisonCounters.put(player2.getId(), 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, target.getId()))
@@ -205,7 +206,7 @@ class TheSeedcoreTest extends BaseCardTest {
         gd.playerPoisonCounters.put(player2.getId(), 3);
 
         harness.activateAbility(player1, 0, 2, null, target.getId());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);

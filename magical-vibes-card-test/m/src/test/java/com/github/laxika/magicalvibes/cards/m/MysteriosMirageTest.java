@@ -34,8 +34,8 @@ class MysteriosMirageTest extends BaseCardTest {
         List<Permanent> tokens = findPermanents(player1, "Illusion Villain");
         assertThat(tokens).hasSize(1);
         assertThat(tokens.getFirst().getCard().isToken()).isTrue();
-        assertThat(tokens.getFirst().getEffectivePower()).isEqualTo(3);
-        assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, tokens.getFirst())).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, tokens.getFirst())).isEqualTo(3);
     }
 
     @Test

@@ -25,10 +25,10 @@ class VirtuousChargeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(firstCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(firstCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(secondCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(secondCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(3);
     }
 
     @Test
@@ -41,10 +41,10 @@ class VirtuousChargeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -60,8 +60,8 @@ class VirtuousChargeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -74,10 +74,10 @@ class VirtuousChargeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new VolunteerMilitia());
 
-        assertThat(existingCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(existingCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, existingCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, existingCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
     }
 
     @Test
@@ -101,15 +101,15 @@ class VirtuousChargeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -123,7 +123,7 @@ class VirtuousChargeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 }

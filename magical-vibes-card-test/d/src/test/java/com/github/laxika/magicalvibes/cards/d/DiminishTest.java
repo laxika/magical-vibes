@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -65,7 +66,7 @@ class DiminishTest extends BaseCardTest {
 
         // Grizzly Bears is normally 2/2 — after Diminish it should be 1/1
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.isBasePowerToughnessOverriddenUntilEndOfTurn()).isTrue();
+        assertThat(PermanentGrants.hasBasePowerToughnessSet(gd, bear)).isTrue();
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(1);
     }
@@ -76,8 +77,8 @@ class DiminishTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         // Give the bear +2/+2 boost
-        bear.setPowerModifier(2);
-        bear.setToughnessModifier(2);
+        PermanentGrants.setPowerBoost(gd, bear, 2);
+        PermanentGrants.setToughnessBoost(gd, bear, 2);
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4); // 2 base + 2 modifier
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
 
@@ -131,7 +132,7 @@ class DiminishTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // After cleanup, base P/T override is removed
-        assertThat(bear.isBasePowerToughnessOverriddenUntilEndOfTurn()).isFalse();
+        assertThat(PermanentGrants.hasBasePowerToughnessSet(gd, bear)).isFalse();
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
@@ -257,7 +258,7 @@ class DiminishTest extends BaseCardTest {
 
         // Village is no longer a creature, no longer has base P/T override
         assertThat(gd.animatedByFloatingEffect(village.getId())).isFalse();
-        assertThat(village.isBasePowerToughnessOverriddenUntilEndOfTurn()).isFalse();
+        assertThat(PermanentGrants.hasBasePowerToughnessSet(gd, village)).isFalse();
         assertThat(gqs.isCreature(gd, village)).isFalse();
     }
 

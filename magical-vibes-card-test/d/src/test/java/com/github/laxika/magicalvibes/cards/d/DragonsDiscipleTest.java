@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BlueDragon;
 import com.github.laxika.magicalvibes.cards.b.BullsStrength;
 import com.github.laxika.magicalvibes.cards.n.NowhereToRun;
@@ -66,7 +67,7 @@ class DragonsDiscipleTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInGraveyard(player2, "Bull's Strength");
-        assertThat(dragon.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
     }
 
     @Test
@@ -78,7 +79,7 @@ class DragonsDiscipleTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(2);
     }
 
     @Test
@@ -108,7 +109,7 @@ class DragonsDiscipleTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Bull's Strength");
-        assertThat(dragon.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(2);
     }
 
     @Test
@@ -122,7 +123,7 @@ class DragonsDiscipleTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
-        assertThat(dragon.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
     }
 
@@ -135,7 +136,7 @@ class DragonsDiscipleTest extends BaseCardTest {
         castBullsStrengthAt(player2, dragon, 3);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(dragon.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(2);
     }
 
     @Test
@@ -145,7 +146,7 @@ class DragonsDiscipleTest extends BaseCardTest {
         castBullsStrengthAt(player2, disciple, 3);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(disciple.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(2);
     }
 
     @Test

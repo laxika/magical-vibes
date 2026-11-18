@@ -45,7 +45,7 @@ class FlayerOfTheHateboundTest extends BaseCardTest {
         Permanent flayer = flayerOnBattlefield(gd);
         assertThat(flayer).isNotNull();
         assertThat(flayer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(flayer.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, flayer)).isEqualTo(5);
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
     }

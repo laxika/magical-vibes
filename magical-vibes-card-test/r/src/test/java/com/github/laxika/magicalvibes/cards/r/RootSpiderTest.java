@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BeastWalkers;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -28,8 +29,8 @@ class RootSpiderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(spider.getPowerModifier()).isEqualTo(1);
-        assertThat(spider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spider)).isZero();
         assertThat(gqs.hasKeyword(gd, spider, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -44,7 +45,7 @@ class RootSpiderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(spider.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isZero();
         assertThat(gqs.hasKeyword(gd, spider, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -58,12 +59,12 @@ class RootSpiderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(spider.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, spider, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(spider.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isZero();
         assertThat(gqs.hasKeyword(gd, spider, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -76,12 +77,12 @@ class RootSpiderTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(spider.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isZero();
         assertThat(gqs.hasKeyword(gd, spider, Keyword.FIRST_STRIKE)).isFalse();
 
         resolveAllTriggers();
 
-        assertThat(spider.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, spider, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -117,8 +118,8 @@ class RootSpiderTest extends BaseCardTest {
                 new BlockerAssignment(1, 1)));
         resolveAllTriggers();
 
-        assertThat(spider.getPowerModifier()).isEqualTo(1);
-        assertThat(spider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spider)).isZero();
         assertThat(gqs.hasKeyword(gd, spider, Keyword.FIRST_STRIKE)).isTrue();
     }
 }

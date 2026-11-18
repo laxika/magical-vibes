@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -50,7 +51,7 @@ class SteelLeafChampionTest extends BaseCardTest {
     void increasedPowerAllowsBlocking() {
         attackingChampion();
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, bears, 1);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -64,7 +65,7 @@ class SteelLeafChampionTest extends BaseCardTest {
     void decreasedPowerPreventsBlocking() {
         attackingChampion();
         Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        giant.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, giant, -1);
 
         prepareDeclareBlockers();
 

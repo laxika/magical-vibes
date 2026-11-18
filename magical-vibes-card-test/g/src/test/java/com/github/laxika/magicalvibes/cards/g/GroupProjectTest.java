@@ -28,8 +28,8 @@ class GroupProjectTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Spirit")
-                        && p.getEffectivePower() == 2
-                        && p.getEffectiveToughness() == 2);
+                        && gqs.getEffectivePower(gd, p) == 2
+                        && gqs.getEffectiveToughness(gd, p) == 2);
     }
 
     @Test

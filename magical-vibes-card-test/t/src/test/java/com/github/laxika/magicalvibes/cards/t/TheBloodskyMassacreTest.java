@@ -31,8 +31,8 @@ class TheBloodskyMassacreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent token = findPermanent(player1, "Demon Berserker");
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.DEMON, CardSubtype.BERSERKER);
         assertThat(token.getCard().getKeywords()).contains(Keyword.MENACE);
     }

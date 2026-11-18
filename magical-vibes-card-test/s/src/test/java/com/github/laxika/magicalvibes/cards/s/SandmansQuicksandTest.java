@@ -30,10 +30,10 @@ class SandmansQuicksandTest extends BaseCardTest {
         harness.castFromHand(player1, new SandmansQuicksand(), "{1}{B}{B}");
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(1);
     }
 
     @Test
@@ -52,10 +52,10 @@ class SandmansQuicksandTest extends BaseCardTest {
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(1);
     }
 
     @Test
@@ -65,15 +65,15 @@ class SandmansQuicksandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent later = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        assertThat(existing.getEffectiveToughness()).isEqualTo(1);
-        assertThat(later.getEffectivePower()).isEqualTo(3);
-        assertThat(later.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(existing.getEffectivePower()).isEqualTo(3);
-        assertThat(existing.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(3);
     }
 
     @Test
@@ -116,10 +116,10 @@ class SandmansQuicksandTest extends BaseCardTest {
         harness.castAndResolveFromLibraryTop(player1);
 
         harness.assertLife(player1, 17);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(1);
     }
 
     private void prepareMainPhase() {

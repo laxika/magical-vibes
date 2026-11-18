@@ -54,8 +54,8 @@ class HearthcageGiantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Elemental");
-        assertThat(giant.getEffectivePower()).isEqualTo(8);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(6);
     }
 
     @Test
@@ -66,13 +66,13 @@ class HearthcageGiantTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, giant.getId());
         harness.passBothPriorities();
-        assertThat(giant.getEffectivePower()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(8);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(giant.getEffectivePower()).isEqualTo(5);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(5);
     }
 
     @Test
@@ -121,8 +121,8 @@ class HearthcageGiantTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Rebellion of the Flamekin");
         harness.passBothPriorities();
-        assertThat(giant.getEffectivePower()).isEqualTo(8);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(6);
     }
 
     @Test
@@ -134,10 +134,10 @@ class HearthcageGiantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
 
         harness.assertNotOnBattlefield(player1, "Flamekin Harbinger");
-        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         harness.passBothPriorities();
-        assertThat(target.getEffectivePower()).isEqualTo(8);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
     }
 
     @Test

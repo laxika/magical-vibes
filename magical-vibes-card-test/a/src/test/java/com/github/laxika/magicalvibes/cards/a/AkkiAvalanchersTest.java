@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,8 +26,8 @@ class AkkiAvalanchersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Forest");
-        assertThat(akki.getEffectivePower()).isEqualTo(3);
-        assertThat(akki.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, akki)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, akki)).isEqualTo(1);
     }
 
     @Test
@@ -45,7 +46,7 @@ class AkkiAvalanchersTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getId)
                 .containsExactlyInAnyOrder(akki.getId(), firstForest.getId());
-        assertThat(akki.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, akki)).isEqualTo(3);
     }
 
     @Test
@@ -61,7 +62,7 @@ class AkkiAvalanchersTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(akki.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, akki)).isEqualTo(0);
     }
 
     @Test
@@ -111,7 +112,7 @@ class AkkiAvalanchersTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Forest");
         harness.assertNotOnBattlefield(player1, "Forest");
-        assertThat(akki.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, akki)).isEqualTo(1);
 
         harness.addToBattlefield(player1, new Forest());
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -119,7 +120,7 @@ class AkkiAvalanchersTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Forest");
 
         harness.passBothPriorities();
-        assertThat(akki.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, akki)).isEqualTo(3);
     }
 
     @Test
@@ -131,15 +132,15 @@ class AkkiAvalanchersTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
 
         harness.addToBattlefield(player1, new Forest());
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
     }
 
     @Test
@@ -151,12 +152,12 @@ class AkkiAvalanchersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(akki.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, akki)).isEqualTo(1);
         harness.addToBattlefield(player1, new Forest());
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(akki.getEffectivePower()).isEqualTo(3);
-        assertThat(akki.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, akki)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, akki)).isEqualTo(1);
     }
 }

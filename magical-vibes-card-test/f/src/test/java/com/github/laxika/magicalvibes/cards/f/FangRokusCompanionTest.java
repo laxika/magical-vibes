@@ -65,12 +65,12 @@ class FangRokusCompanionTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, legendary.getId());
-        fang.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, fang, 3);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, legendary)).isEqualTo(9);
         assertThat(gqs.getEffectiveToughness(gd, legendary)).isEqualTo(2);
-        fang.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, fang, 0);
         assertThat(gqs.getEffectivePower(gd, legendary)).isEqualTo(9);
     }
 
@@ -82,7 +82,7 @@ class FangRokusCompanionTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, legendary.getId());
-        fang.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, fang, 3);
         fang.setMarkedDamage(gqs.getEffectiveToughness(gd, fang));
         harness.runStateBasedActions();
         resolveAllTriggers();
@@ -172,7 +172,7 @@ class FangRokusCompanionTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, legendary)).isEqualTo(2);
     }
     private void kill(Permanent creature) {
-        creature.setMarkedDamage(creature.getEffectiveToughness());
+        creature.setMarkedDamage(gqs.getEffectiveToughness(gd, creature));
         harness.runStateBasedActions();
         harness.passBothPriorities();
     }

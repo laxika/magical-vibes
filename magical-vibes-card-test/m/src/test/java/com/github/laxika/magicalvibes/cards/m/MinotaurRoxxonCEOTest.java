@@ -34,8 +34,8 @@ class MinotaurRoxxonCEOTest extends BaseCardTest {
         assertThat(villain.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(villain.getCard().getSubtypes()).contains(CardSubtype.VILLAIN);
         assertThat(villain.getCard().getKeywords()).contains(Keyword.MENACE);
-        assertThat(villain.getEffectivePower()).isEqualTo(2);
-        assertThat(villain.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, villain)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, villain)).isEqualTo(1);
     }
 
     @Test

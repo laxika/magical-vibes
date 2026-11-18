@@ -91,8 +91,8 @@ class ZhalfirinKnightTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isZero();
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
     }
 
     @Test
@@ -106,8 +106,8 @@ class ZhalfirinKnightTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -122,18 +122,18 @@ class ZhalfirinKnightTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(firstBlocker.getEffectivePower()).isZero();
-        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(3);
-        assertThat(secondBlocker.getEffectivePower()).isZero();
-        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firstBlocker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, firstBlocker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondBlocker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, secondBlocker)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(firstBlocker.getEffectivePower()).isEqualTo(1);
-        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(4);
-        assertThat(secondBlocker.getEffectivePower()).isEqualTo(1);
-        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, firstBlocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, firstBlocker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, secondBlocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, secondBlocker)).isEqualTo(4);
     }
 
     @Test
@@ -147,8 +147,8 @@ class ZhalfirinKnightTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getEffectivePower()).isEqualTo(1);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -34,12 +35,12 @@ class SkulduggeryTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(ownId, oppId));
 
         Permanent own = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(own.getPowerModifier()).isEqualTo(1);
-        assertThat(own.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, own)).isEqualTo(1);
 
         Permanent opp = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(opp.getPowerModifier()).isEqualTo(-1);
-        assertThat(opp.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opp)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opp)).isEqualTo(-1);
     }
 
     @Test
@@ -55,8 +56,8 @@ class SkulduggeryTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(ownId, oppId));
 
         Permanent own = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(own.getPowerModifier()).isEqualTo(1);
-        assertThat(own.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, own)).isEqualTo(1);
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
@@ -135,8 +136,8 @@ class SkulduggeryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent own = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(own.getPowerModifier()).isEqualTo(1);
-        assertThat(own.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, own)).isEqualTo(1);
     }
 
     @Test
@@ -147,16 +148,16 @@ class SkulduggeryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castAndResolveInstant(player1, 0, List.of(own.getId(), opponent.getId()));
-        assertThat(own.getPowerModifier()).isEqualTo(1);
-        assertThat(opponent.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(own.getPowerModifier()).isZero();
-        assertThat(own.getToughnessModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, own)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -182,10 +183,10 @@ class SkulduggeryTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(own);
         harness.passBothPriorities();
 
-        assertThat(own.getPowerModifier()).isZero();
-        assertThat(own.getToughnessModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isEqualTo(-1);
-        assertThat(opponent.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, own)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isEqualTo(-1);
     }
 
     @Test
@@ -200,10 +201,10 @@ class SkulduggeryTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(opponent);
         harness.passBothPriorities();
 
-        assertThat(own.getPowerModifier()).isEqualTo(1);
-        assertThat(own.getToughnessModifier()).isEqualTo(1);
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, own)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -223,7 +224,7 @@ class SkulduggeryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent opp = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(opp.getPowerModifier()).isEqualTo(-1);
-        assertThat(opp.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opp)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opp)).isEqualTo(-1);
     }
 }

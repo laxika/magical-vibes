@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BounceOff;
 import com.github.laxika.magicalvibes.cards.v.VoyagerGlidecar;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -24,8 +25,8 @@ class HowlersHeavyTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new HowlersHeavy());
         cycleHowlersHeavy(List.of(bears));
 
-        assertThat(bears.getPowerModifier()).isEqualTo(-3);
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         harness.assertInGraveyard(player1, "Howler's Heavy");
         harness.assertInHand(player1, "Howler's Heavy");
     }
@@ -36,8 +37,8 @@ class HowlersHeavyTest extends BaseCardTest {
         Permanent vehicle = harness.addToBattlefieldAndReturn(player2, new VoyagerGlidecar());
         cycleHowlersHeavy(List.of(vehicle));
 
-        assertThat(vehicle.getPowerModifier()).isEqualTo(-3);
-        assertThat(vehicle.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, vehicle)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vehicle)).isZero();
     }
 
     @Test
@@ -77,8 +78,8 @@ class HowlersHeavyTest extends BaseCardTest {
 
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -93,7 +94,7 @@ class HowlersHeavyTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
-        assertThat(creature.getPowerModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(-3);
         harness.assertNotInHand(player1, "Voyager Glidecar");
 
         harness.passBothPriorities();
@@ -140,7 +141,7 @@ class HowlersHeavyTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(creature.getPowerModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(-3);
         harness.assertInHand(player1, "Voyager Glidecar");
     }
 

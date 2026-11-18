@@ -31,12 +31,12 @@ class AmprynTacticianTest extends BaseCardTest {
         castTactician();
 
         Permanent freeblade = findPermanent(player1, "Topan Freeblade");
-        assertThat(freeblade.getEffectivePower()).isEqualTo(3);
-        assertThat(freeblade.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, freeblade)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, freeblade)).isEqualTo(3);
 
         Permanent tactician = findPermanent(player1, "Ampryn Tactician");
-        assertThat(tactician.getEffectivePower()).isEqualTo(4);
-        assertThat(tactician.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, tactician)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tactician)).isEqualTo(4);
     }
 
     @Test
@@ -46,8 +46,8 @@ class AmprynTacticianTest extends BaseCardTest {
 
         castTactician();
 
-        assertThat(findPermanent(player2, "Topan Freeblade").getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanent(player2, "Topan Freeblade").getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Topan Freeblade"))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Topan Freeblade"))).isEqualTo(2);
     }
 
     @Test
@@ -61,9 +61,9 @@ class AmprynTacticianTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Topan Freeblade").getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Ampryn Tactician").getEffectivePower()).isEqualTo(3);
-        assertThat(findPermanent(player1, "Ampryn Tactician").getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Topan Freeblade"))).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Ampryn Tactician"))).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Ampryn Tactician"))).isEqualTo(3);
     }
 
     @Test
@@ -75,16 +75,16 @@ class AmprynTacticianTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent tactician = findPermanent(player1, "Ampryn Tactician");
-        assertThat(tactician.getEffectivePower()).isEqualTo(3);
-        assertThat(tactician.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, tactician)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, tactician)).isEqualTo(3);
         Permanent freeblade = harness.addToBattlefieldAndReturn(player1, new TopanFreeblade());
 
         resolveAllTriggers();
 
-        assertThat(freeblade.getEffectivePower()).isEqualTo(3);
-        assertThat(freeblade.getEffectiveToughness()).isEqualTo(3);
-        assertThat(tactician.getEffectivePower()).isEqualTo(4);
-        assertThat(tactician.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, freeblade)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, freeblade)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, tactician)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tactician)).isEqualTo(4);
     }
 
     @Test
@@ -94,9 +94,9 @@ class AmprynTacticianTest extends BaseCardTest {
 
         Permanent freeblade = harness.addToBattlefieldAndReturn(player1, new TopanFreeblade());
 
-        assertThat(freeblade.getEffectivePower()).isEqualTo(2);
-        assertThat(freeblade.getEffectiveToughness()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Ampryn Tactician").getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, freeblade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, freeblade)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Ampryn Tactician"))).isEqualTo(4);
     }
 
     @Test
@@ -110,11 +110,11 @@ class AmprynTacticianTest extends BaseCardTest {
 
         List<Permanent> tacticians = findPermanents(player1, "Ampryn Tactician");
         assertThat(tacticians).hasSize(2);
-        assertThat(freeblade.getEffectivePower()).isEqualTo(4);
-        assertThat(freeblade.getEffectiveToughness()).isEqualTo(4);
-        assertThat(first.getEffectivePower()).isEqualTo(5);
-        assertThat(first.getEffectiveToughness()).isEqualTo(5);
-        assertThat(tacticians.get(1).getEffectivePower()).isEqualTo(4);
-        assertThat(tacticians.get(1).getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, freeblade)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, freeblade)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, tacticians.get(1))).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tacticians.get(1))).isEqualTo(4);
     }
 }

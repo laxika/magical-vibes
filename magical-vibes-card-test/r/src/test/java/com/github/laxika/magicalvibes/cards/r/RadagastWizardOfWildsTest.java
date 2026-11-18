@@ -32,8 +32,8 @@ class RadagastWizardOfWildsTest extends BaseCardTest {
         Permanent beast = findPermanent(player1, "Beast");
         assertThat(beast.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(beast.getCard().getSubtypes()).contains(CardSubtype.BEAST);
-        assertThat(beast.getEffectivePower()).isEqualTo(3);
-        assertThat(beast.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(3);
     }
 
     @Test
@@ -46,8 +46,8 @@ class RadagastWizardOfWildsTest extends BaseCardTest {
         assertThat(bird.getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(bird.getCard().getSubtypes()).contains(CardSubtype.BIRD);
         assertThat(gqs.hasKeyword(gd, bird, Keyword.FLYING)).isTrue();
-        assertThat(bird.getEffectivePower()).isEqualTo(2);
-        assertThat(bird.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
     }
 
     @Test

@@ -24,8 +24,8 @@ class LictorTest extends BaseCardTest {
         Permanent token = findPermanent(player1, "Tyranid Warrior");
         assertThat(token.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.TYRANID, CardSubtype.WARRIOR);
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, token, Keyword.TRAMPLE)).isTrue();
     }
 

@@ -159,8 +159,8 @@ class PhantasmalImageTest extends BaseCardTest {
         Permanent image = enterCopyOf(faceDown.getId());
 
         assertThat(image.isFaceDown()).isFalse();
-        assertThat(image.getEffectivePower()).isEqualTo(2);
-        assertThat(image.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, image)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, image)).isEqualTo(2);
         assertThat(image.getCard().getSubtypes()).containsExactly(CardSubtype.ILLUSION);
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -25,8 +26,8 @@ class SerraAdvocateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -37,8 +38,8 @@ class SerraAdvocateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(2);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -63,8 +64,8 @@ class SerraAdvocateTest extends BaseCardTest {
         attacker.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(0);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(0);
     }
 
     @Test
@@ -89,8 +90,8 @@ class SerraAdvocateTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(0);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(0);
     }
 
     @Test
@@ -126,8 +127,8 @@ class SerraAdvocateTest extends BaseCardTest {
         blocker.setBlocking(false);
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(0);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(0);
     }
 
     private void addSerraAdvocate() {

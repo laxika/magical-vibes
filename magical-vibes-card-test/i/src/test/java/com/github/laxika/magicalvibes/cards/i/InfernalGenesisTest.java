@@ -43,8 +43,8 @@ class InfernalGenesisTest extends BaseCardTest {
         assertThat(minion.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(minion.getCard().getColors()).containsExactly(CardColor.BLACK);
         assertThat(minion.getCard().getSubtypes()).containsExactly(CardSubtype.MINION);
-        assertThat(minion.getEffectivePower()).isEqualTo(1);
-        assertThat(minion.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, minion)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, minion)).isEqualTo(1);
     }
 
     @Test

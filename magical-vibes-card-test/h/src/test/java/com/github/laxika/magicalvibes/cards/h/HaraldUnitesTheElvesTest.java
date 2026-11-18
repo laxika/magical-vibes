@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AxgardCavalry;
 import com.github.laxika.magicalvibes.cards.j.JasperaSentinel;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
@@ -77,8 +78,8 @@ class HaraldUnitesTheElvesTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getPowerModifier()).isEqualTo(-1);
-        assertThat(opponentCreature.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isEqualTo(-1);
     }
 
     @Test
@@ -94,8 +95,8 @@ class HaraldUnitesTheElvesTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(opposingElf.getPowerModifier()).isZero();
-        assertThat(opposingElf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingElf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingElf)).isZero();
     }
 
     @Test
@@ -176,10 +177,10 @@ class HaraldUnitesTheElvesTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(firstTarget.getPowerModifier()).isEqualTo(-1);
-        assertThat(firstTarget.getToughnessModifier()).isEqualTo(-1);
-        assertThat(secondTarget.getPowerModifier()).isEqualTo(-1);
-        assertThat(secondTarget.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstTarget)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstTarget)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondTarget)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondTarget)).isEqualTo(-1);
     }
     @Test
     void chapterIIITriggerAndDebuffExpireAtEndOfTurn() {
@@ -193,8 +194,8 @@ class HaraldUnitesTheElvesTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
         gs.declareBlockers(gd, player2, List.of());
 
         harness.forceStep(TurnStep.END_STEP);
@@ -202,13 +203,13 @@ class HaraldUnitesTheElvesTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.performUntapStep(player1);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         declareAttackers(List.of(0));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
     private void advanceToNextChapter() {
         harness.forceActivePlayer(player1);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -26,8 +27,8 @@ class WyluliWolfTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent wolf = findPermanent(player1, "Wyluli Wolf");
-        assertThat(wolf.getPowerModifier()).isEqualTo(1);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(1);
     }
 
     @Test
@@ -76,8 +77,8 @@ class WyluliWolfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentWolf.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentWolf.getPowerModifier()).isEqualTo(1);
-        assertThat(opponentWolf.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentWolf)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentWolf)).isEqualTo(1);
     }
 
     @Test
@@ -103,8 +104,8 @@ class WyluliWolfTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent wolf = findPermanent(player1, "Wyluli Wolf");
-        assertThat(wolf.getPowerModifier()).isEqualTo(0);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(0);
     }
 
     @Test
@@ -120,8 +121,8 @@ class WyluliWolfTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         Permanent wolf = findPermanent(player1, "Wyluli Wolf");
-        assertThat(wolf.getPowerModifier()).isEqualTo(0);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(0);
     }
 
     @Test
@@ -133,13 +134,13 @@ class WyluliWolfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, wolf.getId());
 
         assertThat(wolf.isTapped()).isTrue();
-        assertThat(wolf.getPowerModifier()).isZero();
-        assertThat(wolf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(1);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(1);
     }
 
     @Test
@@ -153,8 +154,8 @@ class WyluliWolfTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -169,8 +170,8 @@ class WyluliWolfTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -184,8 +185,8 @@ class WyluliWolfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, wolf.getId());
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(1);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(1);
     }
 
     private void setupWolf() {

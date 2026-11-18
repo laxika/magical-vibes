@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -38,8 +39,8 @@ class RiotRingleaderTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(ringleader.getPowerModifier()).isEqualTo(1);
-        assertThat(ringleader.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ringleader)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ringleader)).isZero();
     }
 
     @Test
@@ -51,8 +52,8 @@ class RiotRingleaderTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(human.getPowerModifier()).isEqualTo(1);
-        assertThat(human.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, human)).isZero();
     }
 
     @Test
@@ -64,7 +65,7 @@ class RiotRingleaderTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(goblin.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isZero();
     }
 
     @Test
@@ -76,7 +77,7 @@ class RiotRingleaderTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(enemyHuman.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, enemyHuman)).isZero();
     }
 
     @Test
@@ -87,12 +88,12 @@ class RiotRingleaderTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(ringleader.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ringleader)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ringleader.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ringleader)).isZero();
     }
 
     @Test
@@ -105,8 +106,8 @@ class RiotRingleaderTest extends BaseCardTest {
         Permanent newcomer = addCreatureReady(player1, new RiotRingleader());
         resolveAllTriggers();
 
-        assertThat(newcomer.getPowerModifier()).isEqualTo(1);
-        assertThat(newcomer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newcomer)).isZero();
     }
 
     @Test
@@ -118,9 +119,9 @@ class RiotRingleaderTest extends BaseCardTest {
 
         Permanent newcomer = addCreatureReady(player1, new RiotRingleader());
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(newcomer.getPowerModifier()).isZero();
-        assertThat(newcomer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newcomer)).isZero();
     }
 
     @Test
@@ -134,8 +135,8 @@ class RiotRingleaderTest extends BaseCardTest {
         resolveAllTriggers();
 
         for (Permanent human : List.of(first, second, nonAttacker)) {
-            assertThat(human.getPowerModifier()).isEqualTo(2);
-            assertThat(human.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, human)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, human)).isZero();
         }
     }
 

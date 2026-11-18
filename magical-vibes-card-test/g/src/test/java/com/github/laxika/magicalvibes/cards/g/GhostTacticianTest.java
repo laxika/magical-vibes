@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SerraSphinx;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,12 +31,12 @@ class GhostTacticianTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(tactician.getPowerModifier()).isEqualTo(1);
-        assertThat(tactician.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tactician)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tactician)).isZero();
         assertThat(tactician.isTapped()).isTrue();
-        assertThat(ownSphinx.getPowerModifier()).isEqualTo(1);
-        assertThat(ownSphinx.getToughnessModifier()).isZero();
-        assertThat(opponentSphinx.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownSphinx)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownSphinx)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentSphinx)).isZero();
         harness.assertInGraveyard(player1, "Serra Sphinx");
     }
 
@@ -61,13 +62,13 @@ class GhostTacticianTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
-        assertThat(tactician.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, tactician)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(tactician.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tactician)).isZero();
     }
 
     @Test
@@ -83,7 +84,7 @@ class GhostTacticianTest extends BaseCardTest {
 
         Permanent lateCreature = addCreatureReady(player1, new SerraSphinx());
 
-        assertThat(lateCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, lateCreature)).isZero();
     }
 
     @Test
@@ -99,15 +100,15 @@ class GhostTacticianTest extends BaseCardTest {
         assertThat(tactician.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Serra Sphinx");
         harness.assertNotInHand(player1, "Serra Sphinx");
-        assertThat(tactician.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tactician)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         Permanent newcomer = addCreatureReady(player1, new SerraSphinx());
         harness.passBothPriorities();
 
-        assertThat(tactician.getPowerModifier()).isEqualTo(1);
-        assertThat(newcomer.getPowerModifier()).isEqualTo(1);
-        assertThat(newcomer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tactician)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newcomer)).isZero();
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BreakOpen;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -43,7 +44,7 @@ class SilumgarAssassinTest extends BaseCardTest {
     void megamorphHasNoTargetWhenOnlyOwnOrHigherPowerOpponentCreaturesExist() {
         harness.addToBattlefield(player1, new HillGiant());
         Permanent highPowerCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        highPowerCreature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, highPowerCreature, 1);
         Permanent assassin = castFaceDown();
 
         turnFaceUp(assassin);
@@ -112,7 +113,7 @@ class SilumgarAssassinTest extends BaseCardTest {
         Permanent assassin = castFaceDown();
         turnFaceUp(assassin);
         harness.handlePermanentChosen(player1, target.getId());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
 
         harness.passBothPriorities();
 
@@ -126,7 +127,7 @@ class SilumgarAssassinTest extends BaseCardTest {
         Permanent assassin = addCreatureReady(player1, new SilumgarAssassin());
         assassin.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
         prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
@@ -139,7 +140,7 @@ class SilumgarAssassinTest extends BaseCardTest {
     @Test
     void blockingRestrictionUsesAssassinsCurrentPower() {
         Permanent assassin = addCreatureReady(player1, new SilumgarAssassin());
-        assassin.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, assassin, 1);
         assassin.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new HillGiant());
         prepareDeclareBlockers();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HealingSalve;
@@ -32,8 +33,8 @@ class ProvokeTheTrollsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
-        assertThat(target.getEffectivePower()).isEqualTo(9);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -66,7 +67,7 @@ class ProvokeTheTrollsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -82,7 +83,7 @@ class ProvokeTheTrollsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -110,10 +111,10 @@ class ProvokeTheTrollsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, ownTarget.getId());
 
         assertThat(earlierTarget.getMarkedDamage()).isEqualTo(3);
-        assertThat(earlierTarget.getEffectivePower()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, earlierTarget)).isEqualTo(9);
         assertThat(ownTarget.getMarkedDamage()).isEqualTo(3);
-        assertThat(ownTarget.getEffectivePower()).isEqualTo(9);
-        assertThat(ownTarget.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownTarget)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, ownTarget)).isEqualTo(4);
     }
 
     @Test
@@ -145,8 +146,8 @@ class ProvokeTheTrollsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(6);
-        assertThat(target.getEffectivePower()).isEqualTo(17);
-        assertThat(target.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(17);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
         harness.assertOnBattlefield(player2, "Air Elemental");
     }
 
@@ -168,7 +169,7 @@ class ProvokeTheTrollsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
-        assertThat(target.getEffectivePower()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(9);
         harness.assertOnBattlefield(player2, "Air Elemental");
     }
 
@@ -184,8 +185,8 @@ class ProvokeTheTrollsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         harness.assertOnBattlefield(player2, "Tyvar Kell");
     }
 

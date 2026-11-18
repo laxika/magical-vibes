@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RearingEmbermare;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,8 +32,8 @@ class OraclesRestorationTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(6);
         assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(1);
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(21);
     }
@@ -52,8 +53,8 @@ class OraclesRestorationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(5);
     }
 
     @Test
@@ -103,8 +104,8 @@ class OraclesRestorationTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(target);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertLife(player1, 20);

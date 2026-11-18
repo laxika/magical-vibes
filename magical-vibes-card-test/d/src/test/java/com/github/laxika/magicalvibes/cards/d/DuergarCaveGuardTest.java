@@ -27,8 +27,8 @@ class DuergarCaveGuardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(guard.getEffectivePower()).isEqualTo(2);
-        assertThat(guard.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, guard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, guard)).isEqualTo(3);
     }
 
     @Test
@@ -40,7 +40,7 @@ class DuergarCaveGuardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(guard.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, guard)).isEqualTo(2);
     }
 
     @Test
@@ -54,8 +54,8 @@ class DuergarCaveGuardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(guard.getEffectivePower()).isEqualTo(3);
-        assertThat(guard.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, guard)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, guard)).isEqualTo(3);
     }
 
     @Test
@@ -67,14 +67,14 @@ class DuergarCaveGuardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(guard.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, guard)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(guard.getEffectivePower()).isEqualTo(1);
-        assertThat(guard.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, guard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, guard)).isEqualTo(3);
     }
 
     @Test

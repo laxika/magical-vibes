@@ -131,12 +131,12 @@ class TurnCleanupServiceTest {
         void delegatesToResetAndReturnStolen() {
             Card card = createCardWithName("Grizzly Bears");
             Permanent perm = new Permanent(card);
-            perm.setPowerModifier(3);
+            perm.setMarkedDamage(1);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.applyCleanupResets(gd);
 
-            assertThat(perm.getPowerModifier()).isZero();
+            assertThat(perm.getMarkedDamage()).isZero();
             verify(creatureControlService).reconcileControl(gd);
         }
 
@@ -175,21 +175,6 @@ class TurnCleanupServiceTest {
     class ResetEndOfTurnModifiers {
 
         @Test
-        @DisplayName("Clears power and toughness modifiers on permanents")
-        void clearsPowerToughnessModifiers() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.setPowerModifier(3);
-            perm.setToughnessModifier(2);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.getPowerModifier()).isZero();
-            assertThat(perm.getToughnessModifier()).isZero();
-        }
-
-        @Test
         @DisplayName("Clears marked damage on all permanents (CR 514.2)")
         void clearsMarkedDamage() {
             Card card = createCardWithName("Grizzly Bears");
@@ -200,19 +185,6 @@ class TurnCleanupServiceTest {
             sut.resetEndOfTurnModifiers(gd);
 
             assertThat(perm.getMarkedDamage()).isZero();
-        }
-
-        @Test
-        @DisplayName("Clears basePowerToughnessOverriddenUntilEndOfTurn flag on permanents")
-        void clearsBasePowerToughnessOverridden() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.isBasePowerToughnessOverriddenUntilEndOfTurn()).isFalse();
         }
 
         @Test
@@ -316,8 +288,8 @@ class TurnCleanupServiceTest {
 
             sut.resetEndOfTurnModifiers(gd);
 
-            assertThat(perm.getPowerModifier()).isZero();
-            assertThat(perm.getToughnessModifier()).isZero();
+            assertThat(perm.getMarkedDamage()).isZero();
+            assertThat(gd.floatingEffects).isEmpty();
         }
     }
 

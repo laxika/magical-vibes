@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -50,7 +51,7 @@ class StormQueenOfWakandaTest extends BaseCardTest {
     void attackBoostUsesCurrentPower() {
         Permanent storm = addCreatureReady(player1, new StormQueenOfWakanda());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        storm.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, storm, 2);
 
         declareAttackers(player1, List.of(0, 1));
         harness.handlePermanentChosen(player1, bears.getId());
@@ -64,8 +65,8 @@ class StormQueenOfWakandaTest extends BaseCardTest {
     void damagesFlyingCreatureAttackingDirectly() {
         Permanent storm = addCreatureReady(player1, new StormQueenOfWakanda());
         Permanent attacker = addCreatureReady(player2, new AirElemental());
-        attacker.setToughnessModifier(2);
-        storm.setPowerModifier(2);
+        PermanentGrants.setToughnessBoost(gd, attacker, 2);
+        PermanentGrants.setPowerBoost(gd, storm, 2);
 
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
@@ -78,7 +79,7 @@ class StormQueenOfWakandaTest extends BaseCardTest {
     void doesNotDamageNonFlyingAttacker() {
         addCreatureReady(player1, new StormQueenOfWakanda());
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
-        attacker.setToughnessModifier(4);
+        PermanentGrants.setToughnessBoost(gd, attacker, 4);
 
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
@@ -112,12 +113,12 @@ class StormQueenOfWakandaTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
-        storm.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, storm, 3);
         harness.handlePermanentChosen(player1, bears.getId());
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(9);
-        storm.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, storm, 0);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(9);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
@@ -128,8 +129,8 @@ class StormQueenOfWakandaTest extends BaseCardTest {
         addCreatureReady(player1, new StormQueenOfWakanda());
         Permanent first = addCreatureReady(player2, new AirElemental());
         Permanent second = addCreatureReady(player2, new AirElemental());
-        first.setToughnessModifier(2);
-        second.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, first, 2);
+        PermanentGrants.setToughnessBoost(gd, second, 2);
 
         declareAttackers(player2, List.of(0, 1));
         resolveAllTriggers();

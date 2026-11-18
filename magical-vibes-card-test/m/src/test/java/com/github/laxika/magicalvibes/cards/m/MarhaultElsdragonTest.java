@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.k.KoboldsOfKherKeep;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,8 +29,8 @@ class MarhaultElsdragonTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(marhault.getPowerModifier()).isZero();
-        assertThat(marhault.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, marhault)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marhault)).isZero();
     }
 
     @Test
@@ -46,8 +47,8 @@ class MarhaultElsdragonTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(marhault.getPowerModifier()).isEqualTo(1);
-        assertThat(marhault.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, marhault)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marhault)).isEqualTo(1);
     }
 
     @Test
@@ -66,8 +67,8 @@ class MarhaultElsdragonTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(marhault.getPowerModifier()).isEqualTo(2);
-        assertThat(marhault.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, marhault)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marhault)).isEqualTo(2);
     }
 
     @Test
@@ -84,15 +85,15 @@ class MarhaultElsdragonTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(marhault.getPowerModifier()).isEqualTo(1);
-        assertThat(marhault.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, marhault)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marhault)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(marhault.getPowerModifier()).isZero();
-        assertThat(marhault.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, marhault)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marhault)).isZero();
     }
 
     @Test
@@ -114,11 +115,11 @@ class MarhaultElsdragonTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.castAndResolveInstant(player1, 0, blocker.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
-        assertThat(marhault.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, marhault)).isZero();
         harness.passBothPriorities();
 
-        assertThat(marhault.getPowerModifier()).isEqualTo(1);
-        assertThat(marhault.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, marhault)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marhault)).isEqualTo(1);
     }
 
     @Test
@@ -136,12 +137,12 @@ class MarhaultElsdragonTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)
         ));
         harness.passBothPriorities();
-        assertThat(marhault.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, marhault)).isEqualTo(1);
         harness.castAndResolveInstant(player1, 0, blocker.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
-        assertThat(marhault.getPowerModifier()).isEqualTo(1);
-        assertThat(marhault.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, marhault)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marhault)).isEqualTo(1);
     }
 
     @Test
@@ -152,8 +153,8 @@ class MarhaultElsdragonTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(marhault.getPowerModifier()).isZero();
-        assertThat(marhault.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, marhault)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marhault)).isZero();
     }
 
 }

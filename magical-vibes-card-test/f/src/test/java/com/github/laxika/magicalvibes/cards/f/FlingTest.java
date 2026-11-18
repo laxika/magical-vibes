@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
@@ -143,7 +144,7 @@ class FlingTest extends BaseCardTest {
     @Test
     void usesModifiedPowerImmediatelyBeforeSacrifice() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        sacrifice.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, sacrifice, 3);
         sacrifice.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new Fling()));
@@ -160,7 +161,7 @@ class FlingTest extends BaseCardTest {
     void nonpositivePowerDealsNoDamage() {
         for (int modifier : List.of(-2, -3)) {
             Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-            sacrifice.setPowerModifier(modifier);
+            PermanentGrants.setPowerBoost(gd, sacrifice, modifier);
             harness.setLife(player2, 20);
             harness.setHand(player1, List.of(new Fling()));
             harness.addMana(player1, ManaColor.RED, 2);

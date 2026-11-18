@@ -26,8 +26,8 @@ class DemonsGraspTest extends BaseCardTest {
 
         castDemonsGrasp(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -40,8 +40,8 @@ class DemonsGraspTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(7);
-        assertThat(target.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
     }
 
     @Test
@@ -76,10 +76,10 @@ class DemonsGraspTest extends BaseCardTest {
 
         castDemonsGrasp(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
-        assertThat(other.getEffectivePower()).isEqualTo(7);
-        assertThat(other.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(8);
     }
 
     @Test

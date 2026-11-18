@@ -27,10 +27,10 @@ class MawOfTheObzedatTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Kraul Warrior");
-        assertThat(maw.getEffectivePower()).isEqualTo(4);
-        assertThat(maw.getEffectiveToughness()).isEqualTo(4);
-        assertThat(survivor.getEffectivePower()).isEqualTo(3);
-        assertThat(survivor.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, maw)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, maw)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(3);
     }
 
     @Test
@@ -45,8 +45,8 @@ class MawOfTheObzedatTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, food.getId());
         harness.passBothPriorities();
 
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 
     @Test
@@ -61,8 +61,8 @@ class MawOfTheObzedatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Maw of the Obzedat");
-        assertThat(survivor.getEffectivePower()).isEqualTo(3);
-        assertThat(survivor.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(3);
     }
 
     @Test
@@ -79,8 +79,8 @@ class MawOfTheObzedatTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(maw.getEffectivePower()).isEqualTo(3);
-        assertThat(maw.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, maw)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, maw)).isEqualTo(3);
     }
 
     @Test
@@ -96,13 +96,13 @@ class MawOfTheObzedatTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Kraul Warrior");
         harness.assertNotOnBattlefield(player1, "Kraul Warrior");
         assertThat(gd.stack).hasSize(1);
-        assertThat(maw.getEffectivePower()).isEqualTo(3);
-        assertThat(maw.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, maw)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, maw)).isEqualTo(3);
 
         harness.passBothPriorities();
 
-        assertThat(maw.getEffectivePower()).isEqualTo(4);
-        assertThat(maw.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, maw)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, maw)).isEqualTo(4);
     }
 
     @Test
@@ -124,8 +124,8 @@ class MawOfTheObzedatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(survivor.getEffectivePower()).isEqualTo(4);
-        assertThat(survivor.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(4);
     }
 
     @Test
@@ -141,9 +141,9 @@ class MawOfTheObzedatTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.enterBattlefieldAndReturn(player1, new KraulWarrior());
 
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(3);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(3);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
     }
 }

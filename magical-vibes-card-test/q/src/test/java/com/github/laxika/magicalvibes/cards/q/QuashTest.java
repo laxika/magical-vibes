@@ -40,8 +40,8 @@ class QuashTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player2, List.of(handCopy.getId(), libraryCopy.getId()));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
 
         // All four Magnifies (cast + hand + graveyard + library) are exiled.
         assertThat(gd.getPlayerExiledCards(player1.getId()))

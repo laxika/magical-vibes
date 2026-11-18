@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalothGorger;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -181,7 +182,7 @@ class GrunnTheLonelyKingTest extends BaseCardTest {
     @DisplayName("Doubling handles negative power independently of toughness")
     void doublingNegativePower() {
         Permanent grunn = addCreatureReady(player1, new GrunnTheLonelyKing());
-        grunn.setPowerModifier(-7);
+        PermanentGrants.setPowerBoost(gd, grunn, -7);
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.IndomitableWill;
 import com.github.laxika.magicalvibes.cards.p.PheresBandBrawler;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -35,8 +36,8 @@ class NyxHeraldTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -50,8 +51,8 @@ class NyxHeraldTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -86,13 +87,13 @@ class NyxHeraldTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.getPowerModifier()).isEqualTo(0);
-        assertThat(creature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -105,8 +106,8 @@ class NyxHeraldTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, herald.getId());
         harness.passBothPriorities();
 
-        assertThat(herald.getPowerModifier()).isEqualTo(1);
-        assertThat(herald.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, herald)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, herald)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, herald, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -165,8 +166,8 @@ class NyxHeraldTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -184,8 +185,8 @@ class NyxHeraldTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(0);
-        assertThat(creature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -203,8 +204,8 @@ class NyxHeraldTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -220,8 +221,8 @@ class NyxHeraldTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(herald.getCard());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 }

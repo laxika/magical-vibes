@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SwordwiseCentaur;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,7 +25,7 @@ class ChargingBadgerTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         Permanent badger = harness.addToBattlefieldAndReturn(player1, new ChargingBadger());
-        badger.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, badger, 2);
         badger.setSummoningSick(false);
         badger.setAttacking(true);
 
@@ -51,7 +52,7 @@ class ChargingBadgerTest extends BaseCardTest {
     void cannotTrampleWithoutAssigningLethalDamage() {
         harness.setLife(player2, 20);
         Permanent badger = harness.addToBattlefieldAndReturn(player1, new ChargingBadger());
-        badger.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, badger, 2);
         badger.setSummoningSick(false);
         badger.setAttacking(true);
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new SwordwiseCentaur());
@@ -79,7 +80,7 @@ class ChargingBadgerTest extends BaseCardTest {
     void mayAssignAllDamageToBlocker() {
         harness.setLife(player2, 20);
         Permanent badger = harness.addToBattlefieldAndReturn(player1, new ChargingBadger());
-        badger.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, badger, 2);
         badger.setSummoningSick(false);
         badger.setAttacking(true);
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new SwordwiseCentaur());

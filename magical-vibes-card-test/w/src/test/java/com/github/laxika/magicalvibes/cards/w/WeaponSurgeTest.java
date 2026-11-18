@@ -30,8 +30,8 @@ class WeaponSurgeTest extends BaseCardTest {
         harness.castInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE);
     }
 
@@ -61,7 +61,7 @@ class WeaponSurgeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
@@ -78,11 +78,11 @@ class WeaponSurgeTest extends BaseCardTest {
         harness.castWithOverload(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, first)).contains(Keyword.FIRST_STRIKE);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, second)).contains(Keyword.FIRST_STRIKE);
-        assertThat(theirs.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, theirs)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, theirs)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
@@ -110,7 +110,7 @@ class WeaponSurgeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof WeaponSurge);
-        assertThat(theirs.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, theirs)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, theirs)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
@@ -126,20 +126,20 @@ class WeaponSurgeTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = addCreature(player1);
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, first)).contains(Keyword.FIRST_STRIKE);
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, beforeResolution)).contains(Keyword.FIRST_STRIKE);
-        assertThat(afterResolution.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, afterResolution)).doesNotContain(Keyword.FIRST_STRIKE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, first)).doesNotContain(Keyword.FIRST_STRIKE);
-        assertThat(beforeResolution.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, beforeResolution)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
@@ -154,9 +154,9 @@ class WeaponSurgeTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FIRST_STRIKE);
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
@@ -172,7 +172,7 @@ class WeaponSurgeTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(target);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.FIRST_STRIKE);
         assertThat(gd.stack).isEmpty();
     }

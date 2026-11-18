@@ -28,8 +28,8 @@ class FanaticalStrengthTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -45,8 +45,8 @@ class FanaticalStrengthTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -70,11 +70,11 @@ class FanaticalStrengthTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, opposingBear.getId());
 
-        assertThat(opposingBear.getEffectivePower()).isEqualTo(5);
-        assertThat(opposingBear.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opposingBear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opposingBear)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, opposingBear, Keyword.TRAMPLE)).isTrue();
-        assertThat(ownBear.getEffectivePower()).isEqualTo(2);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -87,20 +87,20 @@ class FanaticalStrengthTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getEffectivePower()).isEqualTo(8);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        assertThat(bear.getEffectivePower()).isEqualTo(8);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
 
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 }

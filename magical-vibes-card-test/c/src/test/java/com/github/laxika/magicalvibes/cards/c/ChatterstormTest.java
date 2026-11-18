@@ -26,8 +26,8 @@ class ChatterstormTest extends BaseCardTest {
 
         List<Permanent> squirrels = findPermanents(player1, "Squirrel");
         assertThat(squirrels).hasSize(1);
-        assertThat(squirrels.getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(squirrels.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, squirrels.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, squirrels.getFirst())).isEqualTo(1);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
@@ -26,7 +27,7 @@ class InsideOutTest extends BaseCardTest {
     @DisplayName("Resolving Inside Out switches power and toughness and draws a card")
     void switchesPowerToughnessAndDraws() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bear.setPowerModifier(1); // Grizzly Bears 2/2 -> 3/2
+        PermanentGrants.setPowerBoost(gd, bear, 1); // Grizzly Bears 2/2 -> 3/2
         harness.getGameData().playerDecks.get(player1.getId()).add(new GrizzlyBears());
         harness.setHand(player1, List.of(new InsideOut()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -45,7 +46,7 @@ class InsideOutTest extends BaseCardTest {
     @DisplayName("Switch wears off at cleanup step")
     void switchWearsOffAtCleanup() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bear.setPowerModifier(1); // 3/2
+        PermanentGrants.setPowerBoost(gd, bear, 1); // 3/2
 
         harness.setHand(player1, List.of(new InsideOut()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -100,7 +101,7 @@ class InsideOutTest extends BaseCardTest {
     @DisplayName("Two Inside Outs cancel the switch and each draws a card")
     void twoSwitchesCancelAndEachDraws() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bear.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, bear, 1);
         GrizzlyBears firstDraw = new GrizzlyBears();
         GrizzlyBears secondDraw = new GrizzlyBears();
         harness.setLibrary(player1, List.of(firstDraw, secondDraw));
@@ -123,7 +124,7 @@ class InsideOutTest extends BaseCardTest {
     @DisplayName("Targeting an opponent's creature still draws for the caster")
     void targetsOpponentsCreatureAndCasterDraws() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bear.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, bear, 1);
         GrizzlyBears drawnCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(drawnCard));
         harness.setHand(player1, List.of(new InsideOut()));
@@ -145,7 +146,7 @@ class InsideOutTest extends BaseCardTest {
     @DisplayName("Switching a zero-power creature kills it but still draws a card")
     void zeroPowerCreatureDiesAndCasterStillDraws() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bear.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, bear, -2);
         GrizzlyBears drawnCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(drawnCard));
         harness.setHand(player1, List.of(new InsideOut()));

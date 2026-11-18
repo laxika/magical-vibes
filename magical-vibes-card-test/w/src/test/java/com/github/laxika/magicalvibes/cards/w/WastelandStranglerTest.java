@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BroodhunterWurm;
 import com.github.laxika.magicalvibes.cards.k.KozileksChanneler;
 import com.github.laxika.magicalvibes.cards.s.ScourFromExistence;
@@ -33,8 +34,8 @@ class WastelandStranglerTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(exiledCard.getId()));
 
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
-        assertThat(target.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-3);
         harness.assertInGraveyard(player2, "Scour from Existence");
         assertThat(gd.findExiledCard(exiledCard.getId())).isNull();
     }
@@ -51,8 +52,8 @@ class WastelandStranglerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of());
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.findExiledCard(exiledCard.getId())).isNotNull();
     }
 
@@ -88,8 +89,8 @@ class WastelandStranglerTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.findExiledCard(ownExiledCard.getId())).isNotNull();
     }
 
@@ -156,8 +157,8 @@ class WastelandStranglerTest extends BaseCardTest {
         assertThat(gd.findExiledCard(chosenCard.getId())).isNull();
         assertThat(gd.findExiledCard(otherCard.getId())).isNotNull();
         assertThat(gd.findExiledCard(ownCard.getId())).isNotNull();
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
-        assertThat(target.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-3);
     }
 
     private void castWastelandStrangler() {

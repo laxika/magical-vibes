@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.o.OrdinaryBear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -131,7 +132,7 @@ class WarglingTest extends BaseCardTest {
     @DisplayName("Wargling itself can satisfy ferocious using its effective power")
     void sourceCanSatisfyFerocious() {
         Permanent wargling = addCreatureReady(player1, new Wargling());
-        wargling.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, wargling, 2);
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
@@ -144,7 +145,7 @@ class WarglingTest extends BaseCardTest {
     @DisplayName("Power three is insufficient and a later large creature cannot create the trigger")
     void ferociousMustBeSatisfiedWhenAttacking() {
         Permanent wargling = addCreatureReady(player1, new Wargling());
-        wargling.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, wargling, 1);
 
         declareAttackers(player1, List.of(0));
         assertThat(gd.stack).isEmpty();

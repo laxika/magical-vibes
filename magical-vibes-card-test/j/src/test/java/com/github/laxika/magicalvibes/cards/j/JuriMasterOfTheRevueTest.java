@@ -98,7 +98,7 @@ class JuriMasterOfTheRevueTest extends BaseCardTest {
         Permanent juri = harness.addToBattlefieldAndReturn(player1, new JuriMasterOfTheRevue());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         sacrificeOwnPermanent(bears);
-        assertThat(juri.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, juri)).isEqualTo(2);
 
         int lifeBefore = gd.getLife(player2.getId());
         killJuriWithFlameJavelin(juri.getId());

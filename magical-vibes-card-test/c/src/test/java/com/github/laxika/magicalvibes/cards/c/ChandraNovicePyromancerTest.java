@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -32,18 +33,18 @@ class ChandraNovicePyromancerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
-        assertThat(elemental.getPowerModifier()).isEqualTo(2);
-        assertThat(elemental.getToughnessModifier()).isZero();
-        assertThat(sentinel.getPowerModifier()).isZero();
-        assertThat(opposingElemental.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sentinel)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingElemental)).isZero();
 
         Permanent laterElemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
-        assertThat(laterElemental.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, laterElemental)).isZero();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(elemental.getPowerModifier()).isZero();
-        assertThat(elemental.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isZero();
     }
 
     @Test
@@ -147,8 +148,8 @@ class ChandraNovicePyromancerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(2);
-        assertThat(elemental.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isZero();
     }
 
     @Test

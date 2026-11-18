@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BronzeSable;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -32,15 +33,15 @@ class SoulOfTherosTest extends BaseCardTest {
 
         List<Permanent> ownPermanents = gd.playerBattlefields.get(player1.getId());
         for (Permanent permanent : ownPermanents) {
-            assertThat(permanent.getPowerModifier()).isEqualTo(2);
-            assertThat(permanent.getToughnessModifier()).isEqualTo(2);
+            assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isEqualTo(2);
             assertThat(gqs.hasKeyword(gd, permanent, Keyword.FIRST_STRIKE)).isTrue();
             assertThat(gqs.hasKeyword(gd, permanent, Keyword.LIFELINK)).isTrue();
         }
 
         Permanent opponentBear = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(opponentBear.getPowerModifier()).isZero();
-        assertThat(opponentBear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentBear)).isZero();
         assertThat(gqs.hasKeyword(gd, opponentBear, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, opponentBear, Keyword.LIFELINK)).isFalse();
     }
@@ -60,8 +61,8 @@ class SoulOfTherosTest extends BaseCardTest {
         harness.passBothPriorities();
 
         for (Permanent permanent : gd.playerBattlefields.get(player1.getId())) {
-            assertThat(permanent.getPowerModifier()).isZero();
-            assertThat(permanent.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isZero();
             assertThat(gqs.hasKeyword(gd, permanent, Keyword.FIRST_STRIKE)).isFalse();
             assertThat(gqs.hasKeyword(gd, permanent, Keyword.LIFELINK)).isFalse();
         }
@@ -87,14 +88,14 @@ class SoulOfTherosTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent ownBear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(ownBear.getPowerModifier()).isEqualTo(2);
-        assertThat(ownBear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownBear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownBear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.LIFELINK)).isTrue();
 
         Permanent opponentBear = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(opponentBear.getPowerModifier()).isZero();
-        assertThat(opponentBear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentBear)).isZero();
     }
 
     @Test
@@ -116,12 +117,12 @@ class SoulOfTherosTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(soul);
         harness.passBothPriorities();
 
-        assertThat(soul.getPowerModifier()).isZero();
-        assertThat(soul.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, soul)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soul)).isZero();
         assertThat(gqs.hasKeyword(gd, soul, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, soul, Keyword.LIFELINK)).isFalse();
-        assertThat(sable.getPowerModifier()).isEqualTo(2);
-        assertThat(sable.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sable)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sable)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, sable, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, sable, Keyword.LIFELINK)).isTrue();
     }
@@ -140,12 +141,12 @@ class SoulOfTherosTest extends BaseCardTest {
 
         Permanent soul = gd.playerBattlefields.get(player1.getId()).getFirst();
         Permanent lateCreature = gd.playerBattlefields.get(player1.getId()).get(1);
-        assertThat(soul.getPowerModifier()).isEqualTo(4);
-        assertThat(soul.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, soul)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soul)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, soul, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, soul, Keyword.LIFELINK)).isTrue();
-        assertThat(lateCreature.getPowerModifier()).isZero();
-        assertThat(lateCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, lateCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lateCreature)).isZero();
         assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.LIFELINK)).isFalse();
     }
@@ -161,15 +162,15 @@ class SoulOfTherosTest extends BaseCardTest {
         Permanent sable = gd.playerBattlefields.get(player1.getId()).getFirst();
         harness.passBothPriorities();
 
-        assertThat(sable.getPowerModifier()).isEqualTo(2);
-        assertThat(sable.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sable)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sable)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, sable, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, sable, Keyword.LIFELINK)).isTrue();
 
         harness.addToBattlefield(player1, new BronzeSable());
         Permanent lateCreature = gd.playerBattlefields.get(player1.getId()).get(1);
-        assertThat(lateCreature.getPowerModifier()).isZero();
-        assertThat(lateCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, lateCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lateCreature)).isZero();
         assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.LIFELINK)).isFalse();
 
@@ -177,8 +178,8 @@ class SoulOfTherosTest extends BaseCardTest {
         harness.passUntil(TurnStep.CLEANUP);
         harness.passBothPriorities();
 
-        assertThat(sable.getPowerModifier()).isZero();
-        assertThat(sable.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sable)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sable)).isZero();
         assertThat(gqs.hasKeyword(gd, sable, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, sable, Keyword.LIFELINK)).isFalse();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GuidingSpirit;
 import com.github.laxika.magicalvibes.cards.p.PantherWarriors;
 import com.github.laxika.magicalvibes.cards.q.QuirionDruid;
@@ -103,7 +104,7 @@ class KatabaticWindsTest extends BaseCardTest {
         harness.activateAbility(player1, drakeIdx, null, null);
         harness.passBothPriorities();
 
-        assertThat(drake.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isEqualTo(1);
     }
 
     @Test

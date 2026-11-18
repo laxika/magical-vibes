@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
@@ -95,7 +96,7 @@ class BucketListTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 1, bucketList.getId());
         resolveAllTriggers();
 
-        assertThat(parasite.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, parasite)).isZero();
         castAndResolve(new DarksteelRelic(), "{0}");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }

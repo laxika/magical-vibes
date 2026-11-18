@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.c.CabalEvangel;
@@ -57,10 +58,10 @@ class RunAmokTest extends BaseCardTest {
         harness.castInstant(player1, 0, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(3);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(3);
-        assertThat(attacker.getEffectivePower()).isEqualTo(5);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -106,8 +107,8 @@ class RunAmokTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(0);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -126,8 +127,8 @@ class RunAmokTest extends BaseCardTest {
         harness.castInstant(player1, 0, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(5);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -146,8 +147,8 @@ class RunAmokTest extends BaseCardTest {
         attacker.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Run Amok");

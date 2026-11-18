@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.Gingerbrute;
 import com.github.laxika.magicalvibes.cards.c.CrystalSlipper;
@@ -43,10 +44,10 @@ class FerventChampionTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attackingKnight.getId());
         resolveAllTriggers();
 
-        assertThat(attackingKnight.getPowerModifier()).isEqualTo(1);
-        assertThat(champion.getPowerModifier()).isZero();
-        assertThat(nonAttackingKnight.getPowerModifier()).isZero();
-        assertThat(attackingNonKnight.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attackingKnight)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, champion)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonAttackingKnight)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attackingNonKnight)).isZero();
     }
 
     @Test
@@ -59,13 +60,13 @@ class FerventChampionTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attackingKnight.getId());
         resolveAllTriggers();
 
-        assertThat(attackingKnight.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attackingKnight)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attackingKnight.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attackingKnight)).isZero();
     }
 
     @Test
@@ -104,7 +105,7 @@ class FerventChampionTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(champion.isAttacking()).isTrue();
-        assertThat(champion.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, champion)).isZero();
     }
 
     @Test
@@ -131,8 +132,8 @@ class FerventChampionTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(champion);
         resolveAllTriggers();
 
-        assertThat(knight.getPowerModifier()).isEqualTo(1);
-        assertThat(knight.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isZero();
     }
 
     @Test
@@ -145,7 +146,7 @@ class FerventChampionTest extends BaseCardTest {
         knight.setAttacking(false);
         resolveAllTriggers();
 
-        assertThat(knight.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isZero();
     }
 
     @Test

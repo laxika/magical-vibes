@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CentaurCourser;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -68,7 +69,7 @@ class VampireOfTheDireMoonTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         Permanent vampire = addCreatureReady(player1, new VampireOfTheDireMoon());
-        vampire.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, vampire, -1);
         vampire.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new CentaurCourser());
         blocker.setBlocking(true);

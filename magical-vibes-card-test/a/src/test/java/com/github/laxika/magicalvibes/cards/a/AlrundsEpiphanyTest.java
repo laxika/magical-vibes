@@ -35,8 +35,8 @@ class AlrundsEpiphanyTest extends BaseCardTest {
         assertThat(birds).allSatisfy(bird -> {
             assertThat(bird.getCard().getColor()).isEqualTo(CardColor.BLUE);
             assertThat(bird.getCard().getSubtypes()).containsExactly(CardSubtype.BIRD);
-            assertThat(bird.getEffectivePower()).isEqualTo(1);
-            assertThat(bird.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
             assertThat(bird.hasKeyword(Keyword.FLYING)).isTrue();
         });
         assertThat(gd.extraTurns).containsExactly(player1.getId());

@@ -30,8 +30,8 @@ class KinsbaileSkirmisherTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent giant = findPermanent(player2, "Hillcomber Giant");
-        assertThat(giant.getEffectivePower()).isEqualTo(4);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(4);
     }
 
     @Test
@@ -48,10 +48,10 @@ class KinsbaileSkirmisherTest extends BaseCardTest {
         harness.castCreature(player1, 0, chosenGiantId);
         resolveAllTriggers();
 
-        assertThat(giants.get(0).getEffectivePower()).isEqualTo(4);
-        assertThat(giants.get(0).getEffectiveToughness()).isEqualTo(4);
-        assertThat(giants.get(1).getEffectivePower()).isEqualTo(3);
-        assertThat(giants.get(1).getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giants.get(0))).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, giants.get(0))).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, giants.get(1))).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giants.get(1))).isEqualTo(3);
     }
 
     @Test
@@ -70,8 +70,8 @@ class KinsbaileSkirmisherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent giant = findPermanent(player2, "Hillcomber Giant");
-        assertThat(giant.getEffectivePower()).isEqualTo(3);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     @Test
@@ -86,8 +86,8 @@ class KinsbaileSkirmisherTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent giant = findPermanent(player1, "Hillcomber Giant");
-        assertThat(giant.getEffectivePower()).isEqualTo(4);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(4);
     }
 
     @Test
@@ -119,8 +119,8 @@ class KinsbaileSkirmisherTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, skirmisher.getId());
         resolveAllTriggers();
 
-        assertThat(skirmisher.getEffectivePower()).isEqualTo(3);
-        assertThat(skirmisher.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, skirmisher)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, skirmisher)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -140,13 +140,13 @@ class KinsbaileSkirmisherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Kinsbaile Skirmisher");
-        assertThat(giant.getEffectivePower()).isEqualTo(3);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
 
         resolveAllTriggers();
 
-        assertThat(giant.getEffectivePower()).isEqualTo(4);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
     }
 }

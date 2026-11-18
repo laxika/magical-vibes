@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
 import com.github.laxika.magicalvibes.cards.i.IvoryGargoyle;
 import com.github.laxika.magicalvibes.cards.s.StormCrow;
@@ -111,8 +112,8 @@ class VarchildsWarRidersTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(riders.getPowerModifier()).isEqualTo(1);
-        assertThat(riders.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, riders)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, riders)).isEqualTo(1);
     }
 
     @Test
@@ -126,8 +127,8 @@ class VarchildsWarRidersTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(riders.getPowerModifier()).isZero();
-        assertThat(riders.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, riders)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, riders)).isZero();
     }
 
     @Test
@@ -147,8 +148,8 @@ class VarchildsWarRidersTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Ivory Gargoyle");
         harness.passBothPriorities();
 
-        assertThat(riders.getPowerModifier()).isZero();
-        assertThat(riders.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, riders)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, riders)).isZero();
     }
 
     @Test
@@ -201,8 +202,8 @@ class VarchildsWarRidersTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(riders.getPowerModifier()).isEqualTo(2);
-        assertThat(riders.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, riders)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, riders)).isEqualTo(2);
     }
 
     @Test
@@ -226,8 +227,8 @@ class VarchildsWarRidersTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Ivory Gargoyle");
         harness.passBothPriorities();
 
-        assertThat(riders.getPowerModifier()).isZero();
-        assertThat(riders.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, riders)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, riders)).isZero();
     }
 
     @Test
@@ -263,8 +264,8 @@ class VarchildsWarRidersTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)
         ));
         harness.passBothPriorities();
-        assertThat(riders.getPowerModifier()).isEqualTo(1);
-        assertThat(riders.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, riders)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, riders)).isEqualTo(1);
 
         resolveCombat();
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
@@ -274,8 +275,8 @@ class VarchildsWarRidersTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(riders);
-        assertThat(riders.getPowerModifier()).isZero();
-        assertThat(riders.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, riders)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, riders)).isZero();
     }
 
     private long survivorCount(Player player) {

@@ -28,8 +28,8 @@ class SporemoundTest extends BaseCardTest {
 
         Permanent saproling = findPermanent(player1, "Saproling");
         assertThat(saproling.getCard().isToken()).isTrue();
-        assertThat(saproling.getEffectivePower()).isEqualTo(1);
-        assertThat(saproling.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, saproling)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, saproling)).isEqualTo(1);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DireWolfProwler;
 import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -24,8 +25,8 @@ class BlackDragonTest extends BaseCardTest {
 
         castBlackDragon(giant.getId());
 
-        assertThat(giant.getPowerModifier()).isEqualTo(-3);
-        assertThat(giant.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(-3);
     }
 
     @Test
@@ -63,13 +64,13 @@ class BlackDragonTest extends BaseCardTest {
         castBlackDragon(giant.getId());
         harness.passUntil(TurnStep.END_STEP);
 
-        assertThat(giant.getPowerModifier()).isEqualTo(-3);
-        assertThat(giant.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(-3);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(giant.getPowerModifier()).isZero();
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
     }
 
     @Test
@@ -79,10 +80,10 @@ class BlackDragonTest extends BaseCardTest {
 
         castBlackDragon(target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
-        assertThat(target.getToughnessModifier()).isEqualTo(-3);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         harness.assertOnBattlefield(player2, "Dire Wolf Prowler");
     }
 
@@ -99,8 +100,8 @@ class BlackDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Black Dragon");
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
-        assertThat(target.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-3);
     }
 
     private void castBlackDragon(UUID targetId) {

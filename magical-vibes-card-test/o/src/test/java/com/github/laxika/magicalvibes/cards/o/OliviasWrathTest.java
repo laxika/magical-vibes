@@ -26,21 +26,21 @@ class OliviasWrathTest extends BaseCardTest {
         Permanent opposingVampire = harness.addToBattlefieldAndReturn(player2, new VampireNoble());
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        int ownVampirePower = ownVampire.getEffectivePower();
-        int ownVampireToughness = ownVampire.getEffectiveToughness();
-        int secondOwnVampirePower = secondOwnVampire.getEffectivePower();
-        int opposingVampirePower = opposingVampire.getEffectivePower();
+        int ownVampirePower = gqs.getEffectivePower(gd, ownVampire);
+        int ownVampireToughness = gqs.getEffectiveToughness(gd, ownVampire);
+        int secondOwnVampirePower = gqs.getEffectivePower(gd, secondOwnVampire);
+        int opposingVampirePower = gqs.getEffectivePower(gd, opposingVampire);
 
         castOliviasWrath();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(ownVampire.getEffectivePower()).isEqualTo(ownVampirePower);
-        assertThat(ownVampire.getEffectiveToughness()).isEqualTo(ownVampireToughness);
-        assertThat(secondOwnVampire.getEffectivePower()).isEqualTo(secondOwnVampirePower);
-        assertThat(opposingVampire.getEffectivePower()).isEqualTo(opposingVampirePower);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownVampire)).isEqualTo(ownVampirePower);
+        assertThat(gqs.getEffectiveToughness(gd, ownVampire)).isEqualTo(ownVampireToughness);
+        assertThat(gqs.getEffectivePower(gd, secondOwnVampire)).isEqualTo(secondOwnVampirePower);
+        assertThat(gqs.getEffectivePower(gd, opposingVampire)).isEqualTo(opposingVampirePower);
     }
 
     @Test
@@ -62,15 +62,15 @@ class OliviasWrathTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VampireNoble());
 
         castOliviasWrath();
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -81,8 +81,8 @@ class OliviasWrathTest extends BaseCardTest {
 
         castOliviasWrath();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
@@ -95,13 +95,13 @@ class OliviasWrathTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VampireNoble());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
 
         harness.addToBattlefield(player1, new VampireNoble());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -113,10 +113,10 @@ class OliviasWrathTest extends BaseCardTest {
         castOliviasWrath();
         Permanent newCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
-        assertThat(existingCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(existingCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(newCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(newCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, existingCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, existingCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, newCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, newCreature)).isEqualTo(3);
     }
 
     private void castOliviasWrath() {

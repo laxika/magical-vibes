@@ -27,10 +27,10 @@ class TyvarsStandTest extends BaseCardTest {
 
         castResolve(bears, 3);
 
-        assertThat(bears.getPowerModifier()).isEqualTo(3);
-        assertThat(bears.getToughnessModifier()).isEqualTo(3);
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
         assertThat(PermanentGrants.keywordsOf(gd, bears))
                 .contains(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
     }
@@ -42,8 +42,8 @@ class TyvarsStandTest extends BaseCardTest {
 
         castResolve(bears, 0);
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bears))
                 .contains(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
     }
@@ -57,8 +57,8 @@ class TyvarsStandTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bears))
                 .doesNotContain(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
     }
@@ -83,14 +83,14 @@ class TyvarsStandTest extends BaseCardTest {
         castResolve(bears, 2);
         castResolve(bears, 3);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(7);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(7);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bears))
                 .doesNotContain(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
     }
@@ -176,8 +176,8 @@ class TyvarsStandTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Tyvar's Stand");
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bears))
                 .doesNotContain(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
         assertThat(gd.stack).isEmpty();

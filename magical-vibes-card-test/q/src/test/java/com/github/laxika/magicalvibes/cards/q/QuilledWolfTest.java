@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class QuilledWolfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(4);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(4);
     }
 
     @Test
@@ -38,8 +39,8 @@ class QuilledWolfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(8);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(8);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(8);
     }
 
     @Test
@@ -55,8 +56,8 @@ class QuilledWolfTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(0);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(0);
     }
 
     @Test
@@ -93,14 +94,14 @@ class QuilledWolfTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(wolf.getPowerModifier()).isZero();
-        assertThat(wolf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(4);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(4);
         assertThat(wolf.isTapped()).isTrue();
     }
 
@@ -115,11 +116,11 @@ class QuilledWolfTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(sourceWolf.getPowerModifier()).isEqualTo(4);
-        assertThat(sourceWolf.getToughnessModifier()).isEqualTo(4);
-        assertThat(otherWolf.getPowerModifier()).isZero();
-        assertThat(otherWolf.getToughnessModifier()).isZero();
-        assertThat(opposingWolf.getPowerModifier()).isZero();
-        assertThat(opposingWolf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sourceWolf)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sourceWolf)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherWolf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherWolf)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingWolf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingWolf)).isZero();
     }
 }

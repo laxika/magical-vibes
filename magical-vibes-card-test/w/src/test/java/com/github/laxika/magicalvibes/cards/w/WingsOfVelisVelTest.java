@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CloudgoatRanger;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.Lignify;
@@ -49,9 +50,9 @@ class WingsOfVelisVelTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, rangerId);
 
         Permanent ranger = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(ranger.isBasePowerToughnessOverriddenUntilEndOfTurn()).isTrue();
-        assertThat(ranger.getEffectivePower()).isEqualTo(4);
-        assertThat(ranger.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.hasBasePowerToughnessSet(gd, ranger)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ranger)).isEqualTo(4);
         // The flying grant is a floating CR 613 layer-6 effect, visible through the query layer.
         assertThat(gqs.hasKeyword(gd, ranger, Keyword.FLYING)).isTrue();
     }
@@ -106,9 +107,9 @@ class WingsOfVelisVelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent ranger = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(ranger.isBasePowerToughnessOverriddenUntilEndOfTurn()).isFalse();
-        assertThat(ranger.getEffectivePower()).isEqualTo(3);
-        assertThat(ranger.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.hasBasePowerToughnessSet(gd, ranger)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ranger)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ranger, Keyword.FLYING)).isFalse();
     }
 

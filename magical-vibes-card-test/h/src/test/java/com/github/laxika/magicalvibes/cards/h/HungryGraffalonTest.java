@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -80,8 +82,8 @@ class HungryGraffalonTest extends BaseCardTest {
         @Test
         void greaterThanToughnessAloneIsEnough() {
             Permanent graffalon = addGraffalon(player1);
-            graffalon.setPowerModifier(2);
-            graffalon.setToughnessModifier(-1);
+            PermanentGrants.setPowerBoost(gd, graffalon, 2);
+            PermanentGrants.setToughnessBoost(gd, graffalon, -1);
             setUpMainPhase(player1);
             harness.addMana(player1, ManaColor.GREEN, 4);
             harness.setHand(player1, List.of(new HungryGraffalon()));

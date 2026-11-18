@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -34,8 +35,8 @@ class RenegadeBullTest extends BaseCardTest {
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(bull.getPowerModifier()).isEqualTo(3);
-        assertThat(bull.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bull)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bull)).isZero();
     }
 
     @Test
@@ -50,13 +51,13 @@ class RenegadeBullTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
-        assertThat(bull.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bull)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bull.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bull)).isZero();
     }
 
     @Test
@@ -112,8 +113,8 @@ class RenegadeBullTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(bull.getPowerModifier()).isEqualTo(1);
-        assertThat(bull.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bull)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bull)).isZero();
         harness.assertLife(player2, 20);
         harness.passBothPriorities();
         harness.assertLife(player2, 18);
@@ -131,8 +132,8 @@ class RenegadeBullTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 4, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(bull.getPowerModifier()).isEqualTo(5);
-        assertThat(bull.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bull)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bull)).isZero();
     }
 
     @Test
@@ -147,7 +148,7 @@ class RenegadeBullTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(bull.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bull)).isZero();
     }
 
     @Test
@@ -160,7 +161,7 @@ class RenegadeBullTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(bull.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bull)).isZero();
         harness.assertLife(player1, 18);
     }
 
@@ -177,7 +178,7 @@ class RenegadeBullTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(bull.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bull)).isEqualTo(1);
         harness.assertLife(player2, 20);
         harness.passBothPriorities();
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionWhite;
 import com.github.laxika.magicalvibes.cards.l.LotusPetal;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,15 +27,15 @@ class AuratogTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Circle of Protection: White");
         harness.assertInGraveyard(player1, "Circle of Protection: White");
-        assertThat(auratog.getPowerModifier()).isZero();
-        assertThat(auratog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, auratog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, auratog)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(auratog.getPowerModifier()).isEqualTo(2);
-        assertThat(auratog.getToughnessModifier()).isEqualTo(2);
-        assertThat(otherAuratog.getPowerModifier()).isZero();
-        assertThat(otherAuratog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, auratog)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, auratog)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAuratog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherAuratog)).isZero();
     }
 
     @Test
@@ -50,8 +51,8 @@ class AuratogTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Circle of Protection: White");
         assertThat(auratog.isTapped()).isTrue();
-        assertThat(auratog.getPowerModifier()).isEqualTo(2);
-        assertThat(auratog.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, auratog)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, auratog)).isEqualTo(2);
     }
 
     @Test
@@ -65,8 +66,8 @@ class AuratogTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Circle of Protection: White");
         harness.assertInGraveyard(player1, "Circle of Protection: White");
-        assertThat(auratog.getPowerModifier()).isEqualTo(2);
-        assertThat(auratog.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, auratog)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, auratog)).isEqualTo(2);
     }
 
     @Test
@@ -82,8 +83,8 @@ class AuratogTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(auratog.getPowerModifier()).isEqualTo(0);
-        assertThat(auratog.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, auratog)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, auratog)).isEqualTo(0);
     }
 
     @Test
@@ -113,8 +114,8 @@ class AuratogTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Circle of Protection: White");
-        assertThat(auratog.getPowerModifier()).isEqualTo(4);
-        assertThat(auratog.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, auratog)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, auratog)).isEqualTo(4);
     }
 
     @Test

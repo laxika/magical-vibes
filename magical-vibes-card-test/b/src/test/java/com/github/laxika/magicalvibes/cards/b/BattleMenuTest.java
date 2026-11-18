@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -29,8 +30,8 @@ class BattleMenuTest extends BaseCardTest {
         assertThat(knight.getCard().isToken()).isTrue();
         assertThat(knight.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(knight.getCard().getSubtypes()).containsExactly(CardSubtype.KNIGHT);
-        assertThat(knight.getEffectivePower()).isEqualTo(2);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
     }
 
     @Test
@@ -39,13 +40,13 @@ class BattleMenuTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         cast(1, creature.getId());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -82,7 +83,7 @@ class BattleMenuTest extends BaseCardTest {
     @DisplayName("Magic destroys a creature with exactly 4 power, including power modifiers")
     void magicDestroysCreatureAtPowerThreshold() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        creature.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, creature, 2);
 
         cast(2, creature.getId());
 
@@ -97,7 +98,7 @@ class BattleMenuTest extends BaseCardTest {
         prepareCard();
         harness.castInstant(player1, 0, 2, creature.getId());
 
-        creature.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, creature, -3);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Craw Wurm");
@@ -123,8 +124,8 @@ class BattleMenuTest extends BaseCardTest {
 
         cast(1, creature.getId());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GoblinCohort;
 import com.github.laxika.magicalvibes.cards.t.TeardropKami;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -25,8 +26,8 @@ class UncheckedGrowthTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GoblinCohort());
         castUncheckedGrowth(target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -36,8 +37,8 @@ class UncheckedGrowthTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new TeardropKami());
         castUncheckedGrowth(target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -50,8 +51,8 @@ class UncheckedGrowthTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -61,8 +62,8 @@ class UncheckedGrowthTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinCohort());
         castUncheckedGrowth(target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -74,11 +75,11 @@ class UncheckedGrowthTest extends BaseCardTest {
 
         castUncheckedGrowth(target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -90,15 +91,15 @@ class UncheckedGrowthTest extends BaseCardTest {
         castUncheckedGrowth(target.getId());
         castUncheckedGrowth(target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(8);
-        assertThat(target.getToughnessModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(8);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 

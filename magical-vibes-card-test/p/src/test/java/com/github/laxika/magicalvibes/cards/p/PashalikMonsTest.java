@@ -268,8 +268,8 @@ class Mh1PashalikMonsTest extends BaseCardTest {
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.GOBLIN);
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         });
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
     }

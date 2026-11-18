@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -21,8 +22,8 @@ class WeaselbackRedcapTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(redcap.getPowerModifier()).isEqualTo(2);
-        assertThat(redcap.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, redcap)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, redcap)).isZero();
     }
 
     @Test
@@ -35,8 +36,8 @@ class WeaselbackRedcapTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(redcap.getPowerModifier()).isEqualTo(4);
-        assertThat(redcap.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, redcap)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, redcap)).isZero();
     }
 
     @Test
@@ -51,8 +52,8 @@ class WeaselbackRedcapTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(redcap.getPowerModifier()).isZero();
-        assertThat(redcap.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, redcap)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, redcap)).isZero();
     }
 
     private Permanent addReadyRedcap(Player player) {
@@ -69,8 +70,8 @@ class WeaselbackRedcapTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(redcap.getPowerModifier()).isEqualTo(2);
-        assertThat(redcap.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, redcap)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, redcap)).isZero();
         assertThat(redcap.isTapped()).isTrue();
     }
 
@@ -83,15 +84,15 @@ class WeaselbackRedcapTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(redcap.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, redcap)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(redcap.getPowerModifier()).isEqualTo(2);
-        assertThat(redcap.getToughnessModifier()).isZero();
-        assertThat(anotherRedcap.getPowerModifier()).isZero();
-        assertThat(opposingRedcap.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, redcap)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, redcap)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, anotherRedcap)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingRedcap)).isZero();
     }
 
     private void addAbilityMana(Player player) {

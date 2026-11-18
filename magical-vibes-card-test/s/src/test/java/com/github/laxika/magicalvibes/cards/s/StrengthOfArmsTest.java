@@ -32,8 +32,8 @@ class StrengthOfArmsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent(player1, "Quilled Wolf");
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
         harness.assertNotOnBattlefield(player1, "Human Soldier");
     }
 
@@ -49,12 +49,12 @@ class StrengthOfArmsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent(player1, "Quilled Wolf");
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
 
         Permanent token = findPermanent(player1, "Human Soldier");
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.HUMAN, CardSubtype.SOLDIER);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(token.isTapped()).isFalse();
@@ -90,8 +90,8 @@ class StrengthOfArmsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Quilled Wolf");
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -120,7 +120,7 @@ class StrengthOfArmsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Human Soldier");
-        assertThat(findPermanent(player1, "Quilled Wolf").getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Quilled Wolf"))).isEqualTo(4);
     }
 
     @Test
@@ -136,7 +136,7 @@ class StrengthOfArmsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Human Soldier");
-        assertThat(findPermanent(player1, "Quilled Wolf").getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Quilled Wolf"))).isEqualTo(4);
     }
 
     @Test
@@ -166,8 +166,8 @@ class StrengthOfArmsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Quilled Wolf"));
 
-        assertThat(findPermanent(player2, "Quilled Wolf").getEffectivePower()).isEqualTo(4);
-        assertThat(findPermanent(player2, "Quilled Wolf").getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Quilled Wolf"))).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Quilled Wolf"))).isEqualTo(4);
         harness.assertOnBattlefield(player1, "Human Soldier");
         harness.assertNotOnBattlefield(player2, "Human Soldier");
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);

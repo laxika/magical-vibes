@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
@@ -78,7 +79,7 @@ class BloodthornTaunterTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new WoollyThoctar());
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
@@ -89,18 +90,18 @@ class BloodthornTaunterTest extends BaseCardTest {
     void usesEffectivePowerWhenChoosingTarget() {
         addCreatureReady(player1, new BloodthornTaunter());
         Permanent target = addCreatureReady(player2, new WoollyThoctar());
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("power must be 5 or greater");
 
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 }

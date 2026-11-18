@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DeeptreadMerrow;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowDodger;
@@ -47,8 +48,8 @@ class StreambedAquitectsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, merrow.getId());
         harness.passBothPriorities();
 
-        assertThat(merrow.getPowerModifier()).isEqualTo(1);
-        assertThat(merrow.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, merrow)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, merrow)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, merrow, Keyword.ISLANDWALK)).isTrue();
     }
 
@@ -65,8 +66,8 @@ class StreambedAquitectsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(merrow.getPowerModifier()).isEqualTo(0);
-        assertThat(merrow.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, merrow)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, merrow)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, merrow, Keyword.ISLANDWALK)).isFalse();
     }
 
@@ -142,8 +143,8 @@ class StreambedAquitectsTest extends BaseCardTest {
         assertThat(aquitects.isTapped()).isTrue();
         harness.passBothPriorities();
 
-        assertThat(merrow.getPowerModifier()).isEqualTo(1);
-        assertThat(merrow.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, merrow)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, merrow)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, merrow, Keyword.ISLANDWALK)).isTrue();
     }
 
@@ -155,8 +156,8 @@ class StreambedAquitectsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, aquitects.getId());
         harness.passBothPriorities();
 
-        assertThat(aquitects.getPowerModifier()).isEqualTo(1);
-        assertThat(aquitects.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, aquitects)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, aquitects)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, aquitects, Keyword.ISLANDWALK)).isTrue();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.cards.s.SilkenfistOrder;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -63,7 +64,7 @@ class AvengerEnDalTest extends BaseCardTest {
     void gainsLifeUsingEffectiveToughnessBeforeExile() {
         addReadyAvenger(player1);
         Permanent attacker = addAttacker(player2);
-        attacker.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, attacker, 2);
         harness.setLife(player2, 10);
         harness.setHand(player1, List.of(new AccumulatedKnowledge()));
         harness.addMana(player1, ManaColor.WHITE, 3);

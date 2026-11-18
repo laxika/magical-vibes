@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HighRiseSawjack;
 import com.github.laxika.magicalvibes.cards.j.JewelThief;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -68,7 +69,7 @@ class MidnightAssassinTest extends BaseCardTest {
     void zeroDamageDoesNotDestroyAttacker() {
         Permanent attacker = addCreatureReady(player1, new HighRiseSawjack());
         Permanent assassin = addCreatureReady(player2, new MidnightAssassin());
-        assassin.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, assassin, -1);
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

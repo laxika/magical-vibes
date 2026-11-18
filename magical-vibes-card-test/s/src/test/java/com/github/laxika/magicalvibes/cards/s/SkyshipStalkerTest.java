@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,12 +28,12 @@ class SkyshipStalkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(stalker.getPowerModifier()).isEqualTo(1);
-        assertThat(stalker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, stalker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, stalker)).isEqualTo(0);
 
         endTurn();
 
-        assertThat(stalker.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, stalker)).isEqualTo(0);
     }
 
     @Test
@@ -78,18 +79,18 @@ class SkyshipStalkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.activateAbility(player1, 0, 0, null, null);
 
-        assertThat(stalker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, stalker)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(stalker.getPowerModifier()).isEqualTo(2);
-        assertThat(stalker.getToughnessModifier()).isZero();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, stalker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, stalker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
 
         endTurn();
 
-        assertThat(stalker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, stalker)).isZero();
     }
 
     @Test

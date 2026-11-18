@@ -96,7 +96,7 @@ class MasterBiomancerTest extends BaseCardTest {
     @Test
     void zeroPowerStillGrantsMutantType() {
         Permanent biomancer = addReadyBiomancer(player1);
-        biomancer.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, biomancer, -2);
 
         Permanent bears = castBears(player1);
 
@@ -107,7 +107,7 @@ class MasterBiomancerTest extends BaseCardTest {
     @Test
     void negativePowerDoesNotPreventMutantType() {
         Permanent biomancer = addReadyBiomancer(player1);
-        biomancer.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, biomancer, -3);
 
         Permanent bears = castBears(player1);
 

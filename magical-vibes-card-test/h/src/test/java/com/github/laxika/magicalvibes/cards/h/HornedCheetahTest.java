@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.Backlash;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -134,7 +135,7 @@ class HornedCheetahTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, cheetah.getId());
 
         harness.assertLife(player2, 18);
-        cheetah.setPowerModifier(cheetah.getPowerModifier() + 3);
+        PermanentGrants.setPowerBoost(gd, cheetah, PermanentGrants.powerBoostOf(gd, cheetah) + 3);
         resolveAllTriggers();
 
         harness.assertLife(player2, 20);

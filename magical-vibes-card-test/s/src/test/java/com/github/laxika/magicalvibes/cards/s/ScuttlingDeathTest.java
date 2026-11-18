@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KamiOfOldStone;
 import com.github.laxika.magicalvibes.cards.l.LanternKami;
@@ -34,8 +35,8 @@ class ScuttlingDeathTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Scuttling Death");
 
         Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -52,8 +53,8 @@ class ScuttlingDeathTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -178,9 +179,9 @@ class ScuttlingDeathTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Kami of Old Stone");
         harness.assertNotInGraveyard(player1, "Kami of Old Stone");
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         harness.passBothPriorities();
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test

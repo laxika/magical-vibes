@@ -59,8 +59,8 @@ class LoveSongOfNightAndDayTest extends BaseCardTest {
                 .findFirst()
                 .orElse(null);
         assertThat(bird).isNotNull();
-        assertThat(bird.getEffectivePower()).isEqualTo(1);
-        assertThat(bird.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
         assertThat(bird.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(bird.getCard().getSubtypes()).contains(CardSubtype.BIRD);
         assertThat(bird.getCard().getKeywords()).contains(Keyword.FLYING);

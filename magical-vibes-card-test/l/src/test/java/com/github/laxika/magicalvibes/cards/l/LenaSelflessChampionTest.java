@@ -118,11 +118,11 @@ class LenaSelflessChampionTest extends BaseCardTest {
     @DisplayName("Negative power is preserved when comparing creatures with sacrificed Lena")
     void negativePowerIsNotClampedToZero() {
         Permanent lena = harness.addToBattlefieldAndReturn(player1, new LenaSelflessChampion());
-        lena.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, lena, -4);
         Permanent equalPower = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        equalPower.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, equalPower, -3);
         Permanent weaker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        weaker.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, weaker, -4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -140,7 +140,7 @@ class LenaSelflessChampionTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         growing.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        shrinking.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, shrinking, -2);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, growing, Keyword.INDESTRUCTIBLE)).isFalse();

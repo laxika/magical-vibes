@@ -75,25 +75,25 @@ class KamahlFistOfKrosaTest extends BaseCardTest {
         Permanent kamahl = addPermanent(player1, new KamahlFistOfKrosa());
         Permanent ownCreature = addPermanent(player1, new ElvishWarrior());
         Permanent opponentCreature = addPermanent(player2, new ElvishWarrior());
-        int kamahlPower = kamahl.getEffectivePower();
-        int kamahlToughness = kamahl.getEffectiveToughness();
-        int ownPower = ownCreature.getEffectivePower();
-        int ownToughness = ownCreature.getEffectiveToughness();
-        int opponentPower = opponentCreature.getEffectivePower();
-        int opponentToughness = opponentCreature.getEffectiveToughness();
+        int kamahlPower = gqs.getEffectivePower(gd, kamahl);
+        int kamahlToughness = gqs.getEffectiveToughness(gd, kamahl);
+        int ownPower = gqs.getEffectivePower(gd, ownCreature);
+        int ownToughness = gqs.getEffectiveToughness(gd, ownCreature);
+        int opponentPower = gqs.getEffectivePower(gd, opponentCreature);
+        int opponentToughness = gqs.getEffectiveToughness(gd, opponentCreature);
 
         harness.addMana(player1, ManaColor.GREEN, 5);
         harness.activateAbility(player1, battlefieldIndex(kamahl), 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(kamahl.getEffectivePower()).isEqualTo(kamahlPower + 3);
-        assertThat(kamahl.getEffectiveToughness()).isEqualTo(kamahlToughness + 3);
+        assertThat(gqs.getEffectivePower(gd, kamahl)).isEqualTo(kamahlPower + 3);
+        assertThat(gqs.getEffectiveToughness(gd, kamahl)).isEqualTo(kamahlToughness + 3);
         assertThat(gqs.hasKeyword(gd, kamahl, Keyword.TRAMPLE)).isTrue();
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(ownPower + 3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(ownToughness + 3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(ownPower + 3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(ownToughness + 3);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(opponentPower);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(opponentToughness);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(opponentPower);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(opponentToughness);
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -102,8 +102,8 @@ class KamahlFistOfKrosaTest extends BaseCardTest {
     void boostWearsOffAtEndOfTurn() {
         Permanent kamahl = addPermanent(player1, new KamahlFistOfKrosa());
         Permanent ownCreature = addPermanent(player1, new ElvishWarrior());
-        int kamahlPower = kamahl.getEffectivePower();
-        int ownPower = ownCreature.getEffectivePower();
+        int kamahlPower = gqs.getEffectivePower(gd, kamahl);
+        int ownPower = gqs.getEffectivePower(gd, ownCreature);
 
         harness.addMana(player1, ManaColor.GREEN, 5);
         harness.activateAbility(player1, battlefieldIndex(kamahl), 1, null, null);
@@ -112,8 +112,8 @@ class KamahlFistOfKrosaTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(kamahl.getEffectivePower()).isEqualTo(kamahlPower);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(ownPower);
+        assertThat(gqs.getEffectivePower(gd, kamahl)).isEqualTo(kamahlPower);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(ownPower);
         assertThat(gqs.hasKeyword(gd, kamahl, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isFalse();
     }

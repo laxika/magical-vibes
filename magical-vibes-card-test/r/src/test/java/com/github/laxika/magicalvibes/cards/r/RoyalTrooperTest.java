@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,8 +29,8 @@ class RoyalTrooperTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(trooper.getPowerModifier()).isEqualTo(2);
-        assertThat(trooper.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, trooper)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, trooper)).isEqualTo(2);
     }
 
     @Test
@@ -43,15 +44,15 @@ class RoyalTrooperTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(trooper.getPowerModifier()).isEqualTo(2);
-        assertThat(trooper.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, trooper)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, trooper)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(trooper.getPowerModifier()).isZero();
-        assertThat(trooper.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, trooper)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, trooper)).isZero();
     }
 
     @Test
@@ -66,13 +67,13 @@ class RoyalTrooperTest extends BaseCardTest {
                 () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(trooper.getPowerModifier()).isZero();
-        assertThat(trooper.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, trooper)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, trooper)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(trooper.getPowerModifier()).isEqualTo(2);
-        assertThat(trooper.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, trooper)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, trooper)).isEqualTo(2);
     }
 
     @Test
@@ -86,8 +87,8 @@ class RoyalTrooperTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(trooper.getPowerModifier()).isZero();
-        assertThat(trooper.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, trooper)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, trooper)).isZero();
     }
 
     @Test
@@ -101,8 +102,8 @@ class RoyalTrooperTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(trooper.getPowerModifier()).isZero();
-        assertThat(trooper.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, trooper)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, trooper)).isZero();
     }
 
     @Test
@@ -122,7 +123,7 @@ class RoyalTrooperTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(trooper.getPowerModifier()).isEqualTo(2);
-        assertThat(trooper.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, trooper)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, trooper)).isEqualTo(2);
     }
 }

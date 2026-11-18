@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AegisAutomaton;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,8 +29,8 @@ class FreejamRegentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(regent.getPowerModifier()).isEqualTo(2);
-        assertThat(regent.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, regent)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, regent)).isEqualTo(0);
     }
 
     @Test
@@ -43,8 +44,8 @@ class FreejamRegentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(regent.getPowerModifier()).isEqualTo(4);
-        assertThat(regent.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, regent)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, regent)).isEqualTo(0);
     }
 
     @Test
@@ -82,8 +83,8 @@ class FreejamRegentTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(regent.getPowerModifier()).isEqualTo(0);
-        assertThat(regent.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, regent)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, regent)).isEqualTo(0);
     }
 
     @Test
@@ -125,7 +126,7 @@ class FreejamRegentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(regent.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, regent)).isEqualTo(2);
         assertThat(regent.isTapped()).isFalse();
     }
 

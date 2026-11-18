@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BenalishSleeper;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -39,8 +40,8 @@ class CoalitionSkyknightTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(second.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
     }
 
     @Test
@@ -56,12 +57,12 @@ class CoalitionSkyknightTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
         harness.castInstant(player1, 0, supporter.getId());
         harness.passBothPriorities();
-        assertThat(supporter.getPowerModifier()).isEqualTo(3);
-        assertThat(skyknight.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, supporter)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, skyknight)).isZero();
 
         harness.passBothPriorities();
-        assertThat(skyknight.getPowerModifier()).isEqualTo(5);
-        assertThat(skyknight.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skyknight)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skyknight)).isZero();
     }
 
     @Test
@@ -74,7 +75,7 @@ class CoalitionSkyknightTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(supporter.isTapped()).isFalse();
-        assertThat(skyknight.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skyknight)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -89,7 +90,7 @@ class CoalitionSkyknightTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
-        assertThat(skyknight.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skyknight)).isZero();
     }
 
     @Test
@@ -107,11 +108,11 @@ class CoalitionSkyknightTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
         assertThat(supporter.isTapped()).isTrue();
-        assertThat(skyknight.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skyknight)).isZero();
 
         harness.passBothPriorities();
-        assertThat(skyknight.getPowerModifier()).isEqualTo(2);
-        assertThat(skyknight.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skyknight)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skyknight)).isZero();
     }
 
     @Test
@@ -124,6 +125,6 @@ class CoalitionSkyknightTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
-        assertThat(skyknight.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skyknight)).isZero();
     }
 }

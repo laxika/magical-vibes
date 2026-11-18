@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
@@ -85,9 +86,9 @@ class SymmetryMatrixTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        gd.playerBattlefields.get(player1.getId()).stream()
+        PermanentGrants.setPowerBoost(gd, gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof GrizzlyBears)
-                .findFirst().orElseThrow().setPowerModifier(1);
+                .findFirst().orElseThrow(), 1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 

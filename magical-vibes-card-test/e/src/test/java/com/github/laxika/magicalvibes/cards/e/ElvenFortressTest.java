@@ -27,15 +27,15 @@ class ElvenFortressTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(0);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(0);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
     }
 
     @Test
@@ -77,8 +77,8 @@ class ElvenFortressTest extends BaseCardTest {
         blocker.setBlocking(false);
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(0);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
     }
 
     @Test
@@ -93,8 +93,8 @@ class ElvenFortressTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         resolveAllTriggers();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(0);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(6);
     }
 
     @Test
@@ -109,8 +109,8 @@ class ElvenFortressTest extends BaseCardTest {
         harness.passBothPriorities();
         blocker.setBlocking(false);
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(0);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(5);
     }
 
     @Test
@@ -124,7 +124,7 @@ class ElvenFortressTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, blocker.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
     }
 
     private void addFortress() {

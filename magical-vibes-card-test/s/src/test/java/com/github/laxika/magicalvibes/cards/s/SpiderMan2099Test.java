@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.cards.y.YawgmothsWill;
@@ -148,7 +149,7 @@ class SpiderMan2099Test extends BaseCardTest {
 
         advanceToEndStep();
         harness.handlePermanentChosen(player1, player2.getId());
-        spiderMan.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, spiderMan, 3);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 15);

@@ -31,8 +31,8 @@ class BloodHostTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bloodHost.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bloodHost.getEffectivePower()).isEqualTo(4);
-        assertThat(bloodHost.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bloodHost)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bloodHost)).isEqualTo(4);
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
     }

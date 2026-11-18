@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -46,10 +47,10 @@ class InspiredChargeTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(2);
-                assertThat(p.getToughnessModifier()).isEqualTo(1);
-                assertThat(p.getEffectivePower()).isEqualTo(4);
-                assertThat(p.getEffectiveToughness()).isEqualTo(3);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(2);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(1);
+                assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(4);
+                assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(3);
             }
         }
     }
@@ -68,8 +69,8 @@ class InspiredChargeTest extends BaseCardTest {
         List<Permanent> p1Battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : p1Battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(2);
-                assertThat(p.getToughnessModifier()).isEqualTo(1);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(2);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(1);
             }
         }
 
@@ -77,8 +78,8 @@ class InspiredChargeTest extends BaseCardTest {
         List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
         for (Permanent p : p2Battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
-                assertThat(p.getToughnessModifier()).isEqualTo(0);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
             }
         }
     }
@@ -100,10 +101,10 @@ class InspiredChargeTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
-                assertThat(p.getToughnessModifier()).isEqualTo(0);
-                assertThat(p.getEffectivePower()).isEqualTo(2);
-                assertThat(p.getEffectiveToughness()).isEqualTo(2);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
+                assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(2);
+                assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(2);
             }
         }
     }
@@ -141,10 +142,10 @@ class InspiredChargeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(land.getPowerModifier()).isZero();
-        assertThat(land.getToughnessModifier()).isZero();
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, land)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, land)).isZero();
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
     }
 
     @Test
@@ -157,8 +158,8 @@ class InspiredChargeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
     }
 
     @Test
@@ -171,10 +172,10 @@ class InspiredChargeTest extends BaseCardTest {
 
         Permanent later = harness.enterBattlefieldAndReturn(player1, new RuneclawBear());
 
-        assertThat(original.getEffectivePower()).isEqualTo(4);
-        assertThat(original.getEffectiveToughness()).isEqualTo(3);
-        assertThat(later.getEffectivePower()).isEqualTo(2);
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
     }
 
     @Test
@@ -187,14 +188,14 @@ class InspiredChargeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(6);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 }

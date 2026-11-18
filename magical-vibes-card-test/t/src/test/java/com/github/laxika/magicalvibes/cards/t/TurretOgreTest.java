@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -55,7 +56,7 @@ class TurretOgreTest extends BaseCardTest {
     @Test
     void anotherCreatureWithPowerThreeDoesNotQualify() {
         var other = harness.addToBattlefieldAndReturn(player1, new TurretOgre());
-        other.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, other, -1);
 
         castTurretOgre();
 
@@ -83,7 +84,7 @@ class TurretOgreTest extends BaseCardTest {
         castTurretOgre();
         assertThat(gd.stack).hasSize(1);
 
-        other.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, other, -1);
         resolveAllTriggers();
 
         harness.assertLife(player2, 20);

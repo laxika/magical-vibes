@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,8 +29,8 @@ class BlitzLeechTest extends BaseCardTest {
         castBlitzLeech(target);
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(target.getCounterCount(CounterType.CHARGE)).isZero();
     }
@@ -46,8 +47,8 @@ class BlitzLeechTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -89,7 +90,7 @@ class BlitzLeechTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Air Elemental");
         harness.assertNotInGraveyard(player2, "Air Elemental");
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
     }
 
     @Test
@@ -103,8 +104,8 @@ class BlitzLeechTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(target);
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
         harness.assertOnBattlefield(player1, "Blitz Leech");
         assertThat(gd.stack).isEmpty();

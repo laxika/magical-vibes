@@ -36,8 +36,7 @@ public class BoostOpponentCreaturesByPoisonCountersEffectHandler implements Norm
             if (poisonCounters <= 0 || !gameQueryService.isCreature(gameData, permanent)) {
                 return;
             }
-            permanent.setPowerModifier(permanent.getPowerModifier() - poisonCounters);
-            permanent.setToughnessModifier(permanent.getToughnessModifier() - poisonCounters);
+            gameData.addPowerToughnessBoost(entry, permanent.getId(), -poisonCounters, -poisonCounters);
             affectedCreatures[0]++;
         });
 

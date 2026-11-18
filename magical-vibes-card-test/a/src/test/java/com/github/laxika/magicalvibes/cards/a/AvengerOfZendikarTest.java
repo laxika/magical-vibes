@@ -29,8 +29,8 @@ class AvengerOfZendikarTest extends BaseCardTest {
         List<Permanent> plants = findPlants(player1);
         assertThat(plants).hasSize(2);
         assertThat(plants).allSatisfy(plant -> {
-            assertThat(plant.getEffectivePower()).isZero();
-            assertThat(plant.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, plant)).isZero();
+            assertThat(gqs.getEffectiveToughness(gd, plant)).isEqualTo(1);
         });
     }
 

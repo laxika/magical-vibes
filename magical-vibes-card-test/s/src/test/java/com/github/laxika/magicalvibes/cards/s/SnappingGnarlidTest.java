@@ -24,8 +24,8 @@ class SnappingGnarlidTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gnarlid.getEffectivePower()).isEqualTo(3);
-        assertThat(gnarlid.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, gnarlid)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, gnarlid)).isEqualTo(3);
     }
 
     @Test
@@ -38,8 +38,8 @@ class SnappingGnarlidTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(gnarlid.getEffectivePower()).isEqualTo(2);
-        assertThat(gnarlid.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, gnarlid)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gnarlid)).isEqualTo(2);
     }
 
     @Test
@@ -53,8 +53,8 @@ class SnappingGnarlidTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gnarlid.getEffectivePower()).isEqualTo(2);
-        assertThat(gnarlid.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, gnarlid)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gnarlid)).isEqualTo(2);
     }
 
     @Test
@@ -65,12 +65,12 @@ class SnappingGnarlidTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gnarlid.getEffectivePower()).isEqualTo(2);
-        assertThat(gnarlid.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, gnarlid)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gnarlid)).isEqualTo(2);
         harness.passBothPriorities();
 
-        assertThat(gnarlid.getEffectivePower()).isEqualTo(3);
-        assertThat(gnarlid.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, gnarlid)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, gnarlid)).isEqualTo(3);
     }
 
     @Test
@@ -88,12 +88,12 @@ class SnappingGnarlidTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
     }
 
     @Test
@@ -104,7 +104,7 @@ class SnappingGnarlidTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new SnappingGnarlid());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gnarlid.getEffectivePower()).isEqualTo(2);
-        assertThat(gnarlid.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, gnarlid)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gnarlid)).isEqualTo(2);
     }
 }

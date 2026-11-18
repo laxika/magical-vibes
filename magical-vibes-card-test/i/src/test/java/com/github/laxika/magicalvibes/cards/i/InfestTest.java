@@ -24,10 +24,10 @@ class InfestTest extends BaseCardTest {
 
         Permanent own = findPermanent(player1, "Gluttonous Zombie");
         Permanent opp = findPermanent(player2, "Gluttonous Zombie");
-        assertThat(own.getEffectivePower()).isEqualTo(1);
-        assertThat(own.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opp.getEffectivePower()).isEqualTo(1);
-        assertThat(opp.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opp)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opp)).isEqualTo(1);
     }
 
     @Test
@@ -47,13 +47,13 @@ class InfestTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GluttonousZombie()); // 3/3
 
         castInfest();
-        assertThat(findPermanent(player1, "Gluttonous Zombie").getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Gluttonous Zombie"))).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Gluttonous Zombie").getEffectivePower()).isEqualTo(3);
-        assertThat(findPermanent(player1, "Gluttonous Zombie").getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Gluttonous Zombie"))).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Gluttonous Zombie"))).isEqualTo(3);
     }
 
     @Test
@@ -65,10 +65,10 @@ class InfestTest extends BaseCardTest {
 
         Permanent later = addCreatureReady(player2, new GluttonousZombie());
 
-        assertThat(existing.getEffectivePower()).isEqualTo(1);
-        assertThat(existing.getEffectiveToughness()).isEqualTo(1);
-        assertThat(later.getEffectivePower()).isEqualTo(3);
-        assertThat(later.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(3);
     }
 
     @Test

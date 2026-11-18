@@ -52,8 +52,8 @@ class OminousSeasTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent kraken = findPermanent(player1, "Kraken");
-        assertThat(kraken.getEffectivePower()).isEqualTo(8);
-        assertThat(kraken.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, kraken)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, kraken)).isEqualTo(8);
         assertThat(kraken.getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(kraken.getCard().getSubtypes()).containsExactly(CardSubtype.KRAKEN);
         assertThat(seas.getCounterCount(CounterType.FORESHADOW)).isZero();

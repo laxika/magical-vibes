@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -27,8 +28,8 @@ class HighStrideTest extends BaseCardTest {
         castHighStride(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
     }
 
@@ -42,8 +43,8 @@ class HighStrideTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
     }
 
@@ -69,12 +70,12 @@ class HighStrideTest extends BaseCardTest {
         castHighStride(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
         assertThat(other.isTapped()).isTrue();
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
     }
 
@@ -93,8 +94,8 @@ class HighStrideTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "High Stride");
         assertThat(other.isTapped()).isTrue();
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
     }
 

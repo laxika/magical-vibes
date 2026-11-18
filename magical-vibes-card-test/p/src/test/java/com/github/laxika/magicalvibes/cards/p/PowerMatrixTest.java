@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class PowerMatrixTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
@@ -47,8 +48,8 @@ class PowerMatrixTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
@@ -63,8 +64,8 @@ class PowerMatrixTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
@@ -79,8 +80,8 @@ class PowerMatrixTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -93,8 +94,8 @@ class PowerMatrixTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(matrix.isTapped()).isTrue();
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
@@ -112,8 +113,8 @@ class PowerMatrixTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();

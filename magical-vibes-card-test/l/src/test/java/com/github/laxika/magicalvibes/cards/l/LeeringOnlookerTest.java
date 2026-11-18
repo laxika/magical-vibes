@@ -34,8 +34,8 @@ class LeeringOnlookerTest extends BaseCardTest {
         assertThat(bats).hasSize(2);
         assertThat(bats).allSatisfy(bat -> {
             assertThat(bat.isTapped()).isTrue();
-            assertThat(bat.getEffectivePower()).isEqualTo(1);
-            assertThat(bat.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, bat)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, bat)).isEqualTo(1);
             assertThat(bat.getCard().getColor()).isEqualTo(CardColor.BLACK);
             assertThat(bat.getCard().getSubtypes()).contains(CardSubtype.BAT);
             assertThat(bat.getCard().getKeywords()).contains(Keyword.FLYING);

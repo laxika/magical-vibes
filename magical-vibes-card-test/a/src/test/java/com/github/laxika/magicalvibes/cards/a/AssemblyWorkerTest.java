@@ -24,10 +24,10 @@ class AssemblyWorkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(2);
-        assertThat(source.getEffectiveToughness()).isEqualTo(2);
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(source.isTapped()).isTrue();
     }
 
@@ -44,8 +44,8 @@ class AssemblyWorkerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -69,8 +69,8 @@ class AssemblyWorkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(worker.isTapped()).isTrue();
-        assertThat(worker.getEffectivePower()).isEqualTo(3);
-        assertThat(worker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, worker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, worker)).isEqualTo(3);
     }
 
     @Test
@@ -85,8 +85,8 @@ class AssemblyWorkerTest extends BaseCardTest {
 
         assertThat(source.isTapped()).isTrue();
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -113,8 +113,8 @@ class AssemblyWorkerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -129,8 +129,8 @@ class AssemblyWorkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -145,8 +145,8 @@ class AssemblyWorkerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -162,7 +162,7 @@ class AssemblyWorkerTest extends BaseCardTest {
 
         assertThat(source.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
-        assertThat(returned.getEffectivePower()).isEqualTo(2);
-        assertThat(returned.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(2);
     }
 }

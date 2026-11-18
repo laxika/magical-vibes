@@ -39,8 +39,8 @@ class SpoilsOfBloodTest extends BaseCardTest {
         assertThat(horror.getCard().isToken()).isTrue();
         assertThat(horror.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(horror.getCard().getSubtypes()).containsExactly(CardSubtype.HORROR);
-        assertThat(horror.getEffectivePower()).isEqualTo(5);
-        assertThat(horror.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, horror)).isEqualTo(5);
     }
 
     @Test
@@ -60,8 +60,8 @@ class SpoilsOfBloodTest extends BaseCardTest {
 
         List<Permanent> horrors = findPermanents(player1, "Horror");
         assertThat(horrors).hasSize(1);
-        assertThat(horrors.getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(horrors.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, horrors.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, horrors.getFirst())).isEqualTo(1);
     }
 
     @Test
@@ -72,12 +72,12 @@ class SpoilsOfBloodTest extends BaseCardTest {
         Permanent horror = findPermanent(player1, "Horror");
 
         gd.creatureDeathCountThisTurn.put(player1.getId(), 4);
-        assertThat(horror.getEffectivePower()).isEqualTo(2);
-        assertThat(horror.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, horror)).isEqualTo(2);
 
         gd.creatureDeathCountThisTurn.clear();
-        assertThat(horror.getEffectivePower()).isEqualTo(2);
-        assertThat(horror.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, horror)).isEqualTo(2);
     }
 
     private void castSpoilsOfBlood() {

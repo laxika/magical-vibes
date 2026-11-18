@@ -31,8 +31,8 @@ class NecroticWoundTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Centaur Courser");
     }
 
@@ -60,7 +60,7 @@ class NecroticWoundTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -96,8 +96,8 @@ class NecroticWoundTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -120,14 +120,14 @@ class NecroticWoundTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.passBothPriorities();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
 
         harness.castAndResolveInstant(player1, 0, secondBear.getId());
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(card -> card instanceof GrizzlyBears).hasSize(2);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Centaur Courser");
     }
 
@@ -139,13 +139,13 @@ class NecroticWoundTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NecroticWound()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castAndResolveInstant(player2, 0, target.getId());

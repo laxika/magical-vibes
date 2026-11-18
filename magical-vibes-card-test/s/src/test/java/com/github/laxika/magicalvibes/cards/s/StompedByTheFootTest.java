@@ -29,8 +29,8 @@ class StompedByTheFootTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -44,8 +44,8 @@ class StompedByTheFootTest extends BaseCardTest {
         harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Spellbook");
     }
 
@@ -60,8 +60,8 @@ class StompedByTheFootTest extends BaseCardTest {
         harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
@@ -77,8 +77,8 @@ class StompedByTheFootTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
     }
 
     @Test
@@ -119,7 +119,7 @@ class StompedByTheFootTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Spellbook");
         harness.assertInGraveyard(player1, "Spellbook");
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
         assertThat(gd.stack).hasSize(1);
     }
 

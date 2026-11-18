@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,8 +25,8 @@ class SandstoneWarriorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(1);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(0);
     }
 
     @Test
@@ -39,14 +40,14 @@ class SandstoneWarriorTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(warrior.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(1);
-        assertThat(warrior.getToughnessModifier()).isZero();
-        assertThat(otherWarrior.getPowerModifier()).isZero();
-        assertThat(opposingWarrior.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherWarrior)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingWarrior)).isZero();
     }
 
     @Test
@@ -60,8 +61,8 @@ class SandstoneWarriorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(1);
-        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isZero();
         assertThat(warrior.isTapped()).isTrue();
     }
 
@@ -78,7 +79,7 @@ class SandstoneWarriorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(3);
     }
 
     @Test
@@ -90,13 +91,13 @@ class SandstoneWarriorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(0);
     }
 
     @Test

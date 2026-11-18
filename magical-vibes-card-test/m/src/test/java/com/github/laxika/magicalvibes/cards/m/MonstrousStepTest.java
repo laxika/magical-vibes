@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,8 +29,8 @@ class MonstrousStepTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(attacker.getId(), blocker.getId()));
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(7);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(7);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(7);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(7);
         assertThat(gd.requiredBlockSourceIds(findPermanent(player2, "Grizzly Bears").getId())).containsExactly(attacker.getId());
     }
 
@@ -43,8 +44,8 @@ class MonstrousStepTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(attacker.getId()));
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(7);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(7);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(7);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(7);
     }
 
     @Test
@@ -106,8 +107,8 @@ class MonstrousStepTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(blocker);
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(7);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(7);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(7);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(7);
         harness.assertInGraveyard(player1, "Monstrous Step");
     }
 
@@ -123,8 +124,8 @@ class MonstrousStepTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(attacker);
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
         assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Monstrous Step");
     }
@@ -162,8 +163,8 @@ class MonstrousStepTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         assertThat(gd.requiredBlockSourceIds(blocker.getId())).isEmpty();
     }
 }

@@ -27,14 +27,14 @@ class PowerPlantWorkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(worker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(worker.getEffectivePower()).isEqualTo(6);
-        assertThat(worker.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, worker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, worker)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(worker.getEffectivePower()).isEqualTo(4);
-        assertThat(worker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, worker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, worker)).isEqualTo(4);
     }
 
     @Test
@@ -49,15 +49,15 @@ class PowerPlantWorkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(worker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(worker.getEffectivePower()).isEqualTo(6);
-        assertThat(worker.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, worker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, worker)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(worker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(worker.getEffectivePower()).isEqualTo(6);
-        assertThat(worker.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, worker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, worker)).isEqualTo(6);
     }
 
     @Test
@@ -74,8 +74,8 @@ class PowerPlantWorkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(worker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(worker.getEffectivePower()).isEqualTo(6);
-        assertThat(worker.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, worker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, worker)).isEqualTo(6);
     }
 
     @Test
@@ -108,8 +108,8 @@ class PowerPlantWorkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(worker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(worker.getEffectivePower()).isEqualTo(6);
-        assertThat(worker.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, worker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, worker)).isEqualTo(6);
     }
 
     @Test
@@ -128,8 +128,8 @@ class PowerPlantWorkerTest extends BaseCardTest {
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.getEffectivePower()).isEqualTo(6);
-        assertThat(second.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(6);
     }
 
     @Test
@@ -143,8 +143,8 @@ class PowerPlantWorkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(worker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(worker.getEffectivePower()).isEqualTo(6);
-        assertThat(worker.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, worker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, worker)).isEqualTo(6);
     }
 
     @Test
@@ -172,8 +172,8 @@ class PowerPlantWorkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(worker.getEffectivePower()).isEqualTo(6);
-        assertThat(worker.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, worker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, worker)).isEqualTo(6);
         assertThat(worker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 

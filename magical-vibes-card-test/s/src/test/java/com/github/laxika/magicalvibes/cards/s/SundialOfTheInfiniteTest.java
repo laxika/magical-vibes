@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ActOfTreason;
 import com.github.laxika.magicalvibes.cards.j.JinGitaxiasCoreAugur;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
@@ -65,14 +66,14 @@ class SundialOfTheInfiniteTest extends BaseCardTest {
         addReadySundial(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
-        bears.setPowerModifier(3);
-        bears.setToughnessModifier(3);
+        PermanentGrants.setPowerBoost(gd, bears, 3);
+        PermanentGrants.setToughnessBoost(gd, bears, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AngrathsMarauders;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -55,7 +56,7 @@ class TahngarthTalruumHeroTest extends BaseCardTest {
     void sourceLeavingBeforeResolutionStillDealsDamage() {
         Permanent tahngarth = addReadyTahngarth(player1);
         Permanent target = addCreatureReady(player2, new CrawWurm());
-        target.setToughnessModifier(1); // Keep the four damage nonlethal so it can be inspected.
+        PermanentGrants.setToughnessBoost(gd, target, 1); // Keep the four damage nonlethal so it can be inspected.
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -142,7 +143,7 @@ class TahngarthTalruumHeroTest extends BaseCardTest {
     @DisplayName("Can target itself and deals both damage instructions to itself")
     void canTargetItself() {
         Permanent tahngarth = addReadyTahngarth(player1);
-        tahngarth.setToughnessModifier(5);
+        PermanentGrants.setToughnessBoost(gd, tahngarth, 5);
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, tahngarth.getId());
@@ -173,11 +174,11 @@ class TahngarthTalruumHeroTest extends BaseCardTest {
     void usesCurrentPowerAtResolution() {
         Permanent tahngarth = addReadyTahngarth(player1);
         Permanent target = addCreatureReady(player2, new CrawWurm());
-        target.setToughnessModifier(5);
+        PermanentGrants.setToughnessBoost(gd, target, 5);
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
-        tahngarth.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, tahngarth, 2);
         harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
 
         assertThat(target.getMarkedDamage()).isEqualTo(6);

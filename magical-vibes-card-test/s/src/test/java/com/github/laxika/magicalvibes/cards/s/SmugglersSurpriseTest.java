@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -179,14 +180,14 @@ class SmugglersSurpriseTest extends BaseCardTest {
     @DisplayName("Protection uses current power at resolution and remains after power drops")
     void protectionIsFixedAtResolution() {
         Permanent boostedBears = addCreatureReady(player1, new GrizzlyBears());
-        boostedBears.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, boostedBears, 2);
         Permanent weakenedAngel = addCreatureReady(player1, new SerraAngel());
-        weakenedAngel.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, weakenedAngel, -1);
         Permanent opposingAngel = addCreatureReady(player2, new SerraAngel());
         cast(new SmugglersSurprise(), 2, 2);
 
-        boostedBears.setPowerModifier(0);
-        weakenedAngel.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, boostedBears, 0);
+        PermanentGrants.setPowerBoost(gd, weakenedAngel, 0);
         Permanent laterAngel = addCreatureReady(player1, new SerraAngel());
 
         assertThat(gqs.hasKeyword(gd, boostedBears, Keyword.HEXPROOF)).isTrue();

@@ -25,8 +25,8 @@ class InfestationSageTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Infestation Sage");
         Permanent token = findPermanent(player1, "Insect");
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.getCard().getColors())
                 .containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.INSECT);

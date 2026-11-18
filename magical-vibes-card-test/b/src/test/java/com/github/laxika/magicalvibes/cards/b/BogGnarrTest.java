@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GaeasSkyfolk;
 import com.github.laxika.magicalvibes.cards.m.MournfulZombie;
 import com.github.laxika.magicalvibes.cards.p.PutridWarrior;
@@ -25,8 +26,8 @@ class BogGnarrTest extends BaseCardTest {
         castBlackSpell(player2);
         harness.passBothPriorities();
 
-        assertThat(gnarr.getPowerModifier()).isEqualTo(2);
-        assertThat(gnarr.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gnarr)).isEqualTo(2);
     }
 
     @Test
@@ -36,8 +37,8 @@ class BogGnarrTest extends BaseCardTest {
 
         castSpellAsOpponent(new GaeasSkyfolk(), "{G}{U}");
 
-        assertThat(gnarr.getPowerModifier()).isZero();
-        assertThat(gnarr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gnarr)).isZero();
     }
 
     @Test
@@ -50,8 +51,8 @@ class BogGnarrTest extends BaseCardTest {
         castBlackSpell(player1);
         harness.passBothPriorities();
 
-        assertThat(gnarr.getPowerModifier()).isEqualTo(4);
-        assertThat(gnarr.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gnarr)).isEqualTo(4);
     }
 
     @Test
@@ -61,7 +62,7 @@ class BogGnarrTest extends BaseCardTest {
 
         castBlackSpell(player2);
         harness.passBothPriorities();
-        assertThat(gnarr.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isEqualTo(2);
 
         resolveAllTriggers();
 
@@ -69,8 +70,8 @@ class BogGnarrTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gnarr.getPowerModifier()).isZero();
-        assertThat(gnarr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gnarr)).isZero();
     }
 
     @Test
@@ -80,16 +81,16 @@ class BogGnarrTest extends BaseCardTest {
 
         harness.castFromHand(player1, new PutridWarrior(), "{W}{B}");
 
-        assertThat(gnarr.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isZero();
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
 
-        assertThat(gnarr.getPowerModifier()).isEqualTo(2);
-        assertThat(gnarr.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gnarr)).isEqualTo(2);
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
-        assertThat(gnarr.getPowerModifier()).isEqualTo(2);
-        assertThat(gnarr.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gnarr)).isEqualTo(2);
     }
 
     @Test
@@ -101,10 +102,10 @@ class BogGnarrTest extends BaseCardTest {
         castBlackSpell(player2);
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(2);
     }
 
     private Permanent addGnarr() {

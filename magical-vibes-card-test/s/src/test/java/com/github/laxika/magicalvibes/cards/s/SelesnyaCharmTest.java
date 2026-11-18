@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AxebaneStag;
 import com.github.laxika.magicalvibes.cards.d.DrudgeBeetle;
 import com.github.laxika.magicalvibes.cards.d.Downsize;
@@ -94,8 +95,8 @@ class SelesnyaCharmTest extends BaseCardTest {
             harness.passBothPriorities();
 
             Permanent beetle = findPermanent(player1, "Drudge Beetle");
-            assertThat(beetle.getPowerModifier()).isEqualTo(2);
-            assertThat(beetle.getToughnessModifier()).isEqualTo(2);
+            assertThat(PermanentGrants.powerBoostOf(gd, beetle)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, beetle)).isEqualTo(2);
             assertThat(gqs.hasKeyword(gd, beetle, Keyword.TRAMPLE)).isTrue();
         }
 
@@ -114,8 +115,8 @@ class SelesnyaCharmTest extends BaseCardTest {
             harness.passUntil(player2, TurnStep.UPKEEP);
 
             Permanent beetle = findPermanent(player1, "Drudge Beetle");
-            assertThat(beetle.getPowerModifier()).isZero();
-            assertThat(beetle.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, beetle)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, beetle)).isZero();
             assertThat(gqs.hasKeyword(gd, beetle, Keyword.TRAMPLE)).isFalse();
         }
     }

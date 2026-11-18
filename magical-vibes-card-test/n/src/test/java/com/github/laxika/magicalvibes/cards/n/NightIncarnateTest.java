@@ -25,10 +25,10 @@ class NightIncarnateTest extends BaseCardTest {
 
         destroyNightIncarnate(nightIncarnate);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
     }
 
     @Test
@@ -43,8 +43,8 @@ class NightIncarnateTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -60,8 +60,8 @@ class NightIncarnateTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Night Incarnate");
         harness.assertInGraveyard(player1, "Night Incarnate");
     }

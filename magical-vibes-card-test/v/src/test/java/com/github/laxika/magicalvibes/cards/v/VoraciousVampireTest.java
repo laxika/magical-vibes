@@ -35,8 +35,8 @@ class VoraciousVampireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent vampire = findPermanent(player1, "Dusk Legion Zealot");
-        assertThat(vampire.getPowerModifier()).isEqualTo(1);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, vampire)).contains(Keyword.MENACE);
     }
 
@@ -57,8 +57,8 @@ class VoraciousVampireTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(vampire.getPowerModifier()).isZero();
-        assertThat(vampire.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, vampire)).doesNotContain(Keyword.MENACE);
     }
 
@@ -78,7 +78,7 @@ class VoraciousVampireTest extends BaseCardTest {
                 .hasMessageContaining("Invalid permanent");
         harness.handlePermanentChosen(player1, source.getId());
         harness.passBothPriorities();
-        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
     }
 
     @Test
@@ -97,8 +97,8 @@ class VoraciousVampireTest extends BaseCardTest {
                 .hasMessageContaining("Invalid permanent");
         harness.handlePermanentChosen(player1, source.getId());
         harness.passBothPriorities();
-        assertThat(findPermanent(player2, "Dusk Legion Zealot").getPowerModifier()).isZero();
-        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player2, "Dusk Legion Zealot"))).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
     }
 
     @Test
@@ -113,8 +113,8 @@ class VoraciousVampireTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, source.getId());
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, source, Keyword.MENACE)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
@@ -132,8 +132,8 @@ class VoraciousVampireTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Voracious Vampire");
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
@@ -151,8 +151,8 @@ class VoraciousVampireTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Dusk Legion Zealot");
         resolveAllTriggers();
 
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

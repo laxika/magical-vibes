@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -23,7 +24,7 @@ class DrownInIchorTest extends BaseCardTest {
     void givesTargetCreatureMinusFourMinusFourAndProliferates() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         UUID targetId = target.getId();
-        target.setToughnessModifier(5);
+        PermanentGrants.setToughnessBoost(gd, target, 5);
 
         Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         otherCreature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
@@ -36,8 +37,8 @@ class DrownInIchorTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(-2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
 
         harness.handleMultiplePermanentsChosen(player1, List.of(otherCreature.getId()));
 
@@ -48,7 +49,7 @@ class DrownInIchorTest extends BaseCardTest {
     void debuffWearsOffAtCleanup() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         UUID targetId = target.getId();
-        target.setToughnessModifier(5);
+        PermanentGrants.setToughnessBoost(gd, target, 5);
 
         harness.setHand(player1, List.of(new DrownInIchor()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -56,15 +57,15 @@ class DrownInIchorTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-4);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test

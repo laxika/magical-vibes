@@ -28,8 +28,8 @@ class SegmentedWurmTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, wurm.getId());
 
         assertThat(wurm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(wurm.getEffectivePower()).isEqualTo(4);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(4);
     }
 
     @Test
@@ -59,7 +59,7 @@ class SegmentedWurmTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, armodon.getId());
 
         assertThat(wurm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(wurm.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(5);
     }
 
     @Test

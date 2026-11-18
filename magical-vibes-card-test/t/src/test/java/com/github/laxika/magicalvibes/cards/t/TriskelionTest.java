@@ -29,8 +29,8 @@ class TriskelionTest extends BaseCardTest {
         Permanent triskelion = findTriskelion(player1);
 
         assertThat(triskelion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(triskelion.getEffectivePower()).isEqualTo(4);
-        assertThat(triskelion.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, triskelion)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, triskelion)).isEqualTo(4);
     }
 
     @Test
@@ -104,8 +104,8 @@ class TriskelionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(triskelion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(triskelion.getEffectivePower()).isEqualTo(3);
-        assertThat(triskelion.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, triskelion)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, triskelion)).isEqualTo(3);
     }
 
     @Test

@@ -29,8 +29,8 @@ class NissaVoiceOfZendikarTest extends BaseCardTest {
         Permanent plant = findPermanent(player1, "Plant");
         assertThat(plant.getCard().isToken()).isTrue();
         assertThat(plant.getCard().getSubtypes()).containsExactly(CardSubtype.PLANT);
-        assertThat(plant.getEffectivePower()).isZero();
-        assertThat(plant.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, plant)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, plant)).isEqualTo(1);
         assertThat(nissa.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BristlingBoar;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -98,7 +99,7 @@ class ColossalMajestyTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         assertThat(gd.stack).hasSize(1);
-        creature.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, creature, -1);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
@@ -128,7 +129,7 @@ class ColossalMajestyTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         assertThat(gd.stack).hasSize(1);
-        originalCreature.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, originalCreature, -1);
         otherCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.passBothPriorities();
 

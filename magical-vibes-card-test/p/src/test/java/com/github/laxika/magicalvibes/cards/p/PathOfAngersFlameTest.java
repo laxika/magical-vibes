@@ -19,10 +19,10 @@ class PathOfAngersFlameTest extends BaseCardTest {
         harness.castFromHand(player1, new PathOfAngersFlame(), "{2}{R}");
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
     }
 
     @Test
@@ -34,8 +34,8 @@ class PathOfAngersFlameTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test
@@ -47,8 +47,8 @@ class PathOfAngersFlameTest extends BaseCardTest {
 
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new HandOfHonor());
 
-        assertThat(existingCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, existingCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
     }
 
     @Test
@@ -58,8 +58,8 @@ class PathOfAngersFlameTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new HandOfHonor());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -71,7 +71,7 @@ class PathOfAngersFlameTest extends BaseCardTest {
         harness.castFromHand(player1, new PathOfAngersFlame(), "{2}{R}");
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(6);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }

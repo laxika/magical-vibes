@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -27,8 +28,8 @@ class SavageSwipeTest extends BaseCardTest {
 
         castSwipe(ownCreature, opponent);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Hill Giant");
     }
@@ -41,8 +42,8 @@ class SavageSwipeTest extends BaseCardTest {
 
         castSwipe(ownCreature, opponent);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
         harness.assertOnBattlefield(player1, "Hill Giant");
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
@@ -55,12 +56,12 @@ class SavageSwipeTest extends BaseCardTest {
 
         castSwipe(ownCreature, opponent);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test
@@ -90,12 +91,12 @@ class SavageSwipeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castSorcery(player1, 0, List.of(ownCreature.getId(), opponent.getId()));
 
-        ownCreature.setPowerModifier(1);
-        ownCreature.setToughnessModifier(1);
+        PermanentGrants.setPowerBoost(gd, ownCreature, 1);
+        PermanentGrants.setToughnessBoost(gd, ownCreature, 1);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
         harness.assertOnBattlefield(player1, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Hill Giant");
     }
@@ -124,8 +125,8 @@ class SavageSwipeTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(opponent);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
         assertThat(ownCreature.getMarkedDamage()).isZero();
     }
 
@@ -142,8 +143,8 @@ class SavageSwipeTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(ownCreature);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(ownCreature.getMarkedDamage()).isZero();
         assertThat(opponent.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Grizzly Bears");

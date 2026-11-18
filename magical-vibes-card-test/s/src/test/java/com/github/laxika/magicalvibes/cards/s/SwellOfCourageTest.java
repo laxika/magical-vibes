@@ -28,10 +28,10 @@ class SwellOfCourageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -44,8 +44,8 @@ class SwellOfCourageTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -62,8 +62,8 @@ class SwellOfCourageTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.assertInGraveyard(player1, "Swell of Courage");
     }
@@ -80,8 +80,8 @@ class SwellOfCourageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 
     @Test
@@ -95,8 +95,8 @@ class SwellOfCourageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.assertInGraveyard(player1, "Swell of Courage");
     }
@@ -154,10 +154,10 @@ class SwellOfCourageTest extends BaseCardTest {
 
         Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new BurrentonBombardier());
 
-        assertThat(original.getEffectivePower()).isEqualTo(4);
-        assertThat(original.getEffectiveToughness()).isEqualTo(4);
-        assertThat(newcomer.getEffectivePower()).isEqualTo(2);
-        assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(2);
     }
 
     @Test
@@ -194,7 +194,7 @@ class SwellOfCourageTest extends BaseCardTest {
         harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 }

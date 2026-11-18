@@ -32,8 +32,8 @@ class EtchedMonstrosityTest extends BaseCardTest {
         Permanent monstrosity = findMonstrosity(player1);
 
         assertThat(monstrosity.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(5);
-        assertThat(monstrosity.getEffectivePower()).isEqualTo(5);
-        assertThat(monstrosity.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, monstrosity)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, monstrosity)).isEqualTo(5);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -82,8 +82,8 @@ class EtchedMonstrosityTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player1.getId());
         assertThat(monstrosity.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
-        assertThat(monstrosity.getEffectivePower()).isEqualTo(10);
-        assertThat(monstrosity.getEffectiveToughness()).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, monstrosity)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, monstrosity)).isEqualTo(10);
         harness.passBothPriorities();
     }
 

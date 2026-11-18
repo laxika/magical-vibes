@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class RidgelineRagerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rager.getPowerModifier()).isEqualTo(1);
-        assertThat(rager.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, rager)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rager)).isEqualTo(0);
     }
 
     @Test
@@ -36,7 +37,7 @@ class RidgelineRagerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rager.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, rager)).isEqualTo(1);
     }
 
     @Test
@@ -50,8 +51,8 @@ class RidgelineRagerTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(rager.getPowerModifier()).isEqualTo(3);
-        assertThat(rager.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, rager)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rager)).isEqualTo(0);
     }
 
     @Test
@@ -63,13 +64,13 @@ class RidgelineRagerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rager.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, rager)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(rager.getPowerModifier()).isEqualTo(0);
-        assertThat(rager.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, rager)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rager)).isEqualTo(0);
     }
 
     @Test
@@ -102,15 +103,15 @@ class RidgelineRagerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(rager.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, rager)).isEqualTo(0);
         assertThat(gd.stack).hasSize(2);
 
         harness.passBothPriorities();
-        assertThat(rager.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, rager)).isEqualTo(1);
 
         harness.passBothPriorities();
-        assertThat(rager.getPowerModifier()).isEqualTo(2);
-        assertThat(rager.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, rager)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rager)).isEqualTo(0);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -125,11 +126,11 @@ class RidgelineRagerTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(rager.getPowerModifier()).isEqualTo(1);
-        assertThat(rager.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, rager)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rager)).isEqualTo(0);
         assertThat(rager.isTapped()).isTrue();
-        assertThat(otherRager.getPowerModifier()).isEqualTo(0);
-        assertThat(otherRager.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherRager)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherRager)).isEqualTo(0);
     }
 
 }

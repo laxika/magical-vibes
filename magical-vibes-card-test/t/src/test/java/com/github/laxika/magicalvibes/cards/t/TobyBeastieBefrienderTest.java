@@ -34,8 +34,8 @@ class TobyBeastieBefrienderTest extends BaseCardTest {
 
         assertThat(beast.getCard().isToken()).isTrue();
         assertThat(beast.getCard().getColor()).isEqualTo(CardColor.WHITE);
-        assertThat(beast.getEffectivePower()).isEqualTo(4);
-        assertThat(beast.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(4);
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(
                         gd.playerBattlefields.get(player1.getId()).indexOf(beast))))

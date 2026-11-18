@@ -50,15 +50,15 @@ class BattlefieldPercherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(percher.getEffectivePower()).isEqualTo(3);
-        assertThat(percher.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, percher)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, percher)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(percher.getEffectivePower()).isEqualTo(2);
-        assertThat(percher.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, percher)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, percher)).isEqualTo(2);
     }
 
     @Test
@@ -73,17 +73,17 @@ class BattlefieldPercherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(percher.getEffectivePower()).isEqualTo(4);
-        assertThat(percher.getEffectiveToughness()).isEqualTo(4);
-        assertThat(otherPercher.getEffectivePower()).isEqualTo(2);
-        assertThat(otherPercher.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, percher)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, percher)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, otherPercher)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherPercher)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(percher.getEffectivePower()).isEqualTo(2);
-        assertThat(percher.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, percher)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, percher)).isEqualTo(2);
     }
 
     @Test
@@ -97,8 +97,8 @@ class BattlefieldPercherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(percher.getEffectivePower()).isEqualTo(3);
-        assertThat(percher.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, percher)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, percher)).isEqualTo(3);
         assertThat(percher.isTapped()).isTrue();
     }
 }

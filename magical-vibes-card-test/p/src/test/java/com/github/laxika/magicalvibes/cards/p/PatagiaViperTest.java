@@ -26,8 +26,8 @@ class PatagiaViperTest extends BaseCardTest {
             assertThat(snake.getCard().getColors())
                     .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLUE);
             assertThat(snake.getCard().getSubtypes()).containsExactly(CardSubtype.SNAKE);
-            assertThat(snake.getEffectivePower()).isEqualTo(1);
-            assertThat(snake.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, snake)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, snake)).isEqualTo(1);
         });
         harness.assertOnBattlefield(player1, "Patagia Viper");
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -57,7 +58,7 @@ class FearOfFailedTestsTest extends BaseCardTest {
         Card draw = new Island();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(draw));
-        addCreatureReady(player1, new FearOfFailedTests()).setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, addCreatureReady(player1, new FearOfFailedTests()), -2);
 
         declareAttackers(List.of(0));
         resolveCombat();
@@ -77,7 +78,7 @@ class FearOfFailedTestsTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(firstDraw, secondDraw, thirdDraw, remaining));
-        addCreatureReady(player2, new FearOfFailedTests()).setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, addCreatureReady(player2, new FearOfFailedTests()), 1);
 
         declareAttackers(player2, List.of(0));
         resolveCombat(player2);

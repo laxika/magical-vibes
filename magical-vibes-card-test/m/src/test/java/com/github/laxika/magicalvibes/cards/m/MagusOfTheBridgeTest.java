@@ -28,8 +28,8 @@ class MagusOfTheBridgeTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Zombie")).hasSize(1);
         Permanent zombie = findPermanents(player1, "Zombie").getFirst();
-        assertThat(zombie.getEffectivePower()).isEqualTo(2);
-        assertThat(zombie.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(2);
         assertThat(zombie.getCard().getColor()).isEqualTo(CardColor.BLACK);
     }
 

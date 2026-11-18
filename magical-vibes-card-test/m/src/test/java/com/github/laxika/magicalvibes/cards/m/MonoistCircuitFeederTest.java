@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -33,10 +34,10 @@ class MonoistCircuitFeederTest extends BaseCardTest {
         harness.castCreature(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
         resolveAllTriggers();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
     }
 
     @Test
@@ -56,10 +57,10 @@ class MonoistCircuitFeederTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getToughnessModifier()).isZero();
-        assertThat(opposingCreature.getPowerModifier()).isZero();
-        assertThat(opposingCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingCreature)).isZero();
     }
 
     @Test
@@ -105,10 +106,10 @@ class MonoistCircuitFeederTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opposingCreature.getId());
         resolveAllTriggers();
 
-        assertThat(feeder.getEffectivePower()).isEqualTo(5);
-        assertThat(feeder.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, feeder)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, feeder)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(3);
     }
 
     @Test
@@ -123,15 +124,15 @@ class MonoistCircuitFeederTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         resolveAllTriggers();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
 
         gd.playerBattlefields.get(player1.getId()).remove(artifact);
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.addToBattlefield(player1, new FountainOfYouth());
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
     }
 
     @Test
@@ -149,9 +150,9 @@ class MonoistCircuitFeederTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(feeder);
         resolveAllTriggers();
 
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(feeder.getPowerModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, feeder)).isZero();
     }
 
     @Test
@@ -166,8 +167,8 @@ class MonoistCircuitFeederTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(opposingCreature);
         resolveAllTriggers();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test
@@ -182,8 +183,8 @@ class MonoistCircuitFeederTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Monoist Circuit-Feeder"));
         resolveAllTriggers();
 
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(opposingCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingCreature)).isZero();
     }
 
     @Test
@@ -197,8 +198,8 @@ class MonoistCircuitFeederTest extends BaseCardTest {
         harness.castCreature(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
         resolveAllTriggers();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposingCreature);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingCreature.getCard());
     }
@@ -218,7 +219,7 @@ class MonoistCircuitFeederTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(feeder.getPowerModifier()).isZero();
-        assertThat(feeder.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, feeder)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, feeder)).isZero();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RakdosPitDragon;
 import com.github.laxika.magicalvibes.cards.s.StalkingVengeance;
 import com.github.laxika.magicalvibes.cards.w.WreckingBall;
@@ -34,8 +35,8 @@ class SlaughterhouseBouncerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
-        assertThat(target.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-3);
     }
 
     @Test
@@ -48,8 +49,8 @@ class SlaughterhouseBouncerTest extends BaseCardTest {
         destroyBouncer();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -64,8 +65,8 @@ class SlaughterhouseBouncerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WreckingBall()));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -78,14 +79,14 @@ class SlaughterhouseBouncerTest extends BaseCardTest {
         destroyBouncer();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -142,8 +143,8 @@ class SlaughterhouseBouncerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     private Permanent addLargeTarget() {

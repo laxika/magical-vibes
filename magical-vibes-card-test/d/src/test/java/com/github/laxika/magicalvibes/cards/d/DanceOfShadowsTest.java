@@ -34,8 +34,8 @@ class DanceOfShadowsTest extends BaseCardTest {
         List<Permanent> ownCreatures = findPermanents(player1, "Humble Budoka");
         assertThat(ownCreatures).hasSize(2);
         for (Permanent p : ownCreatures) {
-            assertThat(p.getEffectivePower()).isEqualTo(3);
-            assertThat(p.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(2);
             assertThat(gqs.hasKeyword(gd, p, Keyword.FEAR)).isTrue();
         }
         harness.assertInGraveyard(player1, "Dance of Shadows");
@@ -52,7 +52,7 @@ class DanceOfShadowsTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         Permanent theirs = findPermanent(player2, "Humble Budoka");
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, theirs, Keyword.FEAR)).isFalse();
     }
 
@@ -70,7 +70,7 @@ class DanceOfShadowsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent creature = findPermanent(player1, "Humble Budoka");
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FEAR)).isFalse();
     }
 
@@ -84,8 +84,8 @@ class DanceOfShadowsTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         Permanent laterCreature = addCreatureReady(player1, new HumbleBudoka());
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.FEAR)).isFalse();
     }
 
@@ -143,16 +143,16 @@ class DanceOfShadowsTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FEAR)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FEAR)).isFalse();
     }
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -21,8 +22,8 @@ class BoaConstrictorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(constrictor.getPowerModifier()).isEqualTo(3);
-        assertThat(constrictor.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, constrictor)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, constrictor)).isEqualTo(3);
     }
 
     @Test
@@ -47,8 +48,8 @@ class BoaConstrictorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(constrictor.getPowerModifier()).isZero();
-        assertThat(constrictor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, constrictor)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, constrictor)).isZero();
     }
 
     @Test
@@ -81,17 +82,17 @@ class BoaConstrictorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(constrictor.getPowerModifier()).isZero();
-        assertThat(constrictor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, constrictor)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, constrictor)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(constrictor.getPowerModifier()).isEqualTo(3);
-        assertThat(constrictor.getToughnessModifier()).isEqualTo(3);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
-        assertThat(opposing.getPowerModifier()).isZero();
-        assertThat(opposing.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, constrictor)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, constrictor)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposing)).isZero();
     }
 
     @Test
@@ -105,8 +106,8 @@ class BoaConstrictorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(constrictor.getPowerModifier()).isEqualTo(6);
-        assertThat(constrictor.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, constrictor)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, constrictor)).isEqualTo(6);
         assertThat(constrictor.isTapped()).isTrue();
     }
 
@@ -122,7 +123,7 @@ class BoaConstrictorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 }

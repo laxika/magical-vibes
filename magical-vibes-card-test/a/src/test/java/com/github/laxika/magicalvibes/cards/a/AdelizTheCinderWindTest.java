@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -36,10 +37,10 @@ class AdelizTheCinderWindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both Adeliz (Human Wizard) and Fugitive Wizard should get +1/+1
-        assertThat(adeliz.getPowerModifier()).isEqualTo(1);
-        assertThat(adeliz.getToughnessModifier()).isEqualTo(1);
-        assertThat(wizard.getPowerModifier()).isEqualTo(1);
-        assertThat(wizard.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, adeliz)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, adeliz)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wizard)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wizard)).isEqualTo(1);
     }
 
     @Test
@@ -57,8 +58,8 @@ class AdelizTheCinderWindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears (Bear) should not get the boost
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -74,8 +75,8 @@ class AdelizTheCinderWindTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(adeliz.getPowerModifier()).isEqualTo(0);
-        assertThat(adeliz.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, adeliz)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, adeliz)).isEqualTo(0);
     }
 
     @Test
@@ -92,8 +93,8 @@ class AdelizTheCinderWindTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(adeliz.getPowerModifier()).isEqualTo(1);
-        assertThat(adeliz.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, adeliz)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, adeliz)).isEqualTo(1);
 
         // Resolve Shock
         harness.passBothPriorities();
@@ -104,8 +105,8 @@ class AdelizTheCinderWindTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(adeliz.getPowerModifier()).isEqualTo(2);
-        assertThat(adeliz.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, adeliz)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, adeliz)).isEqualTo(2);
     }
 
     @Test
@@ -123,8 +124,8 @@ class AdelizTheCinderWindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Opponent's Wizard should not get the boost
-        assertThat(opponentWizard.getPowerModifier()).isEqualTo(0);
-        assertThat(opponentWizard.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentWizard)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentWizard)).isEqualTo(0);
     }
 
     @Test
@@ -139,8 +140,8 @@ class AdelizTheCinderWindTest extends BaseCardTest {
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(adeliz.getPowerModifier()).isEqualTo(1);
-        assertThat(adeliz.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, adeliz)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, adeliz)).isEqualTo(1);
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -157,8 +158,8 @@ class AdelizTheCinderWindTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(adeliz.getPowerModifier()).isZero();
-        assertThat(adeliz.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, adeliz)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, adeliz)).isZero();
     }
 
     @Test
@@ -171,14 +172,14 @@ class AdelizTheCinderWindTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
-        assertThat(adeliz.getPowerModifier()).isEqualTo(1);
-        assertThat(adeliz.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, adeliz)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, adeliz)).isEqualTo(1);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(adeliz.getPowerModifier()).isZero();
-        assertThat(adeliz.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, adeliz)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, adeliz)).isZero();
     }
 
     @Test
@@ -195,10 +196,10 @@ class AdelizTheCinderWindTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = addCreatureReady(player1, new FugitiveWizard());
 
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
     }
 
     @Test
@@ -221,7 +222,7 @@ class AdelizTheCinderWindTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(wizard.getPowerModifier()).isEqualTo(1);
-        assertThat(wizard.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wizard)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wizard)).isEqualTo(1);
     }
 }

@@ -44,8 +44,8 @@ class ExpressiveFiredancerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(firedancer.getPowerModifier()).isEqualTo(1);
-        assertThat(firedancer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, firedancer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firedancer)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, firedancer)).doesNotContain(Keyword.DOUBLE_STRIKE);
     }
 
@@ -59,7 +59,7 @@ class ExpressiveFiredancerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Hurricane()));
         harness.castAndResolveSorcery(player1, 0, 3);
 
-        assertThat(firedancer.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, firedancer)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, firedancer)).doesNotContain(Keyword.DOUBLE_STRIKE);
     }
 
@@ -73,8 +73,8 @@ class ExpressiveFiredancerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Hurricane()));
         harness.castAndResolveSorcery(player1, 0, 4);
 
-        assertThat(firedancer.getPowerModifier()).isEqualTo(1);
-        assertThat(firedancer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, firedancer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firedancer)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, firedancer)).contains(Keyword.DOUBLE_STRIKE);
     }
 
@@ -89,7 +89,7 @@ class ExpressiveFiredancerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(firedancer.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firedancer)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, firedancer)).doesNotContain(Keyword.DOUBLE_STRIKE);
     }
 
@@ -103,8 +103,8 @@ class ExpressiveFiredancerTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(firedancer.getPowerModifier()).isZero();
-        assertThat(firedancer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firedancer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firedancer)).isZero();
         assertThat(gqs.hasKeyword(gd, firedancer, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
@@ -120,11 +120,11 @@ class ExpressiveFiredancerTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(firedancer.getPowerModifier()).isEqualTo(2);
-        assertThat(firedancer.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firedancer)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firedancer)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, firedancer, Keyword.DOUBLE_STRIKE)).isFalse();
-        assertThat(opposingFiredancer.getPowerModifier()).isZero();
-        assertThat(opposingFiredancer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingFiredancer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingFiredancer)).isZero();
     }
 
     @Test
@@ -137,14 +137,14 @@ class ExpressiveFiredancerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Hurricane()));
         harness.castAndResolveSorcery(player1, 0, 4);
 
-        assertThat(firedancer.getPowerModifier()).isEqualTo(1);
-        assertThat(firedancer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, firedancer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firedancer)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, firedancer, Keyword.DOUBLE_STRIKE)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(firedancer.getPowerModifier()).isZero();
-        assertThat(firedancer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firedancer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firedancer)).isZero();
         assertThat(gqs.hasKeyword(gd, firedancer, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }

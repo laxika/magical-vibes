@@ -81,7 +81,7 @@ class HourOfPromiseTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().getSubtypes().contains(CardSubtype.ZOMBIE))
                 .hasSize(2)
-                .allMatch(p -> p.getEffectivePower() == 2 && p.getEffectiveToughness() == 2);
+                .allMatch(p -> gqs.getEffectivePower(gd, p) == 2 && gqs.getEffectiveToughness(gd, p) == 2);
     }
 
     @Test
@@ -222,8 +222,8 @@ class HourOfPromiseTest extends BaseCardTest {
                     assertThat(p.getCard().hasType(CardType.CREATURE)).isTrue();
                     assertThat(p.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
                     assertThat(p.getCard().getColor()).isEqualTo(CardColor.BLACK);
-                    assertThat(p.getEffectivePower()).isEqualTo(2);
-                    assertThat(p.getEffectiveToughness()).isEqualTo(2);
+                    assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(2);
+                    assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(2);
                     assertThat(p.isTapped()).isFalse();
                 });
     }

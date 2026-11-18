@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
@@ -84,8 +85,8 @@ class ThunderstaffTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(nonAttacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonAttacker)).isZero();
     }
 
     @Test
@@ -102,8 +103,8 @@ class ThunderstaffTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ownNonAttacker.getPowerModifier()).isZero();
-        assertThat(opposingAttacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownNonAttacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingAttacker)).isEqualTo(1);
     }
 
     @Test
@@ -174,15 +175,15 @@ class ThunderstaffTest extends BaseCardTest {
         creature.setAttacking(true);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         creature.setAttacking(false);
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -216,7 +217,7 @@ class ThunderstaffTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
         resolveCombat(player2);
 
         harness.assertLife(player1, 16);

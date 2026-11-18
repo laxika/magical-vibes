@@ -30,8 +30,8 @@ class SwarmbornGiantTest extends BaseCardTest {
 
         assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(giant.isMonstrous()).isTrue();
-        assertThat(giant.getEffectivePower()).isEqualTo(8);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, giant, Keyword.REACH)).isTrue();
     }
 

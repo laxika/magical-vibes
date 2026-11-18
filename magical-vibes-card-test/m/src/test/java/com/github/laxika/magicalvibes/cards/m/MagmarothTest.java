@@ -27,8 +27,8 @@ class MagmarothTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(magmaroth.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(magmaroth.getEffectivePower()).isEqualTo(4);
-        assertThat(magmaroth.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, magmaroth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, magmaroth)).isEqualTo(4);
     }
 
     @Test

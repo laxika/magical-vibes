@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -23,14 +24,14 @@ class OverkillTest extends BaseCardTest {
     @DisplayName("Gives target creature -0/-9999 until end of turn")
     void givesTargetCreatureMinusZeroMinus9999() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setToughnessModifier(10000);
+        PermanentGrants.setToughnessBoost(gd, target, 10000);
 
         castOverkill(target);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -50,7 +51,7 @@ class OverkillTest extends BaseCardTest {
     @DisplayName("The debuff wears off at cleanup")
     void debuffWearsOffAtCleanup() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setToughnessModifier(10000);
+        PermanentGrants.setToughnessBoost(gd, target, 10000);
 
         castOverkill(target);
 
@@ -58,8 +59,8 @@ class OverkillTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -78,7 +79,7 @@ class OverkillTest extends BaseCardTest {
     @DisplayName("A creature reduced to exactly zero toughness dies")
     void killsCreatureAtExactlyZeroToughness() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setToughnessModifier(9997);
+        PermanentGrants.setToughnessBoost(gd, target, 9997);
 
         castOverkill(target);
 

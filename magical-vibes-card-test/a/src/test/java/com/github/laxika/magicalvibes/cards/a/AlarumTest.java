@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BayFalcon;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,8 +29,8 @@ class AlarumTest extends BaseCardTest {
         castAlarum(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -40,8 +41,8 @@ class AlarumTest extends BaseCardTest {
         castAlarum(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -54,8 +55,8 @@ class AlarumTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -100,8 +101,8 @@ class AlarumTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
         assertThat(attacker.isAttacking()).isTrue();
-        assertThat(blocker.getPowerModifier()).isEqualTo(1);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(3);
     }
 
     @Test
@@ -113,11 +114,11 @@ class AlarumTest extends BaseCardTest {
         castAlarum(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(other.isTapped()).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -133,8 +134,8 @@ class AlarumTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(returned.isTapped()).isTrue();
-        assertThat(returned.getPowerModifier()).isZero();
-        assertThat(returned.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, returned)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, returned)).isZero();
         harness.assertInGraveyard(player1, "Alarum");
         assertThat(gd.stack).isEmpty();
     }

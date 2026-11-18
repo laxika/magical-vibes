@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -32,10 +33,10 @@ class FortifyTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 0, List.of());
         harness.passBothPriorities();
 
-        assertThat(mine.getPowerModifier()).isEqualTo(2);
-        assertThat(mine.getToughnessModifier()).isZero();
-        assertThat(theirs.getPowerModifier()).isZero();
-        assertThat(theirs.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mine)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mine)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, theirs)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, theirs)).isZero();
     }
 
     @Test
@@ -50,9 +51,9 @@ class FortifyTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 1, List.of());
         harness.passBothPriorities();
 
-        assertThat(mine.getPowerModifier()).isZero();
-        assertThat(mine.getToughnessModifier()).isEqualTo(2);
-        assertThat(theirs.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mine)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mine)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, theirs)).isZero();
     }
 
     @Test
@@ -68,9 +69,9 @@ class FortifyTest extends BaseCardTest {
 
         Permanent later = addCreatureReady(player1, new AshcoatBear());
 
-        assertThat(mine.getPowerModifier()).isEqualTo(2);
-        assertThat(later.getPowerModifier()).isZero();
-        assertThat(later.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mine)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, later)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, later)).isZero();
     }
 
     @Test
@@ -83,12 +84,12 @@ class FortifyTest extends BaseCardTest {
 
         harness.castModalInstant(player1, 0, 0, List.of());
         harness.passBothPriorities();
-        assertThat(mine.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, mine)).isEqualTo(2);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities(); // advance through cleanup
 
-        assertThat(mine.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mine)).isZero();
     }
 
     @ParameterizedTest
@@ -107,15 +108,15 @@ class FortifyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         for (Permanent creature : List.of(first, second, beforeResolution)) {
-            assertThat(creature.getPowerModifier()).isEqualTo(power);
-            assertThat(creature.getToughnessModifier()).isEqualTo(toughness);
+            assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(power);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(toughness);
         }
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isZero();
 
         Permanent afterResolution = addCreatureReady(player1, new AshcoatBear());
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
     }
 
     @ParameterizedTest
@@ -132,8 +133,8 @@ class FortifyTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Fortify");
         assertThat(gd.stack).isEmpty();
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -147,11 +148,11 @@ class FortifyTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 1, List.of());
         harness.passBothPriorities();
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(mine.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mine)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(mine.getPowerModifier()).isZero();
-        assertThat(mine.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mine)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mine)).isZero();
     }
 }

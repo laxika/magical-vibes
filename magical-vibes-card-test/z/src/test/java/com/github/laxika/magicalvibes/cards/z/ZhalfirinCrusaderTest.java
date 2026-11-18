@@ -34,8 +34,8 @@ class ZhalfirinCrusaderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
     }
 
     @Test
@@ -49,8 +49,8 @@ class ZhalfirinCrusaderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -67,10 +67,10 @@ class ZhalfirinCrusaderTest extends BaseCardTest {
                 new BlockerAssignment(indexOf(player2, blocker2), indexOf(player1, crusader))));
         resolveAllTriggers();
 
-        assertThat(blocker1.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker1.getEffectiveToughness()).isEqualTo(1);
-        assertThat(blocker2.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker2.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker1)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker1)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker2)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker2)).isEqualTo(1);
     }
 
     @Test
@@ -83,15 +83,15 @@ class ZhalfirinCrusaderTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test

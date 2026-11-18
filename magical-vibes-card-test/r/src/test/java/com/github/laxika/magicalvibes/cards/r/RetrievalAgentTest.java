@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -22,15 +23,15 @@ class RetrievalAgentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(retrievalAgent.getPowerModifier()).isEqualTo(1);
-        assertThat(retrievalAgent.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, retrievalAgent)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retrievalAgent)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(retrievalAgent.getPowerModifier()).isZero();
-        assertThat(retrievalAgent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, retrievalAgent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retrievalAgent)).isZero();
     }
 
     @Test
@@ -45,11 +46,11 @@ class RetrievalAgentTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(retrievalAgent.getPowerModifier()).isEqualTo(4);
-        assertThat(retrievalAgent.getToughnessModifier()).isEqualTo(-4);
+        assertThat(PermanentGrants.powerBoostOf(gd, retrievalAgent)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retrievalAgent)).isEqualTo(-4);
         harness.assertOnBattlefield(player1, "Retrieval Agent");
-        assertThat(otherAgent.getPowerModifier()).isZero();
-        assertThat(otherAgent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAgent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherAgent)).isZero();
     }
 
     @Test
@@ -78,8 +79,8 @@ class RetrievalAgentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(retrievalAgent.getPowerModifier()).isEqualTo(1);
-        assertThat(retrievalAgent.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, retrievalAgent)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retrievalAgent)).isEqualTo(-1);
         assertThat(retrievalAgent.isTapped()).isTrue();
     }
 

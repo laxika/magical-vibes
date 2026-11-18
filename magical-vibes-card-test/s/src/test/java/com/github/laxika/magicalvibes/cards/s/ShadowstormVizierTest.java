@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Censor;
 import com.github.laxika.magicalvibes.cards.d.DuneBeetle;
 import com.github.laxika.magicalvibes.cards.t.TormentingVoice;
@@ -27,19 +28,19 @@ class ShadowstormVizierTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateHandAbility(player1, 0, null);
-        assertThat(getVizier().getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, getVizier())).isZero();
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities(); // resolve the boost trigger
 
         Permanent vizier = getVizier();
-        assertThat(vizier.getPowerModifier()).isEqualTo(1);
-        assertThat(vizier.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, vizier)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vizier)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(vizier.getPowerModifier()).isEqualTo(1);
-        assertThat(vizier.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, vizier)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vizier)).isEqualTo(1);
     }
 
     @Test
@@ -56,8 +57,8 @@ class ShadowstormVizierTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent vizier = getVizier();
-        assertThat(vizier.getPowerModifier()).isEqualTo(2);
-        assertThat(vizier.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, vizier)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vizier)).isEqualTo(2);
     }
 
     @Test
@@ -72,12 +73,12 @@ class ShadowstormVizierTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent vizier = getVizier();
-        assertThat(vizier.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, vizier)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(vizier.getPowerModifier()).isEqualTo(0);
-        assertThat(vizier.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vizier)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vizier)).isEqualTo(0);
     }
 
     @Test
@@ -90,12 +91,12 @@ class ShadowstormVizierTest extends BaseCardTest {
 
         harness.castSorceryWithDiscard(player1, 0, 1);
 
-        assertThat(getVizier().getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, getVizier())).isZero();
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
 
-        assertThat(getVizier().getPowerModifier()).isEqualTo(1);
-        assertThat(getVizier().getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, getVizier())).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, getVizier())).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -115,10 +116,10 @@ class ShadowstormVizierTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).hasSize(1);
     }
@@ -134,8 +135,8 @@ class ShadowstormVizierTest extends BaseCardTest {
         harness.activateHandAbility(player2, 0, null);
         harness.passBothPriorities();
 
-        assertThat(getVizier().getPowerModifier()).isZero();
-        assertThat(getVizier().getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, getVizier())).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, getVizier())).isZero();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.stack).isEmpty();
     }

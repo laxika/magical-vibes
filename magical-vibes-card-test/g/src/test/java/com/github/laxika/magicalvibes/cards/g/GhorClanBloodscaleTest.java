@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -25,8 +26,8 @@ class GhorClanBloodscaleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bloodscale.getPowerModifier()).isEqualTo(2);
-        assertThat(bloodscale.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bloodscale)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bloodscale)).isEqualTo(2);
     }
 
     @Test
@@ -83,8 +84,8 @@ class GhorClanBloodscaleTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(bloodscale.getPowerModifier()).isEqualTo(0);
-        assertThat(bloodscale.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bloodscale)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bloodscale)).isEqualTo(0);
 
         addAbilityMana(player1);
 
@@ -102,8 +103,8 @@ class GhorClanBloodscaleTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(bloodscale.getPowerModifier()).isZero();
-        assertThat(bloodscale.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bloodscale)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bloodscale)).isZero();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once each turn");
@@ -111,8 +112,8 @@ class GhorClanBloodscaleTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(bloodscale.getPowerModifier()).isEqualTo(2);
-        assertThat(bloodscale.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bloodscale)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bloodscale)).isEqualTo(2);
     }
 
     @Test
@@ -126,18 +127,18 @@ class GhorClanBloodscaleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(2);
     }
 
     @Test
@@ -153,8 +154,8 @@ class GhorClanBloodscaleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bloodscale.getPowerModifier()).isEqualTo(2);
-        assertThat(bloodscale.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bloodscale)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bloodscale)).isEqualTo(2);
         assertThat(bloodscale.isTapped()).isTrue();
     }
 

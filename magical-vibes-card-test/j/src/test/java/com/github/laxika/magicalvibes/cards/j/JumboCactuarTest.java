@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,8 +23,8 @@ class JumboCactuarTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(cactuar.getPowerModifier()).isEqualTo(9999);
-        assertThat(cactuar.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cactuar)).isEqualTo(9999);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cactuar)).isZero();
         assertThat(gqs.getEffectivePower(gd, cactuar)).isEqualTo(10000);
         assertThat(gqs.getEffectiveToughness(gd, cactuar)).isEqualTo(7);
     }
@@ -42,8 +43,8 @@ class JumboCactuarTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(cactuar.getPowerModifier()).isZero();
-        assertThat(cactuar.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cactuar)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cactuar)).isZero();
         assertThat(gqs.getEffectivePower(gd, cactuar)).isEqualTo(1);
     }
 

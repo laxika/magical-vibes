@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CourierHawk;
 import com.github.laxika.magicalvibes.cards.g.GreaterMossdog;
 import com.github.laxika.magicalvibes.cards.v.ViashinoFangtail;
@@ -28,14 +29,14 @@ class AgrusKosWojekVeteranTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2, 3));
         resolveAllTriggers();
 
-        assertThat(agrus.getPowerModifier()).isEqualTo(2);
-        assertThat(agrus.getToughnessModifier()).isEqualTo(2);
-        assertThat(red.getPowerModifier()).isEqualTo(2);
-        assertThat(red.getToughnessModifier()).isZero();
-        assertThat(white.getPowerModifier()).isZero();
-        assertThat(white.getToughnessModifier()).isEqualTo(2);
-        assertThat(green.getPowerModifier()).isZero();
-        assertThat(green.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, agrus)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, agrus)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, red)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, red)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, white)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, white)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, green)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, green)).isZero();
     }
 
     @Test
@@ -48,10 +49,10 @@ class AgrusKosWojekVeteranTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(red.getPowerModifier()).isZero();
-        assertThat(red.getToughnessModifier()).isZero();
-        assertThat(white.getPowerModifier()).isZero();
-        assertThat(white.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, red)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, red)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, white)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, white)).isZero();
     }
 
     @Test
@@ -63,10 +64,10 @@ class AgrusKosWojekVeteranTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
 
-        assertThat(agrus.getPowerModifier()).isZero();
-        assertThat(agrus.getToughnessModifier()).isZero();
-        assertThat(red.getPowerModifier()).isZero();
-        assertThat(red.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, agrus)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, agrus)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, red)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, red)).isZero();
     }
 
     @Test
@@ -77,14 +78,14 @@ class AgrusKosWojekVeteranTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
-        assertThat(red.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, red)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(red.getPowerModifier()).isZero();
-        assertThat(red.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, red)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, red)).isZero();
     }
 
     @Test
@@ -102,10 +103,10 @@ class AgrusKosWojekVeteranTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(red.getPowerModifier()).isZero();
-        assertThat(red.getToughnessModifier()).isZero();
-        assertThat(white.getPowerModifier()).isZero();
-        assertThat(white.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, red)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, red)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, white)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, white)).isZero();
     }
 
     @Test

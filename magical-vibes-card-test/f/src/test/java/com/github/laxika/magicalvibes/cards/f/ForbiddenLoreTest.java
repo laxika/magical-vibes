@@ -60,8 +60,8 @@ class ForbiddenLoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(forest.isTapped()).isTrue();
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 
     @Test
@@ -77,8 +77,8 @@ class ForbiddenLoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(forest.isTapped()).isTrue();
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 
     @Test
@@ -96,8 +96,8 @@ class ForbiddenLoreTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -113,8 +113,8 @@ class ForbiddenLoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(forest.isTapped()).isTrue();
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 
     @Test
@@ -142,8 +142,8 @@ class ForbiddenLoreTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, bears.getId(), null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -161,12 +161,12 @@ class ForbiddenLoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         harness.passBothPriorities();
 
         assertThat(forest.isTapped()).isTrue();
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
 
         forest.untap();
         // The Forest keeps only its own mana ability (CR 305.6).

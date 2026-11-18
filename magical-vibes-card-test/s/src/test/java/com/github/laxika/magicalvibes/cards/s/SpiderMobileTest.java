@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -89,8 +90,8 @@ class SpiderMobileTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gqs.isCreature(gd, mobile)).isFalse();
-        assertThat(mobile.getPowerModifier()).isZero();
-        assertThat(mobile.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mobile)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mobile)).isZero();
     }
 
     @Test

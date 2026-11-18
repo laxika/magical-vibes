@@ -34,13 +34,13 @@ class AngelOfTheDawnTest extends BaseCardTest {
         castAngel();
 
         Permanent corpse = findPermanent(player1, "Walking Corpse");
-        assertThat(corpse.getEffectivePower()).isEqualTo(3);
-        assertThat(corpse.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, corpse)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, corpse)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, corpse, Keyword.VIGILANCE)).isTrue();
 
         Permanent angel = findPermanent(player1, "Angel of the Dawn");
-        assertThat(angel.getEffectivePower()).isEqualTo(4);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.VIGILANCE)).isTrue();
     }
 
@@ -52,7 +52,7 @@ class AngelOfTheDawnTest extends BaseCardTest {
         castAngel();
 
         Permanent corpse = findPermanent(player2, "Walking Corpse");
-        assertThat(corpse.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, corpse)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, corpse, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -66,7 +66,7 @@ class AngelOfTheDawnTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         Permanent corpse = findPermanent(player1, "Walking Corpse");
-        assertThat(corpse.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, corpse)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, corpse, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -78,8 +78,8 @@ class AngelOfTheDawnTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WalkingCorpse());
 
         Permanent corpse = findPermanent(player1, "Walking Corpse");
-        assertThat(corpse.getEffectivePower()).isEqualTo(2);
-        assertThat(corpse.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, corpse)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, corpse)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, corpse, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -93,16 +93,16 @@ class AngelOfTheDawnTest extends BaseCardTest {
 
         Permanent angel = findPermanent(player1, "Angel of the Dawn");
         assertThat(gd.stack).hasSize(1);
-        assertThat(angel.getEffectivePower()).isEqualTo(3);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.VIGILANCE)).isFalse();
 
         harness.addToBattlefield(player1, new WalkingCorpse());
         harness.passBothPriorities();
 
         Permanent corpse = findPermanent(player1, "Walking Corpse");
-        assertThat(corpse.getEffectivePower()).isEqualTo(3);
-        assertThat(corpse.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, corpse)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, corpse)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, corpse, Keyword.VIGILANCE)).isTrue();
     }
 }

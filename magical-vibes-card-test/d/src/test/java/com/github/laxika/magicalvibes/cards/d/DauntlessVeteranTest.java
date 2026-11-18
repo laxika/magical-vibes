@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -24,8 +25,8 @@ class DauntlessVeteranTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(other.getPowerModifier()).isEqualTo(1);
-        assertThat(other.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isEqualTo(1);
     }
 
     @Test
@@ -36,8 +37,8 @@ class DauntlessVeteranTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(veteran.getPowerModifier()).isEqualTo(1);
-        assertThat(veteran.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, veteran)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, veteran)).isEqualTo(1);
     }
 
     @Test
@@ -49,8 +50,8 @@ class DauntlessVeteranTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(opponent.getPowerModifier()).isEqualTo(0);
-        assertThat(opponent.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isEqualTo(0);
     }
 
     @Test
@@ -62,13 +63,13 @@ class DauntlessVeteranTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(other.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(other.getPowerModifier()).isEqualTo(0);
-        assertThat(other.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isEqualTo(0);
     }
 
     @Test
@@ -82,8 +83,8 @@ class DauntlessVeteranTest extends BaseCardTest {
         resolveAllTriggers();
 
         for (Permanent creature : List.of(first, second, nonattacker)) {
-            assertThat(creature.getPowerModifier()).isEqualTo(2);
-            assertThat(creature.getToughnessModifier()).isEqualTo(2);
+            assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
         }
     }
 
@@ -97,8 +98,8 @@ class DauntlessVeteranTest extends BaseCardTest {
         Permanent newcomer = addCreatureReady(player1, new DauntlessVeteran());
         resolveAllTriggers();
 
-        assertThat(newcomer.getPowerModifier()).isEqualTo(1);
-        assertThat(newcomer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newcomer)).isEqualTo(1);
     }
 
     @Test
@@ -110,9 +111,9 @@ class DauntlessVeteranTest extends BaseCardTest {
 
         Permanent newcomer = addCreatureReady(player1, new DauntlessVeteran());
 
-        assertThat(veteran.getPowerModifier()).isEqualTo(1);
-        assertThat(newcomer.getPowerModifier()).isZero();
-        assertThat(newcomer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, veteran)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newcomer)).isZero();
     }
 
     @Test
@@ -127,7 +128,7 @@ class DauntlessVeteranTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(veteran.getCard());
         resolveAllTriggers();
 
-        assertThat(other.getPowerModifier()).isEqualTo(1);
-        assertThat(other.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isEqualTo(1);
     }
 }

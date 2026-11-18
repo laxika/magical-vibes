@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -31,10 +32,10 @@ class DaybreakChargerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player2, "Walking Corpse");
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -55,10 +56,10 @@ class DaybreakChargerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -93,8 +94,8 @@ class DaybreakChargerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, charger.getId());
         harness.passBothPriorities();
 
-        assertThat(charger.getPowerModifier()).isEqualTo(2);
-        assertThat(charger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, charger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, charger)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -107,8 +108,8 @@ class DaybreakChargerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, corpse.getId());
         harness.passBothPriorities();
 
-        assertThat(corpse.getPowerModifier()).isEqualTo(2);
-        assertThat(corpse.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, corpse)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, corpse)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -124,8 +125,8 @@ class DaybreakChargerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(corpse.getPowerModifier()).isEqualTo(2);
-        assertThat(corpse.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, corpse)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, corpse)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

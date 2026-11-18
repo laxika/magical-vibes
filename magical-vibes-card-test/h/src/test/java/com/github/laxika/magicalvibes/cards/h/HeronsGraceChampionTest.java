@@ -25,19 +25,19 @@ class HeronsGraceChampionTest extends BaseCardTest {
 
         castChampion();
 
-        assertThat(human.getEffectivePower()).isEqualTo(2);
-        assertThat(human.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, human, Keyword.LIFELINK)).isTrue();
-        assertThat(nonHuman.getEffectivePower()).isEqualTo(2);
-        assertThat(nonHuman.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonHuman)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonHuman)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, nonHuman, Keyword.LIFELINK)).isFalse();
-        assertThat(opponentHuman.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentHuman.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentHuman)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentHuman)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, opponentHuman, Keyword.LIFELINK)).isFalse();
 
         Permanent champion = findPermanent(player1, "Heron's Grace Champion");
-        assertThat(champion.getEffectivePower()).isEqualTo(3);
-        assertThat(champion.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(3);
     }
 
     @Test
@@ -51,8 +51,8 @@ class HeronsGraceChampionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(human.getEffectivePower()).isEqualTo(1);
-        assertThat(human.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, human, Keyword.LIFELINK)).isFalse();
     }
 
@@ -75,10 +75,10 @@ class HeronsGraceChampionTest extends BaseCardTest {
         castChampion();
         Permanent later = harness.addToBattlefieldAndReturn(player1, new HeronsGraceChampion());
 
-        assertThat(existing.getEffectivePower()).isEqualTo(4);
-        assertThat(existing.getEffectiveToughness()).isEqualTo(4);
-        assertThat(later.getEffectivePower()).isEqualTo(3);
-        assertThat(later.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(3);
     }
 
     @Test
@@ -91,8 +91,8 @@ class HeronsGraceChampionTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(human.getEffectivePower()).isEqualTo(2);
-        assertThat(human.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, human, Keyword.LIFELINK)).isTrue();
     }
 

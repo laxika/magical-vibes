@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,8 +27,8 @@ class CryptFeasterTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(feaster.getPowerModifier()).isEqualTo(0);
-        assertThat(feaster.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, feaster)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, feaster)).isEqualTo(0);
     }
 
     @Test
@@ -39,8 +40,8 @@ class CryptFeasterTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(feaster.getPowerModifier()).isEqualTo(2);
-        assertThat(feaster.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, feaster)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, feaster)).isEqualTo(0);
     }
 
     @Test
@@ -52,7 +53,7 @@ class CryptFeasterTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(feaster.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, feaster)).isEqualTo(0);
     }
 
     @Test
@@ -63,14 +64,14 @@ class CryptFeasterTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
-        assertThat(feaster.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, feaster)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(feaster.getPowerModifier()).isEqualTo(0);
-        assertThat(feaster.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, feaster)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, feaster)).isEqualTo(0);
     }
 
     @Test
@@ -85,8 +86,8 @@ class CryptFeasterTest extends BaseCardTest {
         harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
         resolveAllTriggers();
 
-        assertThat(feaster.getPowerModifier()).isZero();
-        assertThat(feaster.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, feaster)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, feaster)).isZero();
     }
 
     @Test
@@ -101,8 +102,8 @@ class CryptFeasterTest extends BaseCardTest {
         harness.setGraveyard(player1, graveyardWithSevenCards());
         resolveAllTriggers();
 
-        assertThat(feaster.getPowerModifier()).isZero();
-        assertThat(feaster.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, feaster)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, feaster)).isZero();
     }
 
     @Test

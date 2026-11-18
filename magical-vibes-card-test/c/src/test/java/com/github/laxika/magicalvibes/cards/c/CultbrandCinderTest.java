@@ -35,8 +35,8 @@ class CultbrandCinderTest extends BaseCardTest {
 
         Permanent target = findPermanent(player2, "Air Elemental");
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -53,7 +53,7 @@ class CultbrandCinderTest extends BaseCardTest {
 
         // 2/2 with one -1/-1 counter survives as 1/1
         Permanent target = findPermanent(player2, "Grizzly Bears");
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -88,8 +88,8 @@ class CultbrandCinderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(cinder.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(cinder.getEffectivePower()).isEqualTo(2);
-        assertThat(cinder.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, cinder)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, cinder)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -103,8 +103,8 @@ class CultbrandCinderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
     }
@@ -138,8 +138,8 @@ class CultbrandCinderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 }

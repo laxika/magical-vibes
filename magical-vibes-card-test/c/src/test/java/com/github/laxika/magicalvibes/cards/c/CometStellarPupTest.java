@@ -231,10 +231,7 @@ class CometStellarPupTest extends BaseCardTest {
 
     private Permanent addHighToughnessCreature() {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-        creature.setBasePowerOverriddenPermanently(true);
-        creature.setPermanentBasePowerOverride(10000);
-        creature.setBaseToughnessOverriddenPermanently(true);
-        creature.setPermanentBaseToughnessOverride(10000);
+        PermanentGrants.basePowerToughness(gd, creature, 10000, 10000);
         return creature;
     }
 

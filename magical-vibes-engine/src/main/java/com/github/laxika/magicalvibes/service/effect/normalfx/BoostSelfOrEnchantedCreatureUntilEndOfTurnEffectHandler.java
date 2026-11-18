@@ -48,8 +48,7 @@ public class BoostSelfOrEnchantedCreatureUntilEndOfTurnEffectHandler implements 
         int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), context);
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), context);
 
-        target.setPowerModifier(target.getPowerModifier() + powerBoost);
-        target.setToughnessModifier(target.getToughnessModifier() + toughnessBoost);
+        gameData.addPowerToughnessBoost(entry, target.getId(), powerBoost, toughnessBoost);
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())

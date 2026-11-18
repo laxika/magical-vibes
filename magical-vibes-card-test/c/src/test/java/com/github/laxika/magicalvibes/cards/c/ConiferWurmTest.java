@@ -27,8 +27,8 @@ class ConiferWurmTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wurm.getEffectivePower()).isEqualTo(7);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(7);
     }
 
     @Test
@@ -40,16 +40,16 @@ class ConiferWurmTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(wurm.getEffectivePower()).isEqualTo(6);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(6);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wurm.getEffectivePower()).isEqualTo(4);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(4);
     }
 
     @Test
@@ -60,11 +60,11 @@ class ConiferWurmTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         addSnowPermanent(player1);
         harness.passBothPriorities();
-        assertThat(wurm.getEffectivePower()).isEqualTo(6);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(6);
         addSnowPermanent(player1);
-        assertThat(wurm.getEffectivePower()).isEqualTo(6);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(6);
     }
 
     @Test
@@ -76,14 +76,14 @@ class ConiferWurmTest extends BaseCardTest {
         addManaForAbility();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(wurm.getEffectivePower()).isEqualTo(5);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(5);
         addSnowPermanent(player1);
         addManaForAbility();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(wurm.getEffectivePower()).isEqualTo(7);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(7);
         assertThat(wurm.isTapped()).isTrue();
     }
 

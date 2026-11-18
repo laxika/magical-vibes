@@ -33,8 +33,8 @@ class HaazdaOfficerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent sentinel = findPermanent(player1, "Greenwood Sentinel");
-        assertThat(sentinel.getEffectivePower()).isEqualTo(3);
-        assertThat(sentinel.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(3);
     }
 
     @Test
@@ -55,8 +55,8 @@ class HaazdaOfficerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent sentinel = findPermanent(player1, "Greenwood Sentinel");
-        assertThat(sentinel.getEffectivePower()).isEqualTo(2);
-        assertThat(sentinel.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(2);
     }
 
     @Test
@@ -74,11 +74,11 @@ class HaazdaOfficerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, targetId))
                 .isInstanceOf(IllegalStateException.class);
         Permanent officer = findPermanent(player1, "Haazda Officer");
-        int powerBefore = officer.getEffectivePower();
+        int powerBefore = gqs.getEffectivePower(gd, officer);
         harness.handlePermanentChosen(player1, officer.getId());
         harness.passBothPriorities();
-        assertThat(officer.getEffectivePower()).isEqualTo(powerBefore + 1);
-        assertThat(findPermanent(player2, "Greenwood Sentinel").getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, officer)).isEqualTo(powerBefore + 1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Greenwood Sentinel"))).isEqualTo(2);
     }
 
     @Test
@@ -93,12 +93,12 @@ class HaazdaOfficerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         Permanent officer = findPermanent(player1, "Haazda Officer");
-        int powerBefore = officer.getEffectivePower();
-        int toughnessBefore = officer.getEffectiveToughness();
+        int powerBefore = gqs.getEffectivePower(gd, officer);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, officer);
         harness.handlePermanentChosen(player1, officer.getId());
         harness.passBothPriorities();
-        assertThat(officer.getEffectivePower()).isEqualTo(powerBefore + 1);
-        assertThat(officer.getEffectiveToughness()).isEqualTo(toughnessBefore + 1);
+        assertThat(gqs.getEffectivePower(gd, officer)).isEqualTo(powerBefore + 1);
+        assertThat(gqs.getEffectiveToughness(gd, officer)).isEqualTo(toughnessBefore + 1);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -132,14 +132,14 @@ class HaazdaOfficerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent officer = findPermanent(player1, "Haazda Officer");
-        int powerBefore = officer.getEffectivePower();
-        int toughnessBefore = officer.getEffectiveToughness();
+        int powerBefore = gqs.getEffectivePower(gd, officer);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, officer);
         harness.handlePermanentChosen(player1, officer.getId());
         harness.passBothPriorities();
 
-        assertThat(officer.getEffectivePower()).isEqualTo(powerBefore + 1);
-        assertThat(officer.getEffectiveToughness()).isEqualTo(toughnessBefore + 1);
-        assertThat(findPermanent(player1, "Greenwood Sentinel").getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, officer)).isEqualTo(powerBefore + 1);
+        assertThat(gqs.getEffectiveToughness(gd, officer)).isEqualTo(toughnessBefore + 1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Greenwood Sentinel"))).isEqualTo(2);
     }
 
     @Test
@@ -154,14 +154,14 @@ class HaazdaOfficerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent officer = findPermanent(player1, "Haazda Officer");
-        int powerBefore = officer.getEffectivePower();
-        int toughnessBefore = officer.getEffectiveToughness();
+        int powerBefore = gqs.getEffectivePower(gd, officer);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, officer);
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handlePermanentChosen(player1, officer.getId());
         harness.passBothPriorities();
 
-        assertThat(officer.getEffectivePower()).isEqualTo(powerBefore + 1);
-        assertThat(officer.getEffectiveToughness()).isEqualTo(toughnessBefore + 1);
+        assertThat(gqs.getEffectivePower(gd, officer)).isEqualTo(powerBefore + 1);
+        assertThat(gqs.getEffectiveToughness(gd, officer)).isEqualTo(toughnessBefore + 1);
     }
 
     @Test
@@ -179,8 +179,8 @@ class HaazdaOfficerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).removeIf(permanent -> permanent.getId().equals(officerId));
         harness.passBothPriorities();
 
-        assertThat(sentinel.getEffectivePower()).isEqualTo(3);
-        assertThat(sentinel.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(3);
     }
 
     @Test
@@ -197,8 +197,8 @@ class HaazdaOfficerTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(sentinel);
         harness.passBothPriorities();
 
-        assertThat(sentinel.getEffectivePower()).isEqualTo(2);
-        assertThat(sentinel.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 }

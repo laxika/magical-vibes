@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -72,15 +73,15 @@ class GhituAmplifierTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(amplifier.getPowerModifier()).isEqualTo(2);
-        assertThat(amplifier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, amplifier)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, amplifier)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(amplifier.getPowerModifier()).isZero();
-        assertThat(amplifier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, amplifier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, amplifier)).isZero();
     }
 
     @Test
@@ -93,8 +94,8 @@ class GhituAmplifierTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(amplifier.getPowerModifier()).isZero();
-        assertThat(amplifier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, amplifier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, amplifier)).isZero();
     }
 
     @Test
@@ -108,8 +109,8 @@ class GhituAmplifierTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         resolveAllTriggers();
 
-        assertThat(amplifier.getPowerModifier()).isEqualTo(2);
-        assertThat(amplifier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, amplifier)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, amplifier)).isZero();
     }
 
     @Test
@@ -124,8 +125,8 @@ class GhituAmplifierTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 
-        assertThat(amplifier.getPowerModifier()).isEqualTo(4);
-        assertThat(amplifier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, amplifier)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, amplifier)).isZero();
     }
 
     @Test
@@ -139,8 +140,8 @@ class GhituAmplifierTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player1.getId());
         resolveAllTriggers();
 
-        assertThat(amplifier.getPowerModifier()).isZero();
-        assertThat(amplifier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, amplifier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, amplifier)).isZero();
     }
 
     @Test

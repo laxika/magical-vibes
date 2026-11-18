@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.Avizoa;
 import com.github.laxika.magicalvibes.cards.t.Thunderbolt;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -32,9 +33,9 @@ class DwarvenBerserkerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passUntil(TurnStep.COMBAT_DAMAGE);
 
-        assertThat(berserker.getPowerModifier()).isEqualTo(3);
-        assertThat(berserker.getToughnessModifier()).isZero();
-        assertThat(berserker.getEffectivePower()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isZero();
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, berserker, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -53,7 +54,7 @@ class DwarvenBerserkerTest extends BaseCardTest {
         ));
         harness.passUntil(TurnStep.COMBAT_DAMAGE);
 
-        assertThat(berserker.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, berserker, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -67,7 +68,7 @@ class DwarvenBerserkerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(berserker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isZero();
         assertThat(gqs.hasKeyword(gd, berserker, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -86,8 +87,8 @@ class DwarvenBerserkerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(berserker.getPowerModifier()).isZero();
-        assertThat(berserker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isZero();
         assertThat(gqs.hasKeyword(gd, berserker, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -124,9 +125,9 @@ class DwarvenBerserkerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
-        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
         assertThat(gqs.hasKeyword(gd, blocker, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -144,7 +145,7 @@ class DwarvenBerserkerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(berserker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isZero();
         assertThat(gqs.hasKeyword(gd, berserker, Keyword.TRAMPLE)).isFalse();
 
         harness.castModalInstant(player1, 0, 1, List.of(blocker.getId()));
@@ -152,8 +153,8 @@ class DwarvenBerserkerTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Avizoa");
         resolveAllTriggers();
 
-        assertThat(berserker.getPowerModifier()).isEqualTo(3);
-        assertThat(berserker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isZero();
         assertThat(gqs.hasKeyword(gd, berserker, Keyword.TRAMPLE)).isTrue();
     }
 }

@@ -44,8 +44,7 @@ public class BoostCreatedTokensEffectHandler implements NormalEffectHandlerBean 
             if (token == null) {
                 continue;
             }
-            token.setPowerModifier(token.getPowerModifier() + powerBoost);
-            token.setToughnessModifier(token.getToughnessModifier() + toughnessBoost);
+            gameData.addPowerToughnessBoost(entry, token.getId(), powerBoost, toughnessBoost);
             count++;
         }
 

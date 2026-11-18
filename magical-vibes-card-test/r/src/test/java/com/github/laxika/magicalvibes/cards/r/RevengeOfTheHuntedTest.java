@@ -35,8 +35,8 @@ class RevengeOfTheHuntedTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, targetId);
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getEffectivePower()).isEqualTo(8);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
@@ -57,8 +57,8 @@ class RevengeOfTheHuntedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }
@@ -71,8 +71,8 @@ class RevengeOfTheHuntedTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(8);
-        assertThat(target.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
@@ -118,8 +118,8 @@ class RevengeOfTheHuntedTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(8);
-        assertThat(target.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();

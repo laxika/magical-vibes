@@ -51,8 +51,8 @@ class DragonbackAssaultTest extends BaseCardTest {
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Dragon"))
                 .findFirst()
                 .orElseThrow();
-        assertThat(dragon.getEffectivePower()).isEqualTo(4);
-        assertThat(dragon.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(4);
         assertThat(dragon.getCard().getKeywords()).contains(Keyword.FLYING);
     }
 
@@ -106,8 +106,8 @@ class DragonbackAssaultTest extends BaseCardTest {
         assertThat(dragons).hasSize(1);
         assertThat(dragons.getFirst().getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(dragons.getFirst().getCard().getSubtypes()).containsExactly(CardSubtype.DRAGON);
-        assertThat(dragons.getFirst().getEffectivePower()).isEqualTo(4);
-        assertThat(dragons.getFirst().getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, dragons.getFirst())).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, dragons.getFirst())).isEqualTo(4);
         assertThat(dragons.getFirst().getMarkedDamage()).isEqualTo(3);
         harness.assertOnBattlefield(player1, "Forest");
     }

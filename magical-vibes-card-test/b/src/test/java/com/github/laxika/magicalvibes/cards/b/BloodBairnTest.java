@@ -32,8 +32,8 @@ class BloodBairnTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Rumbling Baloth");
         Permanent bairn = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bairn.getCard().getName()).isEqualTo("Blood Bairn");
-        assertThat(bairn.getEffectivePower()).isEqualTo(4);
-        assertThat(bairn.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bairn)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bairn)).isEqualTo(4);
     }
 
     @Test
@@ -79,7 +79,7 @@ class BloodBairnTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Canyon Minotaur");
         harness.assertOnBattlefield(player1, "Rumbling Baloth");
         Permanent bairn = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bairn.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bairn)).isEqualTo(4);
     }
 
     @Test
@@ -96,8 +96,8 @@ class BloodBairnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bairn = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bairn.getEffectivePower()).isEqualTo(2);
-        assertThat(bairn.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bairn)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bairn)).isEqualTo(2);
     }
 
     @Test
@@ -124,13 +124,13 @@ class BloodBairnTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Rumbling Baloth");
         harness.assertNotOnBattlefield(player1, "Rumbling Baloth");
-        assertThat(bairn.getEffectivePower()).isEqualTo(2);
-        assertThat(bairn.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bairn)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bairn)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(bairn.getEffectivePower()).isEqualTo(4);
-        assertThat(bairn.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bairn)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bairn)).isEqualTo(4);
     }
 
     @Test
@@ -151,8 +151,8 @@ class BloodBairnTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Rumbling Baloth");
         harness.assertInGraveyard(player1, "Canyon Minotaur");
-        assertThat(bairn.getEffectivePower()).isEqualTo(6);
-        assertThat(bairn.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bairn)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bairn)).isEqualTo(6);
         assertThat(bairn.isTapped()).isTrue();
     }
 

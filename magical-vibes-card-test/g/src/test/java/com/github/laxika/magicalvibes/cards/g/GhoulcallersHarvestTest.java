@@ -35,8 +35,8 @@ class GhoulcallersHarvestTest extends BaseCardTest {
             assertThat(zombie.getCard().getColor()).isEqualTo(CardColor.BLACK);
             assertThat(zombie.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
             assertThat(zombie.getCard().getKeywords()).contains(Keyword.DECAYED);
-            assertThat(zombie.getEffectivePower()).isEqualTo(2);
-            assertThat(zombie.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(2);
             assertThat(bls.canBlock(gd, zombie)).isFalse();
         });
     }

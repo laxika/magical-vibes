@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -33,8 +34,8 @@ class AssertPerfectionTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of(bearId));
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -52,7 +53,7 @@ class AssertPerfectionTest extends BaseCardTest {
 
         // Bear should be boosted
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
 
         // Llanowar Elves should be destroyed (3 damage >= 1 toughness)
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
@@ -74,7 +75,7 @@ class AssertPerfectionTest extends BaseCardTest {
 
         // Bear should be boosted
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
 
         // Air Elemental should survive (3 damage < 4 toughness)
         harness.assertOnBattlefield(player2, "Air Elemental");
@@ -157,8 +158,8 @@ class AssertPerfectionTest extends BaseCardTest {
 
         // Boost should still apply to the first target
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -190,12 +191,12 @@ class AssertPerfectionTest extends BaseCardTest {
         Permanent bear = findPermanent(player1, "Grizzly Bears");
 
         harness.castAndResolveSorcery(player1, 0, List.of(bear.getId()));
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -230,7 +231,7 @@ class AssertPerfectionTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(bear);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(elemental.getMarkedDamage()).isZero();
         harness.assertInGraveyard(player1, "Assert Perfection");
     }
@@ -250,7 +251,7 @@ class AssertPerfectionTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(elemental);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
         assertThat(elemental.getMarkedDamage()).isZero();
     }
 }

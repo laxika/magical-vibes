@@ -33,8 +33,8 @@ class CarnifexDemonTest extends BaseCardTest {
         Permanent demon = findDemon(player1);
 
         assertThat(demon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
-        assertThat(demon.getEffectivePower()).isEqualTo(4);
-        assertThat(demon.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -93,8 +93,8 @@ class CarnifexDemonTest extends BaseCardTest {
 
         // Started with 2 -1/-1 counters, removed 1 as cost
         assertThat(demon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(demon.getEffectivePower()).isEqualTo(5);
-        assertThat(demon.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(5);
     }
 
     @Test
@@ -119,8 +119,8 @@ class CarnifexDemonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(demon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
-        assertThat(demon.getEffectivePower()).isEqualTo(6);
-        assertThat(demon.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(6);
 
         // Opponent's Contagious Nim (2/2) died from two -1/-1 counters (0/0 toughness)
         harness.assertNotOnBattlefield(player2, "Contagious Nim");

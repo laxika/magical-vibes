@@ -27,8 +27,8 @@ class GolgariRaidersTest extends BaseCardTest {
         Permanent raiders = findPermanent(player1, "Golgari Raiders");
         assertThat(raiders).isNotNull();
         assertThat(raiders.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(raiders.getEffectivePower()).isEqualTo(2);
-        assertThat(raiders.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, raiders)).isEqualTo(2);
     }
 
     @Test
@@ -90,8 +90,8 @@ class GolgariRaidersTest extends BaseCardTest {
 
         Permanent raiders = findPermanent(player1, "Golgari Raiders");
         assertThat(raiders.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(raiders.getEffectivePower()).isEqualTo(2);
-        assertThat(raiders.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, raiders)).isEqualTo(2);
     }
 
     @Test

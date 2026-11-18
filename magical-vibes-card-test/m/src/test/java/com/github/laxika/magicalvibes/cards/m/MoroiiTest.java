@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -82,7 +83,7 @@ class MoroiiTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
 
-        moroii.setToughnessModifier(-4);
+        PermanentGrants.setToughnessBoost(gd, moroii, -4);
         harness.runStateBasedActions();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();

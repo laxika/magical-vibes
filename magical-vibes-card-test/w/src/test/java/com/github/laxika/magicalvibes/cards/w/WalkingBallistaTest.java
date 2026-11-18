@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AetherstreamLeopard;
 import com.github.laxika.magicalvibes.cards.t.TezzeretTheSchemer;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -76,7 +77,7 @@ class WalkingBallistaTest extends BaseCardTest {
     @DisplayName("The damage ability cannot be activated without a +1/+1 counter")
     void cannotActivateDamageAbilityWithoutCounter() {
         Permanent ballista = addReadyBallista(player1, 0);
-        ballista.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, ballista, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);

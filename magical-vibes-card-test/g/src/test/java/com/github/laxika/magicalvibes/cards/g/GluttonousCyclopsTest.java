@@ -25,8 +25,8 @@ class GluttonousCyclopsTest extends BaseCardTest {
 
         assertThat(cyclops.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(cyclops.isMonstrous()).isTrue();
-        assertThat(cyclops.getEffectivePower()).isEqualTo(8);
-        assertThat(cyclops.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, cyclops)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, cyclops)).isEqualTo(7);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.c.CagedSun;
@@ -28,8 +29,8 @@ class MortisDogsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(dogs.getPowerModifier()).isEqualTo(2);
-        assertThat(dogs.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dogs)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dogs)).isEqualTo(0);
     }
 
     @Test
@@ -78,7 +79,7 @@ class MortisDogsTest extends BaseCardTest {
 
         // Simulate the attack boost (+2/+0) that would have been applied by the Triggers.attacks() trigger
         Permanent dogsPerm = findPermanent(player1, "Mortis Dogs");
-        dogsPerm.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, dogsPerm, 2);
 
         setupCombatWhereMortisDogsDies();
         resolveCombat();

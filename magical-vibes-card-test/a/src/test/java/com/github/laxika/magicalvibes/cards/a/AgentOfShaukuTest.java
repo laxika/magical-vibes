@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WintermoonMesa;
 import com.github.laxika.magicalvibes.cards.z.ZerapaMinotaur;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -30,8 +31,8 @@ class AgentOfShaukuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(land.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -53,8 +54,8 @@ class AgentOfShaukuTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -99,7 +100,7 @@ class AgentOfShaukuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -149,7 +150,7 @@ class AgentOfShaukuTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, target));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(land.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -172,8 +173,8 @@ class AgentOfShaukuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, agent.getId());
         harness.passBothPriorities();
 
-        assertThat(agent.getPowerModifier()).isEqualTo(2);
-        assertThat(agent.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, agent)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, agent)).isEqualTo(0);
         assertThat(agent.isTapped()).isTrue();
     }
 
@@ -193,8 +194,8 @@ class AgentOfShaukuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(card -> card instanceof WintermoonMesa)
                 .hasSize(2);
@@ -213,15 +214,15 @@ class AgentOfShaukuTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(land.getId()));
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, agent));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
         harness.assertInGraveyard(player1, "Agent of Shauku");
     }
 

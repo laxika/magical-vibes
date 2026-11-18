@@ -50,8 +50,8 @@ class VoraciousTyphonTest extends BaseCardTest {
 
         Permanent escapedTyphon = findPermanent(player1, "Voracious Typhon");
         assertThat(escapedTyphon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(escapedTyphon.getEffectivePower()).isEqualTo(7);
-        assertThat(escapedTyphon.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, escapedTyphon)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, escapedTyphon)).isEqualTo(7);
     }
 
     @Test

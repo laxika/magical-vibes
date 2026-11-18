@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -21,19 +21,19 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class BuffTargetCreatureIndefinitelyEffectHandler implements NormalEffectHandlerBean {
+public class PowerToughnessBoostEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return BuffTargetCreatureIndefinitelyEffect.class;
+        return PowerToughnessBoostEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var buff = (BuffTargetCreatureIndefinitelyEffect) effect;
+        var buff = (PowerToughnessBoostEffect) effect;
 
         List<UUID> targetIds = entry.targetsForEffect(effect);
         if (targetIds.isEmpty() && entry.getTargetId() != null) {
@@ -45,7 +45,7 @@ public class BuffTargetCreatureIndefinitelyEffectHandler implements NormalEffect
                 continue; // Partially resolves — skip removed targets
             }
 
-            // CR 611.2b: no stated duration means the continuous effect lasts indefinitely. Record
+            // CR 611.2a: no stated duration means the continuous effect lasts until the end of the game. Record
             // it as a PERMANENT floating continuous effect on the target — the layered pass reads
             // the +P/+Y (sublayer 7c) and the granted keywords (layer 6) off it for as long as the
             // permanent exists, so a second copy stacks additively rather than being replaced.

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RibCageSpider;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -119,7 +120,7 @@ class PlagueFiendTest extends BaseCardTest {
     @DisplayName("Zero combat damage does not trigger destruction")
     void zeroCombatDamageDoesNotTrigger() {
         Permanent plagueFiend = addCreatureReady(player1, new PlagueFiend());
-        plagueFiend.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, plagueFiend, -1);
         plagueFiend.setAttacking(true);
         addCreatureReady(player2, new RibCageSpider());
 

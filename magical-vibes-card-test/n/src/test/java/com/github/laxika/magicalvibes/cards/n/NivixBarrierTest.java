@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BoggartBrute;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -66,11 +67,11 @@ class NivixBarrierTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player2, "Nivix Barrier");
-        assertThat(attacker.getPowerModifier()).isEqualTo(-4);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(0);
         // Power can become negative after the reduction.
-        assertThat(attacker.getEffectivePower()).isEqualTo(-1);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -89,7 +90,7 @@ class NivixBarrierTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(-4);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-4);
 
         // Nivix Barrier is a legal blocker, so combat stops for blocker declaration; the pending
         // interaction has to be answered or passing priority below is a no-op and cleanup never runs.
@@ -99,8 +100,8 @@ class NivixBarrierTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(0);
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
     }
 
     @Test
@@ -174,7 +175,7 @@ class NivixBarrierTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
         harness.assertOnBattlefield(player2, "Nivix Barrier");
     }
 

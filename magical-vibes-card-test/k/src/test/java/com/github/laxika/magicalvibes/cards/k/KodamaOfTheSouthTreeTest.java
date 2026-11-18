@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DesperateRitual;
 import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
 import com.github.laxika.magicalvibes.cards.h.HarshDeceiver;
@@ -25,8 +26,8 @@ class KodamaOfTheSouthTreeTest extends BaseCardTest {
         harness.castFromHand(player1, new DesperateRitual(), "{1}{R}");
         harness.passBothPriorities();
 
-        assertThat(retainer.getPowerModifier()).isEqualTo(1);
-        assertThat(retainer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, retainer, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -38,8 +39,8 @@ class KodamaOfTheSouthTreeTest extends BaseCardTest {
         harness.castFromHand(player1, new DesperateRitual(), "{1}{R}");
         harness.passBothPriorities();
 
-        assertThat(kodama.getPowerModifier()).isZero();
-        assertThat(kodama.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kodama)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kodama)).isZero();
         assertThat(gqs.hasKeyword(gd, kodama, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -52,8 +53,8 @@ class KodamaOfTheSouthTreeTest extends BaseCardTest {
         harness.castFromHand(player1, new HarshDeceiver(), "{3}{W}");
         harness.passBothPriorities();
 
-        assertThat(retainer.getPowerModifier()).isEqualTo(1);
-        assertThat(retainer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, retainer, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -66,8 +67,8 @@ class KodamaOfTheSouthTreeTest extends BaseCardTest {
         harness.castFromHand(player1, new DesperateRitual(), "{1}{R}");
         harness.passBothPriorities();
 
-        assertThat(enemy.getPowerModifier()).isZero();
-        assertThat(enemy.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, enemy)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enemy)).isZero();
         assertThat(gqs.hasKeyword(gd, enemy, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -83,8 +84,8 @@ class KodamaOfTheSouthTreeTest extends BaseCardTest {
         harness.castFromHand(player2, new DesperateRitual(), "{1}{R}");
         harness.passBothPriorities();
 
-        assertThat(retainer.getPowerModifier()).isZero();
-        assertThat(retainer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isZero();
         assertThat(gqs.hasKeyword(gd, retainer, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -97,8 +98,8 @@ class KodamaOfTheSouthTreeTest extends BaseCardTest {
         harness.castFromHand(player1, new DevotedRetainer(), "{W}");
         harness.passBothPriorities();
 
-        assertThat(retainer.getPowerModifier()).isZero();
-        assertThat(retainer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isZero();
         assertThat(gqs.hasKeyword(gd, retainer, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -110,14 +111,14 @@ class KodamaOfTheSouthTreeTest extends BaseCardTest {
 
         harness.castFromHand(player1, new DesperateRitual(), "{1}{R}");
         resolveAllTriggers();
-        assertThat(retainer.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, retainer, Keyword.TRAMPLE)).isTrue();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(retainer.getPowerModifier()).isZero();
-        assertThat(retainer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isZero();
         assertThat(gqs.hasKeyword(gd, retainer, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -130,16 +131,16 @@ class KodamaOfTheSouthTreeTest extends BaseCardTest {
         harness.castFromHand(player1, new HarshDeceiver(), "{3}{W}");
         harness.passBothPriorities();
 
-        assertThat(retainer.getPowerModifier()).isEqualTo(1);
-        assertThat(retainer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, retainer, Keyword.TRAMPLE)).isTrue();
         harness.assertNotOnBattlefield(player1, "Harsh Deceiver");
 
         resolveAllTriggers();
 
         Permanent deceiver = findPermanent(player1, "Harsh Deceiver");
-        assertThat(deceiver.getPowerModifier()).isZero();
-        assertThat(deceiver.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, deceiver)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, deceiver)).isZero();
         assertThat(gqs.hasKeyword(gd, deceiver, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -156,14 +157,14 @@ class KodamaOfTheSouthTreeTest extends BaseCardTest {
         harness.castFromHand(player1, new DesperateRitual(), "{1}{R}");
         resolveAllTriggers();
 
-        assertThat(retainer.getPowerModifier()).isEqualTo(2);
-        assertThat(retainer.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, retainer, Keyword.TRAMPLE)).isTrue();
-        assertThat(deceiver.getPowerModifier()).isEqualTo(1);
-        assertThat(deceiver.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, deceiver)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, deceiver)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, deceiver, Keyword.TRAMPLE)).isTrue();
-        assertThat(kodama.getPowerModifier()).isZero();
-        assertThat(kodama.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kodama)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kodama)).isZero();
         assertThat(gqs.hasKeyword(gd, kodama, Keyword.TRAMPLE)).isFalse();
     }
 }

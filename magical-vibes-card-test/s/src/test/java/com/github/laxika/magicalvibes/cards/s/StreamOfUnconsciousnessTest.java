@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.InkDissolver;
 import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,8 +29,8 @@ class StreamOfUnconsciousnessTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size() - 1; // -1 for the spell leaving hand
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-4);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
 
         // Controls a Wizard -> draws a card
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -45,8 +46,8 @@ class StreamOfUnconsciousnessTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size() - 1;
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-4);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
 
         // No Wizard controlled -> no draw
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
@@ -63,8 +64,8 @@ class StreamOfUnconsciousnessTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size() - 1;
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-4);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 
@@ -78,8 +79,8 @@ class StreamOfUnconsciousnessTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-4);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -95,8 +96,8 @@ class StreamOfUnconsciousnessTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -111,7 +112,7 @@ class StreamOfUnconsciousnessTest extends BaseCardTest {
         harness.addToBattlefield(player1, new InkDissolver());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-4);
         harness.assertInHand(player1, "Prickly Boggart");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
@@ -129,7 +130,7 @@ class StreamOfUnconsciousnessTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(wizard);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-4);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }

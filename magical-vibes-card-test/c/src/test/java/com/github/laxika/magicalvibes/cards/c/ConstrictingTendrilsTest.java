@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.k.Kaleidostone;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,10 +30,10 @@ class ConstrictingTendrilsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent(player1, "Cylian Sunsinger");
-        assertThat(bear.getPowerModifier()).isEqualTo(-3);
-        assertThat(bear.getEffectivePower()).isEqualTo(-1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -50,9 +51,9 @@ class ConstrictingTendrilsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Cylian Sunsinger");
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -99,8 +100,8 @@ class ConstrictingTendrilsTest extends BaseCardTest {
         Permanent creature = findPermanent(player2, "Cylian Sunsinger");
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(-1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Cylian Sunsinger");
         harness.assertInGraveyard(player1, "Constricting Tendrils");
     }

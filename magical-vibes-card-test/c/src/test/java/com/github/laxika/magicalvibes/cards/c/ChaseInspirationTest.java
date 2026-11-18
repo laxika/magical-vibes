@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.n.NoxiousNewt;
@@ -50,10 +51,10 @@ class ChaseInspirationTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(newt.getPowerModifier()).isEqualTo(0);
-        assertThat(newt.getToughnessModifier()).isEqualTo(3);
-        assertThat(newt.getEffectivePower()).isEqualTo(1);
-        assertThat(newt.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, newt)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newt)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, newt)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, newt)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, newt, Keyword.HEXPROOF)).isTrue();
     }
 
@@ -84,8 +85,8 @@ class ChaseInspirationTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(newt.getPowerModifier()).isEqualTo(0);
-        assertThat(newt.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, newt)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newt)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, newt, Keyword.HEXPROOF)).isFalse();
     }
 
@@ -138,8 +139,8 @@ class ChaseInspirationTest extends BaseCardTest {
         harness.castInstant(player1, 0, newt.getId());
         harness.passBothPriorities();
 
-        assertThat(newt.getPowerModifier()).isZero();
-        assertThat(newt.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, newt)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newt)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, newt, Keyword.HEXPROOF)).isTrue();
     }
 
@@ -161,8 +162,8 @@ class ChaseInspirationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(newt.getPowerModifier()).isZero();
-        assertThat(newt.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, newt)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newt)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, newt, Keyword.FIRST_STRIKE)).isFalse();
         harness.assertInGraveyard(player2, "Interjection");
     }

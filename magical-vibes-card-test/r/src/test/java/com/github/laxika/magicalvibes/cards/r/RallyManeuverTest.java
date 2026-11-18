@@ -28,12 +28,12 @@ class RallyManeuverTest extends BaseCardTest {
         Permanent secondTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castRallyManeuver(List.of(firstTarget.getId(), secondTarget.getId()));
 
-        assertThat(firstTarget.getPowerModifier()).isEqualTo(2);
-        assertThat(firstTarget.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstTarget)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstTarget)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, firstTarget)).contains(Keyword.FIRST_STRIKE);
         assertThat(PermanentGrants.keywordsOf(gd, firstTarget)).doesNotContain(Keyword.LIFELINK);
-        assertThat(secondTarget.getPowerModifier()).isZero();
-        assertThat(secondTarget.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondTarget)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondTarget)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, secondTarget)).contains(Keyword.LIFELINK);
         assertThat(PermanentGrants.keywordsOf(gd, secondTarget)).doesNotContain(Keyword.FIRST_STRIKE);
     }
@@ -44,7 +44,7 @@ class RallyManeuverTest extends BaseCardTest {
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castRallyManeuver(List.of(firstTarget.getId()));
 
-        assertThat(firstTarget.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstTarget)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, firstTarget)).contains(Keyword.FIRST_STRIKE);
     }
 
@@ -59,9 +59,9 @@ class RallyManeuverTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(firstTarget.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstTarget)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, firstTarget)).doesNotContain(Keyword.FIRST_STRIKE);
-        assertThat(secondTarget.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondTarget)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, secondTarget)).doesNotContain(Keyword.LIFELINK);
     }
 
@@ -103,9 +103,9 @@ class RallyManeuverTest extends BaseCardTest {
         Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castRallyManeuver(List.of(firstTarget.getId(), secondTarget.getId()));
 
-        assertThat(firstTarget.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstTarget)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, firstTarget)).contains(Keyword.FIRST_STRIKE).doesNotContain(Keyword.LIFELINK);
-        assertThat(secondTarget.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondTarget)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, secondTarget)).contains(Keyword.LIFELINK).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
@@ -119,8 +119,8 @@ class RallyManeuverTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, firstTarget));
         harness.passBothPriorities();
 
-        assertThat(secondTarget.getPowerModifier()).isZero();
-        assertThat(secondTarget.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondTarget)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondTarget)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, secondTarget)).contains(Keyword.LIFELINK).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
@@ -134,8 +134,8 @@ class RallyManeuverTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, secondTarget));
         harness.passBothPriorities();
 
-        assertThat(firstTarget.getPowerModifier()).isEqualTo(2);
-        assertThat(firstTarget.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstTarget)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstTarget)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, firstTarget)).contains(Keyword.FIRST_STRIKE).doesNotContain(Keyword.LIFELINK);
     }
 
@@ -144,7 +144,7 @@ class RallyManeuverTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castRallyManeuver(List.of(creature.getId()));
 
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.LIFELINK);
     }
 

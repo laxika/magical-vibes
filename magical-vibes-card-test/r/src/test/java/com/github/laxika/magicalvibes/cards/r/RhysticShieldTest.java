@@ -24,8 +24,8 @@ class RhysticShieldTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
     }
 
     @Test
@@ -37,7 +37,7 @@ class RhysticShieldTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 
@@ -49,7 +49,7 @@ class RhysticShieldTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -64,8 +64,8 @@ class RhysticShieldTest extends BaseCardTest {
 
         Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
 
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(lateCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, lateCreature)).isEqualTo(1);
     }
 
     @Test
@@ -80,7 +80,7 @@ class RhysticShieldTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
     }
 
     @Test
@@ -94,11 +94,11 @@ class RhysticShieldTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(firstCreature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(secondCreature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(firstCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(secondCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(2);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -112,8 +112,8 @@ class RhysticShieldTest extends BaseCardTest {
         castShield();
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

@@ -26,17 +26,17 @@ class StirThePrideTest extends BaseCardTest {
 
         castSingleMode(0);
 
-        assertThat(mine.getEffectivePower()).isEqualTo(3);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(3);
-        assertThat(theirs.getEffectivePower()).isEqualTo(1);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(1);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(1);
     }
 
     @Test
@@ -67,8 +67,8 @@ class StirThePrideTest extends BaseCardTest {
         harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0, 1}, List.of());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(creature.getTemporaryTriggerEffects(Triggers.dealsDamage())).isNotEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
@@ -188,10 +188,10 @@ class StirThePrideTest extends BaseCardTest {
 
         Permanent late = harness.addToBattlefieldAndReturn(player1, new MyrMoonvessel());
 
-        assertThat(early.getEffectivePower()).isEqualTo(3);
-        assertThat(early.getEffectiveToughness()).isEqualTo(3);
-        assertThat(late.getEffectivePower()).isEqualTo(1);
-        assertThat(late.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, early)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, early)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, late)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, late)).isEqualTo(1);
     }
 
     @Test

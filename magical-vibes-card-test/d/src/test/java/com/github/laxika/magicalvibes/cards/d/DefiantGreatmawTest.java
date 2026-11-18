@@ -42,7 +42,7 @@ class DefiantGreatmawTest extends BaseCardTest {
 
         // Air Elemental (4/4) with two -1/-1 counters → 2/2.
         assertThat(elemental.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(2);
     }
 
     @Test

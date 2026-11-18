@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -117,7 +118,7 @@ class RockyRebukeTest extends BaseCardTest {
         addMana();
         harness.castInstant(player1, 0, List.of(source.getId(), victim.getId()));
 
-        source.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, source, 1);
         harness.passBothPriorities();
 
         assertThat(victim.getMarkedDamage()).isEqualTo(3);

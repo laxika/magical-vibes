@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -22,7 +23,7 @@ class LothlorienBladeTest extends BaseCardTest {
     @DisplayName("Equipped creature deals power damage to a creature defending player controls")
     void equippedCreatureDealsPowerDamageToDefendingCreature() {
         Permanent elf = addCreatureReady(player1, new LlanowarElves());
-        elf.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, elf, 2);
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(elf.getId());
         Permanent target = addCreatureReady(player2, new EnormousBaloth());
@@ -75,7 +76,7 @@ class LothlorienBladeTest extends BaseCardTest {
     @Test
     void attackDamageStillResolvesAfterBladeLeavesBattlefield() {
         Permanent elf = addCreatureReady(player1, new LlanowarElves());
-        elf.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, elf, 2);
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(elf.getId());
         Permanent target = addCreatureReady(player2, new EnormousBaloth());
@@ -98,7 +99,7 @@ class LothlorienBladeTest extends BaseCardTest {
 
         declareAttack(player1, elf);
         harness.handlePermanentChosen(player1, target.getId());
-        elf.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, elf, 3);
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, elf));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
@@ -109,7 +110,7 @@ class LothlorienBladeTest extends BaseCardTest {
     @Test
     void movingBladeDoesNotChangeWhichCreatureDealsAttackDamage() {
         Permanent elf = addCreatureReady(player1, new LlanowarElves());
-        elf.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, elf, 2);
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(elf.getId());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
@@ -132,7 +133,7 @@ class LothlorienBladeTest extends BaseCardTest {
 
         declareAttack(player1, elf);
         harness.handlePermanentChosen(player1, target.getId());
-        elf.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, elf, 3);
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(target.getMarkedDamage()).isEqualTo(4);

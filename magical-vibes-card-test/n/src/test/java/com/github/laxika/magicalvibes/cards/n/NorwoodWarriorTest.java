@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -43,10 +44,10 @@ class NorwoodWarriorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(1);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(1);
-        assertThat(warrior.getEffectivePower()).isEqualTo(3);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(3);
     }
 
     @Test
@@ -63,8 +64,8 @@ class NorwoodWarriorTest extends BaseCardTest {
         ));
         resolveAllTriggers();
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(1);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(1);
     }
 
     @Test
@@ -77,8 +78,8 @@ class NorwoodWarriorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(warrior.getPowerModifier()).isZero();
-        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isZero();
     }
 
     @Test
@@ -91,8 +92,8 @@ class NorwoodWarriorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(warrior.getPowerModifier()).isZero();
-        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isZero();
     }
 
     @Test
@@ -106,14 +107,14 @@ class NorwoodWarriorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(1);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(warrior.getPowerModifier()).isZero();
-        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isZero();
     }
 }

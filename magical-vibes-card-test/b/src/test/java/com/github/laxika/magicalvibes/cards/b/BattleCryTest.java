@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionRed;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
 import com.github.laxika.magicalvibes.cards.n.NobleOx;
@@ -65,10 +66,10 @@ class BattleCryTest extends BaseCardTest {
         // Delayed trigger on the stack — resolve it.
         resolveAllTriggers();
 
-        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -96,8 +97,8 @@ class BattleCryTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
-        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
     }
 
     @Test
@@ -121,8 +122,8 @@ class BattleCryTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
-        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
     }
 
     @Test
@@ -143,13 +144,13 @@ class BattleCryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
         resolveAllTriggers();
 
-        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
     }
 
     @Test
@@ -166,11 +167,11 @@ class BattleCryTest extends BaseCardTest {
                 new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(whiteBlocker.getToughnessModifier()).isEqualTo(1);
-        assertThat(greenBlocker.getToughnessModifier()).isEqualTo(1);
-        assertThat(whiteBlocker.getPowerModifier()).isZero();
-        assertThat(greenBlocker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, whiteBlocker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, greenBlocker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, whiteBlocker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, greenBlocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -186,8 +187,8 @@ class BattleCryTest extends BaseCardTest {
         });
 
         assertThat(blocker.isBlocking()).isTrue();
-        assertThat(blocker.getToughnessModifier()).isZero();
-        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
     }
 
     @Test
@@ -206,8 +207,8 @@ class BattleCryTest extends BaseCardTest {
                 () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
         resolveAllTriggers();
 
-        assertThat(blocker.getToughnessModifier()).isZero();
-        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
     }
 
     @Test
@@ -230,7 +231,7 @@ class BattleCryTest extends BaseCardTest {
         Permanent blocker = findPermanent(player2, "Noble Ox");
         assertThat(blocker.getBlockingTargetIds())
                 .containsExactlyInAnyOrder(firstAttacker.getId(), secondAttacker.getId());
-        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
-        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
     }
 }

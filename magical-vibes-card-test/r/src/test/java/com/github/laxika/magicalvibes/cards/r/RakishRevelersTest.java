@@ -31,8 +31,8 @@ class RakishRevelersTest extends BaseCardTest {
         assertThat(citizen.getCard().isToken()).isTrue();
         assertThat(citizen.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(citizen.getCard().getSubtypes()).containsExactly(CardSubtype.CITIZEN);
-        assertThat(citizen.getEffectivePower()).isEqualTo(1);
-        assertThat(citizen.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, citizen)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, citizen)).isEqualTo(1);
         assertThat(citizen.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(citizen.getCard().getColors())
                 .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);

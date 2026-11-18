@@ -97,8 +97,8 @@ class GrixisCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 2, null);
             harness.passBothPriorities();
 
-            assertThat(bear.getEffectivePower()).isEqualTo(4);
-            assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         }
 
         @Test
@@ -115,8 +115,8 @@ class GrixisCharmTest extends BaseCardTest {
             harness.clearPriorityPassed();
             harness.passBothPriorities();
 
-            assertThat(bear.getEffectivePower()).isEqualTo(2);
-            assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         }
     }
 
@@ -130,16 +130,16 @@ class GrixisCharmTest extends BaseCardTest {
         harness.castInstant(player1, 0, 1, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Cavern Thoctar");
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 
     @Test
@@ -155,14 +155,14 @@ class GrixisCharmTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new CavernThoctar());
 
-        assertThat(first.getEffectivePower()).isEqualTo(7);
-        assertThat(first.getEffectiveToughness()).isEqualTo(5);
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(7);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(5);
-        assertThat(opponent.getEffectivePower()).isEqualTo(5);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(5);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(5);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(5);
     }
 
     @Test

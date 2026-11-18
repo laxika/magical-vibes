@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ActOfAggression;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OrcishArtillery;
@@ -124,8 +125,8 @@ class ContestedWarZoneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Attacker should have +1 power modifier
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(0);
     }
 
     @Test
@@ -153,9 +154,9 @@ class ContestedWarZoneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Non-attacking creature should not be boosted
-        assertThat(nonAttacker.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonAttacker)).isEqualTo(0);
         // Attacking creature should be boosted
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
     }
 
     @Test
@@ -221,16 +222,16 @@ class ContestedWarZoneTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isZero();
-        assertThat(laterAttacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, laterAttacker)).isZero();
         attacker.setAttacking(false);
         laterAttacker.setAttacking(true);
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(laterAttacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, laterAttacker)).isZero();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 
     private Permanent addContestedWarZone(Player player) {

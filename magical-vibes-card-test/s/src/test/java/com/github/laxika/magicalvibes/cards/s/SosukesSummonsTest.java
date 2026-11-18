@@ -38,8 +38,8 @@ class SosukesSummonsTest extends BaseCardTest {
         assertThat(snakes).allSatisfy(snake -> {
             assertThat(snake.getCard().isToken()).isTrue();
             assertThat(snake.getCard().getSubtypes()).containsExactly(CardSubtype.SNAKE);
-            assertThat(snake.getEffectivePower()).isEqualTo(1);
-            assertThat(snake.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, snake)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, snake)).isEqualTo(1);
         });
     }
 

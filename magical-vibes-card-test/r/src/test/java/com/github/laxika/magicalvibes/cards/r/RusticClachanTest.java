@@ -93,7 +93,7 @@ class RusticClachanTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         harness.assertInGraveyard(player1, "Rustic Clachan");
     }
 

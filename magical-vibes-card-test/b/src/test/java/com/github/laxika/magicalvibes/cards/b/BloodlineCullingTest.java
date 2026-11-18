@@ -28,8 +28,8 @@ class BloodlineCullingTest extends BaseCardTest {
 
         castBloodlineCulling(0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -42,8 +42,8 @@ class BloodlineCullingTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(8);
-        assertThat(target.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
     }
 
     @Test
@@ -64,8 +64,8 @@ class BloodlineCullingTest extends BaseCardTest {
         castBloodlineCulling(1, null);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
-        assertThat(nontoken.getEffectivePower()).isEqualTo(2);
-        assertThat(nontoken.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nontoken)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nontoken)).isEqualTo(2);
     }
 
     @Test
@@ -133,8 +133,8 @@ class BloodlineCullingTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
     }
 
     private void addBloodlineCullingMana() {

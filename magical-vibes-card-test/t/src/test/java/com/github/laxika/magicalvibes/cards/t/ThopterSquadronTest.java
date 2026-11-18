@@ -34,8 +34,8 @@ class ThopterSquadronTest extends BaseCardTest {
 
         Permanent squadron = findPermanent(player1, "Thopter Squadron");
         assertThat(squadron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(squadron.getEffectivePower()).isEqualTo(3);
-        assertThat(squadron.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, squadron)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, squadron)).isEqualTo(3);
     }
 
     @Test

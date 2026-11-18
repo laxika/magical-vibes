@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,12 +30,12 @@ class CaptiveFlameTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -48,7 +49,7 @@ class CaptiveFlameTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(1);
     }
 
     @Test
@@ -74,8 +75,8 @@ class CaptiveFlameTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -88,7 +89,7 @@ class CaptiveFlameTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bear.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -105,10 +106,10 @@ class CaptiveFlameTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(0);
-        assertThat(second.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(0);
     }
 
     @Test
@@ -123,7 +124,7 @@ class CaptiveFlameTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(flame.getCard());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 }

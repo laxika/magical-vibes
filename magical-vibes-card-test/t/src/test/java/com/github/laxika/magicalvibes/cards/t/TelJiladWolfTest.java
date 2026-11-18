@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class TelJiladWolfTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(3);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(3);
     }
 
     @Test
@@ -41,8 +42,8 @@ class TelJiladWolfTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isZero();
-        assertThat(wolf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isZero();
     }
 
     @Test
@@ -58,8 +59,8 @@ class TelJiladWolfTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(6);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(6);
     }
 
     @Test
@@ -77,8 +78,8 @@ class TelJiladWolfTest extends BaseCardTest {
                 new BlockerAssignment(2, 0)));
         resolveAllTriggers();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(6);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(6);
     }
 
     @Test
@@ -91,15 +92,15 @@ class TelJiladWolfTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(3);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isZero();
-        assertThat(wolf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isZero();
     }
 
     @Test
@@ -112,7 +113,7 @@ class TelJiladWolfTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isZero();
-        assertThat(wolf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isZero();
     }
 }

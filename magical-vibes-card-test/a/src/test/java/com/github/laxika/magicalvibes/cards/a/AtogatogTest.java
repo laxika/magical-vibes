@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,8 +27,8 @@ class AtogatogTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Atog");
-        assertThat(atogatog.getPowerModifier()).isEqualTo(1);
-        assertThat(atogatog.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, atogatog)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, atogatog)).isEqualTo(1);
     }
 
     @Test
@@ -41,8 +42,8 @@ class AtogatogTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, atog.getId());
         harness.passBothPriorities();
 
-        assertThat(atogatog.getPowerModifier()).isEqualTo(2);
-        assertThat(atogatog.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, atogatog)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, atogatog)).isEqualTo(2);
     }
 
     @Test
@@ -102,15 +103,15 @@ class AtogatogTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, atog.getId());
         harness.passBothPriorities();
 
-        assertThat(atogatog.getPowerModifier()).isEqualTo(1);
-        assertThat(atogatog.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, atogatog)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, atogatog)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(atogatog.getPowerModifier()).isZero();
-        assertThat(atogatog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, atogatog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, atogatog)).isZero();
     }
 
     @Test
@@ -125,8 +126,8 @@ class AtogatogTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Atog");
         harness.passBothPriorities();
 
-        assertThat(atogatog.getPowerModifier()).isZero();
-        assertThat(atogatog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, atogatog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, atogatog)).isZero();
     }
 
     @Test
@@ -134,15 +135,15 @@ class AtogatogTest extends BaseCardTest {
     void negativePowerGivesNoBoostOrPenalty() {
         Permanent atogatog = harness.addToBattlefieldAndReturn(player1, new Atogatog());
         Permanent atog = harness.addToBattlefieldAndReturn(player1, new Atog());
-        atog.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, atog, -2);
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, atog.getId());
         harness.assertInGraveyard(player1, "Atog");
         harness.passBothPriorities();
 
-        assertThat(atogatog.getPowerModifier()).isZero();
-        assertThat(atogatog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, atogatog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, atogatog)).isZero();
     }
 
     @Test
@@ -163,8 +164,8 @@ class AtogatogTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Atog");
         harness.assertNotInGraveyard(player2, "Atog");
         harness.assertInGraveyard(player1, "Atog");
-        assertThat(atogatog.getPowerModifier()).isEqualTo(1);
-        assertThat(atogatog.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, atogatog)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, atogatog)).isEqualTo(1);
     }
 
     @Test
@@ -177,20 +178,20 @@ class AtogatogTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, firstAtog.getId());
-        assertThat(atogatog.getPowerModifier()).isZero();
-        assertThat(atogatog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, atogatog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, atogatog)).isZero();
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, secondAtog.getId());
         harness.passBothPriorities();
 
-        assertThat(atogatog.getPowerModifier()).isEqualTo(3);
-        assertThat(atogatog.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, atogatog)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, atogatog)).isEqualTo(3);
 
         harness.passBothPriorities();
 
-        assertThat(atogatog.getPowerModifier()).isEqualTo(4);
-        assertThat(atogatog.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, atogatog)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, atogatog)).isEqualTo(4);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(card -> card.getName().equals("Atog"))
                 .hasSize(2);

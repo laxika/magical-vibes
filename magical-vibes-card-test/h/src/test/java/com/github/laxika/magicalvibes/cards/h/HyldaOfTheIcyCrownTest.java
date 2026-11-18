@@ -40,8 +40,8 @@ class HyldaOfTheIcyCrownTest extends BaseCardTest {
         assertThat(elementals.getFirst().getCard().getColors())
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLUE);
         assertThat(elementals.getFirst().getCard().getSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
-        assertThat(elementals.getFirst().getEffectivePower()).isEqualTo(4);
-        assertThat(elementals.getFirst().getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elementals.getFirst())).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elementals.getFirst())).isEqualTo(4);
         assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(creaturesBefore);
     }
 

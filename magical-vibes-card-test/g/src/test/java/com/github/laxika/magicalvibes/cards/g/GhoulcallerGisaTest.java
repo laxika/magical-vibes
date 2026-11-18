@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -101,7 +102,7 @@ class GhoulcallerGisaTest extends BaseCardTest {
     void zeroPowerCreatesNoTokensButStillPaysCosts() {
         Permanent gisa = addCreatureReady(player1, new GhoulcallerGisa());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, bears, -2);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -116,7 +117,7 @@ class GhoulcallerGisaTest extends BaseCardTest {
     void negativePowerCreatesNoTokens() {
         addCreatureReady(player1, new GhoulcallerGisa());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, bears, -3);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

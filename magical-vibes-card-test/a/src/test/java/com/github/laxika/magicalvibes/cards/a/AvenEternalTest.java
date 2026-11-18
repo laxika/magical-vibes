@@ -32,8 +32,8 @@ class AvenEternalTest extends BaseCardTest {
         assertThat(army.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.ZOMBIE, CardSubtype.ARMY);
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(army.getEffectivePower()).isEqualTo(1);
-        assertThat(army.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, army)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, army)).isEqualTo(1);
     }
 
     @Test

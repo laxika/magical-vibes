@@ -28,8 +28,8 @@ class FourthBridgeProwlerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent target = findPermanent(player2, "Countless Gears Renegade");
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -44,8 +44,8 @@ class FourthBridgeProwlerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         Permanent target = findPermanent(player2, "Countless Gears Renegade");
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -79,8 +79,8 @@ class FourthBridgeProwlerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player2, "Countless Gears Renegade");
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -122,8 +122,8 @@ class FourthBridgeProwlerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent target = findPermanent(player1, "Countless Gears Renegade");
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     private void castProwler() {

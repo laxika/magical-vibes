@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,8 +24,8 @@ class BorosEliteTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(elite.getPowerModifier()).isZero();
-        assertThat(elite.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elite)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elite)).isZero();
     }
 
     @Test
@@ -37,8 +38,8 @@ class BorosEliteTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(elite.getPowerModifier()).isEqualTo(2);
-        assertThat(elite.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, elite)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elite)).isEqualTo(2);
     }
 
     @Test
@@ -51,8 +52,8 @@ class BorosEliteTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(elite.getPowerModifier()).isZero();
-        assertThat(elite.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elite)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elite)).isZero();
     }
 
     @Test
@@ -66,8 +67,8 @@ class BorosEliteTest extends BaseCardTest {
         declareAttackers(List.of(1, 2, 3));
         resolveAllTriggers();
 
-        assertThat(elite.getPowerModifier()).isZero();
-        assertThat(elite.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elite)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elite)).isZero();
     }
 
     @Test
@@ -84,8 +85,8 @@ class BorosEliteTest extends BaseCardTest {
         third.setAttacking(false);
         resolveAllTriggers();
 
-        assertThat(elite.getPowerModifier()).isEqualTo(2);
-        assertThat(elite.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, elite)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elite)).isEqualTo(2);
     }
 
     @Test
@@ -99,12 +100,12 @@ class BorosEliteTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2, 3));
         resolveAllTriggers();
 
-        assertThat(elite.getPowerModifier()).isEqualTo(2);
-        assertThat(elite.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, elite)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elite)).isEqualTo(2);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(elite.getPowerModifier()).isZero();
-        assertThat(elite.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elite)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elite)).isZero();
     }
 }

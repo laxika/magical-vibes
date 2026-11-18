@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -31,8 +32,8 @@ class ChelonianTackleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isEqualTo(10);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(10);
     }
 
     @Test
@@ -50,7 +51,7 @@ class ChelonianTackleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent elves = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(elves.getToughnessModifier()).isEqualTo(10);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elves)).isEqualTo(10);
         harness.assertOnBattlefield(player1, "Llanowar Elves");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
@@ -121,7 +122,7 @@ class ChelonianTackleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getToughnessModifier()).isEqualTo(10);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(10);
     }
 
     @Test
@@ -135,7 +136,7 @@ class ChelonianTackleTest extends BaseCardTest {
         harness.getGameData().playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(elves.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elves)).isZero();
         assertThat(elves.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player1, "Chelonian Tackle");
@@ -148,11 +149,11 @@ class ChelonianTackleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castSorcery(player1, 0, List.of(bear.getId()));
         harness.passBothPriorities();
-        assertThat(bear.getToughnessModifier()).isEqualTo(10);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(10);
 
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }

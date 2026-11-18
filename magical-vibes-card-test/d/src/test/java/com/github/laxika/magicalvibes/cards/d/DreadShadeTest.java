@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -86,10 +87,10 @@ class DreadShadeTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent shade = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(shade.getEffectivePower()).isEqualTo(4);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(4);
-        assertThat(shade.getPowerModifier()).isEqualTo(1);
-        assertThat(shade.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(1);
     }
 
     @Test
@@ -106,10 +107,10 @@ class DreadShadeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent shade = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(shade.getEffectivePower()).isEqualTo(6);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(6);
-        assertThat(shade.getPowerModifier()).isEqualTo(3);
-        assertThat(shade.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(3);
     }
 
     @Test
@@ -124,18 +125,18 @@ class DreadShadeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent shade = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(shade.getEffectivePower()).isEqualTo(5);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(5);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances from END to CLEANUP
 
-        assertThat(shade.getPowerModifier()).isEqualTo(0);
-        assertThat(shade.getToughnessModifier()).isEqualTo(0);
-        assertThat(shade.getEffectivePower()).isEqualTo(3);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(3);
     }
 
     @Test
@@ -177,8 +178,8 @@ class DreadShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(4);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(4);
         assertThat(shade.isTapped()).isTrue();
     }
 
@@ -191,17 +192,17 @@ class DreadShadeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
-        assertThat(shade.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isZero();
         assertThat(harness.getGameData().stack).hasSize(2);
 
         harness.passBothPriorities();
-        assertThat(shade.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(1);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(5);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(5);
-        assertThat(otherShade.getPowerModifier()).isZero();
-        assertThat(otherShade.getToughnessModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherShade)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherShade)).isZero();
     }
 
     @Test
@@ -216,8 +217,8 @@ class DreadShadeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().stack).isEmpty();
-        assertThat(returned.getPowerModifier()).isZero();
-        assertThat(returned.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, returned)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, returned)).isZero();
     }
 
     @Test

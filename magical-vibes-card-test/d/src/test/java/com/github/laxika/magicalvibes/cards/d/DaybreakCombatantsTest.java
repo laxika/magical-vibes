@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,8 +28,8 @@ class DaybreakCombatantsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -39,14 +40,14 @@ class DaybreakCombatantsTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -75,8 +76,8 @@ class DaybreakCombatantsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, combatants.getId());
         harness.passBothPriorities();
 
-        assertThat(combatants.getEffectivePower()).isEqualTo(4);
-        assertThat(combatants.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, combatants)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, combatants)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -105,8 +106,8 @@ class DaybreakCombatantsTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 

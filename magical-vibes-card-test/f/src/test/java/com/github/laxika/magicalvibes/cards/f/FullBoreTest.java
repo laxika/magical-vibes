@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KnightLuminary;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -26,8 +27,8 @@ class FullBoreTest extends BaseCardTest {
 
         castFullBore(bears);
 
-        assertThat(bears.getPowerModifier()).isEqualTo(3);
-        assertThat(bears.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
@@ -40,8 +41,8 @@ class FullBoreTest extends BaseCardTest {
 
         castFullBore(knight);
 
-        assertThat(knight.getPowerModifier()).isEqualTo(3);
-        assertThat(knight.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, knight, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isTrue();
     }
@@ -59,8 +60,8 @@ class FullBoreTest extends BaseCardTest {
         Permanent knight = findPermanent(player1, "Knight Luminary");
         castFullBore(knight);
 
-        assertThat(knight.getPowerModifier()).isEqualTo(3);
-        assertThat(knight.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, knight, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isFalse();
     }
@@ -75,8 +76,8 @@ class FullBoreTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
@@ -102,8 +103,8 @@ class FullBoreTest extends BaseCardTest {
         castFullBore(knight);
         castFullBore(knight);
 
-        assertThat(knight.getPowerModifier()).isEqualTo(6);
-        assertThat(knight.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, knight, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isTrue();
     }
@@ -122,8 +123,8 @@ class FullBoreTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(knight.getPowerModifier()).isEqualTo(0);
-        assertThat(knight.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, knight, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isFalse();
     }
@@ -142,10 +143,10 @@ class FullBoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
-        assertThat(other.getPowerModifier()).isEqualTo(0);
-        assertThat(other.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
         harness.assertInGraveyard(player1, "Full Bore");

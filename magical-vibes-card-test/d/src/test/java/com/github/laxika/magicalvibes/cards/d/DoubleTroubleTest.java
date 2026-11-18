@@ -25,10 +25,10 @@ class DoubleTroubleTest extends BaseCardTest {
 
         castDoubleTrouble();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
     }
 
     @Test
@@ -42,8 +42,8 @@ class DoubleTroubleTest extends BaseCardTest {
 
         castDoubleTrouble();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(10);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(5);
     }
 
     @Test
@@ -52,13 +52,13 @@ class DoubleTroubleTest extends BaseCardTest {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castDoubleTrouble();
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
     }
 
     private void castDoubleTrouble() {
@@ -75,10 +75,10 @@ class DoubleTroubleTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(2);
-        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
     }
 
     @Test
@@ -89,8 +89,8 @@ class DoubleTroubleTest extends BaseCardTest {
 
         Permanent later = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(later.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
     }
 
     @Test
@@ -101,8 +101,8 @@ class DoubleTroubleTest extends BaseCardTest {
         castDoubleTrouble();
         castDoubleTrouble();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(8);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -116,8 +116,8 @@ class DoubleTroubleTest extends BaseCardTest {
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(7);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 
     @Test

@@ -30,8 +30,8 @@ class SerpentineAmbushTest extends BaseCardTest {
 
         castSerpentineAmbush(target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLUE);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.SERPENT);
     }
@@ -49,8 +49,8 @@ class SerpentineAmbushTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).isEqualTo(originalSubtypes);
         assertThat(gqs.getEffectiveColors(gd, target)).isEqualTo(originalColors);
     }

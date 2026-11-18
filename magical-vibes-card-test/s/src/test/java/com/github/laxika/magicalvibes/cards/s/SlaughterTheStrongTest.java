@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -114,9 +115,9 @@ class SlaughterTheStrongTest extends BaseCardTest {
     @Test
     void negativePowerAllowsKeepingACreatureWithPowerAboveFour() {
         Permanent negative = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        negative.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, negative, -3);
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
-        giant.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, giant, 2);
 
         cast();
         harness.handleMultiplePermanentsChosen(player1, List.of(negative.getId(), giant.getId()));
@@ -128,7 +129,7 @@ class SlaughterTheStrongTest extends BaseCardTest {
     @Test
     void usesModifiedPowerWhenCheckingTheLimit() {
         Permanent zetalpa = harness.addToBattlefieldAndReturn(player1, new ZetalpaPrimalDawn());
-        zetalpa.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, zetalpa, 1);
 
         cast();
 

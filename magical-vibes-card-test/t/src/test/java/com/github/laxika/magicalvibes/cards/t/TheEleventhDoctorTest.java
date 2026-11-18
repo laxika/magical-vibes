@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -40,8 +41,8 @@ class TheEleventhDoctorTest extends BaseCardTest {
     void activatedAbilityOnlyTargetsCreatureWithPowerThreeOrLess() {
         harness.addToBattlefield(player1, new TheEleventhDoctor());
         Permanent largeCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        largeCreature.setPowerModifier(2);
-        largeCreature.setToughnessModifier(2);
+        PermanentGrants.setPowerBoost(gd, largeCreature, 2);
+        PermanentGrants.setToughnessBoost(gd, largeCreature, 2);
 
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
 
@@ -146,7 +147,7 @@ class TheEleventhDoctorTest extends BaseCardTest {
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        target.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, 2);
         harness.passBothPriorities();
 
         assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
@@ -156,12 +157,12 @@ class TheEleventhDoctorTest extends BaseCardTest {
     void opposingCreatureAtPowerThreeRemainsUnblockableIfPowerIncreasesAfterResolution() {
         harness.addToBattlefield(player1, new TheEleventhDoctor());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        target.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, 2);
 
         assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }

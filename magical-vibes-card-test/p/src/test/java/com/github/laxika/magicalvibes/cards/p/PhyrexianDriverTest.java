@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.Mossdog;
 import com.github.laxika.magicalvibes.cards.s.SpinelessThug;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,14 +30,14 @@ class PhyrexianDriverTest extends BaseCardTest {
 
         Permanent driver = findPermanent(player1, "Phyrexian Driver");
 
-        assertThat(ownMercenary.getPowerModifier()).isEqualTo(1);
-        assertThat(ownMercenary.getToughnessModifier()).isEqualTo(1);
-        assertThat(opponentMercenary.getPowerModifier()).isEqualTo(1);
-        assertThat(opponentMercenary.getToughnessModifier()).isEqualTo(1);
-        assertThat(ownNonMercenary.getPowerModifier()).isEqualTo(0);
-        assertThat(ownNonMercenary.getToughnessModifier()).isEqualTo(0);
-        assertThat(driver.getPowerModifier()).isEqualTo(0);
-        assertThat(driver.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownMercenary)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownMercenary)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentMercenary)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentMercenary)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownNonMercenary)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownNonMercenary)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, driver)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, driver)).isEqualTo(0);
     }
 
     @Test
@@ -50,8 +51,8 @@ class PhyrexianDriverTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(mercenary.getPowerModifier()).isEqualTo(0);
-        assertThat(mercenary.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mercenary)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mercenary)).isEqualTo(0);
     }
 
     @Test
@@ -67,10 +68,10 @@ class PhyrexianDriverTest extends BaseCardTest {
 
         List<Permanent> mercenaries = findPermanents(player1, "Spineless Thug");
         assertThat(mercenaries).hasSize(2);
-        assertThat(existingMercenary.getPowerModifier()).isEqualTo(1);
-        assertThat(existingMercenary.getToughnessModifier()).isEqualTo(1);
-        assertThat(mercenaries.getLast().getPowerModifier()).isEqualTo(0);
-        assertThat(mercenaries.getLast().getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, existingMercenary)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, existingMercenary)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mercenaries.getLast())).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mercenaries.getLast())).isEqualTo(0);
     }
 
     @Test
@@ -87,11 +88,11 @@ class PhyrexianDriverTest extends BaseCardTest {
 
         List<Permanent> drivers = findPermanents(player1, "Phyrexian Driver");
         assertThat(drivers).hasSize(2);
-        assertThat(firstDriver.getPowerModifier()).isEqualTo(1);
-        assertThat(firstDriver.getToughnessModifier()).isEqualTo(1);
-        assertThat(drivers.getLast().getPowerModifier()).isEqualTo(0);
-        assertThat(drivers.getLast().getToughnessModifier()).isEqualTo(0);
-        assertThat(mercenary.getPowerModifier()).isEqualTo(2);
-        assertThat(mercenary.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstDriver)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstDriver)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, drivers.getLast())).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drivers.getLast())).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mercenary)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mercenary)).isEqualTo(2);
     }
 }

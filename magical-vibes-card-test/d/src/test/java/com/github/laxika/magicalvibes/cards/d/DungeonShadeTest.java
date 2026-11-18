@@ -23,8 +23,8 @@ class DungeonShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(2);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
         assertThat(shade.isTapped()).isFalse();
     }
 
@@ -39,8 +39,8 @@ class DungeonShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(3);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(3);
     }
 
     @Test
@@ -53,8 +53,8 @@ class DungeonShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(2);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
         assertThat(shade.isTapped()).isTrue();
     }
 
@@ -67,8 +67,8 @@ class DungeonShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(2);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
     }
 
     @Test
@@ -95,8 +95,8 @@ class DungeonShadeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(1);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(1);
     }
 
     @Test
@@ -122,21 +122,21 @@ class DungeonShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(shade.getEffectivePower()).isEqualTo(1);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
 
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(2);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(3);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(3);
     }
 
     @Test
@@ -150,11 +150,11 @@ class DungeonShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(2);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
-        assertThat(otherShade.getEffectivePower()).isEqualTo(1);
-        assertThat(otherShade.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponentShade.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentShade.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherShade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, otherShade)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentShade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentShade)).isEqualTo(1);
     }
 }

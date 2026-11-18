@@ -30,8 +30,8 @@ class ElfswornGiantTest extends BaseCardTest {
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Elf Warrior"))
                 .findFirst()
                 .orElseThrow();
-        assertThat(elfWarrior.getEffectivePower()).isEqualTo(1);
-        assertThat(elfWarrior.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elfWarrior)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elfWarrior)).isEqualTo(1);
     }
 
     @Test
@@ -67,8 +67,8 @@ class ElfswornGiantTest extends BaseCardTest {
                     assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
                     assertThat(token.getCard().getSubtypes())
                             .containsExactlyInAnyOrder(CardSubtype.ELF, CardSubtype.WARRIOR);
-                    assertThat(token.getEffectivePower()).isEqualTo(1);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
                     assertThat(token.isTapped()).isFalse();
                     assertThat(token.isAttacking()).isFalse();
                 });

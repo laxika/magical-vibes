@@ -105,8 +105,8 @@ class FoothillGuideTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, guide.getId());
         harness.passBothPriorities();
 
-        assertThat(guide.getEffectivePower()).isEqualTo(3);
-        assertThat(guide.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, guide)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, guide)).isEqualTo(3);
         harness.assertInGraveyard(player2, "Goblin Sledder");
     }
 
@@ -148,8 +148,8 @@ class FoothillGuideTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(guide.getEffectivePower()).isEqualTo(1);
-        assertThat(guide.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, guide)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, guide)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 }

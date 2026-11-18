@@ -34,8 +34,8 @@ class ComingInHotTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FIRST_STRIKE);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
@@ -74,8 +74,8 @@ class ComingInHotTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
@@ -105,8 +105,8 @@ class ComingInHotTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FIRST_STRIKE);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, top);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentTop);
@@ -124,8 +124,8 @@ class ComingInHotTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FIRST_STRIKE);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
         assertThat(gd.stack).isEmpty();

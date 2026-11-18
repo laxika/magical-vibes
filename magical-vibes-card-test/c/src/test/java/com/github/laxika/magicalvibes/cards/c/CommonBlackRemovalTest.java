@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
@@ -165,7 +166,7 @@ class CommonBlackRemovalTest extends BaseCardTest {
     @Test
     void negativePowerMillsNoCards() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, target, -3);
         int libraryBefore = gd.playerDecks.get(player2.getId()).size();
         cast(target, 3);
 

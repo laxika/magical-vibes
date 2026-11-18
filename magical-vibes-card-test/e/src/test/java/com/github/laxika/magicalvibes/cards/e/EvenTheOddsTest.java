@@ -34,8 +34,8 @@ class EvenTheOddsTest extends BaseCardTest {
             assertThat(soldier.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(soldier.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(soldier.getCard().getSubtypes()).containsExactly(CardSubtype.SOLDIER);
-            assertThat(soldier.getEffectivePower()).isEqualTo(1);
-            assertThat(soldier.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
         });
     }
 

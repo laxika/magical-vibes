@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -114,8 +115,8 @@ class AshnodTheUncaringTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(vampire.getPowerModifier()).isEqualTo(4);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(4);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SpringleafDrum;
 import com.github.laxika.magicalvibes.cards.n.NyxbornWolf;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -51,8 +52,8 @@ class MortalsArdorTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, wolf.getId());
         harness.passBothPriorities();
-        assertThat(wolf.getPowerModifier()).isEqualTo(1);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, wolf, Keyword.LIFELINK)).isTrue();
 
         declareAttackers(player2, List.of(0));
@@ -75,8 +76,8 @@ class MortalsArdorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.castInstant(player1, 0, wolf.getId());
         harness.passBothPriorities();
-        assertThat(wolf.getPowerModifier()).isEqualTo(2);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(2);
 
         declareAttackers(List.of(0));
         resolveCombat();
@@ -100,8 +101,8 @@ class MortalsArdorTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Mortal's Ardor");
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.LIFELINK)).isFalse();
     }
 
@@ -116,8 +117,8 @@ class MortalsArdorTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearId);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isTrue();
     }
 
@@ -136,8 +137,8 @@ class MortalsArdorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isFalse();
     }
 

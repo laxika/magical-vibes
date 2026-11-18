@@ -42,8 +42,8 @@ class AssembleFromPartsTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
     }

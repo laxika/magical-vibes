@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GlazeFiend;
 import com.github.laxika.magicalvibes.cards.b.BasilicaSkullbomb;
 import com.github.laxika.magicalvibes.cards.c.CrawlingChorus;
@@ -31,8 +32,8 @@ class MandibleJusticiarTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(justiciar.getPowerModifier()).isEqualTo(1);
-        assertThat(justiciar.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, justiciar)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, justiciar)).isEqualTo(1);
     }
 
     @Test
@@ -46,15 +47,15 @@ class MandibleJusticiarTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
-        assertThat(justiciar.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, justiciar)).isEqualTo(1);
 
         harness.setHand(player1, new ArrayList<>());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(justiciar.getPowerModifier()).isEqualTo(0);
-        assertThat(justiciar.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, justiciar)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, justiciar)).isEqualTo(0);
     }
 
     @Test
@@ -71,8 +72,8 @@ class MandibleJusticiarTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         resolveAllTriggers();
 
-        assertThat(justiciar.getPowerModifier()).isEqualTo(0);
-        assertThat(justiciar.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, justiciar)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, justiciar)).isEqualTo(0);
     }
 
     @Test
@@ -86,8 +87,8 @@ class MandibleJusticiarTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent justiciar = findPermanent(player1, "Mandible Justiciar");
-        assertThat(justiciar.getPowerModifier()).isZero();
-        assertThat(justiciar.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, justiciar)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, justiciar)).isZero();
     }
 
     @Test
@@ -103,8 +104,8 @@ class MandibleJusticiarTest extends BaseCardTest {
             resolveAllTriggers();
         }
 
-        assertThat(justiciar.getPowerModifier()).isEqualTo(2);
-        assertThat(justiciar.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, justiciar)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, justiciar)).isEqualTo(2);
     }
 
     @Test
@@ -136,8 +137,8 @@ class MandibleJusticiarTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
 
-        assertThat(justiciar.getPowerModifier()).isEqualTo(1);
-        assertThat(justiciar.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, justiciar)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, justiciar)).isEqualTo(1);
     }
 
     @Test
@@ -150,7 +151,7 @@ class MandibleJusticiarTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(justiciar.getPowerModifier()).isZero();
-        assertThat(justiciar.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, justiciar)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, justiciar)).isZero();
     }
 }

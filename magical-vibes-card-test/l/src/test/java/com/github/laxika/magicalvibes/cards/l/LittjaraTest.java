@@ -40,8 +40,8 @@ class LittjaraTest extends BaseCardTest {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLUE);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SHAPESHIFTER);
             assertThat(token.getCard().getKeywords()).contains(Keyword.CHANGELING);
-            assertThat(token.getEffectivePower()).isEqualTo(2);
-            assertThat(token.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         });
     }
 

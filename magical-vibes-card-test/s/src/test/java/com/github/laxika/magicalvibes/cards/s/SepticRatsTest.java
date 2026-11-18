@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -40,8 +41,8 @@ class SepticRatsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(rats.getPowerModifier()).isEqualTo(1);
-        assertThat(rats.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, rats)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rats)).isEqualTo(1);
     }
 
     @Test
@@ -53,8 +54,8 @@ class SepticRatsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(rats.getPowerModifier()).isEqualTo(0);
-        assertThat(rats.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, rats)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rats)).isEqualTo(0);
     }
 
     @Test
@@ -67,8 +68,8 @@ class SepticRatsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(rats.getPowerModifier()).isEqualTo(0);
-        assertThat(rats.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, rats)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rats)).isEqualTo(0);
     }
 
     @Test
@@ -82,8 +83,8 @@ class SepticRatsTest extends BaseCardTest {
         gd.playerPoisonCounters.put(player2.getId(), 0);
         resolveAllTriggers();
 
-        assertThat(rats.getPowerModifier()).isZero();
-        assertThat(rats.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rats)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rats)).isZero();
     }
 
     @Test
@@ -97,8 +98,8 @@ class SepticRatsTest extends BaseCardTest {
 
         harness.assertLife(player2, 20);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
-        assertThat(rats.getPowerModifier()).isZero();
-        assertThat(rats.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rats)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rats)).isZero();
     }
 
     @Test
@@ -134,12 +135,12 @@ class SepticRatsTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(4);
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(rats.getPowerModifier()).isEqualTo(1);
-        assertThat(rats.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, rats)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rats)).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(rats.getPowerModifier()).isZero();
-        assertThat(rats.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rats)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rats)).isZero();
     }
 }

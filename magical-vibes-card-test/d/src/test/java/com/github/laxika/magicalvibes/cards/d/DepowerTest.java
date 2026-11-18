@@ -33,8 +33,8 @@ class DepowerTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(-2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         harness.assertInHand(player1, "Forest");
     }
 
@@ -87,11 +87,11 @@ class DepowerTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -127,7 +127,7 @@ class DepowerTest extends BaseCardTest {
         target.setAttackTarget(null);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
         harness.assertInHand(player1, "Forest");
     }
 

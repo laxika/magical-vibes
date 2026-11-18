@@ -66,21 +66,21 @@ class RiptideIslandTest extends BaseCardTest {
         harness.inMutationScope(() -> planar.chaos(gd));
         harness.passBothPriorities();
 
-        assertThat(ownSliver.getEffectivePower()).isEqualTo(2);
-        assertThat(ownSliver.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownSliver)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownSliver)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.HASTE)).isTrue();
-        assertThat(ownNonSliver.getEffectivePower()).isEqualTo(2);
-        assertThat(ownNonSliver.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownNonSliver)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownNonSliver)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownNonSliver, Keyword.HASTE)).isFalse();
-        assertThat(opposingSliver.getEffectivePower()).isEqualTo(1);
-        assertThat(opposingSliver.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingSliver)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingSliver)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(ownSliver.getEffectivePower()).isEqualTo(1);
-        assertThat(ownSliver.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownSliver)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownSliver)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.HASTE)).isFalse();
     }
 
@@ -100,21 +100,21 @@ class RiptideIslandTest extends BaseCardTest {
         Permanent second = addCreatureReady(player1, new MetallicSliver());
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(first.getEffectiveToughness()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
 
         Permanent lateArrival = addCreatureReady(player1, new MetallicSliver());
-        assertThat(lateArrival.getEffectivePower()).isEqualTo(1);
-        assertThat(lateArrival.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, lateArrival)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, lateArrival)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, lateArrival, Keyword.HASTE)).isFalse();
-        assertThat(first.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
 
         gd.playerBattlefields.get(player1.getId()).remove(second);
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(first.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
     }
 
@@ -124,8 +124,8 @@ class RiptideIslandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent sliver = addCreatureReady(player1, new MetallicSliver());
-        assertThat(sliver.getEffectivePower()).isEqualTo(1);
-        assertThat(sliver.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sliver)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, sliver)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, sliver, Keyword.HASTE)).isFalse();
     }
 

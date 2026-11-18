@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PouncingWurm;
 import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,13 +32,13 @@ class RidgedKusiteTest extends BaseCardTest {
 
         assertThat(kusite.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Urborg, Tomb of Yawgmoth");
-        assertThat(kusite.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kusite)).isZero();
         assertThat(gqs.hasKeyword(gd, kusite, Keyword.FIRST_STRIKE)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(kusite.getPowerModifier()).isEqualTo(1);
-        assertThat(kusite.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kusite)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kusite)).isZero();
         assertThat(gqs.hasKeyword(gd, kusite, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -109,8 +110,8 @@ class RidgedKusiteTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(kusite.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Pouncing Wurm");
@@ -119,7 +120,7 @@ class RidgedKusiteTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
     }
 

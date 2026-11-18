@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SwordwiseCentaur;
 import com.github.laxika.magicalvibes.cards.n.NyxbornRollicker;
 import com.github.laxika.magicalvibes.cards.a.AuraGraft;
@@ -28,8 +29,8 @@ class ThunderousMightTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(0);
     }
 
     @Test
@@ -40,13 +41,13 @@ class ThunderousMightTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(0);
     }
 
     @Test
@@ -60,8 +61,8 @@ class ThunderousMightTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -74,10 +75,10 @@ class ThunderousMightTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.addToBattlefield(player1, new NyxbornRollicker());
         resolveAllTriggers();
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
 
         harness.addToBattlefield(player1, new NyxbornRollicker());
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -90,8 +91,8 @@ class ThunderousMightTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -111,8 +112,8 @@ class ThunderousMightTest extends BaseCardTest {
         assertThat(aura.getAttachedTo()).isEqualTo(otherCreature.getId());
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(otherCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isZero();
     }
 
     private void castOnCreature(Permanent creature) {

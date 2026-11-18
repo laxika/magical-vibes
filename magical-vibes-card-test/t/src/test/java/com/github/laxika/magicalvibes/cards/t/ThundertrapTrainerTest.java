@@ -89,8 +89,8 @@ class ThundertrapTrainerTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(1);
-        assertThat(tokens.getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tokens.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tokens.getFirst())).isEqualTo(1);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.Roterothopter;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -27,8 +28,8 @@ class AnabaAncestorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent minotaur = findPermanent(player1, "Anaba Bodyguard");
-        assertThat(minotaur.getPowerModifier()).isEqualTo(1);
-        assertThat(minotaur.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, minotaur)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, minotaur)).isEqualTo(1);
     }
 
     @Test
@@ -41,7 +42,7 @@ class AnabaAncestorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player2, "Anaba Bodyguard").getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player2, "Anaba Bodyguard"))).isEqualTo(1);
     }
 
     @Test
@@ -56,8 +57,8 @@ class AnabaAncestorTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         Permanent minotaur = findPermanent(player1, "Anaba Bodyguard");
-        assertThat(minotaur.getPowerModifier()).isEqualTo(0);
-        assertThat(minotaur.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, minotaur)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, minotaur)).isEqualTo(0);
     }
 
     @Test
@@ -115,9 +116,9 @@ class AnabaAncestorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
-        assertThat(findPermanent(player1, "Anaba Ancestor").getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Anaba Ancestor"))).isZero();
     }
 
     @Test
@@ -132,8 +133,8 @@ class AnabaAncestorTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 

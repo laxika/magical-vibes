@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -71,10 +72,10 @@ class WaterServantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent servant = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(servant.getEffectivePower()).isEqualTo(4);
-        assertThat(servant.getEffectiveToughness()).isEqualTo(3);
-        assertThat(servant.getPowerModifier()).isEqualTo(1);
-        assertThat(servant.getToughnessModifier()).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, servant)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, servant)).isEqualTo(-1);
     }
 
     @Test
@@ -87,10 +88,10 @@ class WaterServantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent servant = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(servant.getEffectivePower()).isEqualTo(2);
-        assertThat(servant.getEffectiveToughness()).isEqualTo(5);
-        assertThat(servant.getPowerModifier()).isEqualTo(-1);
-        assertThat(servant.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, servant)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, servant)).isEqualTo(1);
     }
 
     @Test
@@ -108,10 +109,10 @@ class WaterServantTest extends BaseCardTest {
 
         // Net effect: 0/0 modifier
         Permanent servant = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(servant.getEffectivePower()).isEqualTo(3);
-        assertThat(servant.getEffectiveToughness()).isEqualTo(4);
-        assertThat(servant.getPowerModifier()).isEqualTo(0);
-        assertThat(servant.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, servant)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, servant)).isEqualTo(0);
     }
 
     @Test
@@ -129,8 +130,8 @@ class WaterServantTest extends BaseCardTest {
 
         // 3+3 / 4-3 = 6/1
         Permanent servant = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(servant.getEffectivePower()).isEqualTo(6);
-        assertThat(servant.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(1);
     }
 
     @Test
@@ -148,8 +149,8 @@ class WaterServantTest extends BaseCardTest {
 
         // 3-3 / 4+3 = 0/7
         Permanent servant = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(servant.getEffectivePower()).isEqualTo(0);
-        assertThat(servant.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(7);
     }
 
     @Test
@@ -164,18 +165,18 @@ class WaterServantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent servant = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(servant.getEffectivePower()).isEqualTo(5);
-        assertThat(servant.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(2);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(servant.getPowerModifier()).isEqualTo(0);
-        assertThat(servant.getToughnessModifier()).isEqualTo(0);
-        assertThat(servant.getEffectivePower()).isEqualTo(3);
-        assertThat(servant.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, servant)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, servant)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(4);
     }
 
     @Test
@@ -198,13 +199,13 @@ class WaterServantTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(servant.getEffectivePower()).isEqualTo(4);
-        assertThat(servant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(3);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        assertThat(servant.getEffectivePower()).isEqualTo(3);
-        assertThat(servant.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(4);
         assertThat(servant.isTapped()).isTrue();
     }
 
@@ -219,15 +220,15 @@ class WaterServantTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(servant.getEffectivePower()).isEqualTo(-1);
-        assertThat(servant.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(8);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(servant.getEffectivePower()).isEqualTo(3);
-        assertThat(servant.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(4);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -30,8 +31,8 @@ class FumikoTheLowbloodTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(fumiko.getPowerModifier()).isEqualTo(2);
-        assertThat(fumiko.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, fumiko)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fumiko)).isEqualTo(2);
     }
 
     @Test
@@ -47,8 +48,8 @@ class FumikoTheLowbloodTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(fumiko.getPowerModifier()).isEqualTo(2);
-        assertThat(fumiko.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, fumiko)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fumiko)).isEqualTo(2);
     }
 
     @Test
@@ -65,8 +66,8 @@ class FumikoTheLowbloodTest extends BaseCardTest {
         ally.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(fumiko.getPowerModifier()).isEqualTo(1);
-        assertThat(fumiko.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, fumiko)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fumiko)).isEqualTo(1);
     }
 
     @Test
@@ -78,8 +79,8 @@ class FumikoTheLowbloodTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(fumiko.getPowerModifier()).isZero();
-        assertThat(fumiko.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fumiko)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fumiko)).isZero();
     }
 
     @Test
@@ -136,8 +137,8 @@ class FumikoTheLowbloodTest extends BaseCardTest {
                 new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(fumiko.getPowerModifier()).isEqualTo(1);
-        assertThat(fumiko.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, fumiko)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fumiko)).isEqualTo(1);
     }
 
     @Test

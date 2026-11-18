@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.cards.m.MoggConscripts;
@@ -117,7 +118,7 @@ class DeadshotTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castSorcery(player1, 0, List.of(conscripts.getId(), turtle.getId()));
-        conscripts.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, conscripts, 1);
         harness.passBothPriorities();
 
         assertThat(turtle.getMarkedDamage()).isEqualTo(3);
@@ -160,7 +161,7 @@ class DeadshotTest extends BaseCardTest {
     @DisplayName("A creature with zero or negative power is tapped but deals no damage")
     void nonpositivePowerDealsNoDamage(int powerModifier) {
         Permanent conscripts = harness.addToBattlefieldAndReturn(player1, new MoggConscripts());
-        conscripts.setPowerModifier(powerModifier);
+        PermanentGrants.setPowerBoost(gd, conscripts, powerModifier);
         Permanent turtle = harness.addToBattlefieldAndReturn(player2, new HornedTurtle());
         harness.setHand(player1, List.of(new Deadshot()));
         harness.addMana(player1, ManaColor.RED, 4);

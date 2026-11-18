@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SteadfastPaladin;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,11 +28,11 @@ class LiaraOfTheFlamingFistTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        assertThat(firstPaladin.getPowerModifier()).isEqualTo(1);
-        assertThat(firstPaladin.getToughnessModifier()).isEqualTo(1);
-        assertThat(secondPaladin.getPowerModifier()).isEqualTo(1);
-        assertThat(liara.getPowerModifier()).isZero();
-        assertThat(opposingPaladin.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstPaladin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstPaladin)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondPaladin)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, liara)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingPaladin)).isZero();
     }
 
     @Test
@@ -42,8 +43,8 @@ class LiaraOfTheFlamingFistTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        assertThat(liara.getPowerModifier()).isZero();
-        assertThat(paladin.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, liara)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(1);
     }
 
     @Test
@@ -52,12 +53,12 @@ class LiaraOfTheFlamingFistTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new LiaraOfTheFlamingFist()));
 
         advanceToCombat(player1);
-        assertThat(liara.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, liara)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(liara.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, liara)).isZero();
     }
 
     @Test
@@ -103,8 +104,8 @@ class LiaraOfTheFlamingFistTest extends BaseCardTest {
 
         advanceToCombat(player2);
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(1);
-        assertThat(paladin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(1);
     }
 
     @Test
@@ -116,8 +117,8 @@ class LiaraOfTheFlamingFistTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        assertThat(liara.getPowerModifier()).isZero();
-        assertThat(paladin.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, liara)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isZero();
     }
 
     @Test
@@ -132,7 +133,7 @@ class LiaraOfTheFlamingFistTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(1);
     }
 
     @Test

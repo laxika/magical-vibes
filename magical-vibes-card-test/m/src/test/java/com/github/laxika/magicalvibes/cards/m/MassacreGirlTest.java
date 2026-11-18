@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -36,8 +37,8 @@ class MassacreGirlTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, enemyBear)).isEqualTo(1);
 
         Permanent massacreGirl = findPermanent(player1, "Massacre Girl");
-        assertThat(massacreGirl.getPowerModifier()).isZero();
-        assertThat(massacreGirl.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, massacreGirl)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, massacreGirl)).isZero();
     }
 
     @Test

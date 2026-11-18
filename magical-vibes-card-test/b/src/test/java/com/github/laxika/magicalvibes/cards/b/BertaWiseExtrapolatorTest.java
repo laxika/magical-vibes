@@ -138,8 +138,8 @@ class BertaWiseExtrapolatorTest extends BaseCardTest {
 
             Permanent fractal = fractals.getFirst();
             assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-            assertThat(fractal.getEffectivePower()).isEqualTo(3);
-            assertThat(fractal.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(3);
             assertThat(fractal.getCard().getSubtypes()).contains(CardSubtype.FRACTAL);
         }
 
@@ -156,8 +156,8 @@ class BertaWiseExtrapolatorTest extends BaseCardTest {
             assertThat(findPermanents(player1, "Fractal")).hasSize(2)
                     .allSatisfy(fractal -> {
                         assertThat(fractal.getPlusOnePlusOneCounters()).isEqualTo(6);
-                        assertThat(fractal.getEffectivePower()).isEqualTo(6);
-                        assertThat(fractal.getEffectiveToughness()).isEqualTo(6);
+                        assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(6);
+                        assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(6);
                     });
         }
 

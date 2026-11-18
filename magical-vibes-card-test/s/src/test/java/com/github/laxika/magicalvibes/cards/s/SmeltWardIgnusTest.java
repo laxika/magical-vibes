@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RampagingRendhorn;
 import com.github.laxika.magicalvibes.cards.r.RubblebeltRunner;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -114,7 +115,7 @@ class SmeltWardIgnusTest extends BaseCardTest {
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         harness.passBothPriorities();
 
@@ -151,7 +152,7 @@ class SmeltWardIgnusTest extends BaseCardTest {
     void canTargetCreatureWhosePowerWasReducedToThree() {
         addCreatureReady(player1, new SmeltWardIgnus());
         Permanent target = addCreatureReady(player2, new RampagingRendhorn());
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         prepareForSorcerySpeedActivation();
         addActivationMana();

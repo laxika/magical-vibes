@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
@@ -22,7 +23,7 @@ class CutDownDmuTest extends BaseCardTest {
     @DisplayName("Destroys a creature with total power and toughness 5 or less")
     void destroysSmallCreature() {
         Permanent target = addCreatureReady(player2, new GoblinPiker());
-        target.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, 2);
 
         castCutDown(target);
 
@@ -50,7 +51,7 @@ class CutDownDmuTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castInstant(player1, 0, target.getId());
-        target.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, target, 3);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -84,8 +85,8 @@ class CutDownDmuTest extends BaseCardTest {
     @DisplayName("Uses negative power when calculating the total")
     void includesNegativePowerInTotal() {
         Permanent target = addCreatureReady(player2, new AirElemental());
-        target.setPowerModifier(-5);
-        target.setToughnessModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, -5);
+        PermanentGrants.setToughnessBoost(gd, target, 2);
 
         castCutDown(target);
 
@@ -101,7 +102,7 @@ class CutDownDmuTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castInstant(player1, 0, target.getId());
 
-        target.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, target, 3);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Goblin Piker");

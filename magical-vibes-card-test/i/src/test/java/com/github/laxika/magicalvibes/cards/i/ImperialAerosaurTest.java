@@ -80,10 +80,10 @@ class ImperialAerosaurTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         Permanent companion = findPermanent(player1, "Raptor Companion");
-        assertThat(companion.getPowerModifier()).isEqualTo(1);
-        assertThat(companion.getToughnessModifier()).isEqualTo(1);
-        assertThat(companion.getEffectivePower()).isEqualTo(4);
-        assertThat(companion.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, companion)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, companion)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, companion)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, companion)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, companion)).contains(Keyword.FLYING);
     }
 
@@ -102,20 +102,20 @@ class ImperialAerosaurTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve ETB
 
         Permanent companion = findPermanent(player1, "Raptor Companion");
-        assertThat(companion.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, companion)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, companion)).contains(Keyword.FLYING);
 
         // Advance through the end step — cleanup resets modifiers and granted keywords
         harness.forceStep(TurnStep.END_STEP);
-        assertThat(companion.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, companion)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, companion, Keyword.FLYING)).isTrue();
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(companion.getPowerModifier()).isEqualTo(0);
-        assertThat(companion.getToughnessModifier()).isEqualTo(0);
-        assertThat(companion.getEffectivePower()).isEqualTo(3);
-        assertThat(companion.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, companion)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, companion)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, companion)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, companion)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, companion)).doesNotContain(Keyword.FLYING);
     }
 
@@ -157,7 +157,7 @@ class ImperialAerosaurTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, ownCreature.getId());
         harness.passBothPriorities();
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
     }
 
     @Test
@@ -224,8 +224,8 @@ class ImperialAerosaurTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, companion.getId());
         harness.passBothPriorities();
-        assertThat(companion.getPowerModifier()).isEqualTo(1);
-        assertThat(aerosaur.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, companion)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, aerosaur)).isZero();
     }
 
     @Test
@@ -235,8 +235,8 @@ class ImperialAerosaurTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, companion.getId());
         harness.passBothPriorities();
 
-        assertThat(companion.getPowerModifier()).isEqualTo(1);
-        assertThat(companion.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, companion)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, companion)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, companion, Keyword.FLYING)).isTrue();
     }
 
@@ -250,8 +250,8 @@ class ImperialAerosaurTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(companion.getPowerModifier()).isZero();
-        assertThat(companion.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, companion)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, companion)).isZero();
         assertThat(gqs.hasKeyword(gd, companion, Keyword.FLYING)).isFalse();
     }
 
@@ -263,8 +263,8 @@ class ImperialAerosaurTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(aerosaur);
         harness.passBothPriorities();
 
-        assertThat(companion.getPowerModifier()).isEqualTo(1);
-        assertThat(companion.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, companion)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, companion)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, companion, Keyword.FLYING)).isTrue();
     }
 }

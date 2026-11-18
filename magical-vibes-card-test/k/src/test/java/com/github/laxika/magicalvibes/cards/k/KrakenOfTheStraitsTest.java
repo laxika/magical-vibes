@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -99,7 +100,7 @@ class KrakenOfTheStraitsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new Island());
         Permanent blocker = addCreatureReady(player2, new FugitiveWizard());
-        blocker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, blocker, 1);
         Permanent kraken = addCreatureReady(player1, new KrakenOfTheStraits());
         kraken.setAttacking(true);
 
@@ -113,7 +114,7 @@ class KrakenOfTheStraitsTest extends BaseCardTest {
     @DisplayName("Negative-power creatures cannot block even with no Islands")
     void negativePowerCannotBlockWithoutIslands() {
         Permanent blocker = addCreatureReady(player2, new Ornithopter());
-        blocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
         Permanent kraken = addCreatureReady(player1, new KrakenOfTheStraits());
         kraken.setAttacking(true);
 

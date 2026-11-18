@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -20,7 +21,7 @@ class CinderStrikeTest extends BaseCardTest {
     @Test
     void withoutBlightDealsTwoDamageToTargetCreature() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, target, 1);
         harness.setHand(player1, List.of(new CinderStrike()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -34,7 +35,7 @@ class CinderStrikeTest extends BaseCardTest {
     void blightDealsFourDamageToTargetCreature() {
         Permanent blightCreature = addCreatureReady(player1, new HillGiant());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, target, 3);
         harness.setHand(player1, List.of(new CinderStrike()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -72,7 +73,7 @@ class CinderStrikeTest extends BaseCardTest {
         Permanent blightCreature = addCreatureReady(player1, new GrizzlyBears());
         blightCreature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         Permanent target = addCreatureReady(player2, new HillGiant());
-        target.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, target, 2);
         harness.setHand(player1, List.of(new CinderStrike()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -90,7 +91,7 @@ class CinderStrikeTest extends BaseCardTest {
     @Test
     void canBlightTheCreatureBeingTargeted() {
         Permanent target = addCreatureReady(player1, new HillGiant());
-        target.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, target, 3);
         harness.setHand(player1, List.of(new CinderStrike()));
         harness.addMana(player1, ManaColor.RED, 1);
 

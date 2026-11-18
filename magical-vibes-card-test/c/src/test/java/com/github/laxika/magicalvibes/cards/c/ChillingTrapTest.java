@@ -26,8 +26,8 @@ class ChillingTrapTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(-2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -64,11 +64,11 @@ class ChillingTrapTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        assertThat(target.getEffectivePower()).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -80,7 +80,7 @@ class ChillingTrapTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
@@ -98,7 +98,7 @@ class ChillingTrapTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(target.getEffectivePower()).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
     }
 
     @Test
@@ -115,7 +115,7 @@ class ChillingTrapTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
-        assertThat(target.getEffectivePower()).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
     }
 
     @Test
@@ -145,8 +145,8 @@ class ChillingTrapTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(-2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);

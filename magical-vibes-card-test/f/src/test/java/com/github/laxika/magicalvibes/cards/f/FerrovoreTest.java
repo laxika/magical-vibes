@@ -79,8 +79,8 @@ class FerrovoreTest extends BaseCardTest {
 
         Permanent ferrovore = findPermanent(player1, "Ferrovore");
         // Base 2/2, boosted to 5/2
-        assertThat(ferrovore.getEffectivePower()).isEqualTo(5);
-        assertThat(ferrovore.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ferrovore)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ferrovore)).isEqualTo(2);
     }
 
     @Test
@@ -104,7 +104,7 @@ class FerrovoreTest extends BaseCardTest {
 
         Permanent ferrovore = findPermanent(player1, "Ferrovore");
         // Base 2/2, boosted twice: 2 + 3 + 3 = 8
-        assertThat(ferrovore.getEffectivePower()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, ferrovore)).isEqualTo(8);
     }
 
     @Test
@@ -144,7 +144,7 @@ class FerrovoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Base 2/2, boosted to 5/2
-        assertThat(ferrovore.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ferrovore)).isEqualTo(5);
     }
 
     @Test
@@ -156,12 +156,12 @@ class FerrovoreTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(ferrovore.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ferrovore)).isEqualTo(5);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(ferrovore.getEffectivePower()).isEqualTo(2);
-        assertThat(ferrovore.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ferrovore)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ferrovore)).isEqualTo(2);
     }
 
     @Test
@@ -176,13 +176,13 @@ class FerrovoreTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Memnite");
         harness.assertInGraveyard(player1, "Memnite");
-        assertThat(ferrovore.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ferrovore)).isEqualTo(2);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(ferrovore.getEffectivePower()).isEqualTo(5);
-        assertThat(ferrovore.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ferrovore)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ferrovore)).isEqualTo(2);
     }
 
     @Test

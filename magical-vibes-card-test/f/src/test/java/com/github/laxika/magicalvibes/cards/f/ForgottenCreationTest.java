@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -61,7 +62,7 @@ class ForgottenCreationTest extends BaseCardTest {
         attacker.setAttacking(true);
 
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        blocker.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, blocker, 2);
 
         prepareDeclareBlockers(player1);
 

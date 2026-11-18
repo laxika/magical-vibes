@@ -191,7 +191,7 @@ class BalduvianWarlordTest extends BaseCardTest {
         harness.passBothPriorities();
 
         setUpCombat(formerAttacker, chosenAttacker, blocker);
-        assertThat(chosenAttacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, chosenAttacker)).isZero();
 
         harness.activateAbility(player2, indexOf(player2, warlord), null, blocker.getId());
         harness.passBothPriorities();
@@ -201,8 +201,8 @@ class BalduvianWarlordTest extends BaseCardTest {
         // "when that creature becomes blocked this turn" (CR 509.3c).
         assertThat(blocker.getBlockingTargetIds()).containsExactly(chosenAttacker.getId());
         harness.passBothPriorities();
-        assertThat(chosenAttacker.getPowerModifier()).isEqualTo(1);
-        assertThat(chosenAttacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, chosenAttacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, chosenAttacker)).isEqualTo(1);
     }
 
     private void setUpCombat(Permanent formerAttacker, Permanent chosenAttacker, Permanent blocker) {

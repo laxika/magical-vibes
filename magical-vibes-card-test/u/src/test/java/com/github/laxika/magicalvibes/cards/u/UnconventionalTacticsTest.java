@@ -41,8 +41,8 @@ class UnconventionalTacticsTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, targetId);
 
         Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
     }
 
@@ -63,8 +63,8 @@ class UnconventionalTacticsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
 

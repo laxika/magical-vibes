@@ -22,11 +22,11 @@ class NocturnalRaidTest extends BaseCardTest {
 
         castNocturnalRaid();
 
-        assertThat(blackCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(blackCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blackCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blackCreature)).isEqualTo(1);
 
-        assertThat(nonBlackCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(nonBlackCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, nonBlackCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, nonBlackCreature)).isEqualTo(4);
     }
 
     @Test
@@ -37,8 +37,8 @@ class NocturnalRaidTest extends BaseCardTest {
 
         castNocturnalRaid();
 
-        assertThat(ownBlack.getEffectivePower()).isEqualTo(3);
-        assertThat(opponentBlack.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownBlack)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentBlack)).isEqualTo(3);
     }
 
     @Test
@@ -48,8 +48,8 @@ class NocturnalRaidTest extends BaseCardTest {
 
         Permanent laterBlackCreature = addCreatureReady(player1, new LoomingShade());
 
-        assertThat(laterBlackCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(laterBlackCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, laterBlackCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, laterBlackCreature)).isEqualTo(1);
     }
 
     @Test
@@ -59,14 +59,14 @@ class NocturnalRaidTest extends BaseCardTest {
 
         castNocturnalRaid();
 
-        assertThat(blackCreature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blackCreature)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blackCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(blackCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blackCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blackCreature)).isEqualTo(1);
     }
 
     @Test
@@ -79,8 +79,8 @@ class NocturnalRaidTest extends BaseCardTest {
         Permanent creature = harness.enterBattlefieldAndReturn(player2, new LoomingShade());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -91,15 +91,15 @@ class NocturnalRaidTest extends BaseCardTest {
         castNocturnalRaid();
         castNocturnalRaid();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     private void castNocturnalRaid() {

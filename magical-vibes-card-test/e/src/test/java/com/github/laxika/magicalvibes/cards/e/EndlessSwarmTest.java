@@ -28,8 +28,8 @@ class EndlessSwarmTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Snake")).hasSize(2)
                 .allMatch(token -> token.getCard().isToken()
-                && token.getEffectivePower() == 1
-                && token.getEffectiveToughness() == 1
+                && gqs.getEffectivePower(gd, token) == 1
+                && gqs.getEffectiveToughness(gd, token) == 1
                 && token.getCard().getColor() == CardColor.GREEN
                 && token.getCard().getSubtypes().contains(CardSubtype.SNAKE));
         assertThat(playersAffectedBy(PlayerCantCastSpellsEffect.class)).contains(player1.getId());

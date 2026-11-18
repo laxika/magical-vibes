@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HexgoldSlash;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -24,8 +25,8 @@ class FreeFromFleshTest extends BaseCardTest {
     void boostsAndAddsOilCounters() {
         Permanent bears = castFreeFromFlesh();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
         assertThat(bears.getCounterCount(CounterType.OIL)).isEqualTo(2);
     }
 
@@ -38,8 +39,8 @@ class FreeFromFleshTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(bears.getCounterCount(CounterType.OIL)).isEqualTo(2);
     }
 
@@ -64,8 +65,8 @@ class FreeFromFleshTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
         assertThat(bears.getCounterCount(CounterType.OIL)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Free from Flesh");
     }
@@ -79,8 +80,8 @@ class FreeFromFleshTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(6);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
         assertThat(bears.getCounterCount(CounterType.OIL)).isEqualTo(4);
     }
 
@@ -91,11 +92,11 @@ class FreeFromFleshTest extends BaseCardTest {
 
         harness.passUntil(TurnStep.END_STEP);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(bears.getCounterCount(CounterType.OIL)).isEqualTo(2);
     }
 
@@ -116,8 +117,8 @@ class FreeFromFleshTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.OIL)).isZero();
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         harness.assertInGraveyard(player1, "Free from Flesh");
         assertThat(gd.stack).isEmpty();
     }

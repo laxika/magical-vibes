@@ -22,8 +22,8 @@ class MatchTheOddsTest extends BaseCardTest {
 
         Permanent ally = token();
         assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(ally.getEffectivePower()).isEqualTo(3);
-        assertThat(ally.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(3);
     }
 
     @Test
@@ -35,8 +35,8 @@ class MatchTheOddsTest extends BaseCardTest {
 
         Permanent ally = token();
         assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(ally.getEffectivePower()).isEqualTo(1);
-        assertThat(ally.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(1);
     }
 
     @Test
@@ -47,8 +47,8 @@ class MatchTheOddsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         Permanent ally = token();
         assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(ally.getEffectivePower()).isEqualTo(1);
-        assertThat(ally.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Match the Odds");
     }
 

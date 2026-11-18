@@ -49,8 +49,7 @@ public class BoostOwnCreaturesAttackingPlayersByDefendingPlayerCreatureCountEffe
             int defendingCreatureCount = countCreaturesControlledBy(gameData, attackedPlayerId);
             int powerBoost = defendingCreatureCount * boost.powerPerCreature();
             int toughnessBoost = defendingCreatureCount * boost.toughnessPerCreature();
-            creature.setPowerModifier(creature.getPowerModifier() + powerBoost);
-            creature.setToughnessModifier(creature.getToughnessModifier() + toughnessBoost);
+            gameData.addPowerToughnessBoost(entry, creature.getId(), powerBoost, toughnessBoost);
             gameLogService.append(gameData, GameLog.builder()
                     .card(creature.getCard())
                     .text(String.format(" gets %+d/%+d until end of turn.", powerBoost, toughnessBoost))

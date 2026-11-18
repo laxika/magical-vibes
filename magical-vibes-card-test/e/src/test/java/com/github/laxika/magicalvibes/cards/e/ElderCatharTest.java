@@ -144,8 +144,8 @@ class ElderCatharTest extends BaseCardTest {
             // Walking Corpse should have 1 +1/+1 counter
             Permanent bearsPerm = findPermanent(player1, "Walking Corpse");
             assertThat(bearsPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-            assertThat(bearsPerm.getEffectivePower()).isEqualTo(3);
-            assertThat(bearsPerm.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(3);
         }
 
         @Test
@@ -255,8 +255,8 @@ class ElderCatharTest extends BaseCardTest {
             // +1/+1 counters should still be there (they're counters, not temporary boosts)
             Permanent bears = findPermanent(player1, "Walking Corpse");
             assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-            assertThat(bears.getEffectivePower()).isEqualTo(3);
-            assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
         }
     }
 }

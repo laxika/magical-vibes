@@ -25,8 +25,8 @@ class AllStarKickerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent kicker = findPermanent(player1, "All-Star Kicker");
-        assertThat(kicker.getEffectivePower()).isEqualTo(2);
-        assertThat(kicker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, kicker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kicker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, kicker, Keyword.HASTE)).isFalse();
     }
 
@@ -42,22 +42,22 @@ class AllStarKickerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent kicker = findPermanent(player1, "All-Star Kicker");
-        assertThat(kicker.getEffectivePower()).isEqualTo(3);
-        assertThat(kicker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, kicker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, kicker)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, kicker, Keyword.HASTE)).isTrue();
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(kicker.getEffectivePower()).isEqualTo(2);
-        assertThat(kicker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, kicker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kicker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, kicker, Keyword.HASTE)).isFalse();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
@@ -74,14 +74,14 @@ class AllStarKickerTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = addCreatureReady(player1, new AllStarKicker());
 
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(3);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.HASTE)).isTrue();
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.HASTE)).isFalse();
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HASTE)).isFalse();
     }
 

@@ -66,8 +66,8 @@ class BroodspinnerTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Insect")).isEqualTo(3);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(broodspinner.getCard());
         Permanent insect = findPermanent(player1, "Insect");
-        assertThat(insect.getEffectivePower()).isEqualTo(1);
-        assertThat(insect.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, insect)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, insect)).isEqualTo(1);
         assertThat(insect.getCard().getColors())
                 .containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
         assertThat(insect.getCard().getSubtypes()).contains(CardSubtype.INSECT);

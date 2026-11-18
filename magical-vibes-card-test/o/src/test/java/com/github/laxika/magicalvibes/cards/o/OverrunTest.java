@@ -30,15 +30,15 @@ class OverrunTest extends BaseCardTest {
         harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
         harness.passBothPriorities();
 
-        assertThat(p1a.getEffectivePower()).isEqualTo(4);
-        assertThat(p1a.getEffectiveToughness()).isEqualTo(5);
-        assertThat(p1b.getEffectivePower()).isEqualTo(4);
-        assertThat(p1b.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, p1a)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, p1a)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, p1b)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, p1b)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, p1a, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, p1b, Keyword.TRAMPLE)).isTrue();
 
-        assertThat(p2.getEffectivePower()).isEqualTo(1);
-        assertThat(p2.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, p2)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, p2)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, p2, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -76,16 +76,16 @@ class OverrunTest extends BaseCardTest {
         harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -99,11 +99,11 @@ class OverrunTest extends BaseCardTest {
 
         Permanent laterCreature = addCreatureReady(player1, new WoodlandDruid());
 
-        assertThat(existingCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(existingCreature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, existingCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, existingCreature)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, existingCreature, Keyword.TRAMPLE)).isTrue();
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -115,8 +115,8 @@ class OverrunTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -130,16 +130,16 @@ class OverrunTest extends BaseCardTest {
         harness.castFromHand(player1, new Overrun(), "{2}{G}{G}{G}");
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(7);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 

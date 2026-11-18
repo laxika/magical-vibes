@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NemaSiltlurker;
@@ -30,8 +31,8 @@ class PreysVengeanceTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
     }
@@ -47,8 +48,8 @@ class PreysVengeanceTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -73,8 +74,8 @@ class PreysVengeanceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Prey's Vengeance");
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
@@ -96,8 +97,8 @@ class PreysVengeanceTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -118,8 +119,8 @@ class PreysVengeanceTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

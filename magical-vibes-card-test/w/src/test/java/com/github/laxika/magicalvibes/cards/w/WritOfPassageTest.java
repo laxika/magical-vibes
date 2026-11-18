@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AssaultZeppelid;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -98,7 +99,7 @@ class WritOfPassageTest extends BaseCardTest {
         addAuraOn(attacker, player1);
 
         declareAttackers(player2, List.of(0));
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         harness.passBothPriorities();
 
         assertThat(gqs.hasCantBeBlocked(gd, attacker)).isFalse();
@@ -112,7 +113,7 @@ class WritOfPassageTest extends BaseCardTest {
 
         declareAttackers(player2, List.of(0));
         gd.playerBattlefields.get(player1.getId()).remove(aura);
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         harness.passBothPriorities();
 
         assertThat(gqs.hasCantBeBlocked(gd, attacker)).isFalse();
@@ -199,7 +200,7 @@ class WritOfPassageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateHandAbility(player1, 0, target.getId());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.passBothPriorities();
 
         assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
@@ -229,7 +230,7 @@ class WritOfPassageTest extends BaseCardTest {
 
         harness.activateHandAbility(player1, 0, target.getId());
         harness.passBothPriorities();
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);

@@ -51,8 +51,8 @@ class CombineChrysalisTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(token.getId()));
         Permanent beast = findPermanent(player1, "Beast");
         assertThat(beast.getCard().getColor()).isEqualTo(CardColor.GREEN);
-        assertThat(beast.getEffectivePower()).isEqualTo(4);
-        assertThat(beast.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, beast, Keyword.FLYING)).isTrue();
         assertThat(chrysalis.isTapped()).isTrue();
     }
@@ -112,8 +112,8 @@ class CombineChrysalisTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(chrysalis.getId()));
         harness.passBothPriorities();
         Permanent beast = findPermanent(player1, "Beast");
-        assertThat(beast.getEffectivePower()).isEqualTo(4);
-        assertThat(beast.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, beast, Keyword.FLYING)).isFalse();
     }
 

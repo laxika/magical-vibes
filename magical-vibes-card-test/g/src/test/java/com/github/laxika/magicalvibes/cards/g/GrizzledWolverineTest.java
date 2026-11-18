@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,8 +30,8 @@ class GrizzledWolverineTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(wolverine), null, null);
         harness.passBothPriorities();
 
-        assertThat(wolverine.getPowerModifier()).isEqualTo(2);
-        assertThat(wolverine.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverine)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolverine)).isEqualTo(0);
     }
 
     @Test
@@ -48,7 +49,7 @@ class GrizzledWolverineTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wolverine.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverine)).isEqualTo(0);
     }
 
     @Test
@@ -96,7 +97,7 @@ class GrizzledWolverineTest extends BaseCardTest {
         harness.clearPriorityPassed();
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(wolverine), null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(wolverine.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverine)).isEqualTo(2);
     }
 
     @Test
@@ -121,7 +122,7 @@ class GrizzledWolverineTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(wolverine), null, null);
         harness.passBothPriorities();
 
-        assertThat(wolverine.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverine)).isEqualTo(2);
     }
 
     @Test
@@ -171,7 +172,7 @@ class GrizzledWolverineTest extends BaseCardTest {
                 .hasMessageContaining("once each turn");
         harness.passBothPriorities();
 
-        assertThat(wolverine.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverine)).isEqualTo(2);
     }
 
     @Test
@@ -201,8 +202,8 @@ class GrizzledWolverineTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToHand(gd, blocker);
         harness.passBothPriorities();
 
-        assertThat(wolverine.getPowerModifier()).isEqualTo(2);
-        assertThat(wolverine.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverine)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolverine)).isEqualTo(0);
     }
 
     private int battlefieldIndex(Permanent permanent) {

@@ -28,8 +28,8 @@ class BullsStrengthTest extends BaseCardTest {
         castBullsStrength(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -43,8 +43,8 @@ class BullsStrengthTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -71,12 +71,12 @@ class BullsStrengthTest extends BaseCardTest {
         castBullsStrength(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(other.isTapped()).isTrue();
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -99,8 +99,8 @@ class BullsStrengthTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Bull's Strength");
         assertThat(gd.stack).isEmpty();
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 

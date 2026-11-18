@@ -49,8 +49,8 @@ class JinnieFayJetmirsSecondTest extends BaseCardTest {
             assertThat(cat.getCard().getColor()).isEqualTo(CardColor.GREEN);
             assertThat(cat.getCard().getSubtypes()).containsExactly(CardSubtype.CAT);
             assertThat(cat.getCard().getKeywords()).contains(Keyword.HASTE);
-            assertThat(cat.getEffectivePower()).isEqualTo(2);
-            assertThat(cat.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, cat)).isEqualTo(2);
         });
     }
 
@@ -71,8 +71,8 @@ class JinnieFayJetmirsSecondTest extends BaseCardTest {
             assertThat(dog.getCard().getColor()).isEqualTo(CardColor.GREEN);
             assertThat(dog.getCard().getSubtypes()).containsExactly(CardSubtype.DOG);
             assertThat(dog.getCard().getKeywords()).contains(Keyword.VIGILANCE);
-            assertThat(dog.getEffectivePower()).isEqualTo(3);
-            assertThat(dog.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, dog)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, dog)).isEqualTo(1);
         });
     }
 
@@ -292,8 +292,8 @@ class JinnieFayJetmirsSecondTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Cat")).hasSize(2).allSatisfy(cat -> {
             assertThat(cat.getCard().isToken()).isTrue();
-            assertThat(cat.getEffectivePower()).isEqualTo(2);
-            assertThat(cat.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, cat)).isEqualTo(2);
         });
         assertThat(findPermanents(player1, "Food")).isEmpty();
         assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);

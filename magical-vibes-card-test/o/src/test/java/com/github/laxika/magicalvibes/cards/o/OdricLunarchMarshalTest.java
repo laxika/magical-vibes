@@ -129,7 +129,7 @@ class OdricLunarchMarshalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new OdricLunarchMarshal());
 
         Permanent highPowerBlocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        highPowerBlocker.setPowerModifier(2); // 4 power > attacker 2
+        PermanentGrants.setPowerBoost(gd, highPowerBlocker, 2); // 4 power > attacker 2
 
         advanceToCombatAndResolve(player1);
 

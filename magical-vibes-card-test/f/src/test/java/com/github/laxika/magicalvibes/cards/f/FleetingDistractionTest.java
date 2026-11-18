@@ -36,8 +36,8 @@ class FleetingDistractionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(1);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -66,8 +66,8 @@ class FleetingDistractionTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -91,8 +91,8 @@ class FleetingDistractionTest extends BaseCardTest {
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         harness.assertInHand(player1, "Moorland Inquisitor");
     }
 
@@ -115,7 +115,7 @@ class FleetingDistractionTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Fleeting Distraction");
         Permanent returnedCreature = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(returnedCreature.getId()).isNotEqualTo(targetId);
-        assertThat(returnedCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(returnedCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, returnedCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, returnedCreature)).isEqualTo(2);
     }
 }

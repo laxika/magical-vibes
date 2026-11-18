@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
 import com.github.laxika.magicalvibes.cards.a.AbbeyGriffin;
@@ -64,8 +65,8 @@ class MindshriekerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Mindshrieker should get +4/+4 (base 1/1 + modifier 4/4)
-        assertThat(mindshrieker.getPowerModifier()).isEqualTo(4);
-        assertThat(mindshrieker.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, mindshrieker)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mindshrieker)).isEqualTo(4);
         // Opponent's library should be empty
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         // Milled card should be in graveyard
@@ -84,8 +85,8 @@ class MindshriekerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(mindshrieker.getPowerModifier()).isEqualTo(0);
-        assertThat(mindshrieker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mindshrieker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mindshrieker)).isEqualTo(0);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
     }
 
@@ -101,8 +102,8 @@ class MindshriekerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(mindshrieker.getPowerModifier()).isEqualTo(2);
-        assertThat(mindshrieker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, mindshrieker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mindshrieker)).isEqualTo(2);
     }
 
     @Test
@@ -117,8 +118,8 @@ class MindshriekerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(mindshrieker.getPowerModifier()).isEqualTo(1);
-        assertThat(mindshrieker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mindshrieker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mindshrieker)).isEqualTo(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }
@@ -144,8 +145,8 @@ class MindshriekerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Total boost: +2/+2 + +1/+1 = +3/+3
-        assertThat(mindshrieker.getPowerModifier()).isEqualTo(3);
-        assertThat(mindshrieker.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, mindshrieker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mindshrieker)).isEqualTo(3);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
@@ -160,8 +161,8 @@ class MindshriekerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(mindshrieker.getPowerModifier()).isEqualTo(0);
-        assertThat(mindshrieker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mindshrieker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mindshrieker)).isEqualTo(0);
     }
 
     @Test
@@ -194,8 +195,8 @@ class MindshriekerTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
-        assertThat(mindshrieker.getPowerModifier()).isEqualTo(6);
-        assertThat(mindshrieker.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, mindshrieker)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mindshrieker)).isEqualTo(6);
     }
 
     @Test
@@ -206,13 +207,13 @@ class MindshriekerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        assertThat(mindshrieker.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, mindshrieker)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(mindshrieker.getPowerModifier()).isZero();
-        assertThat(mindshrieker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mindshrieker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mindshrieker)).isZero();
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
 import com.github.laxika.magicalvibes.cards.c.ChandraHopesBeacon;
 import com.github.laxika.magicalvibes.cards.g.GoblinElectromancer;
@@ -116,7 +117,7 @@ class InfantryShieldTest extends BaseCardTest {
     @Test
     void zeroPowerCreatesNoWarriors() {
         Permanent creature = addCreatureReady(player1);
-        creature.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, creature, -2);
         addShieldReady(player1).setAttachedTo(creature.getId());
 
         declareAttackers(List.of(0));

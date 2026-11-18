@@ -32,10 +32,10 @@ class HamperingSnareTest extends BaseCardTest {
 
         castSnare();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(2);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(2);
-        assertThat(theirs.getEffectivePower()).isEqualTo(0);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 
     @Test
@@ -44,14 +44,14 @@ class HamperingSnareTest extends BaseCardTest {
         Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castSnare();
-        assertThat(theirs.getEffectivePower()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(0);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 
     @Test
@@ -77,9 +77,9 @@ class HamperingSnareTest extends BaseCardTest {
         castSnare();
         Permanent later = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThat(existing.getEffectivePower()).isZero();
-        assertThat(later.getEffectivePower()).isEqualTo(2);
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, existing)).isZero();
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
     }
 
     @Test
@@ -90,9 +90,9 @@ class HamperingSnareTest extends BaseCardTest {
 
         castSnare();
 
-        assertThat(bears.getEffectivePower()).isZero();
-        assertThat(naturalist.getEffectivePower()).isEqualTo(-1);
-        assertThat(naturalist.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isZero();
+        assertThat(gqs.getEffectivePower(gd, naturalist)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, naturalist)).isEqualTo(3);
         harness.assertOnBattlefield(player2, "Humble Naturalist");
     }
 
@@ -113,7 +113,7 @@ class HamperingSnareTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Grizzly Bears");
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 }

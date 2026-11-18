@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzledLeotau;
 import com.github.laxika.magicalvibes.cards.m.MagneticTheft;
 import com.github.laxika.magicalvibes.cards.q.QasaliPridemage;
@@ -34,8 +35,8 @@ class DemonspineWhipTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, 3, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(0);
     }
 
     @Test
@@ -49,14 +50,14 @@ class DemonspineWhipTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, 2, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(0);
-        assertThat(creature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(0);
     }
 
     @Test
@@ -69,8 +70,8 @@ class DemonspineWhipTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, 3, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(0);
-        assertThat(creature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(0);
     }
 
 
@@ -96,8 +97,8 @@ class DemonspineWhipTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, 0, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -132,11 +133,11 @@ class DemonspineWhipTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, 2, null);
         harness.activateAbility(player1, 0, 0, 3, null);
         harness.passBothPriorities();
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(5);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -153,9 +154,9 @@ class DemonspineWhipTest extends BaseCardTest {
         assertThat(whip.getAttachedTo()).isEqualTo(replacement.getId());
         harness.passBothPriorities();
 
-        assertThat(original.getPowerModifier()).isZero();
-        assertThat(replacement.getPowerModifier()).isEqualTo(3);
-        assertThat(replacement.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, original)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, replacement)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, replacement)).isZero();
     }
 
     @Test
@@ -177,8 +178,8 @@ class DemonspineWhipTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Demonspine Whip");
         harness.passBothPriorities();
 
-        assertThat(original.getPowerModifier()).isZero();
-        assertThat(replacement.getPowerModifier()).isEqualTo(3);
-        assertThat(replacement.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, original)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, replacement)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, replacement)).isZero();
     }
 }

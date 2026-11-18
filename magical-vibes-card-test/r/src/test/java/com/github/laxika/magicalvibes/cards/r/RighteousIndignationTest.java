@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CateranBrute;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.g.GerrardsIrregulars;
@@ -39,8 +40,8 @@ class RighteousIndignationTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(1);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(1);
     }
 
     @Test
@@ -55,8 +56,8 @@ class RighteousIndignationTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(1);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(1);
     }
 
     @Test
@@ -71,8 +72,8 @@ class RighteousIndignationTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
     }
 
     @Test
@@ -91,8 +92,8 @@ class RighteousIndignationTest extends BaseCardTest {
                 new BlockerAssignment(0, 1)));
         resolveAllTriggers();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(2);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -107,15 +108,15 @@ class RighteousIndignationTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(1);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
     }
 
     @Test
@@ -133,12 +134,12 @@ class RighteousIndignationTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(firstBlocker.getPowerModifier()).isEqualTo(1);
-        assertThat(firstBlocker.getToughnessModifier()).isEqualTo(1);
-        assertThat(secondBlocker.getPowerModifier()).isEqualTo(1);
-        assertThat(secondBlocker.getToughnessModifier()).isEqualTo(1);
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstBlocker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstBlocker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondBlocker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondBlocker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -154,8 +155,8 @@ class RighteousIndignationTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(2);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -173,7 +174,7 @@ class RighteousIndignationTest extends BaseCardTest {
                 findPermanent(player1, "Righteous Indignation"));
         resolveAllTriggers();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(1);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(1);
     }
 }

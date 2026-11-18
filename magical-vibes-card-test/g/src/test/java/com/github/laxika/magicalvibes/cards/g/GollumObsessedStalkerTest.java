@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -69,7 +70,7 @@ class GollumObsessedStalkerTest extends BaseCardTest {
     void skulkRejectsGreaterPowerBlocker() {
         Permanent attacker = addCreatureReady(player1, new GollumObsessedStalker());
         Permanent blocker = addCreatureReady(player2, new GollumObsessedStalker());
-        blocker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, blocker, 1);
         attacker.setAttacking(true);
         prepareDeclareBlockers();
 

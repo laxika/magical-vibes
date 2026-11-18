@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -22,8 +23,8 @@ class ScionOfGlaciersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(scion.getPowerModifier()).isEqualTo(1);
-        assertThat(scion.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, scion)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scion)).isEqualTo(-1);
     }
 
     @Test
@@ -37,8 +38,8 @@ class ScionOfGlaciersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(scion.getPowerModifier()).isEqualTo(2);
-        assertThat(scion.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, scion)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scion)).isEqualTo(-2);
     }
 
     @Test
@@ -49,15 +50,15 @@ class ScionOfGlaciersTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(scion.getPowerModifier()).isEqualTo(1);
-        assertThat(scion.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, scion)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scion)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(scion.getPowerModifier()).isZero();
-        assertThat(scion.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, scion)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scion)).isZero();
     }
 
     @Test
@@ -71,13 +72,13 @@ class ScionOfGlaciersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(scion.getPowerModifier()).isZero();
-        assertThat(scion.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, scion)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scion)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(scion.getPowerModifier()).isEqualTo(1);
-        assertThat(scion.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, scion)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scion)).isEqualTo(-1);
         assertThat(scion.isTapped()).isTrue();
     }
 

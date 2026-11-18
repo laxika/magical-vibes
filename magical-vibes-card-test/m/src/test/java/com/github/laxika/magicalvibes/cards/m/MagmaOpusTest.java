@@ -42,8 +42,8 @@ class MagmaOpusTest extends BaseCardTest {
         assertThat(tapTarget1.isTapped()).isTrue();
         assertThat(tapTarget2.isTapped()).isTrue();
         assertThat(findPermanents(player1, "Elemental")).singleElement().satisfies(elemental -> {
-            assertThat(elemental.getEffectivePower()).isEqualTo(4);
-            assertThat(elemental.getEffectiveToughness()).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(4);
         });
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn1, drawn2);
     }

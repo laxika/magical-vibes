@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -68,7 +69,7 @@ class DivinerSpiritTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
 
         Permanent spirit = addCreatureReady(player1, new DivinerSpirit());
-        spirit.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, spirit, 1);
         spirit.setAttacking(true);
 
         spirit.setAttackTarget(player2.getId());
@@ -80,7 +81,7 @@ class DivinerSpiritTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
 
-        spirit.setPowerModifier(4);
+        PermanentGrants.setPowerBoost(gd, spirit, 4);
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
@@ -118,7 +119,7 @@ class DivinerSpiritTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
 
         Permanent spirit = addCreatureReady(player1, new DivinerSpirit());
-        spirit.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, spirit, -2);
         spirit.setAttacking(true);
 
         resolveCombat();

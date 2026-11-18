@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -55,8 +56,8 @@ class ChandrasSpitfireTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         Permanent spitfire = findPermanent(player1, "Chandra's Spitfire");
-        assertThat(spitfire.getPowerModifier()).isEqualTo(3);
-        assertThat(spitfire.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, spitfire)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spitfire)).isEqualTo(0);
     }
 
     @Test
@@ -96,8 +97,8 @@ class ChandrasSpitfireTest extends BaseCardTest {
         Permanent spitfire = findPermanent(player1, "Chandra's Spitfire");
 
         // +3/+0 twice = +6/+0
-        assertThat(spitfire.getPowerModifier()).isEqualTo(6);
-        assertThat(spitfire.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, spitfire)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spitfire)).isEqualTo(0);
     }
 
     @Test
@@ -129,8 +130,8 @@ class ChandrasSpitfireTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(spitfire.getPowerModifier()).isEqualTo(3);
-        assertThat(spitfire.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spitfire)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spitfire)).isZero();
     }
 
     @Test
@@ -147,7 +148,7 @@ class ChandrasSpitfireTest extends BaseCardTest {
 
         harness.assertLife(player2, 19);
         assertThat(gd.stack).isEmpty();
-        assertThat(spitfire.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spitfire)).isZero();
     }
 
     @Test
@@ -160,10 +161,10 @@ class ChandrasSpitfireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(spitfire.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, spitfire)).isEqualTo(3);
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(spitfire.getPowerModifier()).isZero();
-        assertThat(spitfire.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spitfire)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spitfire)).isZero();
     }
 
     @Test
@@ -179,9 +180,9 @@ class ChandrasSpitfireTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(3);
-        assertThat(second.getPowerModifier()).isEqualTo(3);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 }

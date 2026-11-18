@@ -28,14 +28,14 @@ class KangeeSkyWardenTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         harness.passBothPriorities();
 
-        assertThat(kangee.getEffectivePower()).isEqualTo(5);
-        assertThat(kangee.getEffectiveToughness()).isEqualTo(3);
-        assertThat(flyer.getEffectivePower()).isEqualTo(6);
-        assertThat(flyer.getEffectiveToughness()).isEqualTo(4);
-        assertThat(groundCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(groundCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(stayingBack.getEffectivePower()).isEqualTo(1);
-        assertThat(stayingBack.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, kangee)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, kangee)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, flyer)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, flyer)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, groundCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, groundCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, stayingBack)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, stayingBack)).isEqualTo(1);
     }
 
     @Test
@@ -58,13 +58,13 @@ class KangeeSkyWardenTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(kangee.getEffectivePower()).isEqualTo(3);
-        assertThat(kangee.getEffectiveToughness()).isEqualTo(5);
-        assertThat(flyer.getEffectivePower()).isEqualTo(1);
-        assertThat(flyer.getEffectiveToughness()).isEqualTo(3);
-        assertThat(groundBlocker.getEffectivePower()).isEqualTo(2);
-        assertThat(groundBlocker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(flyingAttacker.getEffectivePower()).isEqualTo(4);
-        assertThat(flyingAttacker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, kangee)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, kangee)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, flyer)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, flyer)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, groundBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, groundBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, flyingAttacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, flyingAttacker)).isEqualTo(4);
     }
 }

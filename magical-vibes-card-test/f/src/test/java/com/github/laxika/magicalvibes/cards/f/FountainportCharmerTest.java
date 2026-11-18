@@ -40,8 +40,8 @@ class FountainportCharmerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().isToken()
-                        && permanent.getEffectivePower() == 1
-                        && permanent.getEffectiveToughness() == 1);
+                        && gqs.getEffectivePower(gd, permanent) == 1
+                        && gqs.getEffectiveToughness(gd, permanent) == 1);
         assertThat(countPermanents(player1, "Fountainport Charmer")).isEqualTo(2);
     }
 

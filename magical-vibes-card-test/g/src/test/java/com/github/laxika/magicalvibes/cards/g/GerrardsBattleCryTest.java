@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SoltariFootSoldier;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,13 +24,13 @@ class GerrardsBattleCryTest extends BaseCardTest {
 
         activateAndResolve();
 
-        assertThat(soldier.getPowerModifier()).isEqualTo(1);
-        assertThat(soldier.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(1);
 
         activateAndResolve();
 
-        assertThat(soldier.getPowerModifier()).isEqualTo(2);
-        assertThat(soldier.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(2);
     }
 
     @Test
@@ -41,8 +42,8 @@ class GerrardsBattleCryTest extends BaseCardTest {
 
         activateAndResolve();
 
-        assertThat(enemySoldier.getPowerModifier()).isEqualTo(0);
-        assertThat(enemySoldier.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, enemySoldier)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enemySoldier)).isEqualTo(0);
     }
 
     @Test
@@ -54,15 +55,15 @@ class GerrardsBattleCryTest extends BaseCardTest {
 
         activateAndResolve();
 
-        assertThat(soldier.getPowerModifier()).isEqualTo(1);
-        assertThat(soldier.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(soldier.getPowerModifier()).isZero();
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
     }
 
     @Test
@@ -76,12 +77,12 @@ class GerrardsBattleCryTest extends BaseCardTest {
 
         Permanent laterSoldier = harness.addToBattlefieldAndReturn(player1, new SoltariFootSoldier());
 
-        assertThat(existingSoldier.getPowerModifier()).isEqualTo(1);
-        assertThat(existingSoldier.getToughnessModifier()).isEqualTo(1);
-        assertThat(laterSoldier.getPowerModifier()).isZero();
-        assertThat(laterSoldier.getToughnessModifier()).isZero();
-        assertThat(battleCry.getPowerModifier()).isZero();
-        assertThat(battleCry.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, existingSoldier)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, existingSoldier)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, laterSoldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterSoldier)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, battleCry)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, battleCry)).isZero();
     }
 
     @Test
@@ -92,13 +93,13 @@ class GerrardsBattleCryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         Permanent soldier = harness.addToBattlefieldAndReturn(player1, new SoltariFootSoldier());
-        assertThat(soldier.getPowerModifier()).isZero();
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(soldier.getPowerModifier()).isEqualTo(1);
-        assertThat(soldier.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(1);
     }
 
     @Test
@@ -110,11 +111,11 @@ class GerrardsBattleCryTest extends BaseCardTest {
         activateAndResolve();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(battleCry.getPowerModifier()).isZero();
-        assertThat(battleCry.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, battleCry)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, battleCry)).isZero();
         Permanent soldier = harness.addToBattlefieldAndReturn(player1, new SoltariFootSoldier());
-        assertThat(soldier.getPowerModifier()).isZero();
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
     }
 
     @Test
@@ -128,8 +129,8 @@ class GerrardsBattleCryTest extends BaseCardTest {
 
         activateAndResolve();
 
-        assertThat(soldier.getPowerModifier()).isEqualTo(1);
-        assertThat(soldier.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(1);
         assertThat(soldier.isTapped()).isTrue();
         assertThat(battleCry.isTapped()).isTrue();
     }

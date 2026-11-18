@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -31,8 +32,8 @@ class ChitteringWitchTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Rat")).hasSize(1);
         Permanent rat = findPermanent(player1, "Rat");
-        assertThat(rat.getEffectivePower()).isEqualTo(1);
-        assertThat(rat.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, rat)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, rat)).isEqualTo(1);
     }
 
     @Test
@@ -61,17 +62,17 @@ class ChitteringWitchTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof GrizzlyBears);
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test

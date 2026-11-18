@@ -31,8 +31,8 @@ class SuddenBreakthroughTest extends BaseCardTest {
         harness.castInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE);
         assertThat(findPermanent(player1, "Treasure")).isNotNull();
     }
@@ -52,8 +52,8 @@ class SuddenBreakthroughTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
@@ -81,8 +81,8 @@ class SuddenBreakthroughTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FIRST_STRIKE);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
         assertThat(findPermanent(player1, "Treasure").isTapped()).isFalse();

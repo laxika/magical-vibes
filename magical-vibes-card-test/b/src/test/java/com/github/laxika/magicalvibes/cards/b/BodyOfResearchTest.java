@@ -38,8 +38,8 @@ class BodyOfResearchTest extends BaseCardTest {
         assertThat(fractal.getCard().getColors()).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLUE);
         assertThat(fractal.getCard().getSubtypes()).containsExactly(CardSubtype.FRACTAL);
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(fractal.getEffectivePower()).isEqualTo(4);
-        assertThat(fractal.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(4);
     }
 
     @Test
@@ -74,8 +74,8 @@ class BodyOfResearchTest extends BaseCardTest {
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.setLibrary(player1, List.of());
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(fractal.getEffectivePower()).isEqualTo(1);
-        assertThat(fractal.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(1);
     }
 
     private void addMana() {

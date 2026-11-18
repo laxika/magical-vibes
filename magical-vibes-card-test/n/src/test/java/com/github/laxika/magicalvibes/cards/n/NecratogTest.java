@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.s.StripedBears;
 import com.github.laxika.magicalvibes.cards.v.Vitalize;
@@ -34,8 +35,8 @@ class NecratogTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(necratog.getPowerModifier()).isEqualTo(2);
-        assertThat(necratog.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, necratog)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, necratog)).isEqualTo(2);
         assertThat(graveyardNames(player1)).isEmpty();
         assertThat(gd.exiledCards).extracting(e -> e.card().getName()).contains("Benalish Infantry");
     }
@@ -80,8 +81,8 @@ class NecratogTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(necratog.getPowerModifier()).isEqualTo(0);
-        assertThat(necratog.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, necratog)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, necratog)).isEqualTo(0);
     }
 
     @Test
@@ -108,8 +109,8 @@ class NecratogTest extends BaseCardTest {
 
         assertThat(graveyardNames(player1)).containsExactly("Benalish Infantry", "Vitalize");
         assertThat(gd.exiledCards).extracting(e -> e.card().getName()).containsExactly("Striped Bears");
-        assertThat(necratog.getPowerModifier()).isZero();
-        assertThat(necratog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, necratog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, necratog)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -125,13 +126,13 @@ class NecratogTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(necratog.getPowerModifier()).isEqualTo(2);
-        assertThat(necratog.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, necratog)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, necratog)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(necratog.getPowerModifier()).isEqualTo(4);
-        assertThat(necratog.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, necratog)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, necratog)).isEqualTo(4);
         assertThat(necratog.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
     }

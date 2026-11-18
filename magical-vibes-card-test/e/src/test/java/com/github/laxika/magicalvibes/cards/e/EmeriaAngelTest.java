@@ -36,8 +36,8 @@ class EmeriaAngelTest extends BaseCardTest {
                         && permanent.getCard().getSubtypes().contains(CardSubtype.BIRD))
                 .findFirst()
                 .orElseThrow();
-        assertThat(bird.getEffectivePower()).isEqualTo(1);
-        assertThat(bird.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
         assertThat(bird.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(bird.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(bird.getCard().getKeywords()).contains(Keyword.FLYING);

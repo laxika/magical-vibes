@@ -39,8 +39,8 @@ class BridgeFromBelowTest extends BaseCardTest {
         assertThat(zombies.getFirst().getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(zombies.getFirst().getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(zombies.getFirst().getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
-        assertThat(zombies.getFirst().getEffectivePower()).isEqualTo(2);
-        assertThat(zombies.getFirst().getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, zombies.getFirst())).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, zombies.getFirst())).isEqualTo(2);
     }
 
     @Test

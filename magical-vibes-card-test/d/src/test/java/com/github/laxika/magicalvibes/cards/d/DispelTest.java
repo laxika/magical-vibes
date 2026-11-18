@@ -38,7 +38,7 @@ class DispelTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Dispel");
         assertThat(harness.getGameData().stack).isEmpty();
         // The countered pump never applied
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -73,7 +73,7 @@ class DispelTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Might of Oaks");
         harness.assertInGraveyard(player1, "Dispel");
         assertThat(gd.stack).isEmpty();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -100,6 +100,6 @@ class DispelTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Dispel");
         assertThat(gd.stack).isEmpty();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
     }
 }

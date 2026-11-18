@@ -29,8 +29,8 @@ class MagicDamperTest extends BaseCardTest {
         castMagicDamper(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.HEXPROOF);
     }
 
@@ -44,8 +44,8 @@ class MagicDamperTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.HEXPROOF);
     }
 
@@ -83,12 +83,12 @@ class MagicDamperTest extends BaseCardTest {
         castMagicDamper(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.HEXPROOF);
         assertThat(other.isTapped()).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.HEXPROOF);
     }
 
@@ -102,8 +102,8 @@ class MagicDamperTest extends BaseCardTest {
         castMagicDamper(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.HEXPROOF);
     }
 
@@ -121,8 +121,8 @@ class MagicDamperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.HEXPROOF);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Magic Damper");

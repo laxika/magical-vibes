@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CopperLonglegs;
 import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -39,8 +40,8 @@ class BlazingCrescendoTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .contains(topCard.getId());
@@ -61,8 +62,8 @@ class BlazingCrescendoTest extends BaseCardTest {
         harness.inMutationScope(() ->
                 GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gd.exilePlayPermissionHolders()).containsKey(topCard.getId());
     }
 
@@ -104,8 +105,8 @@ class BlazingCrescendoTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
@@ -88,7 +89,7 @@ class StonehandsTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bearsPerm.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bearsPerm)).isEqualTo(0);
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(4);
     }

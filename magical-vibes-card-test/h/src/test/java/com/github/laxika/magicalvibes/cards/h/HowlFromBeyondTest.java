@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.MinionOfLeshrac;
 import com.github.laxika.magicalvibes.cards.w.WindSpirit;
@@ -27,10 +28,10 @@ class HowlFromBeyondTest extends BaseCardTest {
         harness.castInstant(player1, 0, 4, spirit.getId());
         harness.passBothPriorities();
 
-        assertThat(spirit.getPowerModifier()).isEqualTo(4);
-        assertThat(spirit.getToughnessModifier()).isEqualTo(0);
-        assertThat(spirit.getEffectivePower()).isEqualTo(7);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, spirit)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spirit)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
     }
 
     @Test
@@ -46,8 +47,8 @@ class HowlFromBeyondTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(spirit.getPowerModifier()).isEqualTo(0);
-        assertThat(spirit.getEffectivePower()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, spirit)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(3);
     }
 
     @Test
@@ -73,10 +74,10 @@ class HowlFromBeyondTest extends BaseCardTest {
         harness.castInstant(player1, 0, 1, spirit.getId());
         harness.passBothPriorities();
 
-        assertThat(spirit.getPowerModifier()).isEqualTo(1);
-        assertThat(spirit.getToughnessModifier()).isEqualTo(0);
-        assertThat(spirit.getEffectivePower()).isEqualTo(4);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, spirit)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spirit)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
     }
 
     @Test
@@ -89,10 +90,10 @@ class HowlFromBeyondTest extends BaseCardTest {
         harness.castInstant(player1, 0, 0, spirit.getId());
         harness.passBothPriorities();
 
-        assertThat(spirit.getPowerModifier()).isEqualTo(0);
-        assertThat(spirit.getToughnessModifier()).isEqualTo(0);
-        assertThat(spirit.getEffectivePower()).isEqualTo(3);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, spirit)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spirit)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
     }
 
     @Test
@@ -118,8 +119,8 @@ class HowlFromBeyondTest extends BaseCardTest {
         harness.castInstant(player1, 0, 0, spirit.getId());
         harness.passBothPriorities();
 
-        assertThat(spirit.getPowerModifier()).isZero();
-        assertThat(spirit.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spirit)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spirit)).isZero();
         assertThat(gameLogContains("gets +0/+0")).isTrue();
     }
 
@@ -151,19 +152,19 @@ class HowlFromBeyondTest extends BaseCardTest {
         harness.castInstant(player1, 0, 3, spirit.getId());
         harness.passBothPriorities();
 
-        assertThat(spirit.getEffectivePower()).isEqualTo(6);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(spirit.getEffectivePower()).isEqualTo(8);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(spirit.getEffectivePower()).isEqualTo(3);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
     }
 }

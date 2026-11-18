@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -48,8 +49,8 @@ class ElementalMascotTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(mascot.getPowerModifier()).isEqualTo(1);
-        assertThat(mascot.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mascot)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mascot)).isZero();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
@@ -66,7 +67,7 @@ class ElementalMascotTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 4);
         harness.passBothPriorities();
 
-        assertThat(mascot.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mascot)).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
         assertThat(gd.exilePlayPermissionHolder(topCard.getId())).isEqualTo(player1.getId());
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
@@ -84,7 +85,7 @@ class ElementalMascotTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(mascot.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mascot)).isZero();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
@@ -99,7 +100,7 @@ class ElementalMascotTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 3);
         harness.passBothPriorities();
 
-        assertThat(mascot.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mascot)).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
@@ -114,7 +115,7 @@ class ElementalMascotTest extends BaseCardTest {
         harness.castInstant(player2, 0, player1.getId());
         resolveAllTriggers();
 
-        assertThat(mascot.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mascot)).isZero();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
@@ -132,10 +133,10 @@ class ElementalMascotTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 
-        assertThat(mascot.getPowerModifier()).isEqualTo(2);
-        assertThat(mascot.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mascot)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mascot)).isZero();
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(mascot.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mascot)).isZero();
     }
 
     @Test
@@ -149,7 +150,7 @@ class ElementalMascotTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 4);
         harness.passBothPriorities();
 
-        assertThat(mascot.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mascot)).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 

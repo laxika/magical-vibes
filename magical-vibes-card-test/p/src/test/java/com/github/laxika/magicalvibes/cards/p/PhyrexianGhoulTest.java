@@ -23,8 +23,8 @@ class PhyrexianGhoulTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, gorilla.getId());
         harness.passBothPriorities();
 
-        assertThat(ghoul.getEffectivePower()).isEqualTo(4);
-        assertThat(ghoul.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ghoul)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ghoul)).isEqualTo(4);
         harness.assertInGraveyard(player1, "Gorilla Warrior");
     }
 
@@ -48,14 +48,14 @@ class PhyrexianGhoulTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, gorilla.getId());
         harness.passBothPriorities();
-        assertThat(ghoul.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ghoul)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ghoul.getEffectivePower()).isEqualTo(2);
-        assertThat(ghoul.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ghoul)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ghoul)).isEqualTo(2);
     }
 
     @Test
@@ -73,8 +73,8 @@ class PhyrexianGhoulTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, secondGorilla.getId());
         harness.passBothPriorities();
 
-        assertThat(ghoul.getEffectivePower()).isEqualTo(6);
-        assertThat(ghoul.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, ghoul)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, ghoul)).isEqualTo(6);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 
@@ -90,13 +90,13 @@ class PhyrexianGhoulTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Gorilla Warrior");
         harness.assertInGraveyard(player1, "Gorilla Warrior");
         assertThat(gd.stack).hasSize(1);
-        assertThat(ghoul.getEffectivePower()).isEqualTo(2);
-        assertThat(ghoul.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ghoul)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ghoul)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(ghoul.getEffectivePower()).isEqualTo(4);
-        assertThat(ghoul.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ghoul)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ghoul)).isEqualTo(4);
     }
 
     @Test
@@ -111,8 +111,8 @@ class PhyrexianGhoulTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, gorilla.getId());
         harness.passBothPriorities();
 
-        assertThat(ghoul.getEffectivePower()).isEqualTo(4);
-        assertThat(ghoul.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ghoul)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ghoul)).isEqualTo(4);
         assertThat(ghoul.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Gorilla Warrior");
     }
@@ -135,7 +135,7 @@ class PhyrexianGhoulTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(otherGhoul);
-        assertThat(otherGhoul.getEffectivePower()).isEqualTo(2);
-        assertThat(otherGhoul.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherGhoul)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherGhoul)).isEqualTo(2);
     }
 }

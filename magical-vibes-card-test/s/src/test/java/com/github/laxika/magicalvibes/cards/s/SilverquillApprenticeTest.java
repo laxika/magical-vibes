@@ -36,8 +36,8 @@ class SilverquillApprenticeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -61,8 +61,8 @@ class SilverquillApprenticeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -80,8 +80,8 @@ class SilverquillApprenticeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -109,16 +109,16 @@ class SilverquillApprenticeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, apprentice.getId());
         harness.passBothPriorities();
 
-        assertThat(apprentice.getEffectivePower()).isEqualTo(3);
-        assertThat(apprentice.getEffectiveToughness()).isEqualTo(2);
-        assertThat(spellTarget.getEffectivePower()).isEqualTo(2);
-        assertThat(spellTarget.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, apprentice)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, apprentice)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spellTarget)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spellTarget)).isEqualTo(2);
 
         resolveAllTriggers();
 
-        assertThat(apprentice.getEffectivePower()).isEqualTo(3);
-        assertThat(spellTarget.getEffectivePower()).isEqualTo(4);
-        assertThat(spellTarget.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, apprentice)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, spellTarget)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spellTarget)).isEqualTo(4);
     }
 
     @Test
@@ -136,7 +136,7 @@ class SilverquillApprenticeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
-        assertThat(apprentice.getEffectivePower()).isEqualTo(4);
-        assertThat(apprentice.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, apprentice)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, apprentice)).isEqualTo(4);
     }
 }

@@ -37,8 +37,8 @@ class CurseOfShallowGravesTest extends BaseCardTest {
         Permanent token = tokens.getFirst();
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         assertThat(token.isTapped()).isTrue();
         assertThat(token.isAttacking()).isFalse();
         assertThat(findTokens(player1)).isEmpty();

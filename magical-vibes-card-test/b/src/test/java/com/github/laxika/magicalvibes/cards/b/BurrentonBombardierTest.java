@@ -29,8 +29,8 @@ class BurrentonBombardierTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(targetCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(targetCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(targetCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, targetCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, targetCreature)).isEqualTo(4);
     }
 
     @Test
@@ -44,8 +44,8 @@ class BurrentonBombardierTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(targetCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(targetCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(targetCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, targetCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, targetCreature)).isEqualTo(4);
     }
 
     @Test

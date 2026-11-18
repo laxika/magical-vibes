@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.u.UnrulyMob;
@@ -105,7 +106,7 @@ class CandlegroveWitchTest extends BaseCardTest {
 
         advanceToCombat(player1);
         assertThat(gd.stack).hasSize(1);
-        sanctifier.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, sanctifier, -1);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, witch, Keyword.FLYING)).isFalse();
@@ -153,7 +154,7 @@ class CandlegroveWitchTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.passBothPriorities();
-        sanctifier.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, sanctifier, -1);
 
         assertThat(gqs.hasKeyword(gd, witch, Keyword.FLYING)).isTrue();
     }

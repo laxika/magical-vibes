@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,9 +27,9 @@ class GigantomancerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.isBasePowerToughnessOverriddenUntilEndOfTurn()).isTrue();
-        assertThat(target.getEffectivePower()).isEqualTo(7);
-        assertThat(target.getEffectiveToughness()).isEqualTo(7);
+        assertThat(PermanentGrants.hasBasePowerToughnessSet(gd, target)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
     }
 
     @Test
@@ -40,15 +41,15 @@ class GigantomancerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getEffectivePower()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.isBasePowerToughnessOverriddenUntilEndOfTurn()).isFalse();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.hasBasePowerToughnessSet(gd, target)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test

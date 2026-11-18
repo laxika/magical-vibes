@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -34,8 +35,8 @@ class MassacreWurmTest extends BaseCardTest {
 
         // Mass of Ghouls should be 3/1 (5-2 / 3-2)
         var ghouls = findPermanent(player2, "Mass of Ghouls");
-        assertThat(ghouls.getPowerModifier()).isEqualTo(-2);
-        assertThat(ghouls.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ghouls)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ghouls)).isEqualTo(-2);
     }
 
     @Test
@@ -52,8 +53,8 @@ class MassacreWurmTest extends BaseCardTest {
 
         // Grizzly Bears should still be unmodified
         var bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -150,16 +151,16 @@ class MassacreWurmTest extends BaseCardTest {
 
         var bears = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.runStateBasedActions();
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(ghouls.getPowerModifier()).isEqualTo(-2);
-        assertThat(ghouls.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ghouls)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ghouls)).isEqualTo(-2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
-        assertThat(ghouls.getPowerModifier()).isZero();
-        assertThat(ghouls.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ghouls)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ghouls)).isZero();
     }
 
     @Test

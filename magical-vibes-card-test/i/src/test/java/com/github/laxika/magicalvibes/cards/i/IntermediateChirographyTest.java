@@ -34,8 +34,8 @@ class IntermediateChirographyTest extends BaseCardTest {
         assertThat(inklings).hasSize(1);
         assertThat(inklings.getFirst().getCard().getColors())
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
-        assertThat(inklings.getFirst().getEffectivePower()).isEqualTo(2);
-        assertThat(inklings.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, inklings.getFirst())).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, inklings.getFirst())).isEqualTo(1);
         assertThat(inklings.getFirst().getCard().getKeywords()).contains(Keyword.FLYING);
     }
 

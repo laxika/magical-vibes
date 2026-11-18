@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CaravanEscort;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -89,7 +90,7 @@ class ArrogantBloodlordTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        escort.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, escort, 1);
         harness.passBothPriorities();
 
         assertThat(DelayedPermanentMoves.waiting(gd))
@@ -129,7 +130,7 @@ class ArrogantBloodlordTest extends BaseCardTest {
         Permanent bloodlord = addCreatureReady(player1, new ArrogantBloodlord());
         bloodlord.setAttacking(true);
         Permanent escort = addCreatureReady(player2, new CaravanEscort());
-        escort.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, escort, -1);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

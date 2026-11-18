@@ -70,8 +70,8 @@ class MarduMonumentTest extends BaseCardTest {
                         && permanent.getCard().getName().equals("Warrior"))
                 .toList();
         assertThat(warriors).hasSize(3).allSatisfy(warrior -> {
-            assertThat(warrior.getEffectivePower()).isEqualTo(1);
-            assertThat(warrior.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(1);
             assertThat(gqs.hasKeyword(gd, warrior, Keyword.MENACE)).isTrue();
             assertThat(gqs.hasKeyword(gd, warrior, Keyword.HASTE)).isTrue();
         });

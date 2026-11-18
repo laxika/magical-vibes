@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BileUrchin;
 import com.github.laxika.magicalvibes.cards.f.FrostOgre;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
@@ -40,8 +41,8 @@ class CallForBloodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Goblin Cohort");
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
     }
 
     @Test
@@ -55,10 +56,10 @@ class CallForBloodTest extends BaseCardTest {
         harness.castInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
-        assertThat(bystander.getPowerModifier()).isZero();
-        assertThat(bystander.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bystander)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bystander)).isZero();
     }
 
     @Test
@@ -101,8 +102,8 @@ class CallForBloodTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Goblin Cohort");
         harness.assertInGraveyard(player1, "Goblin Cohort");
         assertThat(gd.stack).hasSize(1);
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -115,13 +116,13 @@ class CallForBloodTest extends BaseCardTest {
         harness.castInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
 
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -163,7 +164,7 @@ class CallForBloodTest extends BaseCardTest {
     @DisplayName("Negative sacrificed power gives no bonus or penalty")
     void negativeSacrificedPowerIsTreatedAsZero() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
-        sacrifice.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, sacrifice, -4);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FrostOgre());
 
         prepare();
@@ -171,15 +172,15 @@ class CallForBloodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Gnarled Mass");
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
     @DisplayName("Zero sacrificed power leaves the target unchanged")
     void zeroSacrificedPowerLeavesTargetUnchanged() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
-        sacrifice.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, sacrifice, -3);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FrostOgre());
 
         prepare();
@@ -187,8 +188,8 @@ class CallForBloodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Gnarled Mass");
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -205,7 +206,7 @@ class CallForBloodTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Call for Blood");
-        assertThat(bystander.getPowerModifier()).isZero();
-        assertThat(bystander.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bystander)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bystander)).isZero();
     }
 }

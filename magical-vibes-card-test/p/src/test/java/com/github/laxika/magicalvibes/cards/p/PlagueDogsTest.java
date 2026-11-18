@@ -34,19 +34,19 @@ class PlagueDogsTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Plated Spider").getEffectivePower()).isEqualTo(3);
-        assertThat(findPermanent(player1, "Plated Spider").getEffectiveToughness()).isEqualTo(3);
-        assertThat(blocker.getEffectivePower()).isEqualTo(4);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Plated Spider"))).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Plated Spider"))).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Plated Spider").getEffectivePower()).isEqualTo(4);
-        assertThat(findPermanent(player1, "Plated Spider").getEffectiveToughness()).isEqualTo(4);
-        assertThat(blocker.getEffectivePower()).isEqualTo(5);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Plated Spider"))).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Plated Spider"))).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(5);
     }
 
     @Test
@@ -63,8 +63,8 @@ class PlagueDogsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Plague Dogs");
         harness.assertInGraveyard(player1, "Plague Dogs");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
-        assertThat(findPermanent(player1, "Plated Spider").getEffectivePower()).isEqualTo(3);
-        assertThat(findPermanent(player1, "Plated Spider").getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Plated Spider"))).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Plated Spider"))).isEqualTo(3);
     }
 
     @Test
@@ -82,13 +82,13 @@ class PlagueDogsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Plague Dogs");
         harness.assertInGraveyard(player1, "Plague Dogs");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
-        assertThat(spider.getEffectivePower()).isEqualTo(4);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(4);
 
         harness.passBothPriorities();
 
-        assertThat(spider.getEffectivePower()).isEqualTo(3);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(3);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
 
         resolveAllTriggers();
@@ -110,11 +110,11 @@ class PlagueDogsTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent afterResolution = harness.enterBattlefieldAndReturn(player2, new PlatedSpider());
 
-        assertThat(existing.getEffectivePower()).isEqualTo(3);
-        assertThat(existing.getEffectiveToughness()).isEqualTo(3);
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(3);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(3);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(4);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(4);
     }
 }

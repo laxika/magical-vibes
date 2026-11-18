@@ -28,11 +28,11 @@ class PursueGloryTest extends BaseCardTest {
         harness.castFromHand(player1, new PursueGlory(), "{3}{R}");
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(5);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
 
-        assertThat(nonAttacker.getEffectivePower()).isEqualTo(3);
-        assertThat(nonAttacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonAttacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, nonAttacker)).isEqualTo(2);
     }
 
     @Test
@@ -47,13 +47,13 @@ class PursueGloryTest extends BaseCardTest {
         harness.castFromHand(player1, new PursueGlory(), "{3}{R}");
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -82,9 +82,9 @@ class PursueGloryTest extends BaseCardTest {
         harness.castFromHand(player1, new PursueGlory(), "{3}{R}");
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(5);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(defender.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(3);
     }
 
     @Test
@@ -100,17 +100,17 @@ class PursueGloryTest extends BaseCardTest {
         newAttacker.setAttacking(true);
         harness.passBothPriorities();
 
-        assertThat(removedAttacker.getEffectivePower()).isEqualTo(3);
-        assertThat(newAttacker.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, removedAttacker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, newAttacker)).isEqualTo(5);
 
         newAttacker.setAttacking(false);
         removedAttacker.setAttacking(true);
         Permanent laterAttacker = addCreatureReady(player1, new PouncingCheetah());
         laterAttacker.setAttacking(true);
 
-        assertThat(newAttacker.getEffectivePower()).isEqualTo(5);
-        assertThat(removedAttacker.getEffectivePower()).isEqualTo(3);
-        assertThat(laterAttacker.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, newAttacker)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, removedAttacker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, laterAttacker)).isEqualTo(3);
     }
 
     @Test
@@ -133,7 +133,7 @@ class PursueGloryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Pouncing Cheetah");
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
     }
 
     @Test
@@ -146,6 +146,6 @@ class PursueGloryTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Pursue Glory");
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
     }
 }

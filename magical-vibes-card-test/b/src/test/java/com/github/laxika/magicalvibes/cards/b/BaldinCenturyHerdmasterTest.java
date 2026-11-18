@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -37,17 +38,17 @@ class BaldinCenturyHerdmasterTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(ownTarget.getId(), opposingTarget.getId()));
         harness.passBothPriorities();
 
-        assertThat(ownTarget.getPowerModifier()).isEqualTo(0);
-        assertThat(ownTarget.getToughnessModifier()).isEqualTo(3);
-        assertThat(opposingTarget.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownTarget)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownTarget)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingTarget)).isEqualTo(3);
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(ownTarget.getToughnessModifier()).isEqualTo(0);
-        assertThat(opposingTarget.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownTarget)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingTarget)).isEqualTo(0);
     }
 
     @Test
@@ -96,9 +97,9 @@ class BaldinCenturyHerdmasterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.passBothPriorities();
 
-        assertThat(baldin.getToughnessModifier()).isEqualTo(2);
-        assertThat(opposingTarget.getToughnessModifier()).isEqualTo(2);
-        assertThat(baldin.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, baldin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingTarget)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, baldin)).isZero();
     }
 
     @Test
@@ -112,7 +113,7 @@ class BaldinCenturyHerdmasterTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(baldin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, baldin)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -127,8 +128,8 @@ class BaldinCenturyHerdmasterTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(baldin.getId()));
         harness.passBothPriorities();
 
-        assertThat(baldin.getToughnessModifier()).isZero();
-        assertThat(baldin.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, baldin)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, baldin)).isZero();
     }
 
     @Test

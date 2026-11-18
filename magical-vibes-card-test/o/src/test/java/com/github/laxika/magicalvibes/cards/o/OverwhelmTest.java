@@ -27,8 +27,8 @@ class OverwhelmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         for (Permanent p : gd.playerBattlefields.get(player1.getId())) {
-            assertThat(p.getEffectivePower()).isEqualTo(5);
-            assertThat(p.getEffectiveToughness()).isEqualTo(7);
+            assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(5);
+            assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(7);
         }
         harness.assertInGraveyard(player1, "Overwhelm");
     }
@@ -42,8 +42,8 @@ class OverwhelmTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getEffectivePower()).isEqualTo(5);
-        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, gd.playerBattlefields.get(player1.getId()).getFirst())).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, gd.playerBattlefields.get(player2.getId()).getFirst())).isEqualTo(2);
     }
 
     @Test
@@ -59,8 +59,8 @@ class OverwhelmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent shepherd = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(shepherd.getEffectivePower()).isEqualTo(2);
-        assertThat(shepherd.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, shepherd)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shepherd)).isEqualTo(4);
     }
 
     @Test
@@ -71,8 +71,8 @@ class OverwhelmTest extends BaseCardTest {
 
         Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new NullmageShepherd());
 
-        assertThat(lateCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(lateCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lateCreature)).isEqualTo(4);
     }
 
     @Test
@@ -91,8 +91,8 @@ class OverwhelmTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(firstCreature.getEffectivePower()).isEqualTo(5);
-        assertThat(secondCreature.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(5);
     }
 
     @Test
@@ -111,8 +111,8 @@ class OverwhelmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creatures).allSatisfy(creature -> {
-            assertThat(creature.getEffectivePower()).isEqualTo(5);
-            assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+            assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
         });
         harness.assertInGraveyard(player1, "Overwhelm");
     }
@@ -125,8 +125,8 @@ class OverwhelmTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
     }
 
     @Test
@@ -143,7 +143,7 @@ class OverwhelmTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 }

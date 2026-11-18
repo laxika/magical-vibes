@@ -157,7 +157,7 @@ public class OpponentChoosesCardFromGraveyardToHandEffectHandler implements Norm
             Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             if (source != null) {
                 int manaValue = card.getManaValue();
-                source.setPowerModifier(source.getPowerModifier() + manaValue);
+                gameData.addPowerToughnessBoost(entry, source.getId(), manaValue, 0);
                 gameLogService.append(gameData, GameLog.builder()
                         .card(source.getCard())
                         .text(" gets +" + manaValue + "/+0 until end of turn.")

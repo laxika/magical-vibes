@@ -45,8 +45,8 @@ class HuntedBonebruteTest extends BaseCardTest {
             assertThat(dog.getCard().isToken()).isTrue();
             assertThat(dog.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(dog.getCard().getSubtypes()).contains(CardSubtype.DOG);
-            assertThat(dog.getEffectivePower()).isEqualTo(1);
-            assertThat(dog.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, dog)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, dog)).isEqualTo(1);
         });
     }
 

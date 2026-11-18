@@ -43,8 +43,8 @@ class FesterhideBoarTest extends BaseCardTest {
 
         Permanent boar = findPermanent(player1, "Festerhide Boar");
         assertThat(boar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(boar.getEffectivePower()).isEqualTo(5);
-        assertThat(boar.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, boar)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, boar)).isEqualTo(5);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -68,8 +68,8 @@ class FesterhideBoarTest extends BaseCardTest {
 
         Permanent boar = findPermanent(player1, "Festerhide Boar");
         assertThat(boar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(boar.getEffectivePower()).isEqualTo(5);
-        assertThat(boar.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, boar)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, boar)).isEqualTo(5);
         assertThat(gd.stack).isEmpty();
     }
 

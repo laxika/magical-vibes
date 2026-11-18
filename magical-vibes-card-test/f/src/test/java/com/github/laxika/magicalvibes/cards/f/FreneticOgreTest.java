@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -26,8 +27,8 @@ class FreneticOgreTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ogre.getPowerModifier()).isEqualTo(3);
-        assertThat(ogre.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ogre)).isEqualTo(0);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Forest");
     }
@@ -43,8 +44,8 @@ class FreneticOgreTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(ogre.getPowerModifier()).isEqualTo(0);
-        assertThat(ogre.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ogre)).isEqualTo(0);
     }
 
     @Test
@@ -59,11 +60,11 @@ class FreneticOgreTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(ogre.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(ogre.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isEqualTo(3);
     }
 
     @Test
@@ -92,8 +93,8 @@ class FreneticOgreTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(3);
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -122,12 +123,12 @@ class FreneticOgreTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
-        assertThat(ogre.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isZero();
 
         harness.passBothPriorities();
-        assertThat(ogre.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isEqualTo(3);
         harness.passBothPriorities();
-        assertThat(ogre.getPowerModifier()).isEqualTo(6);
-        assertThat(ogre.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ogre)).isZero();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.t.TundraWolves;
@@ -68,7 +69,7 @@ class ExileTest extends BaseCardTest {
     void lifeGainAccountsForToughnessModifiers() {
         harness.setLife(player2, 10);
         Permanent attacker = addAttacker(player1, new GrizzlyBears());
-        attacker.setToughnessModifier(3); // 2 + 3 = 5 effective toughness
+        PermanentGrants.setToughnessBoost(gd, attacker, 3); // 2 + 3 = 5 effective toughness
 
         castExile(attacker.getId());
         harness.passBothPriorities();
@@ -162,7 +163,7 @@ class ExileTest extends BaseCardTest {
         Permanent attacker = addAttacker(player1, new GrizzlyBears());
 
         castExile(attacker.getId());
-        attacker.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, attacker, 3);
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().exiledCards)

@@ -54,8 +54,7 @@ public class MillTargetPlayerAndBoostSelfByManaValueEffectHandler implements Nor
         }
 
         if (manaValue > 0) {
-            self.setPowerModifier(self.getPowerModifier() + manaValue);
-            self.setToughnessModifier(self.getToughnessModifier() + manaValue);
+            gameData.addPowerToughnessBoost(entry, self.getId(), manaValue, manaValue);
         }
 
         String milledNames = milled.stream().map(Card::getName).collect(java.util.stream.Collectors.joining(", "));

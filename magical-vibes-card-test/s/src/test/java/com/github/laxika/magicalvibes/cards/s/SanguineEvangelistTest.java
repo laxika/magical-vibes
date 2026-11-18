@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -32,8 +33,8 @@ class SanguineEvangelistTest extends BaseCardTest {
         assertThat(bat.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(bat.getCard().getSubtypes()).contains(CardSubtype.BAT);
         assertThat(bat.getCard().getKeywords()).contains(Keyword.FLYING);
-        assertThat(bat.getEffectivePower()).isEqualTo(1);
-        assertThat(bat.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bat)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bat)).isEqualTo(1);
     }
 
     @Test
@@ -61,9 +62,9 @@ class SanguineEvangelistTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
 
-        assertThat(evangelist.getPowerModifier()).isZero();
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, evangelist)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
     }
 
     private void castEvangelist() {
@@ -100,18 +101,18 @@ class SanguineEvangelistTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(evangelist.getPowerModifier()).isZero();
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isZero();
-        assertThat(nonattacker.getPowerModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, evangelist)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(TurnStep.END_STEP);
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
         harness.passUntil(TurnStep.CLEANUP);
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -130,12 +131,12 @@ class SanguineEvangelistTest extends BaseCardTest {
         });
 
         harness.assertNotOnBattlefield(player1, "Sanguine Evangelist");
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         Permanent bat = findPermanent(player1, "Bat");
         assertThat(bat.isAttacking()).isFalse();
-        assertThat(bat.getEffectivePower()).isEqualTo(1);
-        assertThat(bat.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bat)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bat)).isEqualTo(1);
     }
 
     @Test
@@ -149,11 +150,11 @@ class SanguineEvangelistTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 }

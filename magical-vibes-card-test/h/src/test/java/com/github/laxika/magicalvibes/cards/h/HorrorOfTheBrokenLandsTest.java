@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Censor;
 import com.github.laxika.magicalvibes.cards.m.MiasmicMummy;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,8 +31,8 @@ class HorrorOfTheBrokenLandsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the boost trigger
 
         Permanent horror = getHorror();
-        assertThat(horror.getPowerModifier()).isEqualTo(2);
-        assertThat(horror.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, horror)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, horror)).isEqualTo(1);
     }
 
     @Test
@@ -48,8 +49,8 @@ class HorrorOfTheBrokenLandsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent horror = getHorror();
-        assertThat(horror.getPowerModifier()).isEqualTo(4);
-        assertThat(horror.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, horror)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, horror)).isEqualTo(2);
     }
 
     @Test
@@ -64,13 +65,13 @@ class HorrorOfTheBrokenLandsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent horror = getHorror();
-        assertThat(horror.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, horror)).isEqualTo(2);
 
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(horror.getPowerModifier()).isEqualTo(0);
-        assertThat(horror.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, horror)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, horror)).isEqualTo(0);
     }
 
     @Test
@@ -101,8 +102,8 @@ class HorrorOfTheBrokenLandsTest extends BaseCardTest {
         harness.activateHandAbility(player2, 0, null);
         harness.passBothPriorities();
 
-        assertThat(getHorror().getPowerModifier()).isZero();
-        assertThat(getHorror().getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, getHorror())).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, getHorror())).isZero();
         harness.assertInHand(player2, "Censor");
     }
 
@@ -122,8 +123,8 @@ class HorrorOfTheBrokenLandsTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Censor");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(getHorror().getPowerModifier()).isEqualTo(2);
-        assertThat(getHorror().getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, getHorror())).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, getHorror())).isEqualTo(1);
     }
 
     private Permanent getHorror() {

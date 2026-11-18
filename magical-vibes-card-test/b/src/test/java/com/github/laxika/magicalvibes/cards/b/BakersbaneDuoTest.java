@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -47,8 +48,8 @@ class BakersbaneDuoTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(findPermanent(player1, "Bakersbane Duo").getPowerModifier()).isEqualTo(1);
-        assertThat(findPermanent(player1, "Bakersbane Duo").getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Bakersbane Duo"))).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player1, "Bakersbane Duo"))).isEqualTo(1);
     }
 
     @Test
@@ -65,8 +66,8 @@ class BakersbaneDuoTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(findPermanent(player1, "Bakersbane Duo").getPowerModifier()).isZero();
-        assertThat(findPermanent(player1, "Bakersbane Duo").getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Bakersbane Duo"))).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player1, "Bakersbane Duo"))).isZero();
     }
 
     @Test
@@ -90,8 +91,8 @@ class BakersbaneDuoTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 13);
-        assertThat(findPermanent(player1, "Bakersbane Duo").getPowerModifier()).isZero();
-        assertThat(findPermanent(player1, "Bakersbane Duo").getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Bakersbane Duo"))).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player1, "Bakersbane Duo"))).isZero();
     }
 
     @Test
@@ -112,13 +113,13 @@ class BakersbaneDuoTest extends BaseCardTest {
                 harness.passBothPriorities();
                 harness.passBothPriorities();
             }
-            assertThat(duo.getPowerModifier()).isEqualTo(i == 0 ? 0 : 1);
-            assertThat(duo.getToughnessModifier()).isEqualTo(i == 0 ? 0 : 1);
+            assertThat(PermanentGrants.powerBoostOf(gd, duo)).isEqualTo(i == 0 ? 0 : 1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, duo)).isEqualTo(i == 0 ? 0 : 1);
         }
 
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(duo.getPowerModifier()).isZero();
-        assertThat(duo.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, duo)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo)).isZero();
     }
 
     @Test
@@ -140,8 +141,8 @@ class BakersbaneDuoTest extends BaseCardTest {
             }
         }
 
-        assertThat(duo.getPowerModifier()).isZero();
-        assertThat(duo.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, duo)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo)).isZero();
     }
 
     @Test
@@ -162,13 +163,13 @@ class BakersbaneDuoTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().getName().equals("Bakersbane Duo") && p != first)
                 .singleElement()
                 .satisfies(p -> {
-                    assertThat(p.getPowerModifier()).isZero();
-                    assertThat(p.getToughnessModifier()).isZero();
+                    assertThat(PermanentGrants.powerBoostOf(gd, p)).isZero();
+                    assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isZero();
                 });
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -89,7 +90,7 @@ class ArnynDeathbloomBotanistTest extends BaseCardTest {
     void allyWithOnlyLowPowerTriggers() {
         harness.addToBattlefield(player1, new ArnynDeathbloomBotanist());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, bears, -1);
 
         killWithShock(bears.getId());
         chooseOpponentAndResolveDrain();
@@ -99,7 +100,7 @@ class ArnynDeathbloomBotanistTest extends BaseCardTest {
     void allyWithOnlyLowToughnessTriggers() {
         harness.addToBattlefield(player1, new ArnynDeathbloomBotanist());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setToughnessModifier(-1);
+        PermanentGrants.setToughnessBoost(gd, bears, -1);
 
         killWithShock(bears.getId());
         chooseOpponentAndResolveDrain();
@@ -108,7 +109,7 @@ class ArnynDeathbloomBotanistTest extends BaseCardTest {
     @Test
     void ownDeathWithReducedPowerTriggersExactlyOnce() {
         Permanent arnyn = harness.addToBattlefieldAndReturn(player1, new ArnynDeathbloomBotanist());
-        arnyn.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, arnyn, -1);
 
         killWithShock(arnyn.getId());
         chooseOpponentAndResolveDrain();
@@ -120,8 +121,8 @@ class ArnynDeathbloomBotanistTest extends BaseCardTest {
     void boostedSmallCreatureDoesNotQualifyByPrintedStats() {
         harness.addToBattlefield(player1, new ArnynDeathbloomBotanist());
         Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
-        elves.setPowerModifier(1);
-        elves.setToughnessModifier(1);
+        PermanentGrants.setPowerBoost(gd, elves, 1);
+        PermanentGrants.setToughnessBoost(gd, elves, 1);
 
         killWithShock(elves.getId());
 
@@ -135,7 +136,7 @@ class ArnynDeathbloomBotanistTest extends BaseCardTest {
     void zeroToughnessDeathTriggersWithoutDamage() {
         harness.addToBattlefield(player1, new ArnynDeathbloomBotanist());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setToughnessModifier(-2);
+        PermanentGrants.setToughnessBoost(gd, bears, -2);
 
         harness.runStateBasedActions();
         harness.assertInGraveyard(player1, "Grizzly Bears");

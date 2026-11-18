@@ -32,8 +32,8 @@ class ThranduilTheStrategistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent token = findPermanent(player1, "Elf");
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ELF);
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KrenkoMobBoss;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
@@ -62,7 +63,7 @@ class ErthaJoFrontierMentorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -133,8 +134,8 @@ class ErthaJoFrontierMentorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(ertha.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ertha)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -151,7 +152,7 @@ class ErthaJoFrontierMentorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, battlefieldIndex(player1, mercenary), 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -172,7 +173,7 @@ class ErthaJoFrontierMentorTest extends BaseCardTest {
                 player1, battlefieldIndex(player1, mercenary), 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery speed");
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

@@ -60,7 +60,7 @@ class GreaterGoodTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, tree.getId());
         harness.passBothPriorities();
 
-        assertThat(behemoth.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(5);
 
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);

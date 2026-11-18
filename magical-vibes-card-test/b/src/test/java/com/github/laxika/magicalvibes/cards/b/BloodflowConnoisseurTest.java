@@ -27,8 +27,8 @@ class BloodflowConnoisseurTest extends BaseCardTest {
 
         Permanent connoisseur = findPermanent(player1, "Bloodflow Connoisseur");
         assertThat(connoisseur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(connoisseur.getEffectivePower()).isEqualTo(2);
-        assertThat(connoisseur.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, connoisseur)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, connoisseur)).isEqualTo(2);
     }
 
     @Test

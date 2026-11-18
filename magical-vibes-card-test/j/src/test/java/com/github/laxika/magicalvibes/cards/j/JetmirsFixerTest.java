@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -33,8 +34,8 @@ class JetmirsFixerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(fixer.getPowerModifier()).isEqualTo(1);
-        assertThat(fixer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, fixer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fixer)).isEqualTo(1);
         assertThat(fixer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -52,8 +53,8 @@ class JetmirsFixerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(fixer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(fixer.getPowerModifier()).isZero();
-        assertThat(fixer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fixer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fixer)).isZero();
     }
 
     private void activateTreasureAndChooseColor(String color) {
@@ -77,8 +78,8 @@ class JetmirsFixerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(fixer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(fixer.getPowerModifier()).isZero();
-        assertThat(fixer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fixer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fixer)).isZero();
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(fixer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -99,13 +100,13 @@ class JetmirsFixerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(fixer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(fixer.getPowerModifier()).isEqualTo(1);
-        assertThat(fixer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, fixer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fixer)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(fixer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(fixer.getPowerModifier()).isZero();
-        assertThat(fixer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fixer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fixer)).isZero();
     }
 
     private void addTreasureToken(Player player) {

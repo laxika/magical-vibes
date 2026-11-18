@@ -99,8 +99,8 @@ class DeviantSkytechTest extends BaseCardTest {
         List<Permanent> thopters = findPermanents(player1, "Thopter");
         assertThat(thopters).hasSize(count);
         assertThat(thopters).allSatisfy(thopter -> {
-            assertThat(thopter.getEffectivePower()).isEqualTo(1);
-            assertThat(thopter.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(1);
             assertThat(thopter.getCard().getColor()).isNull();
             assertThat(thopter.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(thopter.getCard().hasType(CardType.ARTIFACT)).isTrue();

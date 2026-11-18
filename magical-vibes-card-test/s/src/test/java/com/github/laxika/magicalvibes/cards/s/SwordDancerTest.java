@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,10 +31,10 @@ class SwordDancerTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(attacker.getPowerModifier()).isEqualTo(-1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
-        assertThat(attacker.getEffectivePower()).isEqualTo(1);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -46,10 +47,10 @@ class SwordDancerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, swordDancer.getId());
         harness.passBothPriorities();
 
-        assertThat(swordDancer.getPowerModifier()).isEqualTo(-1);
-        assertThat(swordDancer.getToughnessModifier()).isZero();
-        assertThat(swordDancer.getEffectivePower()).isZero();
-        assertThat(swordDancer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, swordDancer)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, swordDancer)).isZero();
+        assertThat(gqs.getEffectivePower(gd, swordDancer)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, swordDancer)).isEqualTo(2);
     }
 
     @Test
@@ -74,14 +75,14 @@ class SwordDancerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(0);
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -111,8 +112,8 @@ class SwordDancerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(-2);
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -127,8 +128,8 @@ class SwordDancerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -144,8 +145,8 @@ class SwordDancerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getEffectivePower()).isEqualTo(1);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         assertThat(swordDancer.isTapped()).isTrue();
     }
 
@@ -163,8 +164,8 @@ class SwordDancerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(swordDancer);
-        assertThat(attacker.getEffectivePower()).isEqualTo(1);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -178,8 +179,8 @@ class SwordDancerTest extends BaseCardTest {
         harness.passBothPriorities();
         attacker.setAttacking(false);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(1);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     private Permanent addAttackingCreature(Player player) {

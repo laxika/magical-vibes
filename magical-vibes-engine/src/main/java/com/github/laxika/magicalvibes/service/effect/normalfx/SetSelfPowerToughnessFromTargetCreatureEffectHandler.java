@@ -51,9 +51,6 @@ public class SetSelfPowerToughnessFromTargetCreatureEffectHandler implements Nor
         int toughness = gameQueryService.getEffectivePower(gameData, target) + e.toughnessFromTargetPowerOffset();
 
         var setter = new SetBasePowerToughnessEffect(power, toughness, GrantScope.SELF);
-        source.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
-        source.setBasePowerOverride(power);
-        source.setBaseToughnessOverride(toughness);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 setter, source.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));

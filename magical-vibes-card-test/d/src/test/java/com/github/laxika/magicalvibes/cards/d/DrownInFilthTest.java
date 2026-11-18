@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -50,15 +51,15 @@ class DrownInFilthTest extends BaseCardTest {
         castWithLibrary(
                 List.of(new Forest(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()), bearId);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(1);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -97,8 +98,8 @@ class DrownInFilthTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(land, nonland);
-        assertThat(bear.getEffectivePower()).isEqualTo(1);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(1);
         harness.assertLife(player1, 20);
     }
 
@@ -113,8 +114,8 @@ class DrownInFilthTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(library.get(4));
         assertThat(gd.playerGraveyards.get(player1.getId())).containsAll(library.subList(0, 4));
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -124,11 +125,11 @@ class DrownInFilthTest extends BaseCardTest {
         castWithLibrary(List.of(new Forest()), bear.getId());
         harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest()));
 
-        assertThat(bear.getEffectivePower()).isEqualTo(1);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(1);
         harness.setGraveyard(player1, List.of());
-        assertThat(bear.getEffectivePower()).isEqualTo(1);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(1);
     }
 
     @Test

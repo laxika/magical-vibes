@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GustcloakSentinel;
 import com.github.laxika.magicalvibes.cards.k.KrosanColossus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -42,10 +43,10 @@ class DeathPulseTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-4);
-        assertThat(target.getToughnessModifier()).isEqualTo(-4);
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -61,8 +62,8 @@ class DeathPulseTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
         harness.assertInGraveyard(player1, "Death Pulse");
         harness.assertInHand(player1, "Gustcloak Sentinel");
     }
@@ -110,13 +111,13 @@ class DeathPulseTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
 
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -142,8 +143,8 @@ class DeathPulseTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         harness.assertNotInHand(player1, "Krosan Colossus");
 
         harness.passBothPriorities();
@@ -179,12 +180,12 @@ class DeathPulseTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
 
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(9);
-        assertThat(target.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(9);
     }
 
     private void cycleTarget(java.util.UUID targetId) {

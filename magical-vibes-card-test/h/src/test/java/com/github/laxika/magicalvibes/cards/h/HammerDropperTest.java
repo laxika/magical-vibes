@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SureStrike;
 import com.github.laxika.magicalvibes.cards.v.VernadiShieldmate;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -113,7 +114,7 @@ class HammerDropperTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         harness.handlePermanentChosen(player1, attacker.getId());
-        hammerDropper.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, hammerDropper, -1);
         harness.passBothPriorities();
 
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

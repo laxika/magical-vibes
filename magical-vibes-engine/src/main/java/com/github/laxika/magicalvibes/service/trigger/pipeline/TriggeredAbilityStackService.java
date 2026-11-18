@@ -258,7 +258,8 @@ public class TriggeredAbilityStackService extends StackDoor {
         boolean alternateCost = candidate.sourcePermanent() != null && candidate.sourcePermanent().isAlternateCost();
         Permanent lastKnown = event.permanent();
         int power = lastKnown == null ? 0
-                : lastKnown.getLastKnownPower() != null ? lastKnown.getLastKnownPower() : lastKnown.getEffectivePower();
+                : lastKnown.getLastKnownPower() != null ? lastKnown.getLastKnownPower()
+                : gameQueryService.ownPower(gameData, lastKnown);
         int manaValue = lastKnown != null ? lastKnown.getCard().getManaValue() : card.getManaValue();
         Card movedCard = event.leftBattlefield() && lastKnown != null && lastKnown.getOriginalCard() != null
                 ? lastKnown.getOriginalCard() : card;
@@ -1648,7 +1649,8 @@ public class TriggeredAbilityStackService extends StackDoor {
         }
         Permanent entered = event.leftBattlefield() ? null : gameQueryService.findPermanentById(gameData, moved.getId());
         int power = entered != null ? gameQueryService.getEffectivePower(gameData, entered)
-                : moved.getLastKnownPower() != null ? moved.getLastKnownPower() : moved.getEffectivePower();
+                : moved.getLastKnownPower() != null ? moved.getLastKnownPower()
+                : gameQueryService.ownPower(gameData, moved);
         return context.withTriggeringPermanentId(moved.getId())
                 .withTriggeringPermanentPowerAtTrigger(Math.max(0, power));
     }

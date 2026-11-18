@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DuskLegionDreadnought;
 import com.github.laxika.magicalvibes.cards.t.TrainedArynx;
 import com.github.laxika.magicalvibes.cards.w.WallOfIce;
@@ -40,8 +41,8 @@ class GiantOxTest extends BaseCardTest {
     void usesModifiedToughnessEvenWhenPowerWouldBeEnough() {
         addCreatureReady(player1, new DuskLegionDreadnought());
         Permanent ox = addCreatureReady(player1, new GiantOx());
-        ox.setToughnessModifier(-5);
-        ox.setPowerModifier(5);
+        PermanentGrants.setToughnessBoost(gd, ox, -5);
+        PermanentGrants.setPowerBoost(gd, ox, 5);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

@@ -389,9 +389,8 @@ class PermanentViewFactoryTest {
         printed.setToughness(2);
         Permanent creature = new Permanent(printed);
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        creature.setPowerModifier(1);
 
-        PermanentView view = factory.create(creature, 3, 0, Set.of(), false, List.of());
+        PermanentView view = factory.create(creature, 4, 0, Set.of(), false, List.of());
 
         assertThat(view.counters()).containsEntry(CounterType.PLUS_ONE_PLUS_ONE, 2);
         assertThat(view.powerModifier()).isEqualTo(4);

@@ -31,8 +31,8 @@ class CameraLauncherTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Thopter");
         assertThat(launcher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.getCard().getColor()).isNull();
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.THOPTER);
         assertThat(gqs.isArtifact(gd, token)).isTrue();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -35,8 +36,8 @@ class TattermungeDuoTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities(); // resolve the +1/+1 trigger
 
-        assertThat(duo.getPowerModifier()).isEqualTo(1);
-        assertThat(duo.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, duo, Keyword.FORESTWALK)).isFalse();
     }
 
@@ -49,13 +50,13 @@ class TattermungeDuoTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(duo.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(duo.getPowerModifier()).isEqualTo(0);
-        assertThat(duo.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo)).isEqualTo(0);
     }
 
     @Test
@@ -69,7 +70,7 @@ class TattermungeDuoTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the forestwalk trigger
 
         assertThat(gqs.hasKeyword(gd, duo, Keyword.FORESTWALK)).isTrue();
-        assertThat(duo.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo)).isEqualTo(0);
     }
 
     @Test
@@ -105,13 +106,13 @@ class TattermungeDuoTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TattermungeDuo()));
 
         harness.castCreature(player1, 0);
-        assertThat(duo.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, duo)).isZero();
         assertThat(gqs.hasKeyword(gd, duo, Keyword.FORESTWALK)).isFalse();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(duo.getPowerModifier()).isEqualTo(1);
-        assertThat(duo.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, duo, Keyword.FORESTWALK)).isTrue();
     }
 
@@ -125,8 +126,8 @@ class TattermungeDuoTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(duo.getPowerModifier()).isZero();
-        assertThat(duo.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, duo)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo)).isZero();
         assertThat(gqs.hasKeyword(gd, duo, Keyword.FORESTWALK)).isFalse();
     }
 
@@ -144,8 +145,8 @@ class TattermungeDuoTest extends BaseCardTest {
         Permanent duo = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
                 .findFirst().orElseThrow();
-        assertThat(duo.getPowerModifier()).isZero();
-        assertThat(duo.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, duo)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo)).isZero();
         assertThat(gqs.hasKeyword(gd, duo, Keyword.FORESTWALK)).isFalse();
     }
 
@@ -161,8 +162,8 @@ class TattermungeDuoTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(duo.getPowerModifier()).isEqualTo(2);
-        assertThat(duo.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, duo)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duo)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, duo, Keyword.FORESTWALK)).isFalse();
     }
 }

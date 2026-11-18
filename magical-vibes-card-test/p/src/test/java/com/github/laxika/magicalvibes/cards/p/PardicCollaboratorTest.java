@@ -28,8 +28,8 @@ class PardicCollaboratorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(collaborator.getEffectivePower()).isEqualTo(3);
-        assertThat(collaborator.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, collaborator)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, collaborator)).isEqualTo(3);
     }
 
     @Test
@@ -43,8 +43,8 @@ class PardicCollaboratorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(collaborator.getEffectivePower()).isEqualTo(4);
-        assertThat(collaborator.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, collaborator)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, collaborator)).isEqualTo(4);
     }
 
     @Test
@@ -57,10 +57,10 @@ class PardicCollaboratorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(collaborator.getEffectivePower()).isEqualTo(3);
-        assertThat(collaborator.getEffectiveToughness()).isEqualTo(3);
-        assertThat(otherCollaborator.getEffectivePower()).isEqualTo(2);
-        assertThat(otherCollaborator.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, collaborator)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, collaborator)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, otherCollaborator)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherCollaborator)).isEqualTo(2);
     }
 
     @Test
@@ -88,8 +88,8 @@ class PardicCollaboratorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(collaborator.getEffectivePower()).isEqualTo(2);
-        assertThat(collaborator.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, collaborator)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, collaborator)).isEqualTo(2);
     }
 
     @Test
@@ -110,14 +110,14 @@ class PardicCollaboratorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(collaborator.getEffectivePower()).isEqualTo(2);
-        assertThat(collaborator.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, collaborator)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, collaborator)).isEqualTo(2);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(collaborator.getEffectivePower()).isEqualTo(3);
-        assertThat(collaborator.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, collaborator)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, collaborator)).isEqualTo(3);
     }
 
     @Test
@@ -131,8 +131,8 @@ class PardicCollaboratorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(collaborator.getEffectivePower()).isEqualTo(3);
-        assertThat(collaborator.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, collaborator)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, collaborator)).isEqualTo(3);
         assertThat(collaborator.isTapped()).isTrue();
     }
 

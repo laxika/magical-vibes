@@ -58,7 +58,7 @@ class JuganTheRisingStarTest extends BaseCardTest {
 
         assertThat(ownBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(oppGiant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(oppGiant.getEffectivePower()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, oppGiant)).isEqualTo(7);
     }
 
     @Test

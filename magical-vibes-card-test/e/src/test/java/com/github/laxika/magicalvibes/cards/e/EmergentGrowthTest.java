@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
@@ -40,10 +41,10 @@ class EmergentGrowthTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getPowerModifier()).isEqualTo(5);
-        assertThat(bears.getToughnessModifier()).isEqualTo(5);
-        assertThat(bears.getEffectivePower()).isEqualTo(7);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(7);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(7);
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
         // "must be blocked if able" is satisfied by one blocker — it must not become the Lure-style
         // "all creatures able to block it do so".
@@ -119,8 +120,8 @@ class EmergentGrowthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
@@ -188,8 +189,8 @@ class EmergentGrowthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(7);
-        assertThat(target.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 

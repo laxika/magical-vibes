@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -42,10 +43,10 @@ class RazorclawBearTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(5);
     }
 
     @Test
@@ -62,8 +63,8 @@ class RazorclawBearTest extends BaseCardTest {
         ));
         resolveAllTriggers();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -75,8 +76,8 @@ class RazorclawBearTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -89,15 +90,15 @@ class RazorclawBearTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -115,20 +116,20 @@ class RazorclawBearTest extends BaseCardTest {
         ));
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(firstBear.getPowerModifier()).isZero();
-        assertThat(firstBear.getToughnessModifier()).isZero();
-        assertThat(secondBear.getPowerModifier()).isZero();
-        assertThat(secondBear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstBear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstBear)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, secondBear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondBear)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(firstBear.getPowerModifier()).isEqualTo(2);
-        assertThat(firstBear.getToughnessModifier()).isEqualTo(2);
-        assertThat(secondBear.getPowerModifier()).isEqualTo(2);
-        assertThat(secondBear.getToughnessModifier()).isEqualTo(2);
-        assertThat(firstBlocker.getPowerModifier()).isZero();
-        assertThat(firstBlocker.getToughnessModifier()).isZero();
-        assertThat(secondBlocker.getPowerModifier()).isZero();
-        assertThat(secondBlocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstBear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstBear)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondBear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondBear)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstBlocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstBlocker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, secondBlocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondBlocker)).isZero();
     }
 }

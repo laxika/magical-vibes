@@ -27,15 +27,15 @@ class SwordOfTheChosenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sword.isTapped()).isTrue();
-        assertThat(queen.getEffectivePower()).isEqualTo(9);
-        assertThat(queen.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, queen)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, queen)).isEqualTo(9);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(queen.getEffectivePower()).isEqualTo(7);
-        assertThat(queen.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, queen)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, queen)).isEqualTo(7);
     }
 
     @Test
@@ -97,8 +97,8 @@ class SwordOfTheChosenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sword.isTapped()).isTrue();
-        assertThat(queen.getEffectivePower()).isEqualTo(9);
-        assertThat(queen.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, queen)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, queen)).isEqualTo(9);
     }
 
     @Test
@@ -115,8 +115,8 @@ class SwordOfTheChosenTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(sword.getCard());
         harness.passBothPriorities();
 
-        assertThat(queen.getEffectivePower()).isEqualTo(9);
-        assertThat(queen.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, queen)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, queen)).isEqualTo(9);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -135,8 +135,8 @@ class SwordOfTheChosenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sword.isTapped()).isTrue();
-        assertThat(returnedQueen.getEffectivePower()).isEqualTo(7);
-        assertThat(returnedQueen.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, returnedQueen)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, returnedQueen)).isEqualTo(7);
         assertThat(gd.stack).isEmpty();
     }
 }

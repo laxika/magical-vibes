@@ -31,8 +31,8 @@ class GelatinousGenesisTest extends BaseCardTest {
         assertThat(tokens).hasSize(3).allSatisfy(token -> {
             assertThat(token.getCard().isToken()).isTrue();
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.OOZE);
-            assertThat(token.getEffectivePower()).isEqualTo(3);
-            assertThat(token.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         });
     }
 
@@ -65,8 +65,8 @@ class GelatinousGenesisTest extends BaseCardTest {
             assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.OOZE);
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
             assertThat(token.isTapped()).isFalse();
         });
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();

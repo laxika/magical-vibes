@@ -30,8 +30,8 @@ class ShipbreakerKrakenTest extends BaseCardTest {
 
         assertThat(kraken.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(kraken.isMonstrous()).isTrue();
-        assertThat(kraken.getEffectivePower()).isEqualTo(10);
-        assertThat(kraken.getEffectiveToughness()).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, kraken)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, kraken)).isEqualTo(10);
     }
 
     @Test

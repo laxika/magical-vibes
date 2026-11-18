@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -28,7 +29,7 @@ class MomentOfValorTest extends BaseCardTest {
         cast(0, target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
@@ -42,7 +43,7 @@ class MomentOfValorTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -77,8 +78,8 @@ class MomentOfValorTest extends BaseCardTest {
         cast(1, target);
 
         harness.assertOnBattlefield(player1, "Air Elemental");
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
@@ -86,7 +87,7 @@ class MomentOfValorTest extends BaseCardTest {
     @DisplayName("Second mode checks current power when choosing a target")
     void secondModeDestroysCreatureWhosePowerWasIncreasedToFour() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
 
         cast(1, target);
 
@@ -101,7 +102,7 @@ class MomentOfValorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.castInstant(player1, 0, 1, target.getId());
 
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Air Elemental");

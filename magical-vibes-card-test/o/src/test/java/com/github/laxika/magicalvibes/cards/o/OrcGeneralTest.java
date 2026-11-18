@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.g.GoblinRockSled;
 import com.github.laxika.magicalvibes.cards.s.Squire;
@@ -38,22 +39,22 @@ class OrcGeneralTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificed.getCard());
         assertThat(general.isTapped()).isTrue();
-        assertThat(general.getPowerModifier()).isZero();
-        assertThat(allyOrc.getPowerModifier()).isEqualTo(1);
-        assertThat(allyOrc.getToughnessModifier()).isEqualTo(1);
-        assertThat(opponentOrc.getPowerModifier()).isEqualTo(1);
-        assertThat(opponentOrc.getToughnessModifier()).isEqualTo(1);
-        assertThat(nonOrc.getPowerModifier()).isZero();
-        assertThat(nonOrc.getToughnessModifier()).isZero();
-        assertThat(nonOrcGoblin.getPowerModifier()).isZero();
-        assertThat(nonOrcGoblin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, general)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, allyOrc)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, allyOrc)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentOrc)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentOrc)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonOrc)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonOrc)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonOrcGoblin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonOrcGoblin)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(allyOrc.getPowerModifier()).isZero();
-        assertThat(opponentOrc.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, allyOrc)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentOrc)).isZero();
     }
 
     @Test
@@ -89,9 +90,9 @@ class OrcGeneralTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(goblin.getCard());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(goblin);
         assertThat(general.isTapped()).isTrue();
-        assertThat(otherOrc.getPowerModifier()).isEqualTo(1);
-        assertThat(otherOrc.getToughnessModifier()).isEqualTo(1);
-        assertThat(general.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherOrc)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherOrc)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, general)).isZero();
     }
 
     @Test
@@ -103,15 +104,15 @@ class OrcGeneralTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(general), null, null);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificed.getCard());
-        assertThat(otherOrc.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherOrc)).isZero();
 
         harness.passBothPriorities();
         Permanent laterOrc = addCreatureReady(player1, new OrcGeneral());
 
-        assertThat(otherOrc.getPowerModifier()).isEqualTo(1);
-        assertThat(otherOrc.getToughnessModifier()).isEqualTo(1);
-        assertThat(laterOrc.getPowerModifier()).isZero();
-        assertThat(laterOrc.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherOrc)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherOrc)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, laterOrc)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterOrc)).isZero();
     }
 
     @Test

@@ -31,8 +31,8 @@ class BalothCageTrapTest extends BaseCardTest {
         Permanent beast = findPermanent(player1, "Beast");
         assertThat(beast.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(beast.getCard().getSubtypes()).contains(CardSubtype.BEAST);
-        assertThat(beast.getEffectivePower()).isEqualTo(4);
-        assertThat(beast.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(4);
     }
 
     @Test

@@ -51,16 +51,16 @@ class SeekersFollyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 1, (UUID) null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getEffectivePower()).isEqualTo(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getEffectiveToughness()).isEqualTo(2);
-        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, gd.playerBattlefields.get(player1.getId()).getFirst())).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gd.playerBattlefields.get(player1.getId()).getFirst())).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, gd.playerBattlefields.get(player2.getId()).getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, gd.playerBattlefields.get(player2.getId()).getFirst())).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectivePower()).isEqualTo(2);
-        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, gd.playerBattlefields.get(player2.getId()).getFirst())).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gd.playerBattlefields.get(player2.getId()).getFirst())).isEqualTo(2);
     }
 
     @Test
@@ -79,7 +79,7 @@ class SeekersFollyTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(keptCard);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
         harness.assertInHand(player1, "Llanowar Elves");
-        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gd.playerBattlefields.get(player2.getId()).getFirst())).isEqualTo(2);
     }
 
     @Test
@@ -139,8 +139,8 @@ class SeekersFollyTest extends BaseCardTest {
         harness.passBothPriorities();
         var laterCreature = harness.enterBattlefieldAndReturn(player2, new BearCub());
 
-        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectiveToughness()).isEqualTo(1);
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gd.playerBattlefields.get(player2.getId()).getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
     }
 }

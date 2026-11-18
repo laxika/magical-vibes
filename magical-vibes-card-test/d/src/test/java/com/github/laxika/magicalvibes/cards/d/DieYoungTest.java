@@ -34,8 +34,8 @@ class DieYoungTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 2);
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -47,8 +47,8 @@ class DieYoungTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 0);
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -58,14 +58,14 @@ class DieYoungTest extends BaseCardTest {
         cast(target);
         harness.handleXValueChosen(player1, 1);
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -112,8 +112,8 @@ class DieYoungTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 3);
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Die Young");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -141,8 +141,8 @@ class DieYoungTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 1);
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     private void cast(Permanent target) {

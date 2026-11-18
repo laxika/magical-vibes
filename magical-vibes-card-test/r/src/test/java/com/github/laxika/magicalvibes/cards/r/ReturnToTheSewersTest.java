@@ -71,7 +71,7 @@ class ReturnToTheSewersTest extends BaseCardTest {
                 recipient.getId());
         harness.passBothPriorities();
 
-        assertThat(recipient.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, recipient)).isEqualTo(3);
         assertThat(findMutagen(player1)).isNull();
     }
 
@@ -142,7 +142,7 @@ class ReturnToTheSewersTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(findMutagen(player1)).isSameAs(mutagen);
-        assertThat(recipient.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, recipient)).isEqualTo(2);
     }
 
     @Test
@@ -163,8 +163,8 @@ class ReturnToTheSewersTest extends BaseCardTest {
         assertThat(findMutagen(player1)).isNull();
         harness.passBothPriorities();
 
-        assertThat(recipient.getEffectivePower()).isEqualTo(3);
-        assertThat(recipient.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, recipient)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, recipient)).isEqualTo(3);
     }
 
     @Test

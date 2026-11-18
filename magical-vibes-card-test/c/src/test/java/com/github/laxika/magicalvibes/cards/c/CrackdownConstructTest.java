@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AethergeodeMiner;
 import com.github.laxika.magicalvibes.cards.d.DruidOfTheCowl;
 import com.github.laxika.magicalvibes.cards.i.ImplementOfCombustion;
@@ -39,8 +40,8 @@ class CrackdownConstructTest extends BaseCardTest {
         harness.activateAbility(player1, 2, null, null);
         resolveAllTriggers();
 
-        assertThat(construct.getPowerModifier()).isEqualTo(2);
-        assertThat(construct.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, construct)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, construct)).isEqualTo(2);
     }
 
     @Test
@@ -52,8 +53,8 @@ class CrackdownConstructTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(construct.getPowerModifier()).isZero();
-        assertThat(construct.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, construct)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, construct)).isZero();
     }
 
     @Test
@@ -65,8 +66,8 @@ class CrackdownConstructTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(construct.getPowerModifier()).isZero();
-        assertThat(construct.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, construct)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, construct)).isZero();
     }
 
     @Test
@@ -79,17 +80,17 @@ class CrackdownConstructTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(construct.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, construct)).isZero();
         harness.passBothPriorities();
-        assertThat(construct.getPowerModifier()).isEqualTo(1);
-        assertThat(construct.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, construct)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, construct)).isEqualTo(1);
         harness.assertLife(player2, 20);
 
         resolveAllTriggers();
         harness.assertLife(player2, 19);
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(construct.getPowerModifier()).isZero();
-        assertThat(construct.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, construct)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, construct)).isZero();
     }
 
     @Test
@@ -102,8 +103,8 @@ class CrackdownConstructTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         resolveAllTriggers();
 
-        assertThat(construct.getPowerModifier()).isEqualTo(1);
-        assertThat(construct.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, construct)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, construct)).isEqualTo(1);
     }
 
     @Test
@@ -118,8 +119,8 @@ class CrackdownConstructTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Implement of Combustion");
         resolveAllTriggers();
 
-        assertThat(construct.getPowerModifier()).isEqualTo(1);
-        assertThat(construct.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, construct)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, construct)).isEqualTo(1);
         harness.assertLife(player2, 19);
     }
 
@@ -134,8 +135,8 @@ class CrackdownConstructTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
 
-        assertThat(construct.getPowerModifier()).isZero();
-        assertThat(construct.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, construct)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, construct)).isZero();
     }
 
     @Test
@@ -148,8 +149,8 @@ class CrackdownConstructTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(construct.getPowerModifier()).isZero();
-        assertThat(construct.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, construct)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, construct)).isZero();
     }
 
     private void addPermanentWithAbility(Player player, CardType type, CardEffect effect) {

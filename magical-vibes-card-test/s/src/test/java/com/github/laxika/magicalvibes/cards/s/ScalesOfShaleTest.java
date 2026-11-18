@@ -31,8 +31,8 @@ class ScalesOfShaleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player1, 0, lizard.getId());
 
-        assertThat(lizard.getEffectivePower()).isEqualTo(5);
-        assertThat(lizard.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, lizard)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, lizard)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, lizard, Keyword.LIFELINK)).isTrue();
         assertThat(gqs.hasKeyword(gd, lizard, Keyword.INDESTRUCTIBLE)).isTrue();
     }
@@ -51,8 +51,8 @@ class ScalesOfShaleTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(lizard.getEffectivePower()).isEqualTo(3);
-        assertThat(lizard.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, lizard)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, lizard)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, lizard, Keyword.LIFELINK)).isFalse();
         assertThat(gqs.hasKeyword(gd, lizard, Keyword.INDESTRUCTIBLE)).isFalse();
     }
@@ -94,7 +94,7 @@ class ScalesOfShaleTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
@@ -121,8 +121,8 @@ class ScalesOfShaleTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }

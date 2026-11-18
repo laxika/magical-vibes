@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -56,8 +57,8 @@ class LatticeBladeMantisTest extends BaseCardTest {
 
         assertThat(mantis.getCounterCount(CounterType.OIL)).isEqualTo(1);
         assertThat(mantis.isTapped()).isTrue();
-        assertThat(mantis.getPowerModifier()).isZero();
-        assertThat(mantis.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mantis)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mantis)).isZero();
     }
 
     @Test
@@ -72,8 +73,8 @@ class LatticeBladeMantisTest extends BaseCardTest {
 
         assertThat(mantis.getCounterCount(CounterType.OIL)).isZero();
         assertThat(mantis.isTapped()).isTrue();
-        assertThat(mantis.getPowerModifier()).isZero();
-        assertThat(mantis.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mantis)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mantis)).isZero();
     }
 
     @Test

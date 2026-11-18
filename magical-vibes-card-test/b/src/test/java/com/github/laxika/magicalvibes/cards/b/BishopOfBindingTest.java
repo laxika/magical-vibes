@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DuskLegionZealot;
 import com.github.laxika.magicalvibes.cards.s.SunSentinel;
 import com.github.laxika.magicalvibes.cards.t.Tarmogoyf;
@@ -76,8 +77,8 @@ class BishopOfBindingTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, vampire.getId());
         harness.passBothPriorities();
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(2);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(2);
     }
 
     @Test
@@ -136,8 +137,8 @@ class BishopOfBindingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Sun Sentinel");
-        assertThat(vampire.getPowerModifier()).isZero();
-        assertThat(vampire.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isZero();
     }
 
     @Test
@@ -146,7 +147,7 @@ class BishopOfBindingTest extends BaseCardTest {
         Permanent vampire = addCreatureReady(player2, new DuskLegionZealot());
         harness.addToBattlefield(player2, new SunSentinel());
         Permanent sentinel = findPermanent(player2, "Sun Sentinel");
-        sentinel.setPowerModifier(5);
+        PermanentGrants.setPowerBoost(gd, sentinel, 5);
         castBishop(sentinel.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -157,8 +158,8 @@ class BishopOfBindingTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, vampire.getId());
         harness.passBothPriorities();
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(2);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(2);
     }
 
     @Test
@@ -178,8 +179,8 @@ class BishopOfBindingTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new Bombard()));
         harness.passBothPriorities();
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(2);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(2);
     }
 
     private void castBishop(UUID targetId) {

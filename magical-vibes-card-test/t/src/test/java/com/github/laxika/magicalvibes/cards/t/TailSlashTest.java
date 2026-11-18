@@ -68,7 +68,7 @@ class TailSlashTest extends BaseCardTest {
         addMana();
 
         harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
-        source.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, source, 1);
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
@@ -78,7 +78,7 @@ class TailSlashTest extends BaseCardTest {
     @Test
     void negativePowerDealsNoDamage() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        source.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, source, -3);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.setHand(player1, List.of(new TailSlash()));
         addMana();
@@ -96,7 +96,7 @@ class TailSlashTest extends BaseCardTest {
         addMana();
 
         harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
-        source.setToughnessModifier(-2);
+        PermanentGrants.setToughnessBoost(gd, source, -2);
         harness.runStateBasedActions();
         harness.passBothPriorities();
 

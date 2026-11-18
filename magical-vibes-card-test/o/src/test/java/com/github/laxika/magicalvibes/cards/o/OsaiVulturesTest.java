@@ -87,8 +87,8 @@ class OsaiVulturesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(vultures.getCounterCount(CounterType.CARRION)).isOne();
-        assertThat(vultures.getEffectivePower()).isEqualTo(2);
-        assertThat(vultures.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, vultures)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, vultures)).isEqualTo(2);
     }
 
     @Test
@@ -115,8 +115,8 @@ class OsaiVulturesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(vultures.getCounterCount(CounterType.CARRION)).isZero();
-        assertThat(vultures.getEffectivePower()).isEqualTo(2);
-        assertThat(vultures.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, vultures)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, vultures)).isEqualTo(2);
     }
 
     @Test
@@ -129,15 +129,15 @@ class OsaiVulturesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(vultures.getEffectivePower()).isEqualTo(2);
-        assertThat(vultures.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, vultures)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, vultures)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(vultures.getEffectivePower()).isEqualTo(1);
-        assertThat(vultures.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, vultures)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, vultures)).isEqualTo(1);
     }
 
     @Test
@@ -151,15 +151,15 @@ class OsaiVulturesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(vultures.getCounterCount(CounterType.CARRION)).isZero();
-        assertThat(vultures.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, vultures)).isEqualTo(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough counters");
 
         harness.passBothPriorities();
 
-        assertThat(vultures.getEffectivePower()).isEqualTo(2);
-        assertThat(vultures.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, vultures)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, vultures)).isEqualTo(2);
         assertThat(vultures.isTapped()).isTrue();
     }
 

@@ -26,8 +26,8 @@ class BigBerthaTest extends BaseCardTest {
 
         Permanent bertha = findPermanent(player1, "Big Bertha");
         assertThat(bertha.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(bertha.getEffectivePower()).isEqualTo(4);
-        assertThat(bertha.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bertha)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bertha)).isEqualTo(4);
     }
 
     @Test
@@ -41,8 +41,8 @@ class BigBerthaTest extends BaseCardTest {
 
         assertThat(bertha.isTapped()).isTrue();
         assertThat(bertha.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bertha.getEffectivePower()).isEqualTo(2);
-        assertThat(bertha.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bertha)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bertha)).isEqualTo(2);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.e.EcologistsTerrarium;
@@ -62,15 +63,15 @@ class KyodaiSoulOfKamigawaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(kyodai.getPowerModifier()).isEqualTo(5);
-        assertThat(kyodai.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, kyodai)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kyodai)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(kyodai.getPowerModifier()).isZero();
-        assertThat(kyodai.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kyodai)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kyodai)).isZero();
     }
 
     @Test
@@ -141,15 +142,15 @@ class KyodaiSoulOfKamigawaTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(kyodai.getPowerModifier()).isEqualTo(10);
-        assertThat(kyodai.getToughnessModifier()).isEqualTo(10);
+        assertThat(PermanentGrants.powerBoostOf(gd, kyodai)).isEqualTo(10);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kyodai)).isEqualTo(10);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(kyodai.getPowerModifier()).isZero();
-        assertThat(kyodai.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kyodai)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kyodai)).isZero();
     }
 
     private Permanent addReadyKyodai(Player player) {

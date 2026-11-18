@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Fireslinger;
 import com.github.laxika.magicalvibes.cards.s.SearingTouch;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -26,18 +27,18 @@ class AngelicProtectorTest extends BaseCardTest {
 
         harness.castInstant(player2, 0, protector.getId());
 
-        assertThat(protector.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, protector)).isZero();
         assertThat(protector.getMarkedDamage()).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(protector.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, protector)).isEqualTo(3);
         assertThat(protector.getMarkedDamage()).isZero();
 
         harness.passBothPriorities();
 
         assertThat(protector.getMarkedDamage()).isEqualTo(1);
-        assertThat(protector.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, protector)).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(protector);
     }
 
@@ -52,9 +53,9 @@ class AngelicProtectorTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targeted.getId());
         harness.passBothPriorities();
 
-        assertThat(targeted.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, targeted)).isEqualTo(3);
         assertThat(targeted.getMarkedDamage()).isEqualTo(1);
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(other.getMarkedDamage()).isZero();
     }
 
@@ -67,9 +68,9 @@ class AngelicProtectorTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, protector.getId());
 
-        assertThat(protector.getToughnessModifier()).isEqualTo(3);
-        assertThat(protector.getEffectivePower()).isEqualTo(2);
-        assertThat(protector.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, protector)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, protector)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, protector)).isEqualTo(5);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(protector.getId()));
     }
@@ -84,9 +85,9 @@ class AngelicProtectorTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, protector.getId());
         harness.castAndResolveInstant(player2, 0, protector.getId());
 
-        assertThat(protector.getToughnessModifier()).isEqualTo(6);
-        assertThat(protector.getEffectivePower()).isEqualTo(2);
-        assertThat(protector.getEffectiveToughness()).isEqualTo(8);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, protector)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, protector)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, protector)).isEqualTo(8);
     }
 
     @Test
@@ -98,8 +99,8 @@ class AngelicProtectorTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, protector.getId());
         harness.passBothPriorities();
 
-        assertThat(protector.getToughnessModifier()).isEqualTo(3);
-        assertThat(protector.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, protector)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, protector)).isEqualTo(5);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(protector.getId()));
     }
@@ -113,9 +114,9 @@ class AngelicProtectorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, protector.getId());
         harness.passBothPriorities();
 
-        assertThat(protector.getToughnessModifier()).isEqualTo(3);
-        assertThat(protector.getEffectivePower()).isEqualTo(2);
-        assertThat(protector.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, protector)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, protector)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, protector)).isEqualTo(5);
     }
 
     @Test
@@ -127,13 +128,13 @@ class AngelicProtectorTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, protector.getId());
         harness.passBothPriorities();
 
-        assertThat(protector.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, protector)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(protector.getToughnessModifier()).isEqualTo(0);
-        assertThat(protector.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, protector)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, protector)).isEqualTo(2);
     }
 }

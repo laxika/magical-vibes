@@ -33,8 +33,8 @@ class MightyMutanimalsTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         assertThat(battlefield).hasSize(2);
         Permanent token = battlefield.getLast();
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
     }
 
     @Test
@@ -89,8 +89,8 @@ class MightyMutanimalsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,8 +23,8 @@ class ViciousKavuTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(viciousKavu.getPowerModifier()).isEqualTo(2);
-        assertThat(viciousKavu.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, viciousKavu)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, viciousKavu)).isEqualTo(0);
     }
 
     @Test
@@ -34,14 +35,14 @@ class ViciousKavuTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(viciousKavu.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, viciousKavu)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(viciousKavu.getPowerModifier()).isEqualTo(0);
-        assertThat(viciousKavu.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, viciousKavu)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, viciousKavu)).isEqualTo(0);
     }
 
     @Test
@@ -49,8 +50,8 @@ class ViciousKavuTest extends BaseCardTest {
     void noBoostWithoutAttacking() {
         Permanent viciousKavu = addCreatureReady(player1, new ViciousKavu());
 
-        assertThat(viciousKavu.getPowerModifier()).isEqualTo(0);
-        assertThat(viciousKavu.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, viciousKavu)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, viciousKavu)).isEqualTo(0);
     }
 
     @Test
@@ -62,10 +63,10 @@ class ViciousKavuTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
-        assertThat(nonAttacker.getPowerModifier()).isEqualTo(0);
-        assertThat(nonAttacker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonAttacker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonAttacker)).isEqualTo(0);
     }
 
     @Test
@@ -77,9 +78,9 @@ class ViciousKavuTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
-        assertThat(opposingCopy.getPowerModifier()).isEqualTo(0);
-        assertThat(opposingCopy.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCopy)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingCopy)).isEqualTo(0);
     }
 }

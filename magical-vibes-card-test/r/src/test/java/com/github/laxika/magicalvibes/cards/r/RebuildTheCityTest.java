@@ -32,8 +32,8 @@ class RebuildTheCityTest extends BaseCardTest {
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.getCard().hasType(CardType.LAND)).isTrue();
             assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
-            assertThat(token.getEffectivePower()).isEqualTo(3);
-            assertThat(token.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
             assertThat(token.hasKeyword(Keyword.VIGILANCE)).isTrue();
             assertThat(token.hasKeyword(Keyword.MENACE)).isTrue();
             assertThat(token.isSummoningSick()).isTrue();
@@ -127,8 +127,8 @@ class RebuildTheCityTest extends BaseCardTest {
                 .allSatisfy(token -> {
                     assertThat(token.getCard().hasType(CardType.LAND)).isTrue();
                     assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
-                    assertThat(token.getEffectivePower()).isEqualTo(3);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(3);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
                     assertThat(token.hasKeyword(Keyword.VIGILANCE)).isTrue();
                     assertThat(token.hasKeyword(Keyword.MENACE)).isTrue();
                 });

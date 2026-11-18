@@ -34,8 +34,8 @@ class DevastatingSummonsTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .hasSize(2)
                 .allSatisfy(elemental -> {
-                    assertThat(elemental.getEffectivePower()).isEqualTo(2);
-                    assertThat(elemental.getEffectiveToughness()).isEqualTo(2);
+                    assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(2);
+                    assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(2);
                 });
         harness.assertInGraveyard(player1, "Forest");
     }
@@ -87,8 +87,8 @@ class DevastatingSummonsTest extends BaseCardTest {
                 .hasSize(2)
                 .allSatisfy(elemental -> {
                     assertThat(elemental.getCard().isToken()).isTrue();
-                    assertThat(elemental.getEffectivePower()).isEqualTo(1);
-                    assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
                 });
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }

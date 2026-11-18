@@ -128,8 +128,8 @@ class SwarmingGoblinsTest extends BaseCardTest {
             assertThat(goblin.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(goblin.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(goblin.getCard().getSubtypes()).containsExactly(CardSubtype.GOBLIN);
-            assertThat(goblin.getEffectivePower()).isEqualTo(1);
-            assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
         });
     }
 

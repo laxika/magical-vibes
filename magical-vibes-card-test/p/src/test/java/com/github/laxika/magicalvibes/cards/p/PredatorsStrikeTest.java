@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
@@ -29,8 +30,8 @@ class PredatorsStrikeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, myr.getId());
 
-        assertThat(myr.getPowerModifier()).isEqualTo(3);
-        assertThat(myr.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, myr)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myr)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, myr, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -43,8 +44,8 @@ class PredatorsStrikeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, myr.getId());
 
-        assertThat(myr.getPowerModifier()).isEqualTo(3);
-        assertThat(myr.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, myr)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myr)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, myr, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -61,8 +62,8 @@ class PredatorsStrikeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(myr.getPowerModifier()).isZero();
-        assertThat(myr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, myr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myr)).isZero();
         assertThat(gqs.hasKeyword(gd, myr, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -89,16 +90,16 @@ class PredatorsStrikeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, myr.getId());
         harness.castAndResolveInstant(player1, 0, myr.getId());
 
-        assertThat(myr.getPowerModifier()).isEqualTo(6);
-        assertThat(myr.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, myr)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myr)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, myr, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(myr.getPowerModifier()).isZero();
-        assertThat(myr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, myr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myr)).isZero();
         assertThat(gqs.hasKeyword(gd, myr, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -119,8 +120,8 @@ class PredatorsStrikeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Bottle Gnomes");
         harness.assertInGraveyard(player1, "Predator's Strike");
         harness.assertLife(player1, 23);
-        assertThat(myr.getPowerModifier()).isZero();
-        assertThat(myr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, myr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myr)).isZero();
         assertThat(gqs.hasKeyword(gd, myr, Keyword.TRAMPLE)).isFalse();
     }
 }

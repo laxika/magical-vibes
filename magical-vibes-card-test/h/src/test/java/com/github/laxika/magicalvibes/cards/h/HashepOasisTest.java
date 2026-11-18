@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GraspingDunes;
@@ -54,8 +55,8 @@ class HashepOasisTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, elemental.getId());
         harness.passBothPriorities();
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(3);
-        assertThat(elemental.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(oasis.getId()));
         harness.assertInGraveyard(player1, "Hashep Oasis");
@@ -75,7 +76,7 @@ class HashepOasisTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, otherDesert.getId());
         harness.passBothPriorities();
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(oasis.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -97,8 +98,8 @@ class HashepOasisTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elemental.getPowerModifier()).isZero();
-        assertThat(elemental.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isZero();
     }
 
     @Test
@@ -187,15 +188,15 @@ class HashepOasisTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, firstOasis.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(elemental.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isZero();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, elemental.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("stack is empty");
         assertThat(secondOasis.isTapped()).isFalse();
 
         harness.passBothPriorities();
-        assertThat(elemental.getPowerModifier()).isEqualTo(3);
-        assertThat(elemental.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isEqualTo(3);
     }
 
     private Permanent addReadyOasis(Player player) {

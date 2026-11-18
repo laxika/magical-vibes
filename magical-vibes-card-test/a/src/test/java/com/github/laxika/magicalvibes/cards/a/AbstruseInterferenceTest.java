@@ -123,7 +123,7 @@ class AbstruseInterferenceTest extends BaseCardTest {
         Permanent scion = findPermanent(player2, "Eldrazi Scion");
         assertThat(scion.getCard().getColor()).isNull();
         assertThat(scion.getCard().getSubtypes()).containsExactly(CardSubtype.ELDRAZI, CardSubtype.SCION);
-        assertThat(scion.getEffectivePower()).isEqualTo(1);
-        assertThat(scion.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, scion)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, scion)).isEqualTo(1);
     }
 }

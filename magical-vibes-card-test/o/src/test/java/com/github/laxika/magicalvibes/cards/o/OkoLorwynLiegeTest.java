@@ -108,8 +108,8 @@ class OkoLorwynLiegeTest extends BaseCardTest {
         assertThat(elks).allSatisfy(elk -> {
             assertThat(elk.getCard().getColor()).isEqualTo(CardColor.GREEN);
             assertThat(elk.getCard().getType()).isEqualTo(CardType.CREATURE);
-            assertThat(elk.getEffectivePower()).isEqualTo(3);
-            assertThat(elk.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, elk)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, elk)).isEqualTo(3);
         });
     }
 

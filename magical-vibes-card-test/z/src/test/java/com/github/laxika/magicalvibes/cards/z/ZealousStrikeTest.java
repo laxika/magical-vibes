@@ -30,8 +30,8 @@ class ZealousStrikeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.FIRST_STRIKE);
     }
 
@@ -48,8 +48,8 @@ class ZealousStrikeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
@@ -63,11 +63,11 @@ class ZealousStrikeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -85,8 +85,8 @@ class ZealousStrikeTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Zealous Strike");
-        assertThat(replacement.getPowerModifier()).isZero();
-        assertThat(replacement.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, replacement)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, replacement)).isZero();
         assertThat(gqs.hasKeyword(gd, replacement, Keyword.FIRST_STRIKE)).isFalse();
     }
 

@@ -112,8 +112,8 @@ class BlueSunsTwilightTest extends BaseCardTest {
                 .singleElement().satisfies(token -> {
                     assertThat(token.isTapped()).isFalse();
                     assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-                    assertThat(token.getEffectivePower()).isEqualTo(2);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(2);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
                 });
     }
 

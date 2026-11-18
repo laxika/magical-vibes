@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,11 +22,11 @@ class EarthshakerGiantTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castEarthshakerGiant();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(5);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -39,8 +40,8 @@ class EarthshakerGiantTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -53,10 +54,10 @@ class EarthshakerGiantTest extends BaseCardTest {
         Permanent source = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> !permanent.getId().equals(otherGiant.getId()))
                 .findFirst().orElseThrow();
-        assertThat(otherGiant.getPowerModifier()).isEqualTo(3);
-        assertThat(otherGiant.getToughnessModifier()).isEqualTo(3);
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherGiant)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherGiant)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
     }
 
     @Test
@@ -65,8 +66,8 @@ class EarthshakerGiantTest extends BaseCardTest {
         castEarthshakerGiant();
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(laterCreature.getPowerModifier()).isZero();
-        assertThat(laterCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, laterCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterCreature)).isZero();
         assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -78,8 +79,8 @@ class EarthshakerGiantTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -92,8 +93,8 @@ class EarthshakerGiantTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).removeIf(permanent -> permanent != creature);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 

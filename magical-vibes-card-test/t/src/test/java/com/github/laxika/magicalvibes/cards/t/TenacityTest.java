@@ -28,12 +28,12 @@ class TenacityTest extends BaseCardTest {
         castTenacity();
 
         assertThat(mine.isTapped()).isFalse();
-        assertThat(mine.getEffectivePower()).isEqualTo(3);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, mine, Keyword.LIFELINK)).isTrue();
         assertThat(theirs.isTapped()).isTrue();
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, theirs, Keyword.LIFELINK)).isFalse();
     }
 
@@ -58,16 +58,16 @@ class TenacityTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new QuilledWolf());
 
         castTenacity();
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
     }
 
@@ -85,8 +85,8 @@ class TenacityTest extends BaseCardTest {
 
         for (Permanent creature : List.of(tapped, untapped, summoningSick)) {
             assertThat(creature.isTapped()).isFalse();
-            assertThat(creature.getEffectivePower()).isEqualTo(3);
-            assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
             assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
         }
         assertThat(summoningSick.isSummoningSick()).isTrue();
@@ -117,10 +117,10 @@ class TenacityTest extends BaseCardTest {
                 .filter(permanent -> !permanent.getId().equals(original.getId()))
                 .findFirst().orElseThrow();
 
-        assertThat(later.getEffectivePower()).isEqualTo(2);
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, later, Keyword.LIFELINK)).isFalse();
-        assertThat(original.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, original, Keyword.LIFELINK)).isTrue();
     }
 
@@ -135,8 +135,8 @@ class TenacityTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Tenacity");
         assertThat(opponent.isTapped()).isTrue();
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opponent, Keyword.LIFELINK)).isFalse();
     }
 

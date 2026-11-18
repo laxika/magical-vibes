@@ -31,8 +31,8 @@ class SnakeskinVeilTest extends BaseCardTest {
         castResolve(creature);
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HEXPROOF);
     }
 
@@ -81,7 +81,7 @@ class SnakeskinVeilTest extends BaseCardTest {
         castResolve(creature);
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HEXPROOF);
     }
 

@@ -24,13 +24,13 @@ class OnTheJobTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Marketwatch Phantom"))
                 .allSatisfy(creature -> {
-                    assertThat(creature.getEffectivePower()).isEqualTo(4);
-                    assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+                    assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+                    assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
                 });
         assertThat(findPermanents(player2, "Marketwatch Phantom"))
                 .allSatisfy(creature -> {
-                    assertThat(creature.getEffectivePower()).isEqualTo(2);
-                    assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+                    assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+                    assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
                 });
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
     }
@@ -45,8 +45,8 @@ class OnTheJobTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent creature = findPermanent(player1, "Marketwatch Phantom");
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
     }
 
@@ -78,15 +78,15 @@ class OnTheJobTest extends BaseCardTest {
         harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(original.getEffectivePower()).isEqualTo(4);
-        assertThat(original.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(3);
         assertThat(findPermanents(player1, "Marketwatch Phantom"))
                 .hasSize(2)
                 .filteredOn(creature -> creature != original)
                 .singleElement()
                 .satisfies(creature -> {
-                    assertThat(creature.getEffectivePower()).isEqualTo(2);
-                    assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+                    assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+                    assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
                 });
     }
 

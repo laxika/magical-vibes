@@ -91,7 +91,7 @@ class SunglassesOfUrzaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragonWhelp.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, dragonWhelp)).isEqualTo(3);
     }
 
     @Test
@@ -158,7 +158,7 @@ class SunglassesOfUrzaTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
-        assertThat(dragonWhelp.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, dragonWhelp)).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
 }

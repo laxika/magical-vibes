@@ -70,11 +70,11 @@ class FrontlineDevastatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(4);
-        assertThat(source.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(3);
         assertThat(source.isTapped()).isFalse();
-        assertThat(other.getEffectivePower()).isEqualTo(3);
-        assertThat(other.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
     }
 
     @Test
@@ -89,16 +89,16 @@ class FrontlineDevastatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(5);
-        assertThat(source.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(3);
         assertThat(source.isTapped()).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(3);
-        assertThat(source.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(3);
     }
 
     @Test

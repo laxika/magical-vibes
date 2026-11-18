@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -49,7 +50,7 @@ class UnderdarkBasiliskTest extends BaseCardTest {
     @DisplayName("Zero power does not cause a deathtouch kill")
     void zeroPowerDoesNotKillBlocker() {
         Permanent attacker = addCreatureReady(player1, new UnderdarkBasilisk());
-        attacker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, attacker, -1);
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new UnderdarkBasilisk());
         blocker.setBlocking(true);

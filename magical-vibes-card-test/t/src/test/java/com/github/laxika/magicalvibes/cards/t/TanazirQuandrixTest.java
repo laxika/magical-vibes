@@ -62,12 +62,12 @@ class TanazirQuandrixTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(tanazir.getEffectivePower()).isEqualTo(5);
-        assertThat(tanazir.getEffectiveToughness()).isEqualTo(5);
-        assertThat(other.getEffectivePower()).isEqualTo(5);
-        assertThat(other.getEffectiveToughness()).isEqualTo(5);
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, tanazir)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, tanazir)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
     }
 
     @Test
@@ -80,8 +80,8 @@ class TanazirQuandrixTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HardbristleBandit;
 import com.github.laxika.magicalvibes.cards.s.SpinewoodsArmadillo;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -113,9 +114,9 @@ class OutcasterTrailblazerTest extends BaseCardTest {
         harness.castFromHand(player1, new SpinewoodsArmadillo(), "{4}{G}{G}");
         harness.passBothPriorities();
 
-        gd.playerBattlefields.get(player1.getId()).stream()
+        PermanentGrants.setPowerBoost(gd, gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof SpinewoodsArmadillo)
-                .findFirst().orElseThrow().setPowerModifier(-4);
+                .findFirst().orElseThrow(), -4);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

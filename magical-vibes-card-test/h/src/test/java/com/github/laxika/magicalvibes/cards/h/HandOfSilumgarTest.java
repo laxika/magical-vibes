@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ColossodonYearling;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -52,7 +53,7 @@ class HandOfSilumgarTest extends BaseCardTest {
     void zeroDamageDoesNotDestroyBlocker() {
         Permanent hand = addCreatureReady(player1, new HandOfSilumgar());
         Permanent blocker = addCreatureReady(player2, new ColossodonYearling());
-        hand.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, hand, -2);
         hand.setAttacking(true);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);

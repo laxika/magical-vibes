@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CanyonMinotaur;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -60,7 +61,7 @@ class SoulsMajestyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castSorcery(player1, 0, creature.getId());
-        creature.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, creature, 2);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
@@ -73,7 +74,7 @@ class SoulsMajestyTest extends BaseCardTest {
     @DisplayName("Draws no cards for zero or negative power")
     void drawsNothingForNonpositivePower(int modifier) {
         var creature = harness.addToBattlefieldAndReturn(player1, new CanyonMinotaur());
-        creature.setPowerModifier(modifier);
+        PermanentGrants.setPowerBoost(gd, creature, modifier);
         harness.setHand(player1, List.of(new SoulsMajesty()));
         harness.setLibrary(player1, List.of(new CanyonMinotaur()));
         harness.addMana(player1, ManaColor.GREEN, 5);

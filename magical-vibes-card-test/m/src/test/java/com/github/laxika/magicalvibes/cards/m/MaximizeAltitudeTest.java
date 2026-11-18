@@ -27,8 +27,8 @@ class MaximizeAltitudeTest extends BaseCardTest {
         castAndResolveOnBears();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
     }
 
@@ -42,8 +42,8 @@ class MaximizeAltitudeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 
@@ -61,7 +61,7 @@ class MaximizeAltitudeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent battlefieldBears = findPermanent(player1, "Grizzly Bears");
-        assertThat(battlefieldBears.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, battlefieldBears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, battlefieldBears, Keyword.FLYING)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(discarded.getId()));
@@ -107,8 +107,8 @@ class MaximizeAltitudeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HamletCaptain;
 import com.github.laxika.magicalvibes.cards.t.TravelersAmulet;
 import com.github.laxika.magicalvibes.cards.v.VillageRites;
@@ -37,15 +38,15 @@ class FleshtakerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
-        assertThat(fleshtaker.getPowerModifier()).isEqualTo(0);
-        assertThat(fleshtaker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, fleshtaker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fleshtaker)).isEqualTo(0);
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Hamlet Captain");
-        assertThat(fleshtaker.getPowerModifier()).isEqualTo(2);
-        assertThat(fleshtaker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, fleshtaker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fleshtaker)).isEqualTo(2);
     }
 
     @Test
@@ -61,8 +62,8 @@ class FleshtakerTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
         resolveAllTriggers();
 
-        assertThat(fleshtaker.getPowerModifier()).isEqualTo(2);
-        assertThat(fleshtaker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, fleshtaker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fleshtaker)).isEqualTo(2);
     }
 
     @Test
@@ -78,14 +79,14 @@ class FleshtakerTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
         resolveAllTriggers();
 
-        assertThat(fleshtaker.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, fleshtaker)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(fleshtaker.getPowerModifier()).isEqualTo(0);
-        assertThat(fleshtaker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, fleshtaker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fleshtaker)).isEqualTo(0);
     }
 
     @Test
@@ -177,8 +178,8 @@ class FleshtakerTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(fleshtaker.getPowerModifier()).isEqualTo(2);
-        assertThat(fleshtaker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, fleshtaker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fleshtaker)).isEqualTo(2);
     }
 
     @Test
@@ -231,8 +232,8 @@ class FleshtakerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
-        assertThat(fleshtaker.getPowerModifier()).isEqualTo(4);
-        assertThat(fleshtaker.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, fleshtaker)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fleshtaker)).isEqualTo(4);
         harness.assertNotOnBattlefield(player1, "Hamlet Captain");
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.Greed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.ImmolatingSouleater;
@@ -116,7 +117,7 @@ class VerrakWarpedSengirTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player1, 16);
-        assertThat(souleater.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, souleater)).isEqualTo(2);
     }
 
     @Test
@@ -133,7 +134,7 @@ class VerrakWarpedSengirTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.pendingMayAbilities).isEmpty();
         harness.assertLife(player1, 20);
-        assertThat(souleater.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, souleater)).isEqualTo(1);
     }
 
     @Test

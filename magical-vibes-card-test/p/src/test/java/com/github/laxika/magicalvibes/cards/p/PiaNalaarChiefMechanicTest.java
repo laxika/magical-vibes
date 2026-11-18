@@ -55,8 +55,8 @@ class PiaNalaarChiefMechanicTest extends BaseCardTest {
         assertThat(aetherjet.getCard().hasType(CardType.ARTIFACT)).isTrue();
         assertThat(aetherjet.getCard().getSubtypes()).contains(CardSubtype.VEHICLE);
         assertThat(aetherjet.getCard().hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(aetherjet.getEffectivePower()).isEqualTo(3);
-        assertThat(aetherjet.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, aetherjet)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, aetherjet)).isEqualTo(3);
     }
 
     private Permanent addReadyPentavus() {

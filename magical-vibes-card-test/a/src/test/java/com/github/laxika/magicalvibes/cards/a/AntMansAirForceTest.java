@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,8 +26,8 @@ class AntMansAirForceTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -65,8 +66,8 @@ class AntMansAirForceTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -77,7 +78,7 @@ class AntMansAirForceTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -88,8 +89,8 @@ class AntMansAirForceTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(-1);
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -101,9 +102,9 @@ class AntMansAirForceTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isZero();
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -117,8 +118,8 @@ class AntMansAirForceTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(attacker);
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -136,8 +137,8 @@ class AntMansAirForceTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(returnedTarget.getPowerModifier()).isZero();
-        assertThat(returnedTarget.getToughnessModifier()).isZero();
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, returnedTarget)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, returnedTarget)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 }

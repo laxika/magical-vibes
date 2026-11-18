@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BogbrewWitch;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RumblingBaloth;
@@ -63,8 +64,8 @@ class FesteringNewtTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = permanentById(bearsId);
-        assertThat(bears.getPowerModifier()).isEqualTo(-1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(-1);
     }
 
     @Test
@@ -86,8 +87,8 @@ class FesteringNewtTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = permanentById(toughId);
-        assertThat(target.getPowerModifier()).isEqualTo(-4);
-        assertThat(target.getToughnessModifier()).isEqualTo(-4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-4);
     }
 
     @Test
@@ -105,7 +106,7 @@ class FesteringNewtTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = permanentById(bearsId);
-        assertThat(bears.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-1);
     }
 
     @Test
@@ -141,15 +142,15 @@ class FesteringNewtTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
-        assertThat(permanentById(bearsId).getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, permanentById(bearsId))).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent bears = permanentById(bearsId);
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -158,7 +159,7 @@ class FesteringNewtTest extends BaseCardTest {
     void witchEnteringBeforeResolutionUpgradesDebuff() {
         Permanent newt = harness.addToBattlefieldAndReturn(player1, new FesteringNewt());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RumblingBaloth());
-        newt.setToughnessModifier(-1);
+        PermanentGrants.setToughnessBoost(gd, newt, -1);
         harness.runStateBasedActions();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
@@ -177,19 +178,19 @@ class FesteringNewtTest extends BaseCardTest {
         Permanent newt = harness.addToBattlefieldAndReturn(player1, new FesteringNewt());
         Permanent witch = harness.addToBattlefieldAndReturn(player1, new BogbrewWitch());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RumblingBaloth());
-        newt.setToughnessModifier(-1);
+        PermanentGrants.setToughnessBoost(gd, newt, -1);
         harness.runStateBasedActions();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
 
-        witch.setToughnessModifier(-3);
+        PermanentGrants.setToughnessBoost(gd, witch, -3);
         harness.runStateBasedActions();
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Bogbrew Witch");
         harness.assertOnBattlefield(player2, "Rumbling Baloth");
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
     }
 
     @Test
@@ -207,14 +208,14 @@ class FesteringNewtTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, witch)).isFalse();
         assertThat(gqs.isLand(gd, witch)).isTrue();
 
-        newt.setToughnessModifier(-1);
+        PermanentGrants.setToughnessBoost(gd, newt, -1);
         harness.runStateBasedActions();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Rumbling Baloth");
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
     }
 }

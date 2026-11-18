@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.k.KrumarInitiate;
 import com.github.laxika.magicalvibes.cards.k.KinTreeSeverance;
@@ -67,8 +68,8 @@ class FlameholdGrapplerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, copyTarget.getId());
         resolveAllTriggers();
 
-        assertThat(originalTarget.getPowerModifier()).isEqualTo(3);
-        assertThat(copyTarget.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, originalTarget)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, copyTarget)).isEqualTo(3);
         harness.assertInGraveyard(player1, "Sarkhan's Resolve");
     }
 
@@ -85,8 +86,8 @@ class FlameholdGrapplerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isEqualTo(6);
-        assertThat(target.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(6);
     }
 
     @Test
@@ -99,7 +100,7 @@ class FlameholdGrapplerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, 0, target.getId());
         resolveAllTriggers();
-        assertThat(target.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
 
         harness.castFromHand(player1, new KrumarInitiate(), "{1}{B}");
         resolveAllTriggers();
@@ -117,7 +118,7 @@ class FlameholdGrapplerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castInstant(player2, 0, 0, target.getId());
         resolveAllTriggers();
-        assertThat(target.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
 
         harness.castFromHand(player1, new KrumarInitiate(), "{1}{B}");
         resolveAllTriggers();
@@ -170,10 +171,10 @@ class FlameholdGrapplerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, copyTarget.getId());
         resolveAllTriggers();
-        assertThat(originalTarget.getPowerModifier()).isEqualTo(2);
-        assertThat(originalTarget.getToughnessModifier()).isEqualTo(1);
-        assertThat(copyTarget.getPowerModifier()).isEqualTo(2);
-        assertThat(copyTarget.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, originalTarget)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, originalTarget)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, copyTarget)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, copyTarget)).isEqualTo(1);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalothGorger;
 import com.github.laxika.magicalvibes.cards.g.GiftOfGrowth;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -194,13 +195,13 @@ class MarwynTheNurturerTest extends BaseCardTest {
     void nonpositivePowerProducesNoMana() {
         Permanent marwyn = harness.addToBattlefieldAndReturn(player1, new MarwynTheNurturer());
         marwyn.setSummoningSick(false);
-        marwyn.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, marwyn, -1);
         harness.activateAbility(player1, 0, 0, null, null);
         assertThat(marwyn.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
 
         marwyn.untap();
-        marwyn.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, marwyn, -2);
         harness.activateAbility(player1, 0, 0, null, null);
         assertThat(marwyn.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();

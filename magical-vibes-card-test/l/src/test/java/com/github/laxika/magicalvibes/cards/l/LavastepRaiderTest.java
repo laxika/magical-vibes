@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -25,8 +26,8 @@ class LavastepRaiderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(raider.getPowerModifier()).isEqualTo(2);
-        assertThat(raider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raider)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raider)).isZero();
     }
 
     @Test
@@ -42,8 +43,8 @@ class LavastepRaiderTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(raider.getPowerModifier()).isZero();
-        assertThat(raider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raider)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raider)).isZero();
     }
 
     @Test
@@ -57,14 +58,14 @@ class LavastepRaiderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(raider.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raider)).isZero();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(raider.getPowerModifier()).isEqualTo(4);
-        assertThat(raider.getToughnessModifier()).isZero();
-        assertThat(otherRaider.getPowerModifier()).isZero();
-        assertThat(otherRaider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raider)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raider)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherRaider)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherRaider)).isZero();
     }
 
     @Test
@@ -79,8 +80,8 @@ class LavastepRaiderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(raider.getPowerModifier()).isEqualTo(2);
-        assertThat(raider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raider)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raider)).isZero();
         assertThat(raider.isTapped()).isTrue();
     }
 
@@ -94,8 +95,8 @@ class LavastepRaiderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(raider.getPowerModifier()).isZero();
-        assertThat(raider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raider)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raider)).isZero();
     }
 
     private Permanent addReadyRaider(Player player) {

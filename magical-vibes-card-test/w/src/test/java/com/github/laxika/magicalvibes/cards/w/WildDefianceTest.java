@@ -41,8 +41,8 @@ class WildDefianceTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent bears = bears(bearsId);
-        assertThat(bears.getEffectivePower()).isEqualTo(8);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(8);
     }
 
     @Test
@@ -64,7 +64,7 @@ class WildDefianceTest extends BaseCardTest {
 
         Permanent bears = bears(bearsId);
         assertThat(bears).isNotNull();
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
         assertThat(bears.getMarkedDamage()).isEqualTo(2);
     }
 
@@ -118,8 +118,8 @@ class WildDefianceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = bears(bearsId);
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -134,8 +134,8 @@ class WildDefianceTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
         assertThat(creature.getMarkedDamage()).isZero();
         resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
@@ -155,8 +155,8 @@ class WildDefianceTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(3);
         resolveAllTriggers();
-        assertThat(creature.getEffectivePower()).isEqualTo(8);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
         assertThat(creature.getMarkedDamage()).isEqualTo(2);
     }
     @Test

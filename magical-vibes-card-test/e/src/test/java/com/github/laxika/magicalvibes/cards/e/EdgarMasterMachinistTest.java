@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -68,14 +69,14 @@ class EdgarMasterMachinistTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(edgar.getPowerModifier()).isEqualTo(3);
-        assertThat(edgar.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, edgar)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, edgar)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(edgar.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, edgar)).isZero();
     }
 
     @Test
@@ -160,8 +161,8 @@ class EdgarMasterMachinistTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(edgar.getPowerModifier()).isZero();
-        assertThat(edgar.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, edgar)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, edgar)).isZero();
     }
 
     @Test
@@ -173,11 +174,11 @@ class EdgarMasterMachinistTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MindStone());
 
         resolveAllTriggers();
-        assertThat(edgar.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, edgar)).isEqualTo(2);
 
         gd.playerBattlefields.get(player1.getId()).removeIf(
                 permanent -> permanent.getCard() instanceof MindStone);
-        assertThat(edgar.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, edgar)).isEqualTo(2);
     }
 
     private void prepareMainPhase(com.github.laxika.magicalvibes.model.Player activePlayer) {

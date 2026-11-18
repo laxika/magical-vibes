@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DragonlordAtarka;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -33,7 +34,7 @@ class CircleOfEldersTest extends BaseCardTest {
     void canActivateAtExactThreshold() {
         Permanent circle = addCreatureReady(player1, new CircleOfElders());
         addCreatureReady(player1, new DragonlordAtarka());
-        circle.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, circle, -2);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -45,7 +46,7 @@ class CircleOfEldersTest extends BaseCardTest {
     void cannotActivateBelowThreshold() {
         Permanent circle = addCreatureReady(player1, new CircleOfElders());
         addCreatureReady(player1, new DragonlordAtarka());
-        circle.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, circle, -3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

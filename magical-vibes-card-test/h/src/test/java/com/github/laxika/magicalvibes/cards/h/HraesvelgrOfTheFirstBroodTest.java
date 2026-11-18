@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -32,8 +33,8 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
@@ -50,7 +51,7 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
@@ -65,7 +66,7 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
@@ -84,7 +85,7 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
@@ -109,8 +110,8 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, hraesvelgr.getId());
         harness.passBothPriorities();
 
-        assertThat(hraesvelgr.getPowerModifier()).isEqualTo(1);
-        assertThat(hraesvelgr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hraesvelgr)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hraesvelgr)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, hraesvelgr)).isTrue();
     }
 
@@ -124,8 +125,8 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, hraesvelgr.getId());
         harness.passBothPriorities();
 
-        assertThat(hraesvelgr.getPowerModifier()).isEqualTo(1);
-        assertThat(hraesvelgr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hraesvelgr)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hraesvelgr)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, hraesvelgr)).isTrue();
     }
 
@@ -144,8 +145,8 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
@@ -160,7 +161,7 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(hraesvelgr.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hraesvelgr)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, hraesvelgr)).isFalse();
     }
 
@@ -180,7 +181,7 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
         harness.passBothPriorities();
 
-        assertThat(hraesvelgr.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hraesvelgr)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, hraesvelgr)).isFalse();
     }
 }

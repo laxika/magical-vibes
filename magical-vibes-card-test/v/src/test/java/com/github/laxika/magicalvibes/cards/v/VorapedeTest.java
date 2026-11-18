@@ -69,8 +69,8 @@ class VorapedeTest extends BaseCardTest {
 
         Permanent returnedVorapede = findPermanent(player1, "Vorapede");
         assertThat(returnedVorapede.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(returnedVorapede.getEffectivePower()).isEqualTo(6);
-        assertThat(returnedVorapede.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, returnedVorapede)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, returnedVorapede)).isEqualTo(5);
         harness.assertNotInGraveyard(player1, "Vorapede");
     }
 

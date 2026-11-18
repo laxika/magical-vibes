@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
@@ -67,7 +68,7 @@ class OsseousSticktwisterTest extends BaseCardTest {
     @Test
     void landCannotBeSacrificedAndDamageUsesCurrentPower() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new OsseousSticktwister());
-        source.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, source, 2);
         enableDelirium();
         harness.setHand(player2, List.of());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());

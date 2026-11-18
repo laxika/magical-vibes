@@ -78,8 +78,8 @@ class DreamstealerTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Dreamstealer"));
 
         Permanent token = eternalizedToken();
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes())
                 .contains(CardSubtype.ZOMBIE, CardSubtype.HUMAN, CardSubtype.WIZARD);

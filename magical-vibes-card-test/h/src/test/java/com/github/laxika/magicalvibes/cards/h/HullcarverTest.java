@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.o.OreplatePangolin;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -56,7 +57,7 @@ class HullcarverTest extends BaseCardTest {
     void zeroPowerDoesNotApplyDeathtouch() {
         Permanent hullcarver = addCreatureReady(player1, new Hullcarver());
         Permanent blocker = addCreatureReady(player2, new OreplatePangolin());
-        hullcarver.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, hullcarver, -1);
         hullcarver.setAttacking(true);
 
         prepareDeclareBlockers();

@@ -53,14 +53,14 @@ class AvatarRokuFirebenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -109,13 +109,13 @@ class AvatarRokuFirebenderTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, target.getId());
             harness.passBothPriorities();
             assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
-            assertThat(target.getEffectivePower()).isEqualTo(5);
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
 
             harness.activateAbility(player1, 0, null, target.getId());
             harness.passBothPriorities();
             assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
-            assertThat(target.getEffectivePower()).isEqualTo(8);
-            assertThat(target.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+            assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         });
 
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);

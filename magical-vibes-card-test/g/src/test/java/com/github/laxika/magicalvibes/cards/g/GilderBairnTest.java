@@ -29,8 +29,8 @@ class GilderBairnTest extends BaseCardTest {
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
         // Grizzly Bears 2/2 base + six +1/+1 counters.
-        assertThat(bears.getEffectivePower()).isEqualTo(8);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(8);
         // Paying {Q} untapped the source.
         assertThat(bairn.isTapped()).isFalse();
     }

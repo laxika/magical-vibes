@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BearUmbra;
 import com.github.laxika.magicalvibes.cards.c.CoalitionWarbrute;
 import com.github.laxika.magicalvibes.cards.e.EiganjoExemplar;
@@ -37,7 +38,7 @@ class IsshinTwoHeavensAsOneTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(ferrets.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ferrets)).isEqualTo(4);
     }
 
     @Test
@@ -52,8 +53,8 @@ class IsshinTwoHeavensAsOneTest extends BaseCardTest {
 
         // Sublime Archangel's own exalted and the exalted it gives Isshin and the bears: three abilities a creature
         // attacking alone made trigger, each twice.
-        assertThat(bears.getPowerModifier()).isEqualTo(6);
-        assertThat(bears.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(6);
     }
 
     @Test
@@ -82,8 +83,8 @@ class IsshinTwoHeavensAsOneTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(isshin.getPowerModifier()).isEqualTo(2);
-        assertThat(isshin.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, isshin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, isshin)).isEqualTo(2);
     }
 
     @Test
@@ -96,7 +97,7 @@ class IsshinTwoHeavensAsOneTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(ferrets.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ferrets)).isEqualTo(2);
     }
 
     @Test
@@ -158,6 +159,6 @@ class IsshinTwoHeavensAsOneTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
         resolveAllTriggers();
 
-        assertThat(warbrute.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, warbrute)).isEqualTo(2);
     }
 }

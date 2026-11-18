@@ -29,10 +29,10 @@ class UnnervingAssaultTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3); // Only blue mana is spent.
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(theirs.getEffectivePower()).isEqualTo(1);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
-        assertThat(mine.getEffectivePower()).isEqualTo(2);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(2);
     }
 
     @Test
@@ -48,10 +48,10 @@ class UnnervingAssaultTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3); // Only red mana is spent.
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(mine.getEffectivePower()).isEqualTo(3);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(2);
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 
     @Test
@@ -70,8 +70,8 @@ class UnnervingAssaultTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(theirs.getEffectivePower()).isEqualTo(1);
-        assertThat(mine.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(3);
     }
 
     @Test
@@ -85,13 +85,13 @@ class UnnervingAssaultTest extends BaseCardTest {
         harness.setHand(player1, List.of(new UnnervingAssault()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castAndResolveInstant(player1, 0);
-        assertThat(mine.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(2);
     }
 
     @Test
@@ -109,20 +109,20 @@ class UnnervingAssaultTest extends BaseCardTest {
         Permanent theirs = harness.addToBattlefieldAndReturn(player2, new NettleSentinel());
         harness.passBothPriorities();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(3);
-        assertThat(theirs.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(1);
 
         Permanent laterMine = harness.addToBattlefieldAndReturn(player1, new NettleSentinel());
         Permanent laterTheirs = harness.addToBattlefieldAndReturn(player2, new NettleSentinel());
-        assertThat(laterMine.getEffectivePower()).isEqualTo(2);
-        assertThat(laterTheirs.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterMine)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterTheirs)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
     }
 
     @Test
@@ -139,9 +139,9 @@ class UnnervingAssaultTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0);
 
-        assertThat(mine.getEffectivePower()).isEqualTo(1);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(2);
-        assertThat(theirs.getEffectivePower()).isEqualTo(3);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 }

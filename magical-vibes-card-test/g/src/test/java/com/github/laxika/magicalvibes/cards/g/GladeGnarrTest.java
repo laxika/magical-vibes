@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GaeasSkyfolk;
 import com.github.laxika.magicalvibes.cards.m.MournfulZombie;
 import com.github.laxika.magicalvibes.model.Card;
@@ -24,8 +25,8 @@ class GladeGnarrTest extends BaseCardTest {
         castBlueSpell(player2);
         harness.passBothPriorities();
 
-        assertThat(gnarr.getPowerModifier()).isEqualTo(2);
-        assertThat(gnarr.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gnarr)).isEqualTo(2);
     }
 
     @Test
@@ -35,8 +36,8 @@ class GladeGnarrTest extends BaseCardTest {
 
         castSpellAsOpponent(new MournfulZombie(), "{2}{B}");
 
-        assertThat(gnarr.getPowerModifier()).isZero();
-        assertThat(gnarr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gnarr)).isZero();
     }
 
     @Test
@@ -50,8 +51,8 @@ class GladeGnarrTest extends BaseCardTest {
         castBlueSpell(player1);
         harness.passBothPriorities();
 
-        assertThat(gnarr.getPowerModifier()).isEqualTo(4);
-        assertThat(gnarr.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gnarr)).isEqualTo(4);
     }
 
     @Test
@@ -61,12 +62,12 @@ class GladeGnarrTest extends BaseCardTest {
 
         castBlueSpell(player2);
         harness.passBothPriorities();
-        assertThat(gnarr.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isEqualTo(2);
 
         harness.passUntil(player1, TurnStep.UPKEEP);
 
-        assertThat(gnarr.getPowerModifier()).isZero();
-        assertThat(gnarr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gnarr)).isZero();
     }
 
     private Permanent addGnarr() {
@@ -80,21 +81,21 @@ class GladeGnarrTest extends BaseCardTest {
 
         castBlueSpell(player1);
 
-        assertThat(gnarr.getPowerModifier()).isZero();
-        assertThat(gnarr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gnarr)).isZero();
         harness.assertNotOnBattlefield(player1, "Gaea's Skyfolk");
 
         harness.passBothPriorities();
 
-        assertThat(gnarr.getPowerModifier()).isEqualTo(2);
-        assertThat(gnarr.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gnarr)).isEqualTo(2);
         harness.assertNotOnBattlefield(player1, "Gaea's Skyfolk");
 
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Gaea's Skyfolk");
-        assertThat(gnarr.getPowerModifier()).isEqualTo(2);
-        assertThat(gnarr.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gnarr)).isEqualTo(2);
     }
 
     @Test
@@ -105,8 +106,8 @@ class GladeGnarrTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GaeasSkyfolk());
         harness.passBothPriorities();
 
-        assertThat(gnarr.getPowerModifier()).isZero();
-        assertThat(gnarr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gnarr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gnarr)).isZero();
     }
 
     @Test
@@ -119,10 +120,10 @@ class GladeGnarrTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(2);
     }
 
     private void castBlueSpell(Player caster) {

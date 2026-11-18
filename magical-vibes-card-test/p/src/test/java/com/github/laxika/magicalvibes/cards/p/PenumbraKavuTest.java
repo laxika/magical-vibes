@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.v.Vindicate;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -34,8 +35,8 @@ class PenumbraKavuTest extends BaseCardTest {
         Permanent token = findPermanent(player1, "Kavu");
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.KAVU);
     }
@@ -58,7 +59,7 @@ class PenumbraKavuTest extends BaseCardTest {
     @DisplayName("Penumbra Kavu creates its token even when it dies with zero toughness")
     void zeroToughnessDeathCreatesToken() {
         Permanent kavu = harness.addToBattlefieldAndReturn(player1, new PenumbraKavu());
-        kavu.setToughnessModifier(-3);
+        PermanentGrants.setToughnessBoost(gd, kavu, -3);
 
         harness.runStateBasedActions();
         resolveAllTriggers();
@@ -66,8 +67,8 @@ class PenumbraKavuTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Penumbra Kavu");
         assertThat(findPermanents(player1, "Kavu")).hasSize(1);
         Permanent token = findPermanent(player1, "Kavu");
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
     }
 
     @Test

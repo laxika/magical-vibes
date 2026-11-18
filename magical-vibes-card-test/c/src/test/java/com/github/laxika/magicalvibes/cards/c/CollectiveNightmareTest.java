@@ -29,8 +29,8 @@ class CollectiveNightmareTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -46,8 +46,8 @@ class CollectiveNightmareTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
     }
 
     @Test
@@ -67,8 +67,8 @@ class CollectiveNightmareTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -169,8 +169,8 @@ class CollectiveNightmareTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target).contains(survivor);
-        assertThat(survivor.getEffectivePower()).isEqualTo(2);
-        assertThat(survivor.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Collective Nightmare");
     }
 }

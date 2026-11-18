@@ -30,10 +30,10 @@ class StormTheCitadelTest extends BaseCardTest {
 
         castStormTheCitadel();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
         assertThat(ownCreature.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayerOrPlaneswalker()))
                 .isNotEmpty();
     }
@@ -72,7 +72,7 @@ class StormTheCitadelTest extends BaseCardTest {
 
         castStormTheCitadel();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(creature.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayerOrPlaneswalker()))
                 .isNotEmpty();
 
@@ -80,8 +80,8 @@ class StormTheCitadelTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(creature.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayerOrPlaneswalker()))
                 .isEmpty();
     }
@@ -151,8 +151,8 @@ class StormTheCitadelTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new FountainOfYouth());
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());
         resolveCombat();

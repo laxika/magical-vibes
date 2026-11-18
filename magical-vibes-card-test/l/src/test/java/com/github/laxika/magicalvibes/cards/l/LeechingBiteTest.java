@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -47,12 +48,12 @@ class LeechingBiteTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(firstId, secondId));
 
         Permanent first = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
 
         Permanent second = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(second.getPowerModifier()).isEqualTo(-1);
-        assertThat(second.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(-1);
     }
 
     @Test
@@ -68,8 +69,8 @@ class LeechingBiteTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(firstId, secondId));
 
         Permanent first = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
@@ -91,12 +92,12 @@ class LeechingBiteTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(id1, id2));
 
         Permanent first = gd.playerBattlefields.get(player1.getId()).get(0);
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
 
         Permanent second = gd.playerBattlefields.get(player1.getId()).get(1);
-        assertThat(second.getPowerModifier()).isEqualTo(-1);
-        assertThat(second.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(-1);
     }
 
     @Test
@@ -137,8 +138,8 @@ class LeechingBiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent first = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
     }
 
     @Test
@@ -158,8 +159,8 @@ class LeechingBiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent second = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(second.getPowerModifier()).isEqualTo(-1);
-        assertThat(second.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(-1);
     }
 
     @Test
@@ -171,15 +172,15 @@ class LeechingBiteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(-1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getPowerModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 
     @Test

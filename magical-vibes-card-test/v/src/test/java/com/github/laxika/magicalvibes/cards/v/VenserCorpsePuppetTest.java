@@ -37,8 +37,8 @@ class VenserCorpsePuppetTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent sentinel = findPermanent(player1, "The Hollow Sentinel");
-        assertThat(sentinel.getEffectivePower()).isEqualTo(3);
-        assertThat(sentinel.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(3);
         assertThat(sentinel.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.GOLEM);
         assertThat(sentinel.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.c.CribSwap;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -134,8 +135,8 @@ class BenthicAnomalyTest extends BaseCardTest {
         addThirdPlayer();
         Permanent hart = harness.addToBattlefieldAndReturn(player2, new BurnishedHart());
         hart.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        hart.setPowerModifier(1);
-        hart.setToughnessModifier(3);
+        PermanentGrants.setPowerBoost(gd, hart, 1);
+        PermanentGrants.setToughnessBoost(gd, hart, 3);
         hart.tap();
 
         castAnomaly();

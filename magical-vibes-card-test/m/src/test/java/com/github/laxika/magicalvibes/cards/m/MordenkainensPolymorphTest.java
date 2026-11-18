@@ -28,8 +28,8 @@ class MordenkainensPolymorphTest extends BaseCardTest {
 
         castMordenkainensPolymorph(dryad.getId());
 
-        assertThat(dryad.getEffectivePower()).isEqualTo(4);
-        assertThat(dryad.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, dryad)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, dryad)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, dryad, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, dryad, CardSubtype.DRAGON)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, dryad, CardSubtype.DRYAD)).isFalse();
@@ -44,8 +44,8 @@ class MordenkainensPolymorphTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dryad.getEffectivePower()).isEqualTo(1);
-        assertThat(dryad.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, dryad)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, dryad)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, dryad, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasEffectiveSubtype(gd, dryad, CardSubtype.DRYAD)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, dryad, CardSubtype.DRAGON)).isFalse();

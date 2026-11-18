@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.n.NightscapeFamiliar;
 import com.github.laxika.magicalvibes.cards.s.SeaSnidd;
 import com.github.laxika.magicalvibes.cards.t.ThornscapeFamiliar;
@@ -33,8 +34,8 @@ class AmphibiousKavuTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(kavu.getPowerModifier()).isEqualTo(3);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(3);
     }
 
     @Test
@@ -47,8 +48,8 @@ class AmphibiousKavuTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(kavu.getPowerModifier()).isEqualTo(3);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(3);
     }
 
     @Test
@@ -61,8 +62,8 @@ class AmphibiousKavuTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(kavu.getPowerModifier()).isZero();
-        assertThat(kavu.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isZero();
     }
 
     @Test
@@ -78,8 +79,8 @@ class AmphibiousKavuTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(kavu.getPowerModifier()).isEqualTo(3);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(3);
     }
 
     @Test
@@ -97,8 +98,8 @@ class AmphibiousKavuTest extends BaseCardTest {
                 new BlockerAssignment(0, 1)));
         harness.passUntil(TurnStep.COMBAT_DAMAGE);
 
-        assertThat(kavu.getPowerModifier()).isEqualTo(3);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(3);
 
         harness.handleCombatDamageAssigned(player2, 0, Map.of(
                 seaSnidd.getId(), 3,
@@ -115,15 +116,15 @@ class AmphibiousKavuTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(kavu.getPowerModifier()).isEqualTo(3);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(kavu.getPowerModifier()).isZero();
-        assertThat(kavu.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isZero();
     }
 
     @Test
@@ -139,8 +140,8 @@ class AmphibiousKavuTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(kavu.getPowerModifier()).isEqualTo(3);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(3);
     }
 
     @Test
@@ -159,8 +160,8 @@ class AmphibiousKavuTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Sea Snidd");
         resolveAllTriggers();
 
-        assertThat(kavu.getPowerModifier()).isEqualTo(3);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(3);
     }
 
     private Permanent addKavu(Player player) {

@@ -45,8 +45,8 @@ class EchoingAssaultTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.isTapped()).isTrue();
         assertThat(token.isAttacking()).isTrue();
         assertThat(token.getAttackTarget()).isEqualTo(player2.getId());

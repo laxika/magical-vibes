@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -28,10 +29,10 @@ class ChorusOfWoeTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(1);
-                assertThat(p.getToughnessModifier()).isEqualTo(0);
-                assertThat(p.getEffectivePower()).isEqualTo(3);
-                assertThat(p.getEffectiveToughness()).isEqualTo(2);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(1);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
+                assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(3);
+                assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(2);
             }
         }
     }
@@ -47,8 +48,8 @@ class ChorusOfWoeTest extends BaseCardTest {
         List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
         for (Permanent p : p2Battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
-                assertThat(p.getToughnessModifier()).isEqualTo(0);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
             }
         }
     }
@@ -66,8 +67,8 @@ class ChorusOfWoeTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
-                assertThat(p.getEffectivePower()).isEqualTo(2);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
+                assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(2);
             }
         }
     }
@@ -81,10 +82,10 @@ class ChorusOfWoeTest extends BaseCardTest {
 
         Permanent laterBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(laterBear.getPowerModifier()).isZero();
-        assertThat(laterBear.getToughnessModifier()).isZero();
-        assertThat(laterBear.getEffectivePower()).isEqualTo(2);
-        assertThat(laterBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, laterBear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterBear)).isZero();
+        assertThat(gqs.getEffectivePower(gd, laterBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterBear)).isEqualTo(2);
     }
 
     @Test
@@ -95,8 +96,8 @@ class ChorusOfWoeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -116,8 +117,8 @@ class ChorusOfWoeTest extends BaseCardTest {
         harness.castFromHand(player1, new ChorusOfWoe(), "{B}");
         harness.passBothPriorities();
 
-        assertThat(swamp.getPowerModifier()).isZero();
-        assertThat(swamp.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, swamp)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, swamp)).isZero();
     }
 
     @Test
@@ -129,13 +130,13 @@ class ChorusOfWoeTest extends BaseCardTest {
         harness.castFromHand(player1, new ChorusOfWoe(), "{B}");
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 }

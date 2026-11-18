@@ -30,8 +30,8 @@ class ConfidenceFromStrengthTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, bear.getId());
 
-        assertThat(bear.getEffectivePower()).isEqualTo(6);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -48,8 +48,8 @@ class ConfidenceFromStrengthTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -77,11 +77,11 @@ class ConfidenceFromStrengthTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, opposingBear.getId());
 
-        assertThat(opposingBear.getEffectivePower()).isEqualTo(6);
-        assertThat(opposingBear.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opposingBear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, opposingBear)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, opposingBear, Keyword.TRAMPLE)).isTrue();
-        assertThat(ownBear.getEffectivePower()).isEqualTo(2);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -105,8 +105,8 @@ class ConfidenceFromStrengthTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Confidence from Strength");
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
     }
 }

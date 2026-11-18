@@ -24,8 +24,8 @@ class AkoumHellhoundTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(hellhound.getEffectivePower()).isEqualTo(2);
-        assertThat(hellhound.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hellhound)).isEqualTo(3);
     }
 
     @Test
@@ -35,24 +35,24 @@ class AkoumHellhoundTest extends BaseCardTest {
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
-        assertThat(hellhound.getEffectivePower()).isZero();
-        assertThat(hellhound.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, hellhound)).isEqualTo(1);
 
         harness.passBothPriorities();
-        assertThat(hellhound.getEffectivePower()).isEqualTo(2);
-        assertThat(hellhound.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hellhound)).isEqualTo(3);
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.passBothPriorities();
 
-        assertThat(hellhound.getEffectivePower()).isEqualTo(4);
-        assertThat(hellhound.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hellhound)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(hellhound.getEffectivePower()).isZero();
-        assertThat(hellhound.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, hellhound)).isEqualTo(1);
     }
 
     @Test
@@ -66,10 +66,10 @@ class AkoumHellhoundTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(2);
-        assertThat(first.getEffectiveToughness()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(2);
-        assertThat(second.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
     }
 
     @Test
@@ -82,8 +82,8 @@ class AkoumHellhoundTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(hellhound.getEffectivePower()).isZero();
-        assertThat(hellhound.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, hellhound)).isEqualTo(1);
     }
 
     @Test
@@ -97,7 +97,7 @@ class AkoumHellhoundTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(hellhound.getEffectivePower()).isZero();
-        assertThat(hellhound.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, hellhound)).isEqualTo(1);
     }
 }

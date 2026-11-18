@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -53,17 +54,17 @@ class AvenFlockTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(flock.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, flock)).isEqualTo(3);
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(flock.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, flock)).isEqualTo(4);
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(flock.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, flock)).isEqualTo(5);
     }
 
     @Test
@@ -78,10 +79,10 @@ class AvenFlockTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent flock = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(flock.getEffectivePower()).isEqualTo(2);
-        assertThat(flock.getEffectiveToughness()).isEqualTo(4);
-        assertThat(flock.getPowerModifier()).isEqualTo(0);
-        assertThat(flock.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, flock)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, flock)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, flock)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, flock)).isEqualTo(1);
     }
 
     @Test
@@ -96,8 +97,8 @@ class AvenFlockTest extends BaseCardTest {
         }
 
         Permanent flock = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(flock.getEffectiveToughness()).isEqualTo(6);
-        assertThat(flock.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, flock)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, flock)).isEqualTo(3);
     }
 
     @Test
@@ -110,14 +111,14 @@ class AvenFlockTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent flock = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(flock.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, flock)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(flock.getToughnessModifier()).isEqualTo(0);
-        assertThat(flock.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, flock)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, flock)).isEqualTo(3);
     }
 
     @Test
@@ -152,7 +153,7 @@ class AvenFlockTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(flock.isTapped()).isTrue();
-        assertThat(flock.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, flock)).isEqualTo(4);
     }
 
     @Test
@@ -165,8 +166,8 @@ class AvenFlockTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(flock.getEffectiveToughness()).isEqualTo(4);
-        assertThat(otherFlock.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, flock)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, otherFlock)).isEqualTo(3);
     }
 
     @Test
@@ -180,7 +181,7 @@ class AvenFlockTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(flock.isTapped()).isTrue();
-        assertThat(flock.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, flock)).isEqualTo(1);
     }
 
     @Test
@@ -192,7 +193,7 @@ class AvenFlockTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(flock.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, flock)).isEqualTo(1);
     }
 
     @Test

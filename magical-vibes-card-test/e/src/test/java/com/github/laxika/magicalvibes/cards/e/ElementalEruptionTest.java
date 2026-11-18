@@ -29,8 +29,8 @@ class ElementalEruptionTest extends BaseCardTest {
         List<Permanent> tokens = findPermanents(player1, "Dragon Elemental");
         assertThat(tokens).hasSize(1);
         Permanent token = tokens.getFirst();
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.DRAGON, CardSubtype.ELEMENTAL);
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING, Keyword.PROWESS);
@@ -64,14 +64,14 @@ class ElementalEruptionTest extends BaseCardTest {
         castElementalEruption();
         resolveAllTriggers();
 
-        assertThat(firstDragon.getEffectivePower()).isEqualTo(5);
-        assertThat(firstDragon.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, firstDragon)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, firstDragon)).isEqualTo(5);
         assertThat(findPermanents(player1, "Dragon Elemental")).hasSize(3);
         assertThat(findPermanents(player1, "Dragon Elemental").stream()
                 .filter(token -> token != firstDragon))
                 .allSatisfy(token -> {
-                    assertThat(token.getEffectivePower()).isEqualTo(4);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(4);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
                 });
         assertThat(gd.getTotalSpellsCastThisTurnCount()).isEqualTo(2);
     }

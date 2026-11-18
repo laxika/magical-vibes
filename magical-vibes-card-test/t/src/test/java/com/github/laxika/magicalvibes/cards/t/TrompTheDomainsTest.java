@@ -38,10 +38,10 @@ class TrompTheDomainsTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, otherBear, Keyword.TRAMPLE)).isTrue();
-        assertThat(opponentBear.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentBear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opponentBear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -57,8 +57,8 @@ class TrompTheDomainsTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -76,8 +76,8 @@ class TrompTheDomainsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -93,8 +93,8 @@ class TrompTheDomainsTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -114,8 +114,8 @@ class TrompTheDomainsTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(7);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -135,8 +135,8 @@ class TrompTheDomainsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Island());
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -157,11 +157,11 @@ class TrompTheDomainsTest extends BaseCardTest {
                 .filter(permanent -> !permanent.getId().equals(bear.getId()))
                 .findFirst().orElseThrow();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
-        assertThat(laterBear.getEffectivePower()).isEqualTo(2);
-        assertThat(laterBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterBear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, laterBear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -182,8 +182,8 @@ class TrompTheDomainsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, enchantedBear, Keyword.TRAMPLE)).isFalse();
     }

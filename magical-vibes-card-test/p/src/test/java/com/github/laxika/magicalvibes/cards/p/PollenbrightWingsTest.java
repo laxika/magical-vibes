@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.SunderingVitae;
 import com.github.laxika.magicalvibes.cards.w.Watchwolf;
@@ -141,7 +142,7 @@ class PollenbrightWingsTest extends BaseCardTest {
     @DisplayName("Zero combat damage does not trigger token creation")
     void zeroCombatDamageDoesNotTrigger() {
         Permanent creature = addCreatureReady(player1, new Watchwolf());
-        creature.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, creature, -3);
         attachWings(creature);
         creature.setAttacking(true);
 
@@ -161,7 +162,7 @@ class PollenbrightWingsTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
         assertThat(gd.stack).isNotEmpty();
-        creature.setPowerModifier(4);
+        PermanentGrants.setPowerBoost(gd, creature, 4);
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);

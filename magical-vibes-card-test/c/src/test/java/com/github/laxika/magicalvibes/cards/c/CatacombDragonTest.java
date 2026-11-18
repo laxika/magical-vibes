@@ -100,7 +100,7 @@ class CatacombDragonTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        blocker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, blocker, 1);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
@@ -192,7 +192,7 @@ class CatacombDragonTest extends BaseCardTest {
     void onePowerBlockerIsUnchanged() {
         addAttackingDragon();
         Permanent blocker = addFlyingBlocker(new ZhalfirinKnight());
-        blocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
 
         block();
 

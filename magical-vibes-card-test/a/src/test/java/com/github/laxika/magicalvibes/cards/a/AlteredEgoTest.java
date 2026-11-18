@@ -46,8 +46,8 @@ class AlteredEgoTest extends BaseCardTest {
         assertThat(copy.getCard().getPower()).isEqualTo(2);
         assertThat(copy.getCard().getToughness()).isEqualTo(2);
         assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(copy.getEffectivePower()).isEqualTo(5);
-        assertThat(copy.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(5);
     }
 
     @Test
@@ -67,8 +67,8 @@ class AlteredEgoTest extends BaseCardTest {
         Permanent copy = findAlteredEgoCopy(player1);
         assertThat(copy).isNotNull();
         assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(copy.getEffectivePower()).isEqualTo(2);
-        assertThat(copy.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(2);
     }
 
     @Test
@@ -151,8 +151,8 @@ class AlteredEgoTest extends BaseCardTest {
         Permanent copy = findAlteredEgoCopy(player1);
         assertThat(copy).isNotNull();
         assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(copy.getEffectivePower()).isEqualTo(4);
-        assertThat(copy.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(4);
         assertThat(copy.isTapped()).isFalse();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(bears.isTapped()).isTrue();

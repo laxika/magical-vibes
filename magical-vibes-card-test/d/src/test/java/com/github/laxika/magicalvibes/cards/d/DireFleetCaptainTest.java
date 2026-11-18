@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FathomFleetFirebrand;
 import com.github.laxika.magicalvibes.cards.r.RaptorHatchling;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -37,8 +38,8 @@ class DireFleetCaptainTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(0);
-        assertThat(captain.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(0);
     }
 
     @Test
@@ -50,8 +51,8 @@ class DireFleetCaptainTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(1);
-        assertThat(captain.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(1);
     }
 
     @Test
@@ -64,8 +65,8 @@ class DireFleetCaptainTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(2);
-        assertThat(captain.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(2);
     }
 
     @Test
@@ -77,8 +78,8 @@ class DireFleetCaptainTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(0);
-        assertThat(captain.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(0);
     }
 
     @Test
@@ -92,8 +93,8 @@ class DireFleetCaptainTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(1);
-        assertThat(captain.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(1);
     }
 
     @Test
@@ -105,14 +106,14 @@ class DireFleetCaptainTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(0);
-        assertThat(captain.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(0);
     }
 
     @Test
@@ -126,8 +127,8 @@ class DireFleetCaptainTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToHand(gd, pirate);
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(1);
-        assertThat(captain.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(1);
     }
 
     @Test
@@ -140,8 +141,8 @@ class DireFleetCaptainTest extends BaseCardTest {
         resolveAllTriggers();
         harness.getPermanentRemovalService().removePermanentToHand(gd, pirate);
 
-        assertThat(captain.getPowerModifier()).isEqualTo(1);
-        assertThat(captain.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(1);
     }
 
     @Test
@@ -153,10 +154,10 @@ class DireFleetCaptainTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(1);
     }
 
     @Test
@@ -171,7 +172,7 @@ class DireFleetCaptainTest extends BaseCardTest {
         Permanent returned = addCreatureReady(player1, original.getCard());
         resolveAllTriggers();
 
-        assertThat(returned.getPowerModifier()).isZero();
-        assertThat(returned.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, returned)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, returned)).isZero();
     }
 }

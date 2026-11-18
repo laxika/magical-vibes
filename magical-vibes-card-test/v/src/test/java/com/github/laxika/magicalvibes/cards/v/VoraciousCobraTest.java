@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AncientKavu;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -68,7 +69,7 @@ class VoraciousCobraTest extends BaseCardTest {
     @DisplayName("Cobra with zero power does not destroy its blocker")
     void zeroPowerDoesNotTriggerDestruction() {
         Permanent cobra = addCreatureReady(player1, new VoraciousCobra());
-        cobra.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, cobra, -2);
         cobra.setAttacking(true);
         addCreatureReady(player2, new AncientKavu());
 

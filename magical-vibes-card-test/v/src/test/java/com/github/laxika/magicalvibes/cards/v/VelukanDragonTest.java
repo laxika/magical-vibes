@@ -48,7 +48,7 @@ class VelukanDragonTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(10);
     }
 
     @Test
@@ -63,7 +63,7 @@ class VelukanDragonTest extends BaseCardTest {
         resolveCombat(player2);
         resolveAllTriggers();
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(8);
     }
 
     @Test
@@ -75,7 +75,7 @@ class VelukanDragonTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(5);
     }
 
     @Test
@@ -85,13 +85,13 @@ class VelukanDragonTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        assertThat(dragon.getEffectivePower()).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(10);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(5);
     }
 
     @ParameterizedTest
@@ -104,8 +104,8 @@ class VelukanDragonTest extends BaseCardTest {
         resolveAllTriggers();
         resolveCombat();
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(4 + result);
-        assertThat(dragon.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(4 + result);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(5);
         harness.assertLife(player2, 16 - result);
     }
 

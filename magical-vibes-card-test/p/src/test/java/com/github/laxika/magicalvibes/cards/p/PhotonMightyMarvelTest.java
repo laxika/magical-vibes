@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -69,7 +70,7 @@ class PhotonMightyMarvelTest extends BaseCardTest {
     @DisplayName("Mana uses damage dealt even if Photon leaves before resolution")
     void manaUsesDamageDealtAfterSourceLeaves() {
         Permanent photon = addCreatureReady(player1, new PhotonMightyMarvel());
-        photon.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, photon, 3);
         photon.setAttacking(true);
 
         harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);

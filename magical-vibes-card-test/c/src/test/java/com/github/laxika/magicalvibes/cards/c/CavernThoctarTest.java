@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -39,8 +40,8 @@ class CavernThoctarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thoctar.getPowerModifier()).isEqualTo(1);
-        assertThat(thoctar.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, thoctar)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thoctar)).isEqualTo(0);
     }
 
     @Test
@@ -55,8 +56,8 @@ class CavernThoctarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thoctar.getPowerModifier()).isEqualTo(2);
-        assertThat(thoctar.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, thoctar)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thoctar)).isEqualTo(0);
     }
 
     @Test
@@ -79,14 +80,14 @@ class CavernThoctarTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(thoctar.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, thoctar)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(thoctar.getPowerModifier()).isEqualTo(0);
-        assertThat(thoctar.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, thoctar)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thoctar)).isEqualTo(0);
     }
 
     @Test
@@ -99,8 +100,8 @@ class CavernThoctarTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thoctar.getPowerModifier()).isEqualTo(1);
-        assertThat(thoctar.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, thoctar)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thoctar)).isZero();
         assertThat(thoctar.isTapped()).isTrue();
     }
 
@@ -124,14 +125,14 @@ class CavernThoctarTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isZero();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 }

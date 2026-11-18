@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,8 +26,8 @@ class MegatogTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent megatog = findPermanent(player1, "Megatog");
-        assertThat(megatog.getPowerModifier()).isEqualTo(3);
-        assertThat(megatog.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, megatog)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, megatog)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, megatog, Keyword.TRAMPLE)).isTrue();
         harness.assertInGraveyard(player1, "Leonin Scimitar");
     }
@@ -45,8 +46,8 @@ class MegatogTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(megatog.getPowerModifier()).isZero();
-        assertThat(megatog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, megatog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, megatog)).isZero();
         assertThat(gqs.hasKeyword(gd, megatog, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -89,14 +90,14 @@ class MegatogTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Leonin Scimitar");
         assertThat(countPermanents(player1, "Leonin Scimitar")).isZero();
-        assertThat(megatog.getPowerModifier()).isZero();
-        assertThat(megatog.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, megatog)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, megatog)).isZero();
         assertThat(gqs.hasKeyword(gd, megatog, Keyword.TRAMPLE)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(megatog.getPowerModifier()).isEqualTo(3);
-        assertThat(megatog.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, megatog)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, megatog)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, megatog, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -112,8 +113,8 @@ class MegatogTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(megatog.getPowerModifier()).isEqualTo(6);
-        assertThat(megatog.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, megatog)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, megatog)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, megatog, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(card -> card.getName().equals("Leonin Scimitar"))
@@ -131,8 +132,8 @@ class MegatogTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(megatog.getPowerModifier()).isEqualTo(3);
-        assertThat(megatog.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, megatog)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, megatog)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, megatog, Keyword.TRAMPLE)).isTrue();
         harness.assertInGraveyard(player1, "Leonin Scimitar");
     }

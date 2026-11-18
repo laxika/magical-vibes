@@ -35,8 +35,8 @@ class VexyrIchTekiksHeirTest extends BaseCardTest {
         Permanent golem = findPermanent(player1, "Phyrexian Golem");
         assertThat(golem.getCard().getSubtypes())
                 .contains(CardSubtype.PHYREXIAN, CardSubtype.GOLEM);
-        assertThat(golem.getEffectivePower()).isEqualTo(3);
-        assertThat(golem.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(3);
     }
 
     @Test

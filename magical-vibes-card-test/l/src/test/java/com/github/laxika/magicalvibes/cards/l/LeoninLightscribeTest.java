@@ -72,8 +72,8 @@ class LeoninLightscribeTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(lightscribe.getEffectivePower()).isEqualTo(2);
-        assertThat(lightscribe.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, lightscribe)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lightscribe)).isEqualTo(2);
     }
 
     @Test
@@ -91,10 +91,10 @@ class LeoninLightscribeTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(lightscribe.getEffectivePower()).isEqualTo(2);
-        assertThat(lightscribe.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, lightscribe)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lightscribe)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test

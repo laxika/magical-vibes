@@ -27,21 +27,21 @@ class MasterOfPearlsTest extends BaseCardTest {
 
         Permanent master = findPermanent(player1, "Master of Pearls");
         assertThat(master.isFaceDown()).isTrue();
-        assertThat(master.getEffectivePower()).isEqualTo(2);
-        assertThat(master.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(2);
 
         harness.addMana(player1, ManaColor.WHITE, 5);
         int masterIndex = gd.playerBattlefields.get(player1.getId()).indexOf(master);
         harness.turnFaceUp(player1, masterIndex);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getEffectivePower()).isEqualTo(4);
-        assertThat(findPermanent(player1, "Grizzly Bears").getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(4);
         assertThat(master.isFaceDown()).isFalse();
-        assertThat(master.getEffectivePower()).isEqualTo(4);
-        assertThat(master.getEffectiveToughness()).isEqualTo(4);
-        assertThat(findPermanent(player2, "Grizzly Bears").getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanent(player2, "Grizzly Bears").getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Grizzly Bears"))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Grizzly Bears"))).isEqualTo(2);
     }
 
     @Test
@@ -54,10 +54,10 @@ class MasterOfPearlsTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Master of Pearls")).hasSize(2);
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
-        assertThat(findPermanents(player1, "Master of Pearls").get(1).getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanents(player1, "Master of Pearls").get(1).getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanents(player1, "Master of Pearls").get(1))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanents(player1, "Master of Pearls").get(1))).isEqualTo(2);
     }
 
     @Test
@@ -71,25 +71,25 @@ class MasterOfPearlsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 5);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(master));
         assertThat(master.isFaceDown()).isFalse();
-        assertThat(master.getEffectivePower()).isEqualTo(2);
-        assertThat(master.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(2);
         Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new MasterOfPearls());
         resolveAllTriggers();
 
-        assertThat(master.getEffectivePower()).isEqualTo(4);
-        assertThat(master.getEffectiveToughness()).isEqualTo(4);
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(4);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(4);
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new MasterOfPearls());
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(master.getEffectivePower()).isEqualTo(2);
-        assertThat(master.getEffectiveToughness()).isEqualTo(2);
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(2);
     }
 }

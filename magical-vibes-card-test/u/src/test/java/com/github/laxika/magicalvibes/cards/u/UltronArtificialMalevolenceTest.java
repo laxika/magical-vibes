@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AccordersShield;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
@@ -80,7 +81,7 @@ class UltronArtificialMalevolenceTest extends BaseCardTest {
         }
 
         assertThat(gqs.isCreature(gd, findToken(player1, "Accorder's Shield"))).isTrue();
-        assertThat(yellowjacket.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, yellowjacket)).isZero();
     }
 
     @Test

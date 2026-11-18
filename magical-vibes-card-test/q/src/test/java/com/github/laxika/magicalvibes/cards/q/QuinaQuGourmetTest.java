@@ -40,8 +40,8 @@ class QuinaQuGourmetTest extends BaseCardTest {
         assertThat(frog.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(frog.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(frog.getCard().getSubtypes()).containsExactly(CardSubtype.FROG);
-        assertThat(frog.getEffectivePower()).isEqualTo(1);
-        assertThat(frog.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, frog)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, frog)).isEqualTo(1);
     }
 
     @Test

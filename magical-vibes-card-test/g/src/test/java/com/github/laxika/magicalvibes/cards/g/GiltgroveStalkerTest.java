@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -71,7 +72,7 @@ class GiltgroveStalkerTest extends BaseCardTest {
     @DisplayName("Blocking restriction uses current power, including zero and negative power")
     void blockingRestrictionUsesModifiedPower(int powerModifier) {
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        blocker.setPowerModifier(powerModifier);
+        PermanentGrants.setPowerBoost(gd, blocker, powerModifier);
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GiltgroveStalker());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
@@ -96,7 +97,7 @@ class GiltgroveStalkerTest extends BaseCardTest {
     @DisplayName("A printed three-power creature reduced to two power cannot block")
     void weakenedThreePowerCreatureCannotBlock() {
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        blocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GiltgroveStalker());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);

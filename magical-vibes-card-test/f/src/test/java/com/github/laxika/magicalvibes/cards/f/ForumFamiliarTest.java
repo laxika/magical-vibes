@@ -42,8 +42,8 @@ class ForumFamiliarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(familiar.isFaceDown()).isFalse();
-        assertThat(familiar.getEffectivePower()).isEqualTo(2);
-        assertThat(familiar.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, familiar)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, familiar)).isEqualTo(2);
         harness.assertInHand(player1, "Plains");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
@@ -64,8 +64,8 @@ class ForumFamiliarTest extends BaseCardTest {
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(familiar));
 
         assertThat(familiar.isFaceDown()).isFalse();
-        assertThat(familiar.getEffectivePower()).isEqualTo(1);
-        assertThat(familiar.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, familiar)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, familiar)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }

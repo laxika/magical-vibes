@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WildbornPreserver;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -89,7 +90,7 @@ class SyrFarenTheHengehammerTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         harness.handlePermanentChosen(player1, target.getId());
-        syrFaren.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, syrFaren, -3);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
@@ -103,8 +104,8 @@ class SyrFarenTheHengehammerTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         harness.handlePermanentChosen(player1, target.getId());
-        syrFaren.setPowerModifier(3);
-        syrFaren.setToughnessModifier(-2);
+        PermanentGrants.setPowerBoost(gd, syrFaren, 3);
+        PermanentGrants.setToughnessBoost(gd, syrFaren, -2);
         harness.runStateBasedActions();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(syrFaren);
         harness.passBothPriorities();

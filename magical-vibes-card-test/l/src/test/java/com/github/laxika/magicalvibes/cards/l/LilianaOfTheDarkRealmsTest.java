@@ -58,8 +58,8 @@ class LilianaOfTheDarkRealmsTest extends BaseCardTest {
         harness.handleListChoice(player1, PLUS_MODE);
 
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -90,7 +90,7 @@ class LilianaOfTheDarkRealmsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, PLUS_MODE);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
     }
 
     @Test
@@ -103,13 +103,13 @@ class LilianaOfTheDarkRealmsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, bear.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player1, PLUS_MODE);
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -204,11 +204,11 @@ class LilianaOfTheDarkRealmsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, PLUS_MODE);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
         addSwamp(player1);
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -222,8 +222,8 @@ class LilianaOfTheDarkRealmsTest extends BaseCardTest {
         harness.handleListChoice(player1, MINUS_MODE);
 
         harness.assertOnBattlefield(player2, "Walking Corpse");
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     private Permanent addReadyLiliana(Player player) {

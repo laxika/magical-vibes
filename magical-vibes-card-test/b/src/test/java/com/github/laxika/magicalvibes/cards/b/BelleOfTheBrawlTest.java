@@ -27,10 +27,10 @@ class BelleOfTheBrawlTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(otherKnight.getEffectivePower()).isEqualTo(4);
-        assertThat(otherKnight.getEffectiveToughness()).isEqualTo(2);
-        assertThat(nonKnight.getEffectivePower()).isEqualTo(5);
-        assertThat(opposingKnight.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, otherKnight)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, otherKnight)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonKnight)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opposingKnight)).isEqualTo(3);
     }
 
     @Test
@@ -40,8 +40,8 @@ class BelleOfTheBrawlTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(belle.getEffectivePower()).isEqualTo(3);
-        assertThat(belle.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, belle)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, belle)).isEqualTo(2);
     }
 
     @Test
@@ -51,14 +51,14 @@ class BelleOfTheBrawlTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
-        assertThat(otherKnight.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, otherKnight)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(otherKnight.getEffectivePower()).isEqualTo(3);
-        assertThat(otherKnight.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherKnight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherKnight)).isEqualTo(2);
     }
 
     @Test
@@ -70,10 +70,10 @@ class BelleOfTheBrawlTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(knight.getEffectivePower()).isEqualTo(5);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
     }
 
     @Test
@@ -87,8 +87,8 @@ class BelleOfTheBrawlTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent afterResolution = addCreatureReady(player1, new KnightOfTheKeep());
 
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(4);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(3);
     }
 
     @Test
@@ -103,8 +103,8 @@ class BelleOfTheBrawlTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(belle.getCard());
         resolveAllTriggers();
 
-        assertThat(knight.getEffectivePower()).isEqualTo(4);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
     }
 
     @Test

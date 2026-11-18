@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,12 +25,12 @@ class TimidShieldbearerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shieldbearer.getPowerModifier()).isEqualTo(1);
-        assertThat(shieldbearer.getToughnessModifier()).isEqualTo(1);
-        assertThat(otherCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(otherCreature.getToughnessModifier()).isEqualTo(1);
-        assertThat(opponentCreature.getPowerModifier()).isEqualTo(0);
-        assertThat(opponentCreature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, shieldbearer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shieldbearer)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isEqualTo(0);
     }
 
     @Test
@@ -42,14 +43,14 @@ class TimidShieldbearerTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(otherCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(otherCreature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(otherCreature.getPowerModifier()).isEqualTo(0);
-        assertThat(otherCreature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreature)).isEqualTo(0);
     }
 
     @Test
@@ -60,18 +61,18 @@ class TimidShieldbearerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
         Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new TimidShieldbearer());
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new TimidShieldbearer());
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
     }
 
     @Test
@@ -86,12 +87,12 @@ class TimidShieldbearerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(1);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(2);
-        assertThat(source.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(2);
         assertThat(source.isTapped()).isTrue();
     }
 }

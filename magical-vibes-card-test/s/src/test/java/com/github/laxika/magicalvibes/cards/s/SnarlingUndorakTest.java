@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.n.NosyGoblin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -55,8 +56,8 @@ class SnarlingUndorakTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(source.isTapped()).isFalse();
     }
 
@@ -83,8 +84,8 @@ class SnarlingUndorakTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -110,8 +111,8 @@ class SnarlingUndorakTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, source.getId());
         resolveAllTriggers();
 
-        assertThat(source.getPowerModifier()).isEqualTo(2);
-        assertThat(source.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(2);
         assertThat(source.isTapped()).isTrue();
     }
 
@@ -124,8 +125,8 @@ class SnarlingUndorakTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -140,8 +141,8 @@ class SnarlingUndorakTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, undorak.getId());
         harness.passBothPriorities();
 
-        assertThat(undorak.getPowerModifier()).isEqualTo(1);
-        assertThat(undorak.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, undorak)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, undorak)).isEqualTo(1);
     }
 
     private void addAbilityMana() {

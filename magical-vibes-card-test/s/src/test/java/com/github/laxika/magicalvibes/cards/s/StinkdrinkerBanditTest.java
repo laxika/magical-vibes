@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.InkDissolver;
 import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.cards.l.LatchkeyFaerie;
@@ -34,8 +35,8 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of()); // no blocks — the Bandit is unblocked
         harness.passBothPriorities();
 
-        assertThat(bandit.getPowerModifier()).isEqualTo(2);
-        assertThat(bandit.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bandit)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bandit)).isEqualTo(1);
     }
 
     @Test
@@ -48,8 +49,8 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(bandit.getPowerModifier()).isEqualTo(0);
-        assertThat(bandit.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bandit)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bandit)).isEqualTo(0);
     }
 
     @Test
@@ -62,8 +63,8 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
-        assertThat(rogue.getPowerModifier()).isEqualTo(2);
-        assertThat(rogue.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, rogue)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rogue)).isEqualTo(1);
     }
 
     @Test
@@ -76,8 +77,8 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
-        assertThat(nonRogue.getPowerModifier()).isEqualTo(0);
-        assertThat(nonRogue.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonRogue)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonRogue)).isEqualTo(0);
     }
 
     @Test
@@ -89,14 +90,14 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
-        assertThat(bandit.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bandit)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bandit.getPowerModifier()).isEqualTo(0);
-        assertThat(bandit.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bandit)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bandit)).isEqualTo(0);
     }
 
     @Test
@@ -147,10 +148,10 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(4);
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(4);
-        assertThat(second.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(2);
     }
 
     @Test
@@ -186,8 +187,8 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
     }
 
     @Test
@@ -205,8 +206,8 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -225,8 +226,8 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         resolveAllTriggers();
 
-        assertThat(rogue.getPowerModifier()).isZero();
-        assertThat(rogue.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rogue)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rogue)).isZero();
     }
 
     private void recordCombatDamageSubtype(CardSubtype subtype) {

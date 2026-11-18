@@ -35,8 +35,8 @@ class CruelFinalityTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(1);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
     }
@@ -79,8 +79,8 @@ class CruelFinalityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
     }
 
     @Test
@@ -116,8 +116,8 @@ class CruelFinalityTest extends BaseCardTest {
         assertThat(scry).isNotNull();
         assertThat(scry.playerId()).isEqualTo(player1.getId());
         assertThat(scry.cards()).containsExactly(top);
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, second);
@@ -151,8 +151,8 @@ class CruelFinalityTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Cruel Finality");
         harness.assertLife(player1, 20);

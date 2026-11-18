@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EldraziMonument;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
@@ -49,8 +50,8 @@ class KalitasBloodchiefOfGhetTest extends BaseCardTest {
     void destroysCreatureAndCreatesSizedVampire() {
         Permanent kalitas = addCreatureReady(player1, new KalitasBloodchiefOfGhet());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setPowerModifier(3);
-        target.setToughnessModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 3);
+        PermanentGrants.setToughnessBoost(gd, target, 1);
 
         activate(kalitas, target.getId());
 

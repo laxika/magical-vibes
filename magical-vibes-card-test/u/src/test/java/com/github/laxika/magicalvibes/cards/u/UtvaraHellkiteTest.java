@@ -37,8 +37,8 @@ class UtvaraHellkiteTest extends BaseCardTest {
         List<Permanent> tokens = dragonTokens();
         assertThat(tokens).hasSize(1);
         Permanent token = tokens.getFirst();
-        assertThat(token.getEffectivePower()).isEqualTo(6);
-        assertThat(token.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(6);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.DRAGON);
         assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
     }

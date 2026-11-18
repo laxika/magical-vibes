@@ -150,7 +150,7 @@ class OtherworldlyEscortTest extends BaseCardTest {
     }
 
     private void kill(Permanent creature) {
-        creature.setMarkedDamage(creature.getEffectiveToughness());
+        creature.setMarkedDamage(gqs.getEffectiveToughness(gd, creature));
         harness.runStateBasedActions();
         harness.passBothPriorities();
     }

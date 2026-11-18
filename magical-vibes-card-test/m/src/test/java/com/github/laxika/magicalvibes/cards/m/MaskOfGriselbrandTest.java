@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CandlegroveWitch;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.InfernalGrasp;
@@ -151,7 +152,7 @@ class MaskOfGriselbrandTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLife(player1, 20);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new CandlegroveWitch());
-        creature.setPowerModifier(powerModifier);
+        PermanentGrants.setPowerBoost(gd, creature, powerModifier);
         Permanent mask = harness.addToBattlefieldAndReturn(player1, new MaskOfGriselbrand());
         mask.setAttachedTo(creature.getId());
         int handBefore = gd.playerHands.get(player1.getId()).size();

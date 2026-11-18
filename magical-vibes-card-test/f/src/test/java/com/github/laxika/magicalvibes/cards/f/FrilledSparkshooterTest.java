@@ -27,8 +27,8 @@ class FrilledSparkshooterTest extends BaseCardTest {
         Permanent shooter = findPermanent(player1, "Frilled Sparkshooter");
 
         assertThat(shooter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(shooter.getEffectivePower()).isEqualTo(4);
-        assertThat(shooter.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, shooter)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, shooter)).isEqualTo(4);
     }
 
     @Test
@@ -41,8 +41,8 @@ class FrilledSparkshooterTest extends BaseCardTest {
         Permanent shooter = findPermanent(player1, "Frilled Sparkshooter");
 
         assertThat(shooter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(shooter.getEffectivePower()).isEqualTo(3);
-        assertThat(shooter.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shooter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shooter)).isEqualTo(3);
     }
 
     @Test

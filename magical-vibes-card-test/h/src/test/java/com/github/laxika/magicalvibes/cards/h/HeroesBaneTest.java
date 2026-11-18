@@ -23,8 +23,8 @@ class HeroesBaneTest extends BaseCardTest {
 
         Permanent bane = getBane();
         assertThat(bane.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(bane.getEffectivePower()).isEqualTo(4);
-        assertThat(bane.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bane)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bane)).isEqualTo(4);
     }
 
     @Test

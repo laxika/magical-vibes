@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.IguanaParrot;
 import com.github.laxika.magicalvibes.cards.k.KnowledgeSeeker;
 import com.github.laxika.magicalvibes.cards.k.KyoshiBattleFan;
@@ -28,8 +29,8 @@ class AzulaAlwaysLiesTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new IguanaParrot());
         cast(new int[]{0}, List.of(creature.getId()));
 
-        assertThat(creature.getPowerModifier()).isEqualTo(-1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(-1);
     }
 
     @Test
@@ -47,8 +48,8 @@ class AzulaAlwaysLiesTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new IguanaParrot());
         cast(new int[]{0, 1}, List.of(creature.getId(), creature.getId()));
 
-        assertThat(creature.getPowerModifier()).isEqualTo(-1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(-1);
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -69,11 +70,11 @@ class AzulaAlwaysLiesTest extends BaseCardTest {
 
         cast(new int[]{0, 1}, List.of(weakened.getId(), strengthened.getId()));
 
-        assertThat(weakened.getPowerModifier()).isEqualTo(-1);
-        assertThat(weakened.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weakened)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weakened)).isEqualTo(-1);
         assertThat(weakened.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(strengthened.getPowerModifier()).isZero();
-        assertThat(strengthened.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, strengthened)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, strengthened)).isZero();
         assertThat(strengthened.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -106,8 +107,8 @@ class AzulaAlwaysLiesTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
@@ -145,8 +146,8 @@ class AzulaAlwaysLiesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(strengthened.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(strengthened.getPowerModifier()).isZero();
-        assertThat(strengthened.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, strengthened)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, strengthened)).isZero();
         harness.assertInGraveyard(player1, "Azula Always Lies");
     }
 
@@ -161,8 +162,8 @@ class AzulaAlwaysLiesTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(weakened.getPowerModifier()).isEqualTo(-1);
-        assertThat(weakened.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weakened)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weakened)).isEqualTo(-1);
         assertThat(weakened.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.assertInGraveyard(player1, "Azula Always Lies");
     }

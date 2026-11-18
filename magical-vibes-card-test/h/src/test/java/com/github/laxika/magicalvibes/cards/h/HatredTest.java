@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.Slaughter;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
@@ -31,10 +32,10 @@ class HatredTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
-        assertThat(goblin.getPowerModifier()).isEqualTo(4);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(0);
-        assertThat(goblin.getEffectivePower()).isEqualTo(5);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
     }
 
     @Test
@@ -49,9 +50,9 @@ class HatredTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(8);
-        assertThat(goblin.getPowerModifier()).isEqualTo(2);
-        assertThat(goblin.getEffectivePower()).isEqualTo(3);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
     }
 
     @Test
@@ -66,8 +67,8 @@ class HatredTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(goblin.getPowerModifier()).isEqualTo(0);
-        assertThat(goblin.getEffectivePower()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
     }
 
     @Test
@@ -98,8 +99,8 @@ class HatredTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(0);
-        assertThat(goblin.getEffectivePower()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
     }
 
     @Test
@@ -124,14 +125,14 @@ class HatredTest extends BaseCardTest {
         harness.castInstant(player1, 0, 7, goblin.getId());
 
         harness.assertLife(player1, 13);
-        assertThat(goblin.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
         harness.assertLife(player1, 13);
-        assertThat(goblin.getEffectivePower()).isEqualTo(8);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
     }
 
     @Test
@@ -154,7 +155,7 @@ class HatredTest extends BaseCardTest {
         harness.assertLife(player1, 14);
         harness.assertInGraveyard(player1, "Hatred");
         assertThat(gd.stack).isEmpty();
-        assertThat(goblin.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isZero();
     }
 
     @Test

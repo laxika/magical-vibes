@@ -35,8 +35,8 @@ class SarkhanVolTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sarkhan.getCounterCount(CounterType.LOYALTY)).isEqualTo(5); // 4 + 1
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isTrue();
     }
 
@@ -49,7 +49,7 @@ class SarkhanVolTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(oppBear.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, oppBear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, oppBear, Keyword.HASTE)).isFalse();
     }
 
@@ -66,7 +66,7 @@ class SarkhanVolTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isFalse();
     }
 
@@ -178,11 +178,11 @@ class SarkhanVolTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new CylianElf());
 
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(3);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.HASTE)).isTrue();
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.HASTE)).isFalse();
     }
 

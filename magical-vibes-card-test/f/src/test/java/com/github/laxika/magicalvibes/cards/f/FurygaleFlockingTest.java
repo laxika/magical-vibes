@@ -50,8 +50,8 @@ class FurygaleFlockingTest extends BaseCardTest {
                 .toList();
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allSatisfy(token -> {
-            assertThat(token.getEffectivePower()).isEqualTo(3);
-            assertThat(token.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
             assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
             assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
             assertThat(gd.hasFloatingEffectOnPermanent(token.getId(), MustAttackIfAbleEffect.class)).isTrue();

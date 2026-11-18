@@ -38,8 +38,8 @@ class TheLastRoninsTechniqueTest extends BaseCardTest {
         assertThat(tokens).hasSize(3).allSatisfy(token -> {
             assertThat(token.isTapped()).isFalse();
             assertThat(token.isAttacking()).isFalse();
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         });
     }
 

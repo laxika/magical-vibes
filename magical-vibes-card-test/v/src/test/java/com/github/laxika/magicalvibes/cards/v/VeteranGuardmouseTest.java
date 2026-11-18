@@ -32,8 +32,8 @@ class VeteranGuardmouseTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, mouse.getId());
         harness.passBothPriorities();
 
-        assertThat(mouse.getEffectivePower()).isEqualTo(4);
-        assertThat(mouse.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, mouse)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, mouse)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, mouse, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
 
@@ -41,8 +41,8 @@ class VeteranGuardmouseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, top);
-        assertThat(mouse.getEffectivePower()).isEqualTo(5);
-        assertThat(mouse.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, mouse)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, mouse)).isEqualTo(5);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -57,11 +57,11 @@ class VeteranGuardmouseTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, mouse.getId());
         harness.passBothPriorities();
 
-        assertThat(mouse.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, mouse)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, mouse, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.passBothPriorities();
-        assertThat(mouse.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, mouse)).isEqualTo(5);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -76,16 +76,16 @@ class VeteranGuardmouseTest extends BaseCardTest {
 
         harness.castInstant(player2, 0, mouse.getId());
         harness.passBothPriorities();
-        assertThat(mouse.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, mouse)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, mouse, Keyword.FIRST_STRIKE)).isFalse();
 
         harness.castInstant(player1, 0, mouse.getId());
         harness.passBothPriorities();
-        assertThat(mouse.getEffectivePower()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, mouse)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, mouse, Keyword.FIRST_STRIKE)).isTrue();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
         harness.passBothPriorities();
-        assertThat(mouse.getEffectivePower()).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, mouse)).isEqualTo(10);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -103,18 +103,18 @@ class VeteranGuardmouseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(mouse.getEffectivePower()).isEqualTo(3);
-        assertThat(mouse.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, mouse)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mouse)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, mouse, Keyword.FIRST_STRIKE)).isFalse();
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castInstant(player1, 0, mouse.getId());
         harness.passBothPriorities();
-        assertThat(mouse.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, mouse)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, mouse, Keyword.FIRST_STRIKE)).isTrue();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
         harness.passBothPriorities();
-        assertThat(mouse.getEffectivePower()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, mouse)).isEqualTo(7);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -128,14 +128,14 @@ class VeteranGuardmouseTest extends BaseCardTest {
         harness.castInstant(player1, 0, mouse.getId());
         harness.passBothPriorities();
 
-        assertThat(mouse.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, mouse)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, mouse, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
         harness.passBothPriorities();
 
-        assertThat(mouse.getEffectivePower()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, mouse)).isEqualTo(7);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -150,13 +150,13 @@ class VeteranGuardmouseTest extends BaseCardTest {
         harness.passBothPriorities();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
         harness.passBothPriorities();
-        int powerAfterFirstSpell = mouse.getEffectivePower();
+        int powerAfterFirstSpell = gqs.getEffectivePower(gd, mouse);
 
         harness.castInstant(player1, 0, mouse.getId());
         harness.passBothPriorities();
 
         assertThat(powerAfterFirstSpell).isEqualTo(7);
-        assertThat(mouse.getEffectivePower()).isEqualTo(powerAfterFirstSpell + 3);
+        assertThat(gqs.getEffectivePower(gd, mouse)).isEqualTo(powerAfterFirstSpell + 3);
     }
 
     @Test
@@ -168,7 +168,7 @@ class VeteranGuardmouseTest extends BaseCardTest {
         harness.castInstant(player2, 0, mouse.getId());
         harness.passBothPriorities();
 
-        assertThat(mouse.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, mouse)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, mouse, Keyword.FIRST_STRIKE)).isFalse();
     }
 }

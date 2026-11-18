@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,8 +30,8 @@ class HorribleHordesTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(hordes.getPowerModifier()).isZero();
-        assertThat(hordes.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hordes)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hordes)).isZero();
     }
 
     @Test
@@ -48,8 +49,8 @@ class HorribleHordesTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(hordes.getPowerModifier()).isEqualTo(1);
-        assertThat(hordes.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hordes)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hordes)).isEqualTo(1);
     }
 
     @Test
@@ -69,8 +70,8 @@ class HorribleHordesTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(hordes.getPowerModifier()).isEqualTo(2);
-        assertThat(hordes.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, hordes)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hordes)).isEqualTo(2);
     }
 
     @Test
@@ -83,8 +84,8 @@ class HorribleHordesTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(hordes.getPowerModifier()).isZero();
-        assertThat(hordes.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hordes)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hordes)).isZero();
     }
 
     @Test
@@ -106,8 +107,8 @@ class HorribleHordesTest extends BaseCardTest {
         harness.castInstant(player1, 0, removedBlocker.getId());
         resolveAllTriggers();
 
-        assertThat(hordes.getPowerModifier()).isZero();
-        assertThat(hordes.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hordes)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hordes)).isZero();
     }
 
     @Test
@@ -130,8 +131,8 @@ class HorribleHordesTest extends BaseCardTest {
         harness.castInstant(player1, 0, leadingPermanent.getId());
         resolveAllTriggers();
 
-        assertThat(hordes.getPowerModifier()).isEqualTo(1);
-        assertThat(hordes.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hordes)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hordes)).isEqualTo(1);
     }
 
     @Test
@@ -149,16 +150,16 @@ class HorribleHordesTest extends BaseCardTest {
         ));
         resolveAllTriggers();
 
-        assertThat(hordes.getPowerModifier()).isEqualTo(1);
-        assertThat(hordes.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hordes)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hordes)).isEqualTo(1);
 
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castAndResolveInstant(player1, 0, removedBlocker.getId());
 
         harness.assertInHand(player2, "Iron Tusk Elephant");
-        assertThat(hordes.getPowerModifier()).isEqualTo(1);
-        assertThat(hordes.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hordes)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hordes)).isEqualTo(1);
     }
 
     @Test
@@ -176,14 +177,14 @@ class HorribleHordesTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(hordes.getPowerModifier()).isEqualTo(1);
-        assertThat(hordes.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hordes)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hordes)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(hordes.getPowerModifier()).isZero();
-        assertThat(hordes.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hordes)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hordes)).isZero();
     }
 }

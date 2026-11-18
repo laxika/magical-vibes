@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
@@ -41,7 +42,7 @@ class BrokersCharmTest extends BaseCardTest {
                 bear.getId(), harness.getPermanentId(player2, "Llanowar Elves")));
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
 
@@ -111,16 +112,16 @@ class BrokersCharmTest extends BaseCardTest {
     void modeZeroDoesNotBoostOrFightTheVictim() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        victim.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, victim, 3);
         harness.setHand(player1, List.of(new BrokersCharm()));
         addGWU();
 
         harness.castModalInstant(player1, 0, 0, List.of(source.getId(), victim.getId()));
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
         assertThat(source.getMarkedDamage()).isZero();
-        assertThat(victim.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, victim)).isZero();
         assertThat(victim.getMarkedDamage()).isEqualTo(3);
     }
 
@@ -136,7 +137,7 @@ class BrokersCharmTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).add(victim.getCard());
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
         assertThat(source.getMarkedDamage()).isZero();
     }
 
@@ -154,7 +155,7 @@ class BrokersCharmTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Llanowar Elves");
         assertThat(victim.getMarkedDamage()).isZero();
-        assertThat(victim.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, victim)).isZero();
     }
 
     @Test

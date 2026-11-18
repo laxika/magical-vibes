@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -39,16 +40,16 @@ class PatronOfTheWildTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
     }
 
     @Test
@@ -70,14 +71,14 @@ class PatronOfTheWildTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, patron.getId());
 
         assertThat(patron.isFaceDown()).isFalse();
-        assertThat(patron.getPowerModifier()).isZero();
-        assertThat(patron.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, patron)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, patron)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         resolveAllTriggers();
 
-        assertThat(patron.getPowerModifier()).isEqualTo(3);
-        assertThat(patron.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, patron)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, patron)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
     }
 

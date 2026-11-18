@@ -41,8 +41,8 @@ class PaperfinRascalTest extends BaseCardTest {
         Permanent rascal = castPaperfinRascal();
 
         assertThat(rascal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(rascal.getEffectivePower()).isEqualTo(3);
-        assertThat(rascal.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rascal)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, rascal)).isEqualTo(3);
     }
 
     @Test
@@ -55,8 +55,8 @@ class PaperfinRascalTest extends BaseCardTest {
         Permanent rascal = castPaperfinRascal();
 
         assertThat(rascal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
-        assertThat(rascal.getEffectivePower()).isEqualTo(2);
-        assertThat(rascal.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rascal)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rascal)).isEqualTo(2);
     }
 
     @Test
@@ -80,8 +80,8 @@ class PaperfinRascalTest extends BaseCardTest {
         Permanent rascal = castPaperfinRascal();
 
         assertThat(rascal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
-        assertThat(rascal.getEffectivePower()).isEqualTo(2);
-        assertThat(rascal.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rascal)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rascal)).isEqualTo(2);
     }
 
     @Test

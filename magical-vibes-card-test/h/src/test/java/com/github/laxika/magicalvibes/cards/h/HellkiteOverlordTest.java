@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -22,8 +23,8 @@ class HellkiteOverlordTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(overlord.getPowerModifier()).isEqualTo(1);
-        assertThat(overlord.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, overlord)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, overlord)).isEqualTo(0);
     }
 
     @Test
@@ -37,14 +38,14 @@ class HellkiteOverlordTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(overlord.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, overlord)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(overlord.getPowerModifier()).isEqualTo(0);
-        assertThat(overlord.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, overlord)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, overlord)).isEqualTo(0);
     }
 
     @Test
@@ -125,7 +126,7 @@ class HellkiteOverlordTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(overlord.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, overlord)).isEqualTo(1);
         assertThat(gd.regenerationShieldCount(overlord.getId())).isEqualTo(1);
         assertThat(overlord.isTapped()).isTrue();
     }

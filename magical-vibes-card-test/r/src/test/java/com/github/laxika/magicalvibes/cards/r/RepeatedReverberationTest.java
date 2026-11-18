@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.ChandraNovicePyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -62,7 +63,7 @@ class RepeatedReverberationTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(6);
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
     }
 
@@ -92,7 +93,7 @@ class RepeatedReverberationTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(2);
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
     }
 

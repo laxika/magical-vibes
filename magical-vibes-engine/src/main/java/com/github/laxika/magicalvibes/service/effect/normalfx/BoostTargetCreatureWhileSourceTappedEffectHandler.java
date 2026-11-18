@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureWhileSourceTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * Resolves {@link BoostTargetCreatureWhileSourceTappedEffect}: records a {@code WHILE_SOURCE_TAPPED}
  * floating continuous effect on the target that grants the +P/+T boost for as long as the source
- * permanent remains tapped. The wrapped {@link BuffTargetCreatureIndefinitelyEffect} is read by the
+ * permanent remains tapped. The wrapped {@link PowerToughnessBoostEffect} is read by the
  * CR 613 layered pass in sublayer 7c. The duration clock ends the effect when the source becomes
  * untapped or leaves the battlefield ({@code DurationClock}).
  */
@@ -65,7 +65,7 @@ public class BoostTargetCreatureWhileSourceTappedEffectHandler implements Normal
 
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), sourcePermanentId, entry.getControllerId(),
-                    new BuffTargetCreatureIndefinitelyEffect(boost.power(), boost.toughness(), boost.keywords()),
+                    new PowerToughnessBoostEffect(boost.power(), boost.toughness(), boost.keywords()),
                     target.getId(), null, null, Duration.WHILE_SOURCE_TAPPED, 0));
 
             gameLogService.append(gameData, GameLog.builder()

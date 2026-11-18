@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -86,8 +87,8 @@ class GrevenPredatorCaptainTest extends BaseCardTest {
     void usesModifiedPowerAndToughnessImmediatelyBeforeSacrifice() {
         Permanent greven = addCreatureReady(player1, new GrevenPredatorCaptain());
         Permanent sacrifice = addCreatureReady(player1, new GrizzlyBears());
-        sacrifice.setPowerModifier(1);
-        sacrifice.setToughnessModifier(2);
+        PermanentGrants.setPowerBoost(gd, sacrifice, 1);
+        PermanentGrants.setToughnessBoost(gd, sacrifice, 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new HillGiant(), new HillGiant(), new HillGiant()));
 

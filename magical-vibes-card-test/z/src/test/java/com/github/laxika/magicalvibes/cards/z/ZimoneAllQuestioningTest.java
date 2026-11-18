@@ -28,8 +28,8 @@ class ZimoneAllQuestioningTest extends BaseCardTest {
         assertThat(primo.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(primo.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
         assertThat(primo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(primo.getEffectivePower()).isEqualTo(2);
-        assertThat(primo.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, primo)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, primo)).isEqualTo(2);
     }
 
     @Test

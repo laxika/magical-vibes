@@ -67,12 +67,12 @@ class ShipwreckSingerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(ownAttacker.getEffectivePower()).isEqualTo(1);
-        assertThat(ownAttacker.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponentAttacker.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentAttacker.getEffectiveToughness()).isEqualTo(1);
-        assertThat(nonattacker.getEffectivePower()).isEqualTo(2);
-        assertThat(nonattacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownAttacker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownAttacker)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentAttacker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentAttacker)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonattacker)).isEqualTo(2);
     }
 
     @Test
@@ -160,17 +160,17 @@ class ShipwreckSingerTest extends BaseCardTest {
         attacker.setAttacking(false);
         laterAttacker.setAttacking(true);
 
-        assertThat(attacker.getEffectivePower()).isZero();
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(1);
-        assertThat(laterAttacker.getEffectivePower()).isEqualTo(1);
-        assertThat(laterAttacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, laterAttacker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, laterAttacker)).isEqualTo(2);
 
         laterAttacker.setAttacking(false);
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(1);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -203,7 +203,7 @@ class ShipwreckSingerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(1);
         harness.activateAbility(player1, 1, 1, null, null);
         harness.passBothPriorities();
 

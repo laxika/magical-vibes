@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArcaneAdaptation;
 import com.github.laxika.magicalvibes.cards.b.BalothGorger;
 import com.github.laxika.magicalvibes.cards.c.CastDown;
@@ -51,8 +52,8 @@ class ThallidOmnivoreTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Saproling");
 
         Permanent omnivore = findPermanent(player1, "Thallid Omnivore");
-        assertThat(omnivore.getPowerModifier()).isEqualTo(2);
-        assertThat(omnivore.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, omnivore)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, omnivore)).isEqualTo(2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
     }
@@ -74,8 +75,8 @@ class ThallidOmnivoreTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Baloth Gorger");
 
         Permanent omnivore = findPermanent(player1, "Thallid Omnivore");
-        assertThat(omnivore.getPowerModifier()).isEqualTo(2);
-        assertThat(omnivore.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, omnivore)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, omnivore)).isEqualTo(2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
     }
@@ -115,14 +116,14 @@ class ThallidOmnivoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent omnivore = findPermanent(player1, "Thallid Omnivore");
-        assertThat(omnivore.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, omnivore)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(omnivore.getPowerModifier()).isEqualTo(0);
-        assertThat(omnivore.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, omnivore)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, omnivore)).isEqualTo(0);
     }
 
     @Test
@@ -146,8 +147,8 @@ class ThallidOmnivoreTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         Permanent omnivore = findPermanent(player1, "Thallid Omnivore");
-        assertThat(omnivore.getPowerModifier()).isEqualTo(4);
-        assertThat(omnivore.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, omnivore)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, omnivore)).isEqualTo(4);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
     }
@@ -165,12 +166,12 @@ class ThallidOmnivoreTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Saproling");
         harness.assertLife(player1, lifeBefore);
-        assertThat(findPermanent(player1, "Thallid Omnivore").getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Thallid Omnivore"))).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Thallid Omnivore").getPowerModifier()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Thallid Omnivore").getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Thallid Omnivore"))).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player1, "Thallid Omnivore"))).isEqualTo(2);
         harness.assertLife(player1, lifeBefore + 2);
     }
 

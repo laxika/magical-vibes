@@ -33,8 +33,8 @@ class AlphaKavuTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent kavu = findPermanent(player1, "Amphibious Kavu");
-        assertThat(kavu.getEffectivePower()).isEqualTo(1);
-        assertThat(kavu.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(3);
     }
 
     @Test
@@ -51,8 +51,8 @@ class AlphaKavuTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent kavu = findPermanent(player1, "Amphibious Kavu");
-        assertThat(kavu.getEffectivePower()).isEqualTo(2);
-        assertThat(kavu.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
     }
 
     @Test
@@ -77,8 +77,8 @@ class AlphaKavuTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent kavu = findPermanent(player2, "Amphibious Kavu");
-        assertThat(kavu.getEffectivePower()).isEqualTo(1);
-        assertThat(kavu.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(3);
     }
 
     @Test
@@ -105,8 +105,8 @@ class AlphaKavuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, source.getId());
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(1);
-        assertThat(source.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(3);
         assertThat(source.isTapped()).isTrue();
     }
 
@@ -123,8 +123,8 @@ class AlphaKavuTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(source.getEffectivePower()).isEqualTo(-1);
-        assertThat(source.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(5);
         assertThat(source.isTapped()).isFalse();
     }
 

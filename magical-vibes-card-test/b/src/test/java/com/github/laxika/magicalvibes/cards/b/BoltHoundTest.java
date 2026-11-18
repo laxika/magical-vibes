@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,8 +25,8 @@ class BoltHoundTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(other.getPowerModifier()).isEqualTo(1);
-        assertThat(other.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isEqualTo(0);
     }
 
     @Test
@@ -36,7 +37,7 @@ class BoltHoundTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(hound.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, hound)).isEqualTo(0);
     }
 
     @Test
@@ -48,7 +49,7 @@ class BoltHoundTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(enemy.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, enemy)).isEqualTo(0);
     }
 
     @Test
@@ -60,14 +61,14 @@ class BoltHoundTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(other.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(other.getPowerModifier()).isEqualTo(0);
-        assertThat(other.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isEqualTo(0);
     }
 
     @Test
@@ -79,9 +80,9 @@ class BoltHoundTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(otherHound.getPowerModifier()).isEqualTo(1);
-        assertThat(otherHound.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherHound)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherHound)).isZero();
     }
 
     @Test
@@ -94,10 +95,10 @@ class BoltHoundTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(third.getPowerModifier()).isEqualTo(2);
-        assertThat(third.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, third)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, third)).isZero();
     }
 
     @Test
@@ -110,8 +111,8 @@ class BoltHoundTest extends BaseCardTest {
         Permanent newcomer = harness.addToBattlefieldAndReturn(player1, new BoltHound());
         resolveAllTriggers();
 
-        assertThat(newcomer.getPowerModifier()).isEqualTo(1);
-        assertThat(newcomer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newcomer)).isZero();
     }
 
     @Test
@@ -123,8 +124,8 @@ class BoltHoundTest extends BaseCardTest {
 
         Permanent newcomer = harness.addToBattlefieldAndReturn(player1, new BoltHound());
 
-        assertThat(newcomer.getPowerModifier()).isZero();
-        assertThat(newcomer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newcomer)).isZero();
     }
 
     @Test
@@ -138,7 +139,7 @@ class BoltHoundTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(other.getPowerModifier()).isEqualTo(1);
-        assertThat(newcomer.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isZero();
     }
 }

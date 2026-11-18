@@ -63,8 +63,8 @@ class CrushOfTentaclesTest extends BaseCardTest {
         Permanent octopus = findPermanent(player1, "Octopus");
         assertThat(octopus.getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(octopus.getCard().getSubtypes()).containsExactly(CardSubtype.OCTOPUS);
-        assertThat(octopus.getEffectivePower()).isEqualTo(8);
-        assertThat(octopus.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, octopus)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, octopus)).isEqualTo(8);
     }
 
     @Test

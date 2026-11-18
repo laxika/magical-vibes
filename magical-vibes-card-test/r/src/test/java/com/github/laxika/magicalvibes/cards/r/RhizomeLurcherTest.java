@@ -28,8 +28,8 @@ class RhizomeLurcherTest extends BaseCardTest {
         Permanent lurcher = findLurcher();
         assertThat(lurcher).isNotNull();
         assertThat(lurcher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(lurcher.getEffectivePower()).isEqualTo(4);
-        assertThat(lurcher.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, lurcher)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, lurcher)).isEqualTo(4);
     }
 
     @Test

@@ -29,8 +29,8 @@ class PhantomWurmTest extends BaseCardTest {
 
         Permanent wurm = findPermanent(player1, "Phantom Wurm");
         assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(wurm.getEffectivePower()).isEqualTo(6);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(4);
     }
 
     @Test

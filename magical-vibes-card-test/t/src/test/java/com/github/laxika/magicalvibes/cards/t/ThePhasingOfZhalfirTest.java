@@ -78,8 +78,8 @@ class ThePhasingOfZhalfirTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
         assertThat(findPermanents(player2, "Grizzly Bears")).isEmpty();
         assertThat(findPermanents(player1, "Phyrexian")).hasSize(2).allSatisfy(token -> {
-            assertThat(token.getEffectivePower()).isEqualTo(2);
-            assertThat(token.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.PHYREXIAN);
         });
         assertThat(findPermanents(player2, "Phyrexian")).hasSize(1);

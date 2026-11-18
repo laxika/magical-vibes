@@ -26,8 +26,8 @@ class GlintTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castResolve(creature);
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(3);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HEXPROOF);
     }
 
@@ -41,7 +41,7 @@ class GlintTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.HEXPROOF);
     }
 
@@ -78,8 +78,8 @@ class GlintTest extends BaseCardTest {
         castResolve(creature);
         castResolve(creature);
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(6);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HEXPROOF);
     }
 
@@ -117,8 +117,8 @@ class GlintTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(3);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HEXPROOF);
         assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(card -> card instanceof Flatten);
         assertThat(gd.stack).isEmpty();

@@ -48,8 +48,8 @@ class ClavileOFirstOfTheBlessedTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Grizzly Bears"));
         Permanent token = findPermanent(player1, "Vampire Demon");
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         assertThat(token.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.VAMPIRE, CardSubtype.DEMON);
     }

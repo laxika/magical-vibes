@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AetherBurst;
 import com.github.laxika.magicalvibes.cards.w.WoodlandDruid;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -31,8 +32,8 @@ class RabidElephantTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(elephant.getPowerModifier()).isEqualTo(2);
-        assertThat(elephant.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, elephant)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elephant)).isEqualTo(2);
     }
 
     @Test
@@ -50,8 +51,8 @@ class RabidElephantTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(elephant.getPowerModifier()).isEqualTo(4);
-        assertThat(elephant.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, elephant)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elephant)).isEqualTo(4);
     }
 
     @Test
@@ -64,8 +65,8 @@ class RabidElephantTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(elephant.getPowerModifier()).isZero();
-        assertThat(elephant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elephant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elephant)).isZero();
     }
 
     @Test
@@ -79,15 +80,15 @@ class RabidElephantTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(elephant.getPowerModifier()).isEqualTo(2);
-        assertThat(elephant.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, elephant)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elephant)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elephant.getPowerModifier()).isZero();
-        assertThat(elephant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elephant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elephant)).isZero();
     }
 
     @ParameterizedTest
@@ -111,15 +112,15 @@ class RabidElephantTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, assignments);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(elephant.getPowerModifier()).isZero();
-        assertThat(elephant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elephant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elephant)).isZero();
 
         harness.castInstant(player1, 0, List.of(departed.getId()));
         harness.passBothPriorities();
         harness.assertInHand(player2, "Woodland Druid");
         resolveAllTriggers();
 
-        assertThat(elephant.getPowerModifier()).isEqualTo(2 * (blockerCount - 1));
-        assertThat(elephant.getToughnessModifier()).isEqualTo(2 * (blockerCount - 1));
+        assertThat(PermanentGrants.powerBoostOf(gd, elephant)).isEqualTo(2 * (blockerCount - 1));
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elephant)).isEqualTo(2 * (blockerCount - 1));
     }
 }

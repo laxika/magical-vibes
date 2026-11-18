@@ -25,8 +25,8 @@ class BelbesArmorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(0);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         assertThat(armor.isTapped()).isTrue();
     }
 
@@ -39,8 +39,8 @@ class BelbesArmorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(armor.isTapped()).isTrue();
     }
 
@@ -53,15 +53,15 @@ class BelbesArmorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, creature.getId());
         harness.passBothPriorities();
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -85,8 +85,8 @@ class BelbesArmorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 4, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(-2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
         assertThat(armor.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
     }
@@ -102,8 +102,8 @@ class BelbesArmorTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(armor.getCard());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(-1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 
     @Test

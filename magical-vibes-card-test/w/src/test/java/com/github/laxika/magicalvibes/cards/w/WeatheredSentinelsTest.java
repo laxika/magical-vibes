@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -40,8 +41,8 @@ class WeatheredSentinelsTest extends BaseCardTest {
         assertThat(sentinels.isAttacking()).isTrue();
 
         resolveAllTriggers();
-        assertThat(sentinels.getPowerModifier()).isEqualTo(3);
-        assertThat(sentinels.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentinels)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentinels)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, sentinels, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
@@ -58,8 +59,8 @@ class WeatheredSentinelsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(sentinels.getPowerModifier()).isZero();
-        assertThat(sentinels.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sentinels)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentinels)).isZero();
     }
 
     @Test
@@ -93,17 +94,17 @@ class WeatheredSentinelsTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isFalse();
 
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(3);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(nonattacker.getPowerModifier()).isZero();
-        assertThat(nonattacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonattacker)).isZero();
         assertThat(gqs.hasKeyword(gd, nonattacker, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 

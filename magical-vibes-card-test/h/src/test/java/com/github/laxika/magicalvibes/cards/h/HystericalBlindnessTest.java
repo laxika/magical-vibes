@@ -27,8 +27,8 @@ class HystericalBlindnessTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(-2); // 2 - 4 = -2
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-2); // 2 - 4 = -2
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -42,8 +42,8 @@ class HystericalBlindnessTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -57,13 +57,13 @@ class HystericalBlindnessTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -78,10 +78,10 @@ class HystericalBlindnessTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         assertThat(findPermanents(player2, "Grizzly Bears")).hasSize(2).allSatisfy(bears -> {
-            assertThat(bears.getEffectivePower()).isEqualTo(-2);
-            assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-2);
+            assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         });
-        assertThat(findPermanent(player1, "Grizzly Bears").getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(2);
     }
 
     @Test
@@ -95,11 +95,11 @@ class HystericalBlindnessTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        assertThat(affected.getEffectivePower()).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, affected)).isEqualTo(-2);
         assertThat(findPermanents(player2, "Grizzly Bears")).hasSize(2).anySatisfy(bears -> {
             assertThat(bears.getId()).isNotEqualTo(affected.getId());
-            assertThat(bears.getEffectivePower()).isEqualTo(2);
-            assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         });
     }
 
@@ -114,7 +114,7 @@ class HystericalBlindnessTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Hysterical Blindness");
-        assertThat(findPermanent(player1, "Grizzly Bears").getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Grizzly Bears").getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(2);
     }
 }

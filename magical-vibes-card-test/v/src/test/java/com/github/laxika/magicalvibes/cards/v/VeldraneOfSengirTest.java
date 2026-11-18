@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.r.RysorianBadger;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -35,10 +36,10 @@ class VeldraneOfSengirTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.hasKeyword(gd, veldrane, Keyword.FORESTWALK)).isTrue();
-        assertThat(veldrane.getPowerModifier()).isEqualTo(-3);
-        assertThat(veldrane.getToughnessModifier()).isEqualTo(0);
-        assertThat(veldrane.getEffectivePower()).isEqualTo(2);
-        assertThat(veldrane.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, veldrane)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, veldrane)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, veldrane)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, veldrane)).isEqualTo(5);
     }
 
     @Test
@@ -52,8 +53,8 @@ class VeldraneOfSengirTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(veldrane.getEffectivePower()).isEqualTo(-1);
-        assertThat(veldrane.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, veldrane)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, veldrane)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, veldrane, Keyword.FORESTWALK)).isTrue();
     }
 
@@ -131,13 +132,13 @@ class VeldraneOfSengirTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(veldrane.getPowerModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, veldrane)).isEqualTo(-3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(veldrane.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, veldrane)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, veldrane, Keyword.FORESTWALK)).isFalse();
 
         veldrane.setAttacking(true);
@@ -184,13 +185,13 @@ class VeldraneOfSengirTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(veldrane.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, veldrane)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, veldrane, Keyword.FORESTWALK)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(veldrane.getEffectivePower()).isEqualTo(2);
-        assertThat(veldrane.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, veldrane)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, veldrane)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, veldrane, Keyword.FORESTWALK)).isTrue();
         assertThat(veldrane.isTapped()).isTrue();
     }

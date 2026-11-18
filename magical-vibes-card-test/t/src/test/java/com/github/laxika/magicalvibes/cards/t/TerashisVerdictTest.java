@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FrostOgre;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.model.Card;
@@ -70,7 +71,7 @@ class TerashisVerdictTest extends BaseCardTest {
         Permanent attacker = addAttacker(player2, new GnarledMass());
 
         cast(attacker.getId());
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Gnarled Mass");
@@ -81,7 +82,7 @@ class TerashisVerdictTest extends BaseCardTest {
     @DisplayName("Can destroy an attacker whose effective power is reduced to 3")
     void destroysAttackerWithReducedPower() {
         Permanent attacker = addAttacker(player2, new FrostOgre());
-        attacker.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, attacker, -2);
 
         prepare();
         harness.castAndResolveInstant(player1, 0, attacker.getId());

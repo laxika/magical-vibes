@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,8 +30,8 @@ class NumaiOutcastTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(outcast.getPowerModifier()).isEqualTo(2);
-        assertThat(outcast.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, outcast)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, outcast)).isEqualTo(2);
     }
 
     @Test
@@ -43,8 +44,8 @@ class NumaiOutcastTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(outcast.getPowerModifier()).isEqualTo(2);
-        assertThat(outcast.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, outcast)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, outcast)).isEqualTo(2);
     }
 
     @Test
@@ -56,14 +57,14 @@ class NumaiOutcastTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
-        assertThat(outcast.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, outcast)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(outcast.getPowerModifier()).isEqualTo(0);
-        assertThat(outcast.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, outcast)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, outcast)).isEqualTo(0);
     }
 
     @Test
@@ -74,8 +75,8 @@ class NumaiOutcastTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(outcast.getPowerModifier()).isZero();
-        assertThat(outcast.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, outcast)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, outcast)).isZero();
     }
 
     @Test
@@ -90,8 +91,8 @@ class NumaiOutcastTest extends BaseCardTest {
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(outcast.getPowerModifier()).isEqualTo(2);
-        assertThat(outcast.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, outcast)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, outcast)).isEqualTo(2);
     }
 
     @Test
@@ -108,8 +109,8 @@ class NumaiOutcastTest extends BaseCardTest {
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
         resolveAllTriggers();
 
-        assertThat(outcast.getPowerModifier()).isEqualTo(2);
-        assertThat(outcast.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, outcast)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, outcast)).isEqualTo(2);
     }
 
     @Test

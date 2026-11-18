@@ -60,8 +60,8 @@ class LoxodonLifechanterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(loxodon.getEffectivePower()).isEqualTo(11);
-        assertThat(loxodon.getEffectiveToughness()).isEqualTo(13);
+        assertThat(gqs.getEffectivePower(gd, loxodon)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, loxodon)).isEqualTo(13);
     }
 
     @Test
@@ -97,8 +97,8 @@ class LoxodonLifechanterTest extends BaseCardTest {
 
         harness.assertLife(player1, 11);
         Permanent loxodon = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(loxodon.getEffectivePower()).isEqualTo(9);
-        assertThat(loxodon.getEffectiveToughness()).isEqualTo(11);
+        assertThat(gqs.getEffectivePower(gd, loxodon)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, loxodon)).isEqualTo(11);
     }
 
     @Test
@@ -111,17 +111,17 @@ class LoxodonLifechanterTest extends BaseCardTest {
         harness.setLife(player1, 10);
 
         harness.passBothPriorities();
-        assertThat(loxodon.getEffectivePower()).isEqualTo(14);
-        assertThat(loxodon.getEffectiveToughness()).isEqualTo(16);
+        assertThat(gqs.getEffectivePower(gd, loxodon)).isEqualTo(14);
+        assertThat(gqs.getEffectiveToughness(gd, loxodon)).isEqualTo(16);
 
         harness.setLife(player1, 3);
-        assertThat(loxodon.getEffectivePower()).isEqualTo(14);
-        assertThat(loxodon.getEffectiveToughness()).isEqualTo(16);
+        assertThat(gqs.getEffectivePower(gd, loxodon)).isEqualTo(14);
+        assertThat(gqs.getEffectiveToughness(gd, loxodon)).isEqualTo(16);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
-        assertThat(loxodon.getEffectivePower()).isEqualTo(4);
-        assertThat(loxodon.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, loxodon)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, loxodon)).isEqualTo(6);
     }
 
     @Test
@@ -138,8 +138,8 @@ class LoxodonLifechanterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(loxodon.getEffectivePower()).isEqualTo(14);
-        assertThat(loxodon.getEffectiveToughness()).isEqualTo(16);
+        assertThat(gqs.getEffectivePower(gd, loxodon)).isEqualTo(14);
+        assertThat(gqs.getEffectiveToughness(gd, loxodon)).isEqualTo(16);
     }
 
     @Test

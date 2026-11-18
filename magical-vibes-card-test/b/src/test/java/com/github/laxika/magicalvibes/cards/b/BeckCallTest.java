@@ -63,8 +63,8 @@ class BeckCallTest extends BaseCardTest {
                     assertThat(permanent.getCard().getSubtypes()).contains(CardSubtype.BIRD);
                     assertThat(permanent.getCard().getColors()).containsExactly(CardColor.WHITE);
                     assertThat(permanent.hasKeyword(Keyword.FLYING)).isTrue();
-                    assertThat(permanent.getEffectivePower()).isEqualTo(1);
-                    assertThat(permanent.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(1);
                 });
     }
 

@@ -32,8 +32,8 @@ class RampagingMonumentTest extends BaseCardTest {
 
         Permanent monument = findMonument();
         assertThat(monument.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(monument.getEffectivePower()).isEqualTo(3);
-        assertThat(monument.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, monument)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, monument)).isEqualTo(3);
     }
 
     @Test

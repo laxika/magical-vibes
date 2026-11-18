@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
@@ -29,11 +30,11 @@ class DemolisherSpawnTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(4);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(4);
-        assertThat(spawn.getPowerModifier()).isZero();
-        assertThat(nonAttacker.getPowerModifier()).isZero();
-        assertThat(nonAttacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, spawn)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonAttacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonAttacker)).isZero();
     }
 
     @Test
@@ -46,9 +47,9 @@ class DemolisherSpawnTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(spawn.getPowerModifier()).isZero();
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spawn)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -60,14 +61,14 @@ class DemolisherSpawnTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
-        assertThat(attacker.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     private void setUpDelirium() {
@@ -87,8 +88,8 @@ class DemolisherSpawnTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest(), new Shock()));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -103,8 +104,8 @@ class DemolisherSpawnTest extends BaseCardTest {
         setUpDelirium();
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -117,8 +118,8 @@ class DemolisherSpawnTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(4);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(4);
     }
 
     @Test
@@ -132,11 +133,11 @@ class DemolisherSpawnTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(firstSpawn.getPowerModifier()).isEqualTo(4);
-        assertThat(firstSpawn.getToughnessModifier()).isEqualTo(4);
-        assertThat(secondSpawn.getPowerModifier()).isEqualTo(4);
-        assertThat(secondSpawn.getToughnessModifier()).isEqualTo(4);
-        assertThat(attacker.getPowerModifier()).isEqualTo(8);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstSpawn)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstSpawn)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondSpawn)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondSpawn)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(8);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(8);
     }
 }

@@ -32,8 +32,8 @@ class RampartArchitectTest extends BaseCardTest {
         Permanent wall = findPermanents(player1, "Wall").getFirst();
         assertThat(wall.getCard().getSubtypes()).contains(CardSubtype.WALL);
         assertThat(wall.getCard().getKeywords()).contains(Keyword.DEFENDER);
-        assertThat(wall.getEffectivePower()).isEqualTo(1);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
     }
 
     @Test

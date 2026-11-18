@@ -59,19 +59,19 @@ class RockfaceVillageTest extends BaseCardTest {
     void boostsQualifyingCreatureAndGrantsHasteUntilEndOfTurn() {
         addVillage();
         Permanent lizard = harness.addToBattlefieldAndReturn(player1, new FrilledSparkshooter());
-        int originalPower = lizard.getEffectivePower();
+        int originalPower = gqs.getEffectivePower(gd, lizard);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 2, null, lizard.getId());
         harness.passBothPriorities();
 
-        assertThat(lizard.getEffectivePower()).isEqualTo(originalPower + 1);
+        assertThat(gqs.getEffectivePower(gd, lizard)).isEqualTo(originalPower + 1);
         assertThat(gqs.hasKeyword(gd, lizard, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(lizard.getEffectivePower()).isEqualTo(originalPower);
+        assertThat(gqs.getEffectivePower(gd, lizard)).isEqualTo(originalPower);
         assertThat(gqs.hasKeyword(gd, lizard, Keyword.HASTE)).isFalse();
     }
 
@@ -144,15 +144,15 @@ class RockfaceVillageTest extends BaseCardTest {
             int villageIndex = gd.playerBattlefields.get(player1.getId()).size();
             addVillage();
             Permanent target = harness.addToBattlefieldAndReturn(player1, card);
-            int power = target.getEffectivePower();
-            int toughness = target.getEffectiveToughness();
+            int power = gqs.getEffectivePower(gd, target);
+            int toughness = gqs.getEffectiveToughness(gd, target);
             harness.addMana(player1, ManaColor.RED, 1);
 
             harness.activateAbility(player1, villageIndex, 2, null, target.getId());
             harness.passBothPriorities();
 
-            assertThat(target.getEffectivePower()).isEqualTo(power + 1);
-            assertThat(target.getEffectiveToughness()).isEqualTo(toughness);
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(power + 1);
+            assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(toughness);
             assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
             assertThat(gd.playerBattlefields.get(player1.getId()).get(villageIndex).isTapped()).isTrue();
         }
@@ -210,14 +210,14 @@ class RockfaceVillageTest extends BaseCardTest {
     void boostStillResolvesAfterVillageLeavesBattlefield() {
         addVillage();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new FrilledSparkshooter());
-        int power = target.getEffectivePower();
+        int power = gqs.getEffectivePower(gd, target);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, 2, null, target.getId());
         gd.playerBattlefields.get(player1.getId()).removeFirst();
 
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(power + 1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(power + 1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
@@ -241,7 +241,7 @@ class RockfaceVillageTest extends BaseCardTest {
     void boostDoesNotResolveIfTargetChangesController() {
         addVillage();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new FrilledSparkshooter());
-        int power = target.getEffectivePower();
+        int power = gqs.getEffectivePower(gd, target);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, 2, null, target.getId());
         gd.playerBattlefields.get(player1.getId()).remove(target);
@@ -249,7 +249,7 @@ class RockfaceVillageTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(power);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(power);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }

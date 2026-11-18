@@ -27,8 +27,8 @@ class BiomathematicianTest extends BaseCardTest {
 
         Permanent fractal = findFractals().getFirst();
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(fractal.getEffectivePower()).isEqualTo(1);
-        assertThat(fractal.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(1);
     }
 
     @Test
@@ -91,7 +91,7 @@ class BiomathematicianTest extends BaseCardTest {
         assertThat(findFractals()).hasSize(1);
         Permanent fractal = findFractals().getFirst();
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(fractal.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(1);
         assertThat(findPermanent(player1, "Elemental").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 

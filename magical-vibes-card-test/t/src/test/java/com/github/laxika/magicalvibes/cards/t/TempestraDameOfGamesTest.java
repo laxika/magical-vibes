@@ -40,8 +40,8 @@ class TempestraDameOfGamesTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
-        assertThat(token.getEffectivePower()).isEqualTo(target.getEffectivePower());
-        assertThat(token.getEffectiveToughness()).isEqualTo(target.getEffectiveToughness());
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(gqs.getEffectivePower(gd, target));
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(gqs.getEffectiveToughness(gd, target));
         assertThat(DelayedPermanentMoves.waiting(gd))
                 .contains(new DelayedPermanentAction(token.getId(),
                         DelayedPermanentActionKind.SACRIFICE_AT_END_STEP).scheduledBy(gd.resolutionOrdinal));
@@ -179,8 +179,8 @@ class TempestraDameOfGamesTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst().orElseThrow();
         assertThat(token.getCounters()).isEmpty();
-        assertThat(token.getEffectivePower()).isEqualTo(target.getEffectivePower() - 3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(target.getEffectiveToughness() - 3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(gqs.getEffectivePower(gd, target) - 3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(gqs.getEffectiveToughness(gd, target) - 3);
     }
 
     @Test

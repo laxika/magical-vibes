@@ -66,8 +66,8 @@ class ThreeBlindMiceTest extends BaseCardTest {
         advanceToNextChapter();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.VIGILANCE);
     }
 
@@ -147,17 +147,17 @@ class ThreeBlindMiceTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Three Blind Mice");
         assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, own, Keyword.VIGILANCE)).isTrue();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
         assertThat(gqs.hasKeyword(gd, opponent, Keyword.VIGILANCE)).isFalse();
         Permanent later = harness.addToBattlefieldAndReturn(player1, new ToughCookie());
-        assertThat(later.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, later)).isZero();
         assertThat(gqs.hasKeyword(gd, later, Keyword.VIGILANCE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(own.getPowerModifier()).isZero();
-        assertThat(own.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, own)).isZero();
         assertThat(gqs.hasKeyword(gd, own, Keyword.VIGILANCE)).isFalse();
     }
 

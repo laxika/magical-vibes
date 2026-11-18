@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -74,15 +75,15 @@ class WaterWeirdTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(weird.getPowerModifier()).isEqualTo(1);
-        assertThat(weird.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(weird.getPowerModifier()).isZero();
-        assertThat(weird.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, weird)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weird)).isZero();
     }
 
     @Test

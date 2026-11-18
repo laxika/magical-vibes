@@ -30,8 +30,8 @@ class UginsConjurantTest extends BaseCardTest {
 
         Permanent conjurant = findPermanent(player1, "Ugin's Conjurant");
         assertThat(conjurant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(conjurant.getEffectivePower()).isEqualTo(3);
-        assertThat(conjurant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, conjurant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, conjurant)).isEqualTo(3);
     }
 
     @Test

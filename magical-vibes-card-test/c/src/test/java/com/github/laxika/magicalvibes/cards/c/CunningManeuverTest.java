@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ErdwalIlluminator;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -26,10 +27,10 @@ class CunningManeuverTest extends BaseCardTest {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castCunningManeuver(bear);
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
     }
 
@@ -43,8 +44,8 @@ class CunningManeuverTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
     }
 
@@ -80,8 +81,8 @@ class CunningManeuverTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawnCard));
         castCunningManeuver(duck);
 
-        assertThat(duck.getEffectivePower()).isEqualTo(3);
-        assertThat(duck.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, duck)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, duck)).isEqualTo(5);
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
         assertThat(findPermanents(player2, "Clue")).isEmpty();
         Permanent clue = findPermanent(player1, "Clue");
@@ -103,8 +104,8 @@ class CunningManeuverTest extends BaseCardTest {
         castCunningManeuver(illuminator);
         resolveAllTriggers();
 
-        assertThat(illuminator.getEffectivePower()).isEqualTo(4);
-        assertThat(illuminator.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, illuminator)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, illuminator)).isEqualTo(4);
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
         assertThat(findPermanents(player2, "Clue")).isEmpty();
     }

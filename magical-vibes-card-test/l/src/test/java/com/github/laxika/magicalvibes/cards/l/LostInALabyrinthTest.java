@@ -36,8 +36,8 @@ class LostInALabyrinthTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(-1);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
@@ -87,8 +87,8 @@ class LostInALabyrinthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -120,8 +120,8 @@ class LostInALabyrinthTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         GameData gd = harness.getGameData();
-        assertThat(target.getEffectivePower()).isEqualTo(-1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .containsExactly(top);
         harness.getGameService().handleInteractionAnswer(gd, player1,
@@ -164,8 +164,8 @@ class LostInALabyrinthTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(-1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Lost in a Labyrinth");
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMutation;
 import com.github.laxika.magicalvibes.cards.r.RagingBull;
 import com.github.laxika.magicalvibes.cards.w.WallOfEarth;
@@ -127,7 +128,7 @@ class GlyphOfDelusionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GlyphOfDelusion()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castInstant(player1, 0, List.of(wall.getId(), attacker.getId()));
-        attacker.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, attacker, 3);
         harness.passBothPriorities();
 
         assertThat(attacker.getCounterCount(CounterType.GLYPH)).isEqualTo(5);

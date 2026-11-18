@@ -52,8 +52,8 @@ class LazotepSliverTest extends BaseCardTest {
         Permanent army = findPermanent(player1, "Sliver Army");
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(army.getCard().getSubtypes()).containsExactly(CardSubtype.SLIVER, CardSubtype.ARMY);
-        assertThat(army.getEffectivePower()).isEqualTo(2);
-        assertThat(army.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, army)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, army)).isEqualTo(2);
     }
 
     @Test

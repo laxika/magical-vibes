@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,8 +31,8 @@ class BorrowedHostilityTest extends BaseCardTest {
         harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of(bears.getId()));
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(3);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -59,7 +60,7 @@ class BorrowedHostilityTest extends BaseCardTest {
                 List.of(bears.getId(), bears.getId()));
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
@@ -76,9 +77,9 @@ class BorrowedHostilityTest extends BaseCardTest {
                 List.of(boosted.getId(), firstStriker.getId()));
         harness.passBothPriorities();
 
-        assertThat(boosted.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, boosted)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, boosted, Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(firstStriker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstStriker)).isZero();
         assertThat(gqs.hasKeyword(gd, firstStriker, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -93,12 +94,12 @@ class BorrowedHostilityTest extends BaseCardTest {
                 List.of(bears.getId(), bears.getId()));
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -115,7 +116,7 @@ class BorrowedHostilityTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(boosted);
         harness.passBothPriorities();
 
-        assertThat(firstStriker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstStriker)).isZero();
         assertThat(gqs.hasKeyword(gd, firstStriker, Keyword.FIRST_STRIKE)).isTrue();
         harness.assertInGraveyard(player1, "Borrowed Hostility");
     }

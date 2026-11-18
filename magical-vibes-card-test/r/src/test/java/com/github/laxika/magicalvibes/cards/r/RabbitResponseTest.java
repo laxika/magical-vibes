@@ -26,10 +26,10 @@ class RabbitResponseTest extends BaseCardTest {
         harness.castFromHand(player1, new RabbitResponse(), "{2}{W}{W}");
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -41,8 +41,8 @@ class RabbitResponseTest extends BaseCardTest {
         harness.castFromHand(player1, new RabbitResponse(), "{2}{W}{W}");
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(2);
 
         harness.getGameService().handleInteractionAnswer(
@@ -60,8 +60,8 @@ class RabbitResponseTest extends BaseCardTest {
         harness.castFromHand(player1, new RabbitResponse(), "{2}{W}{W}");
         harness.passBothPriorities();
 
-        assertThat(rabbit.getEffectivePower()).isEqualTo(1);
-        assertThat(rabbit.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, rabbit)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, rabbit)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
@@ -78,8 +78,8 @@ class RabbitResponseTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(rabbit.getEffectivePower()).isEqualTo(3);
-        assertThat(rabbit.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rabbit)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, rabbit)).isEqualTo(2);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .containsExactly(first, second);
         gs.handleInteractionAnswer(gd, player1,
@@ -101,8 +101,8 @@ class RabbitResponseTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
@@ -115,15 +115,15 @@ class RabbitResponseTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent lateRabbit = harness.addToBattlefieldAndReturn(player1, new BraveKinDuo());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(lateRabbit.getEffectivePower()).isEqualTo(1);
-        assertThat(lateRabbit.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, lateRabbit)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, lateRabbit)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test

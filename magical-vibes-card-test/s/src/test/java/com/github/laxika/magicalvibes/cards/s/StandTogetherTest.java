@@ -30,9 +30,9 @@ class StandTogetherTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(first.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(second.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
     }
 
     @Test

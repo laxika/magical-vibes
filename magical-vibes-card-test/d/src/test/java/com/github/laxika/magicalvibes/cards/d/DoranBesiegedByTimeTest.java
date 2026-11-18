@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.model.Card;
@@ -54,8 +55,8 @@ class DoranBesiegedByTimeTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(6);
     }
 
     @Test
@@ -69,8 +70,8 @@ class DoranBesiegedByTimeTest extends BaseCardTest {
         declareBlockers(List.of(new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(4);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(6);
     }
 
     @Test
@@ -85,8 +86,8 @@ class DoranBesiegedByTimeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
     }
 
     @Test
@@ -96,13 +97,13 @@ class DoranBesiegedByTimeTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(doran.getEffectivePower()).isEqualTo(5);
-        assertThat(doran.getEffectiveToughness()).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, doran)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, doran)).isEqualTo(10);
 
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(doran.getEffectivePower()).isZero();
-        assertThat(doran.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, doran)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, doran)).isEqualTo(5);
     }
 
     @Test
@@ -113,8 +114,8 @@ class DoranBesiegedByTimeTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(doran.getEffectivePower()).isEqualTo(2);
-        assertThat(doran.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, doran)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, doran)).isEqualTo(7);
     }
 
     @Test
@@ -122,11 +123,11 @@ class DoranBesiegedByTimeTest extends BaseCardTest {
         Permanent doran = addReadyCreature(player1, new DoranBesiegedByTime());
 
         declareAttackers(List.of(0));
-        doran.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, doran, 2);
         harness.passBothPriorities();
 
-        assertThat(doran.getEffectivePower()).isEqualTo(5);
-        assertThat(doran.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, doran)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, doran)).isEqualTo(8);
     }
 
     @Test
@@ -137,8 +138,8 @@ class DoranBesiegedByTimeTest extends BaseCardTest {
         declareAttackers(List.of(1));
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -149,8 +150,8 @@ class DoranBesiegedByTimeTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
     }
 
     @Test

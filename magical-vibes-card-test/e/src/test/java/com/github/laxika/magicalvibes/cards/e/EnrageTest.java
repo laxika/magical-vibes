@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,10 +29,10 @@ class EnrageTest extends BaseCardTest {
         harness.castInstant(player1, 0, 3, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -45,13 +46,13 @@ class EnrageTest extends BaseCardTest {
         harness.castInstant(player1, 0, 3, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(7);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Enrage");
         assertThat(gd.stack).isEmpty();
     }
@@ -70,8 +71,8 @@ class EnrageTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -84,10 +85,10 @@ class EnrageTest extends BaseCardTest {
         harness.castInstant(player1, 0, 2, opponentBear.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentBear.getPowerModifier()).isEqualTo(2);
-        assertThat(opponentBear.getToughnessModifier()).isZero();
-        assertThat(opponentBear.getEffectivePower()).isEqualTo(4);
-        assertThat(opponentBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentBear)).isZero();
+        assertThat(gqs.getEffectivePower(gd, opponentBear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBear)).isEqualTo(2);
     }
 
     @Test
@@ -100,10 +101,10 @@ class EnrageTest extends BaseCardTest {
         harness.castInstant(player1, 0, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -129,10 +130,10 @@ class EnrageTest extends BaseCardTest {
         harness.castInstant(player1, 0, 1, goblin.getId());
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(1);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(0);
-        assertThat(goblin.getEffectivePower()).isEqualTo(3);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
     }
 
     @Test
@@ -145,10 +146,10 @@ class EnrageTest extends BaseCardTest {
         harness.castInstant(player1, 0, 0, goblin.getId());
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(0);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(0);
-        assertThat(goblin.getEffectivePower()).isEqualTo(2);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
     }
 
     @Test

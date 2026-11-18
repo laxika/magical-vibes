@@ -27,12 +27,12 @@ class BattershieldWarriorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(warrior.getEffectivePower()).isEqualTo(3);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(3);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -70,13 +70,13 @@ class BattershieldWarriorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(warrior.getEffectivePower()).isEqualTo(3);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(3);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(warrior.getEffectivePower()).isEqualTo(2);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(2);
     }
 
     @Test
@@ -91,10 +91,10 @@ class BattershieldWarriorTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = addCreatureReady(player1, new BattershieldWarrior());
 
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(3);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(3);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
     }
 
     @Test
@@ -110,7 +110,7 @@ class BattershieldWarriorTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(warrior.getCard());
         harness.passBothPriorities();
 
-        assertThat(remainingCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(remainingCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, remainingCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, remainingCreature)).isEqualTo(3);
     }
 }

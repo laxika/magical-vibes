@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -59,8 +60,8 @@ class TerravoreTest extends BaseCardTest {
         Permanent terravore = addCreatureReady(player1, new Terravore());
         harness.setGraveyard(player1, List.of(new Plains(), new Plains()));
 
-        terravore.setPowerModifier(2);
-        terravore.setToughnessModifier(2);
+        PermanentGrants.setPowerBoost(gd, terravore, 2);
+        PermanentGrants.setToughnessBoost(gd, terravore, 2);
 
         assertThat(gqs.getEffectivePower(gd, terravore)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, terravore)).isEqualTo(4);

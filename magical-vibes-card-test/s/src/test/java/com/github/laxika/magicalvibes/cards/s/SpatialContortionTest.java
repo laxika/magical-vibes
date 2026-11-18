@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.b.BlindingDrone;
@@ -34,10 +35,10 @@ class SpatialContortionTest extends BaseCardTest {
 
         castOn(elemental);
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(3);
-        assertThat(elemental.getToughnessModifier()).isEqualTo(-3);
-        assertThat(elemental.getEffectivePower()).isEqualTo(7);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isEqualTo(-3);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
     }
 
     @Test
@@ -61,8 +62,8 @@ class SpatialContortionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(0);
-        assertThat(elemental.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isEqualTo(0);
     }
 
     @Test
@@ -85,8 +86,8 @@ class SpatialContortionTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(8);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Kozilek's Pathfinder");
         harness.assertInGraveyard(player1, "Spatial Contortion");
     }

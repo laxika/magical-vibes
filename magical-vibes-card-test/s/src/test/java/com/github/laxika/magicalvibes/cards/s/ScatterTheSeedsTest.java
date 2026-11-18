@@ -35,8 +35,8 @@ class ScatterTheSeedsTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Saproling")).hasSize(3)
                 .allSatisfy(saproling -> {
-                    assertThat(saproling.getEffectivePower()).isEqualTo(1);
-                    assertThat(saproling.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, saproling)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, saproling)).isEqualTo(1);
                     assertThat(saproling.getCard().getColors()).containsExactly(CardColor.GREEN);
                     assertThat(saproling.getCard().getSubtypes()).containsExactly(CardSubtype.SAPROLING);
                 });

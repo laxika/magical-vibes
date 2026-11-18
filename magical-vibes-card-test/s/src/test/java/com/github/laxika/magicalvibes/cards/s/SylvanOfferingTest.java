@@ -40,8 +40,8 @@ class SylvanOfferingTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Treefolk")).hasSize(1);
         assertThat(findPermanents(player2, "Treefolk")).hasSize(1);
         assertThat(findPermanents(player3, "Treefolk")).isEmpty();
-        assertThat(findPermanents(player1, "Treefolk").getFirst().getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanents(player2, "Treefolk").getFirst().getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanents(player1, "Treefolk").getFirst())).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanents(player2, "Treefolk").getFirst())).isEqualTo(2);
 
         PendingInteraction.PermanentChoice secondChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -84,8 +84,8 @@ class SylvanOfferingTest extends BaseCardTest {
             assertThat(findPermanents(player, "Treefolk")).singleElement().satisfies(token -> {
                 assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
                 assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.TREEFOLK);
-                assertThat(token.getEffectivePower()).isEqualTo(3);
-                assertThat(token.getEffectiveToughness()).isEqualTo(3);
+                assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+                assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
             });
             assertThat(findPermanents(player, "Elf Warrior")).hasSize(3)
                     .allSatisfy(this::assertElfWarrior);
@@ -105,8 +105,8 @@ class SylvanOfferingTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         for (Player player : List.of(player1, player2)) {
             assertThat(findPermanents(player, "Treefolk")).singleElement().satisfies(token -> {
-                assertThat(token.getEffectivePower()).isZero();
-                assertThat(token.getEffectiveToughness()).isZero();
+                assertThat(gqs.getEffectivePower(gd, token)).isZero();
+                assertThat(gqs.getEffectiveToughness(gd, token)).isZero();
             });
         }
 
@@ -121,8 +121,8 @@ class SylvanOfferingTest extends BaseCardTest {
     private void assertElfWarrior(Permanent token) {
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(token.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.ELF, CardSubtype.WARRIOR);
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
     }
 
     private Player addThirdPlayer() {

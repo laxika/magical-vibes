@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.PyromancersGauntlet;
@@ -91,7 +92,7 @@ class InnerStruggleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castInstant(player1, 0, wall.getId());
-        wall.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, wall, -2);
         harness.passBothPriorities();
 
         assertThat(wall.getMarkedDamage()).isEqualTo(1);
@@ -102,7 +103,7 @@ class InnerStruggleTest extends BaseCardTest {
     @DisplayName("An own creature with negative power deals no damage")
     void negativePowerDealsNoDamageToOwnCreature() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bear.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, bear, -3);
         harness.setHand(player1, List.of(new InnerStruggle()));
         harness.addMana(player1, ManaColor.RED, 4);
 

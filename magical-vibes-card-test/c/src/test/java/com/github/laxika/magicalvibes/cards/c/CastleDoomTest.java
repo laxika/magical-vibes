@@ -80,8 +80,8 @@ class CastleDoomTest extends BaseCardTest {
         assertThat(doombot.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(doombot.getCard().getSubtypes())
                 .containsExactly(CardSubtype.ROBOT, CardSubtype.VILLAIN);
-        assertThat(doombot.getEffectivePower()).isEqualTo(3);
-        assertThat(doombot.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, doombot)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, doombot)).isEqualTo(3);
         assertThat(castle.isTapped()).isTrue();
     }
 

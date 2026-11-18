@@ -36,10 +36,10 @@ class WicksPatrolTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(6);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(6);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
     }
 
@@ -53,8 +53,8 @@ class WicksPatrolTest extends BaseCardTest {
         castAndResolveWicks();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(6);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(6);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
     }
 
@@ -74,8 +74,8 @@ class WicksPatrolTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
     }
 
     @Test
@@ -94,8 +94,8 @@ class WicksPatrolTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
     }
 
     @Test
@@ -110,8 +110,8 @@ class WicksPatrolTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
     }
 
     @Test
@@ -123,15 +123,15 @@ class WicksPatrolTest extends BaseCardTest {
 
         castAndResolveWicks();
         harness.handlePermanentChosen(player1, opponentCreature.getId());
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(6);
         harness.setGraveyard(player1, List.of(new Forest()));
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(6);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(6);
         harness.setGraveyard(player1, List.of(new AirElemental()));
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(6);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(6);
     }
 
     @Test
@@ -144,13 +144,13 @@ class WicksPatrolTest extends BaseCardTest {
         castAndResolveWicks();
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(6);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(6);
     }
 
     @Test
@@ -192,7 +192,7 @@ class WicksPatrolTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(1);
     }
 
     @Test

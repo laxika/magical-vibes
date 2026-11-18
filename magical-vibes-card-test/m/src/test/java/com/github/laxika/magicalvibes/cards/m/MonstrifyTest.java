@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,8 +29,8 @@ class MonstrifyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(bear.getId()));
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(4);
-        assertThat(bear.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -41,13 +42,13 @@ class MonstrifyTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, List.of(bear.getId()));
         harness.passBothPriorities();
-        assertThat(bear.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -61,8 +62,8 @@ class MonstrifyTest extends BaseCardTest {
         harness.castRetrace(player1, 0, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(4);
-        assertThat(bear.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(4);
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -81,10 +82,10 @@ class MonstrifyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(opponent.getId()));
         harness.passBothPriorities();
 
-        assertThat(opponent.getPowerModifier()).isEqualTo(4);
-        assertThat(opponent.getToughnessModifier()).isEqualTo(4);
-        assertThat(own.getPowerModifier()).isZero();
-        assertThat(own.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, own)).isZero();
     }
 
     @Test
@@ -103,8 +104,8 @@ class MonstrifyTest extends BaseCardTest {
         harness.castRetrace(player1, graveyardIndex, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(8);
-        assertThat(bear.getToughnessModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(8);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(8);
         assertThat(harness.getGameData().playerHands.get(player1.getId())).isEmpty();
         assertThat(harness.getGameData().playerGraveyards.get(player1.getId()))
                 .contains(monstrify).hasSize(3);

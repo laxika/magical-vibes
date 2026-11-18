@@ -55,8 +55,7 @@ public class BoostPairedCreatureOfTargetEffectHandler implements NormalEffectHan
             if (partner == null) {
                 continue;
             }
-            partner.setPowerModifier(partner.getPowerModifier() + powerBoost);
-            partner.setToughnessModifier(partner.getToughnessModifier() + toughnessBoost);
+            gameData.addPowerToughnessBoost(entry, partner.getId(), powerBoost, toughnessBoost);
 
             gameLogService.append(gameData, GameLog.builder()
                     .card(partner.getCard())

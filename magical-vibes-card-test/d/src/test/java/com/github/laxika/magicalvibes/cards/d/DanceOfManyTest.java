@@ -54,8 +54,8 @@ class DanceOfManyTest extends BaseCardTest {
 
         Permanent token = tokenCopy(player1);
         assertThat(token).isNotNull();
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         assertThat(danceOfMany(player1)).isNotNull();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -55,8 +56,8 @@ class YaroksFenlurkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(fenlurker.getPowerModifier()).isEqualTo(1);
-        assertThat(fenlurker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, fenlurker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fenlurker)).isEqualTo(1);
     }
 
     @Test
@@ -72,8 +73,8 @@ class YaroksFenlurkerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(fenlurker.getPowerModifier()).isZero();
-        assertThat(fenlurker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fenlurker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fenlurker)).isZero();
     }
 
     @Test
@@ -127,8 +128,8 @@ class YaroksFenlurkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(fenlurker.getPowerModifier()).isEqualTo(2);
-        assertThat(fenlurker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, fenlurker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fenlurker)).isEqualTo(2);
         assertThat(fenlurker.isTapped()).isFalse();
     }
 

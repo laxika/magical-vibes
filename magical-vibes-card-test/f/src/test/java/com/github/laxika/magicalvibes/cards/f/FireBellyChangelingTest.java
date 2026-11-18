@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.MadAuntie;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,8 +25,8 @@ class FireBellyChangelingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(changeling.getPowerModifier()).isEqualTo(1);
-        assertThat(changeling.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, changeling)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, changeling)).isEqualTo(0);
     }
 
     @Test
@@ -39,7 +40,7 @@ class FireBellyChangelingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(changeling.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, changeling)).isEqualTo(2);
     }
 
     @Test
@@ -66,11 +67,11 @@ class FireBellyChangelingTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(changeling.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, changeling)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(changeling.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, changeling)).isEqualTo(0);
     }
 
     @Test
@@ -82,14 +83,14 @@ class FireBellyChangelingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(changeling.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, changeling)).isZero();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no more than 2 times");
 
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(changeling.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, changeling)).isEqualTo(2);
     }
 
     @Test
@@ -103,14 +104,14 @@ class FireBellyChangelingTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
         }
-        assertThat(second.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
 
         for (int i = 0; i < 2; i++) {
             harness.activateAbility(player1, 1, null, null);
             harness.passBothPriorities();
         }
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
     }
 
     @Test
@@ -124,14 +125,14 @@ class FireBellyChangelingTest extends BaseCardTest {
             harness.passBothPriorities();
         }
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(changeling.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, changeling)).isZero();
         harness.addMana(player1, ManaColor.RED, 3);
 
         for (int i = 0; i < 2; i++) {
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
         }
-        assertThat(changeling.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, changeling)).isEqualTo(2);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no more than 2 times");

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,8 +27,8 @@ class BloodcurdlingScreamTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         harness.assertInGraveyard(player1, "Bloodcurdling Scream");
     }
 
@@ -42,12 +43,12 @@ class BloodcurdlingScreamTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 4, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isZero();
-        assertThat(ally.getPowerModifier()).isZero();
-        assertThat(ally.getToughnessModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ally)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -59,10 +60,10 @@ class BloodcurdlingScreamTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 3, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -78,8 +79,8 @@ class BloodcurdlingScreamTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -91,8 +92,8 @@ class BloodcurdlingScreamTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 2, opponentBear.getId());
 
-        assertThat(opponentBear.getPowerModifier()).isEqualTo(2);
-        assertThat(opponentBear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentBear)).isEqualTo(0);
     }
 
     @Test

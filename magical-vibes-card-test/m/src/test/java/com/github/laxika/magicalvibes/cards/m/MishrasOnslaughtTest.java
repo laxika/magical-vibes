@@ -32,8 +32,8 @@ class MishrasOnslaughtTest extends BaseCardTest {
             assertThat(soldier.getCard().getColors()).isEmpty();
             assertThat(soldier.getCard().isToken()).isTrue();
             assertThat(soldier.isTapped()).isFalse();
-            assertThat(soldier.getEffectivePower()).isEqualTo(1);
-            assertThat(soldier.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
         });
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }

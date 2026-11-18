@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TectonicEdge;
@@ -34,17 +35,17 @@ class CausticCrawlerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(bears.getPowerModifier()).isEqualTo(-1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(-1);
-        assertThat(bears.getEffectivePower()).isEqualTo(1);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -59,8 +60,8 @@ class CausticCrawlerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -75,7 +76,7 @@ class CausticCrawlerTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -104,8 +105,8 @@ class CausticCrawlerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(crawler.getEffectivePower()).isEqualTo(3);
-        assertThat(crawler.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, crawler)).isEqualTo(2);
     }
 
     @Test
@@ -147,8 +148,8 @@ class CausticCrawlerTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
                 () -> harness.handleMayAbilityChosen(player1, true));
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 

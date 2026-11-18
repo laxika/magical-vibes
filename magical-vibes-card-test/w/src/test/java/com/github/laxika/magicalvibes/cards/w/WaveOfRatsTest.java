@@ -67,7 +67,7 @@ class WaveOfRatsTest extends BaseCardTest {
         rats.setAttacking(true);
 
         resolveCombat();
-        rats.setMarkedDamage(rats.getEffectiveToughness());
+        rats.setMarkedDamage(gqs.getEffectiveToughness(gd, rats));
         harness.runStateBasedActions();
         harness.passBothPriorities();
 
@@ -79,7 +79,7 @@ class WaveOfRatsTest extends BaseCardTest {
     @DisplayName("Does not return when it dies without dealing combat damage to a player")
     void doesNotReturnWithoutCombatDamageToPlayer() {
         Permanent rats = addCreatureReady(player1, new WaveOfRats());
-        rats.setMarkedDamage(rats.getEffectiveToughness());
+        rats.setMarkedDamage(gqs.getEffectiveToughness(gd, rats));
 
         harness.runStateBasedActions();
         harness.passBothPriorities();
@@ -151,7 +151,7 @@ class WaveOfRatsTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
-        returned.setMarkedDamage(returned.getEffectiveToughness());
+        returned.setMarkedDamage(gqs.getEffectiveToughness(gd, returned));
         harness.runStateBasedActions();
         resolveAllTriggers();
 
@@ -169,7 +169,7 @@ class WaveOfRatsTest extends BaseCardTest {
         harness.assertLife(player2, 16);
 
         harness.withAutoStop(gd.currentStep, () -> {
-            original.setMarkedDamage(original.getEffectiveToughness());
+            original.setMarkedDamage(gqs.getEffectiveToughness(gd, original));
             harness.runStateBasedActions();
             assertThat(gd.stack).hasSize(1);
 
@@ -178,7 +178,7 @@ class WaveOfRatsTest extends BaseCardTest {
             Permanent reentered = new Permanent(original.getCard());
             harness.getBattlefieldEntryService().putPermanentOntoBattlefield(
                     gd, player1.getId(), reentered);
-            reentered.setMarkedDamage(reentered.getEffectiveToughness());
+            reentered.setMarkedDamage(gqs.getEffectiveToughness(gd, reentered));
             harness.runStateBasedActions();
             resolveAllTriggers();
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.w.WreckageWickerfolk;
 import com.github.laxika.magicalvibes.cards.b.BroadcastRambler;
@@ -93,7 +94,7 @@ class GallantStrikeTest extends BaseCardTest {
     @DisplayName("Uses modified toughness when selecting a target")
     void canTargetCreatureRaisedToFourToughness() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new WreckageWickerfolk());
-        creature.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, creature, 1);
 
         castGallantStrike(creature);
 
@@ -105,13 +106,13 @@ class GallantStrikeTest extends BaseCardTest {
     @DisplayName("Target survives when toughness falls below four before resolution")
     void rechecksToughnessOnResolution() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new WreckageWickerfolk());
-        creature.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, creature, 1);
         harness.setHand(player1, List.of(new GallantStrike()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, creature.getId());
 
-        creature.setToughnessModifier(0);
+        PermanentGrants.setToughnessBoost(gd, creature, 0);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Wreckage Wickerfolk");
@@ -135,7 +136,7 @@ class GallantStrikeTest extends BaseCardTest {
     @DisplayName("Can destroy a creature controlled by its caster")
     void canDestroyOwnCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new WreckageWickerfolk());
-        creature.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, creature, 1);
 
         castGallantStrike(creature);
 

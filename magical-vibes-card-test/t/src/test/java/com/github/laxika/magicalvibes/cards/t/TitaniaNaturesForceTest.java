@@ -50,8 +50,8 @@ class TitaniaNaturesForceTest extends BaseCardTest {
 
         assertThat(elementalTokens(player1)).hasSize(1);
         Permanent elemental = elementalTokens(player1).get(0);
-        assertThat(elemental.getEffectivePower()).isEqualTo(5);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(3);
     }
 
     @Test

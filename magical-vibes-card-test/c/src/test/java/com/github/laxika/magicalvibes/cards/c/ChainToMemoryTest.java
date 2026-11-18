@@ -31,8 +31,8 @@ class ChainToMemoryTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(-2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(2);
     }
@@ -71,8 +71,8 @@ class ChainToMemoryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -120,8 +120,8 @@ class ChainToMemoryTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
 
-        assertThat(target.getEffectivePower()).isEqualTo(-2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first, third);
         harness.assertInGraveyard(player1, "Chain to Memory");
     }
@@ -169,8 +169,8 @@ class ChainToMemoryTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(-2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
         harness.assertInGraveyard(player1, "Chain to Memory");
         assertThat(gd.stack).isEmpty();

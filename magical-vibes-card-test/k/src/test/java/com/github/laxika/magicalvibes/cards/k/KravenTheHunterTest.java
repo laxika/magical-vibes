@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -101,7 +102,7 @@ class KravenTheHunterTest extends BaseCardTest {
     void triggersForOnlyCreatureWithNegativePower() {
         Permanent kraven = harness.addToBattlefieldAndReturn(player1, new KravenTheHunter());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, bears, -3);
         Forest drawnCard = new Forest();
         harness.setLibrary(player1, List.of(drawnCard));
         harness.setHand(player1, List.of(new DoomBlade()));

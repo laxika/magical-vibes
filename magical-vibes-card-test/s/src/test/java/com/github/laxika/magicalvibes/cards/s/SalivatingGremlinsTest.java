@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CogworkersPuzzleknot;
 import com.github.laxika.magicalvibes.cards.g.GlazeFiend;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -27,8 +28,8 @@ class SalivatingGremlinsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gremlins.getPowerModifier()).isEqualTo(2);
-        assertThat(gremlins.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, gremlins)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gremlins)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, gremlins, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -47,7 +48,7 @@ class SalivatingGremlinsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gremlins.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, gremlins)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, gremlins, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -62,7 +63,7 @@ class SalivatingGremlinsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gremlins.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, gremlins)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, gremlins, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -75,13 +76,13 @@ class SalivatingGremlinsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gremlins.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gremlins)).isZero();
         assertThat(gqs.hasKeyword(gd, gremlins, Keyword.TRAMPLE)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gremlins.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gremlins)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, gremlins, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -94,7 +95,7 @@ class SalivatingGremlinsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gremlins.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gremlins)).isZero();
         assertThat(gqs.hasKeyword(gd, gremlins, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -109,8 +110,8 @@ class SalivatingGremlinsTest extends BaseCardTest {
         }
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gremlins.getPowerModifier()).isEqualTo(4);
-        assertThat(gremlins.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gremlins)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gremlins)).isZero();
         assertThat(gqs.hasKeyword(gd, gremlins, Keyword.TRAMPLE)).isTrue();
     }
 }

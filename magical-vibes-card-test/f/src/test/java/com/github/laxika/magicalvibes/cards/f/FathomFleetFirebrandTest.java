@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -61,10 +62,10 @@ class FathomFleetFirebrandTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(firebrand.getEffectivePower()).isEqualTo(3);
-        assertThat(firebrand.getEffectiveToughness()).isEqualTo(2);
-        assertThat(firebrand.getPowerModifier()).isEqualTo(1);
-        assertThat(firebrand.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, firebrand)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firebrand)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firebrand)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firebrand)).isEqualTo(0);
     }
 
     @Test
@@ -80,10 +81,10 @@ class FathomFleetFirebrandTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(firebrand.getEffectivePower()).isEqualTo(5);
-        assertThat(firebrand.getEffectiveToughness()).isEqualTo(2);
-        assertThat(firebrand.getPowerModifier()).isEqualTo(3);
-        assertThat(firebrand.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, firebrand)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, firebrand)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firebrand)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firebrand)).isEqualTo(0);
     }
 
     @Test
@@ -97,17 +98,17 @@ class FathomFleetFirebrandTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(firebrand.getEffectivePower()).isEqualTo(4);
-        assertThat(firebrand.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, firebrand)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, firebrand)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(firebrand.getPowerModifier()).isEqualTo(0);
-        assertThat(firebrand.getToughnessModifier()).isEqualTo(0);
-        assertThat(firebrand.getEffectivePower()).isEqualTo(2);
-        assertThat(firebrand.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firebrand)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firebrand)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, firebrand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firebrand)).isEqualTo(2);
     }
 
     @Test
@@ -155,8 +156,8 @@ class FathomFleetFirebrandTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(firebrand.getEffectivePower()).isEqualTo(3);
-        assertThat(firebrand.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, firebrand)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firebrand)).isEqualTo(2);
         assertThat(firebrand.isTapped()).isTrue();
     }
 
@@ -171,8 +172,8 @@ class FathomFleetFirebrandTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(3);
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
     }
 }

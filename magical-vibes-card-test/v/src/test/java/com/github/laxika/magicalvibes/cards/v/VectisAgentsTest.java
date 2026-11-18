@@ -22,14 +22,14 @@ class VectisAgentsTest extends BaseCardTest {
     @DisplayName("Resolving ability gives -2/-0 and makes Vectis Agents unblockable")
     void resolvingAbilityAppliesEffects() {
         Permanent agents = addCreatureReady(player1, new VectisAgents());
-        int basePower = agents.getEffectivePower();
+        int basePower = gqs.getEffectivePower(gd, agents);
         addUbMana(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(agents.getEffectivePower()).isEqualTo(basePower - 2);
+        assertThat(gqs.getEffectivePower(gd, agents)).isEqualTo(basePower - 2);
         assertThat(gqs.hasCantBeBlocked(gd, agents)).isTrue();
     }
 
@@ -37,33 +37,33 @@ class VectisAgentsTest extends BaseCardTest {
     @DisplayName("Toughness is unchanged by the ability")
     void toughnessUnchanged() {
         Permanent agents = addCreatureReady(player1, new VectisAgents());
-        int baseToughness = agents.getEffectiveToughness();
+        int baseToughness = gqs.getEffectiveToughness(gd, agents);
         addUbMana(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(agents.getEffectiveToughness()).isEqualTo(baseToughness);
+        assertThat(gqs.getEffectiveToughness(gd, agents)).isEqualTo(baseToughness);
     }
 
     @Test
     @DisplayName("Both effects wear off at end of turn cleanup")
     void effectsWearOffAtEndOfTurn() {
         Permanent agents = addCreatureReady(player1, new VectisAgents());
-        int basePower = agents.getEffectivePower();
+        int basePower = gqs.getEffectivePower(gd, agents);
         addUbMana(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(agents.getEffectivePower()).isEqualTo(basePower - 2);
+        assertThat(gqs.getEffectivePower(gd, agents)).isEqualTo(basePower - 2);
         assertThat(gqs.hasCantBeBlocked(gd, agents)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(agents.getEffectivePower()).isEqualTo(basePower);
+        assertThat(gqs.getEffectivePower(gd, agents)).isEqualTo(basePower);
         assertThat(gqs.hasCantBeBlocked(gd, agents)).isFalse();
     }
 
@@ -72,8 +72,8 @@ class VectisAgentsTest extends BaseCardTest {
     void repeatedActivationsStackOnlyOnSource() {
         Permanent agents = addCreatureReady(player1, new VectisAgents());
         Permanent other = addCreatureReady(player1, new VectisAgents());
-        int basePower = agents.getEffectivePower();
-        int otherPower = other.getEffectivePower();
+        int basePower = gqs.getEffectivePower(gd, agents);
+        int otherPower = gqs.getEffectivePower(gd, other);
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -82,9 +82,9 @@ class VectisAgentsTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(agents.getEffectivePower()).isEqualTo(basePower - 6);
+        assertThat(gqs.getEffectivePower(gd, agents)).isEqualTo(basePower - 6);
         assertThat(gqs.hasCantBeBlocked(gd, agents)).isTrue();
-        assertThat(other.getEffectivePower()).isEqualTo(otherPower);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(otherPower);
         assertThat(gqs.hasCantBeBlocked(gd, other)).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(agents);
     }
@@ -95,13 +95,13 @@ class VectisAgentsTest extends BaseCardTest {
         Permanent agents = harness.addToBattlefieldAndReturn(player1, new VectisAgents());
         agents.setSummoningSick(true);
         agents.tap();
-        int basePower = agents.getEffectivePower();
+        int basePower = gqs.getEffectivePower(gd, agents);
         addUbMana(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(agents.getEffectivePower()).isEqualTo(basePower - 2);
+        assertThat(gqs.getEffectivePower(gd, agents)).isEqualTo(basePower - 2);
         assertThat(gqs.hasCantBeBlocked(gd, agents)).isTrue();
         assertThat(agents.isTapped()).isTrue();
     }

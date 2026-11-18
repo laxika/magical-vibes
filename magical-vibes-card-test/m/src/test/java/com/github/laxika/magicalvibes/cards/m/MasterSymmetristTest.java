@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PillardropWarden;
 import com.github.laxika.magicalvibes.cards.s.ScurridColony;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -98,7 +99,7 @@ class MasterSymmetristTest extends BaseCardTest {
     void unequalEffectiveStatsPreventTheTrigger() {
         addCreatureReady(player1, new MasterSymmetrist());
         Permanent attacker = addCreatureReady(player1, new ScurridColony());
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
 
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
@@ -110,7 +111,7 @@ class MasterSymmetristTest extends BaseCardTest {
     void equalEffectiveStatsTriggerEvenWhenPrintedStatsAreUnequal() {
         addCreatureReady(player1, new MasterSymmetrist());
         Permanent attacker = addCreatureReady(player1, new PillardropWarden());
-        attacker.setPowerModifier(4);
+        PermanentGrants.setPowerBoost(gd, attacker, 4);
 
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
@@ -124,7 +125,7 @@ class MasterSymmetristTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new ScurridColony());
 
         declareAttackers(player1, List.of(1));
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();

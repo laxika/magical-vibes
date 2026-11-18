@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -62,7 +63,7 @@ class FirstResponderTest extends BaseCardTest {
         Permanent responder = harness.addToBattlefieldAndReturn(player1, new FirstResponder());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.getCounters().put(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        bears.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, bears, 3);
 
         advanceToEndStep(player1);
         harness.handleMayAbilityChosen(player1, true);
@@ -76,7 +77,7 @@ class FirstResponderTest extends BaseCardTest {
     void negativePowerReturnsCreatureWithoutAddingCounters() {
         Permanent responder = harness.addToBattlefieldAndReturn(player1, new FirstResponder());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, bears, -3);
 
         advanceToEndStep(player1);
         harness.handleMayAbilityChosen(player1, true);

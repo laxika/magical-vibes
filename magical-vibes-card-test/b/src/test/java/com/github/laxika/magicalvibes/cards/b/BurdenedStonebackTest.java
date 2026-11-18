@@ -35,8 +35,8 @@ class BurdenedStonebackTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(stoneback.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
-        assertThat(stoneback.getEffectivePower()).isEqualTo(2);
-        assertThat(stoneback.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, stoneback)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, stoneback)).isEqualTo(2);
     }
 
     @Test
@@ -76,8 +76,8 @@ class BurdenedStonebackTest extends BaseCardTest {
 
         // Started with 2, now should have 1
         assertThat(stoneback.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(stoneback.getEffectivePower()).isEqualTo(3);
-        assertThat(stoneback.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, stoneback)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, stoneback)).isEqualTo(3);
     }
 
     @Test
@@ -105,8 +105,8 @@ class BurdenedStonebackTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(stoneback.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
-        assertThat(stoneback.getEffectivePower()).isEqualTo(4);
-        assertThat(stoneback.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, stoneback)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, stoneback)).isEqualTo(4);
     }
 
     @Test

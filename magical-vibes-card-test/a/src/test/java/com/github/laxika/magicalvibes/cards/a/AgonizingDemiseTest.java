@@ -89,7 +89,7 @@ class AgonizingDemiseTest extends BaseCardTest {
     @Test
     void kickedSpellUsesModifiedPower() {
         Permanent barbarian = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
-        barbarian.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, barbarian, 3);
         cast(barbarian, true);
 
         harness.assertInGraveyard(player2, "Yavimaya Barbarian");

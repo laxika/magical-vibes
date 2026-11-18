@@ -27,8 +27,8 @@ class ErrandOfDutyTest extends BaseCardTest {
         List<Permanent> knights = findPermanents(player1, "Knight");
         assertThat(knights).hasSize(1);
         Permanent knight = knights.getFirst();
-        assertThat(knight.getEffectivePower()).isEqualTo(1);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(1);
         assertThat(knight.hasKeyword(Keyword.BANDING)).isTrue();
     }
 

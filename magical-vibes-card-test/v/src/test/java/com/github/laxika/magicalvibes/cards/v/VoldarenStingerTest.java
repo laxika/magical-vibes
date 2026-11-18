@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -41,8 +42,8 @@ class VoldarenStingerTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(stinger), null, null);
         harness.passBothPriorities();
 
-        assertThat(stinger.getPowerModifier()).isEqualTo(2);
-        assertThat(stinger.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, stinger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, stinger)).isEqualTo(0);
     }
 
     @Test
@@ -58,8 +59,8 @@ class VoldarenStingerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(stinger.getPowerModifier()).isEqualTo(0);
-        assertThat(stinger.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, stinger)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, stinger)).isEqualTo(0);
     }
 
     @Test
@@ -88,13 +89,13 @@ class VoldarenStingerTest extends BaseCardTest {
 
         harness.activateAbility(player1, battlefieldIndex(stinger), null, null);
         harness.activateAbility(player1, battlefieldIndex(stinger), null, null);
-        assertThat(stinger.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, stinger)).isZero();
         resolveAllTriggers();
 
-        assertThat(stinger.getPowerModifier()).isEqualTo(4);
-        assertThat(stinger.getToughnessModifier()).isZero();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, stinger)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, stinger)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -109,8 +110,8 @@ class VoldarenStingerTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(stinger), null, null);
         harness.passBothPriorities();
 
-        assertThat(stinger.getPowerModifier()).isEqualTo(2);
-        assertThat(stinger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, stinger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, stinger)).isZero();
         assertThat(stinger.isTapped()).isTrue();
     }
 
@@ -124,7 +125,7 @@ class VoldarenStingerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(stinger.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, stinger)).isZero();
     }
 
     private Permanent addStinger() {

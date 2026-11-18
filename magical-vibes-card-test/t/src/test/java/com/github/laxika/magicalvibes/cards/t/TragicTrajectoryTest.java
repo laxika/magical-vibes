@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -30,10 +31,10 @@ class TragicTrajectoryTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         castTragicTrajectory(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -80,8 +81,8 @@ class TragicTrajectoryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -111,8 +112,8 @@ class TragicTrajectoryTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Knight Luminary");
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-10);
-        assertThat(target.getToughnessModifier()).isEqualTo(-10);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-10);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-10);
         harness.assertInGraveyard(player2, "Hill Giant");
     }
 
@@ -129,8 +130,8 @@ class TragicTrajectoryTest extends BaseCardTest {
         harness.assertInHand(player1, "Fountain of Youth");
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-10);
-        assertThat(target.getToughnessModifier()).isEqualTo(-10);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-10);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-10);
         harness.assertInGraveyard(player2, "Hill Giant");
     }
 
@@ -146,8 +147,8 @@ class TragicTrajectoryTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, land.getId());
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
         harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
@@ -176,8 +177,8 @@ class TragicTrajectoryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         harness.assertInHand(player2, "Hill Giant");
         harness.assertInGraveyard(player1, "Tragic Trajectory");
     }

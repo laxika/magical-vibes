@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.o.OboroEnvoy;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,8 +32,8 @@ class ArabaMothriderTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(mothrider.getPowerModifier()).isZero();
-        assertThat(mothrider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mothrider)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mothrider)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -69,8 +70,8 @@ class ArabaMothriderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(mothrider.getPowerModifier()).isEqualTo(1);
-        assertThat(mothrider.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mothrider)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mothrider)).isEqualTo(1);
     }
 
     @Test
@@ -84,8 +85,8 @@ class ArabaMothriderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(mothrider.getPowerModifier()).isEqualTo(1);
-        assertThat(mothrider.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mothrider)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mothrider)).isEqualTo(1);
     }
 
     @Test
@@ -97,8 +98,8 @@ class ArabaMothriderTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(mothrider.getPowerModifier()).isZero();
-        assertThat(mothrider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mothrider)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mothrider)).isZero();
     }
 
     @Test

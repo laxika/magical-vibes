@@ -30,8 +30,8 @@ class DinosaurStampedeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(dino.getEffectivePower()).isEqualTo(5);  // 3 + 2
-        assertThat(dino.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, dino)).isEqualTo(5);  // 3 + 2
+        assertThat(gqs.getEffectiveToughness(gd, dino)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, dino, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -48,8 +48,8 @@ class DinosaurStampedeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);  // 2 + 2
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);  // 2 + 2
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -65,8 +65,8 @@ class DinosaurStampedeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(dino.getEffectivePower()).isEqualTo(3);  // unchanged
-        assertThat(dino.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, dino)).isEqualTo(3);  // unchanged
+        assertThat(gqs.getEffectiveToughness(gd, dino)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, dino, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -82,8 +82,8 @@ class DinosaurStampedeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -118,15 +118,15 @@ class DinosaurStampedeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(dino.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, dino)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, dino, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dino.getEffectivePower()).isEqualTo(3);
-        assertThat(dino.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, dino)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, dino)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, dino, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -144,10 +144,10 @@ class DinosaurStampedeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(5);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
-        assertThat(ownDinosaur.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownDinosaur)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ownDinosaur, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -164,8 +164,8 @@ class DinosaurStampedeTest extends BaseCardTest {
         Permanent dinosaur = addCreatureReady(player1, new DeathgorgeScavenger());
         dinosaur.setAttacking(true);
 
-        assertThat(dinosaur.getEffectivePower()).isEqualTo(3);
-        assertThat(dinosaur.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, dinosaur)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, dinosaur)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, dinosaur, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -181,8 +181,8 @@ class DinosaurStampedeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         dinosaur.setAttacking(true);
 
-        assertThat(dinosaur.getEffectivePower()).isEqualTo(3);
-        assertThat(dinosaur.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, dinosaur)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, dinosaur)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, dinosaur, Keyword.TRAMPLE)).isTrue();
     }
 }

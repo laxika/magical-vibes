@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.a.AirbendingLesson;
 import com.github.laxika.magicalvibes.cards.y.YuyanArchers;
@@ -108,15 +109,15 @@ class MasterPakkuTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(pakku.getPowerModifier()).isEqualTo(1);
-        assertThat(pakku.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, pakku)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pakku)).isEqualTo(1);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(pakku.getPowerModifier()).isZero();
-        assertThat(pakku.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pakku)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pakku)).isZero();
     }
 
     @Test
@@ -139,8 +140,8 @@ class MasterPakkuTest extends BaseCardTest {
         harness.castInstant(player2, 0, target.getId());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(pakku.getPowerModifier()).isZero();
-        assertThat(pakku.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pakku)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pakku)).isZero();
     }
 
     @Test

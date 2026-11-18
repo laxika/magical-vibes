@@ -33,8 +33,8 @@ class HapatrasMarkTest extends BaseCardTest {
         castResolve(creature);
 
         assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HEXPROOF);
     }
 

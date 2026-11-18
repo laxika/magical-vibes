@@ -27,10 +27,10 @@ class HavocDemonTest extends BaseCardTest {
         destroyWithEyeblightsEnding(demon);
         harness.passBothPriorities();
 
-        assertThat(ownSurvivor.getEffectivePower()).isEqualTo(1);
-        assertThat(ownSurvivor.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opposingSurvivor.getEffectivePower()).isEqualTo(1);
-        assertThat(opposingSurvivor.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownSurvivor)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownSurvivor)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingSurvivor)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingSurvivor)).isEqualTo(1);
     }
 
     @Test
@@ -46,8 +46,8 @@ class HavocDemonTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(survivor.getEffectivePower()).isEqualTo(6);
-        assertThat(survivor.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(6);
     }
 
     @Test
@@ -70,8 +70,8 @@ class HavocDemonTest extends BaseCardTest {
         exileWithSwordsToPlowshares(demon);
         harness.passBothPriorities();
 
-        assertThat(survivor.getEffectivePower()).isEqualTo(6);
-        assertThat(survivor.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(6);
     }
 
     @Test

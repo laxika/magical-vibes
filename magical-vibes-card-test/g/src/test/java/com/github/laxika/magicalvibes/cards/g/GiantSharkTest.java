@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BloodMoon;
 import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.cards.t.TropicalIsland;
@@ -94,7 +95,7 @@ class GiantSharkTest extends BaseCardTest {
                 battlefieldIndex(player2, shark), battlefieldIndex(player1, attacker))));
         harness.passBothPriorities();
 
-        assertThat(shark.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, shark)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, shark, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -111,7 +112,7 @@ class GiantSharkTest extends BaseCardTest {
                 battlefieldIndex(player2, shark), battlefieldIndex(player1, attacker))));
         harness.passBothPriorities();
 
-        assertThat(shark.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shark)).isZero();
         assertThat(gqs.hasKeyword(gd, shark, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -131,7 +132,7 @@ class GiantSharkTest extends BaseCardTest {
                 battlefieldIndex(player2, blocker), battlefieldIndex(player1, shark))));
         harness.passBothPriorities();
 
-        assertThat(shark.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, shark)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, shark, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -154,7 +155,7 @@ class GiantSharkTest extends BaseCardTest {
                 new BlockerAssignment(battlefieldIndex(player2, second), battlefieldIndex(player1, shark))));
         resolveAllTriggers();
 
-        assertThat(shark.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, shark)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, shark, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -173,7 +174,7 @@ class GiantSharkTest extends BaseCardTest {
                 battlefieldIndex(player2, blocker), battlefieldIndex(player1, shark))));
         harness.passBothPriorities();
 
-        assertThat(shark.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shark)).isZero();
         assertThat(gqs.hasKeyword(gd, shark, Keyword.TRAMPLE)).isFalse();
     }
 

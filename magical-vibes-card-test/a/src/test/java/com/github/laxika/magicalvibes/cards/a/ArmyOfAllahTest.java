@@ -33,14 +33,14 @@ class ArmyOfAllahTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(ownAttacker.getEffectivePower()).isEqualTo(4);
-        assertThat(ownAttacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(secondAttacker.getEffectivePower()).isEqualTo(4);
-        assertThat(secondAttacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponentNonAttacker.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentNonAttacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(nonAttacker.getEffectivePower()).isEqualTo(2);
-        assertThat(nonAttacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownAttacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondAttacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentNonAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentNonAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonAttacker)).isEqualTo(2);
     }
 
     @Test
@@ -57,10 +57,10 @@ class ArmyOfAllahTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(defender.getEffectivePower()).isEqualTo(2);
-        assertThat(defender.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(2);
     }
 
     @Test
@@ -77,8 +77,8 @@ class ArmyOfAllahTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThat(attacker.isAttacking()).isTrue();
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Army of Allah");
     }
 
@@ -95,13 +95,13 @@ class ArmyOfAllahTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 }

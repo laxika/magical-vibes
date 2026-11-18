@@ -49,8 +49,8 @@ class TevalTheBalancedScaleTest extends BaseCardTest {
         assertThat(returnedLand.isTapped()).isTrue();
 
         Permanent token = findPermanent(player1, "Zombie Druid");
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes())
                 .containsExactly(CardSubtype.ZOMBIE, CardSubtype.DRUID);

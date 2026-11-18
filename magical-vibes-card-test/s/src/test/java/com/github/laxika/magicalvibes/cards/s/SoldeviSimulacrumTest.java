@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -90,8 +91,8 @@ class SoldeviSimulacrumTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(simulacrum.getPowerModifier()).isEqualTo(1);
-        assertThat(simulacrum.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, simulacrum)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, simulacrum)).isEqualTo(0);
     }
 
     @Test
@@ -102,13 +103,13 @@ class SoldeviSimulacrumTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(simulacrum.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, simulacrum)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(simulacrum.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, simulacrum)).isEqualTo(0);
     }
 
     @Test
@@ -124,8 +125,8 @@ class SoldeviSimulacrumTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(simulacrum.getPowerModifier()).isEqualTo(2);
-        assertThat(simulacrum.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, simulacrum)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, simulacrum)).isZero();
         assertThat(simulacrum.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }

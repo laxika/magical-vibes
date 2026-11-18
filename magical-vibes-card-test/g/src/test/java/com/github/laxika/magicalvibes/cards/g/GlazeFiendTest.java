@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DregscapeZombie;
 import com.github.laxika.magicalvibes.cards.o.ObeliskOfEsper;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,8 +26,8 @@ class GlazeFiendTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve spell, artifact enters, trigger onto stack
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(fiend.getPowerModifier()).isEqualTo(2);
-        assertThat(fiend.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isEqualTo(2);
     }
 
     @Test
@@ -37,15 +38,15 @@ class GlazeFiendTest extends BaseCardTest {
         harness.castFromHand(player1, new GlazeFiend(), "{1}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(fiend.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(2);
 
         harness.setHand(player1, new ArrayList<>());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(fiend.getPowerModifier()).isEqualTo(0);
-        assertThat(fiend.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isEqualTo(0);
     }
 
     @Test
@@ -59,8 +60,8 @@ class GlazeFiendTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(fiend.getPowerModifier()).isEqualTo(0);
-        assertThat(fiend.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isEqualTo(0);
     }
 
     @Test
@@ -71,8 +72,8 @@ class GlazeFiendTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         Permanent fiend = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(fiend.getPowerModifier()).isZero();
-        assertThat(fiend.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isZero();
     }
 
     @Test
@@ -83,8 +84,8 @@ class GlazeFiendTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(fiend.getPowerModifier()).isZero();
-        assertThat(fiend.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isZero();
     }
 
     @Test
@@ -95,16 +96,16 @@ class GlazeFiendTest extends BaseCardTest {
         harness.castFromHand(player1, new ObeliskOfEsper(), "{3}");
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
-        assertThat(fiend.getPowerModifier()).isZero();
-        assertThat(fiend.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isZero();
         harness.passBothPriorities();
-        assertThat(fiend.getPowerModifier()).isEqualTo(2);
-        assertThat(fiend.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isEqualTo(2);
 
         harness.castFromHand(player1, new ObeliskOfEsper(), "{3}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(fiend.getPowerModifier()).isEqualTo(4);
-        assertThat(fiend.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isEqualTo(4);
     }
 }

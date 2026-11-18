@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.n.NeedleshotGourna;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,7 @@ class RiptideManglerTest extends BaseCardTest {
     void setsBasePowerToTargetPowerIndefinitely() {
         Permanent mangler = addCreatureReady(player1, new RiptideMangler());
         Permanent target = addCreatureReady(player2, new NeedleshotGourna());
-        target.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, 2);
         int originalToughness = gqs.getEffectiveToughness(gd, mangler);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -32,7 +33,7 @@ class RiptideManglerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, mangler)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, mangler)).isEqualTo(originalToughness);
 
-        target.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, target, 0);
         assertThat(gqs.getEffectivePower(gd, mangler)).isEqualTo(5);
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
@@ -51,7 +52,7 @@ class RiptideManglerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        target.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, 2);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, mangler)).isEqualTo(5);
@@ -73,7 +74,7 @@ class RiptideManglerTest extends BaseCardTest {
     @DisplayName("Self-targeting includes power bonuses, which still apply after setting base power")
     void selfTargetingRetainsPowerBonus() {
         Permanent mangler = addCreatureReady(player1, new RiptideMangler());
-        mangler.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, mangler, 2);
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -85,7 +86,7 @@ class RiptideManglerTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, mangler)).isEqualTo(6);
 
-        mangler.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, mangler, 0);
         assertThat(gqs.getEffectivePower(gd, mangler)).isEqualTo(4);
     }
 
@@ -94,7 +95,7 @@ class RiptideManglerTest extends BaseCardTest {
     void copiesNegativePower() {
         Permanent mangler = addCreatureReady(player1, new RiptideMangler());
         Permanent target = addCreatureReady(player2, new NeedleshotGourna());
-        target.setPowerModifier(-5);
+        PermanentGrants.setPowerBoost(gd, target, -5);
         int originalToughness = gqs.getEffectiveToughness(gd, mangler);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

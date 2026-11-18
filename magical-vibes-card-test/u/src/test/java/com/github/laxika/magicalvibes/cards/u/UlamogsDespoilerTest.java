@@ -32,8 +32,8 @@ class UlamogsDespoilerTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         Permanent despoiler = findPermanent(player1, "Ulamog's Despoiler");
         assertThat(despoiler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(despoiler.getEffectivePower()).isEqualTo(9);
-        assertThat(despoiler.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, despoiler)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, despoiler)).isEqualTo(9);
     }
 
     @Test

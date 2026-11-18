@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CloakAndDagger;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -30,8 +31,8 @@ class FestercreepTest extends BaseCardTest {
 
         Permanent creep = findCreep(player1);
         assertThat(creep.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(creep.getEffectivePower()).isEqualTo(1);
-        assertThat(creep.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creep)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creep)).isEqualTo(1);
     }
 
 
@@ -52,15 +53,15 @@ class FestercreepTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both other creatures get -1/-1
-        assertThat(ownElf.getPowerModifier()).isEqualTo(-1);
-        assertThat(ownElf.getToughnessModifier()).isEqualTo(-1);
-        assertThat(oppElf.getPowerModifier()).isEqualTo(-1);
-        assertThat(oppElf.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownElf)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownElf)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, oppElf)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, oppElf)).isEqualTo(-1);
 
         harness.assertOnBattlefield(player1, "Festercreep");
         // Festercreep itself is not affected by the boost
-        assertThat(creep.getPowerModifier()).isEqualTo(0);
-        assertThat(creep.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creep)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creep)).isEqualTo(0);
     }
 
     @Test
@@ -77,8 +78,8 @@ class FestercreepTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(equipment.getPowerModifier()).isEqualTo(0);
-        assertThat(equipment.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, equipment)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, equipment)).isEqualTo(0);
     }
 
     @Test
@@ -113,21 +114,21 @@ class FestercreepTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(elf.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elf.getPowerModifier()).isEqualTo(0);
-        assertThat(elf.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isEqualTo(0);
     }
 
     @Test
     @DisplayName("Cannot activate ability when no +1/+1 counter remains")
     void cannotActivateWithoutCounter() {
         Permanent creep = addReadyCreep(player1);
-        creep.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, creep, 1);
         creep.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
 
         harness.forceActivePlayer(player1);
@@ -155,10 +156,10 @@ class FestercreepTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Festercreep");
         harness.assertInGraveyard(player1, "Festercreep");
-        assertThat(elf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isZero();
         harness.passBothPriorities();
-        assertThat(elf.getPowerModifier()).isEqualTo(-1);
-        assertThat(elf.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isEqualTo(-1);
     }
 
     @Test
@@ -175,13 +176,13 @@ class FestercreepTest extends BaseCardTest {
         Permanent beforeResolution = harness.enterBattlefieldAndReturn(player2, new ElvishWarrior());
         harness.passBothPriorities();
 
-        assertThat(otherCreep.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreep)).isEqualTo(-1);
         harness.assertInGraveyard(player2, "Festercreep");
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(-1);
-        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isEqualTo(-1);
         Permanent afterResolution = harness.enterBattlefieldAndReturn(player2, new ElvishWarrior());
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
     }
 
     @Test
@@ -201,10 +202,10 @@ class FestercreepTest extends BaseCardTest {
         assertThat(creep.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         resolveAllTriggers();
 
-        assertThat(elf.getPowerModifier()).isEqualTo(-2);
-        assertThat(elf.getToughnessModifier()).isEqualTo(-2);
-        assertThat(creep.getPowerModifier()).isZero();
-        assertThat(creep.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creep)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creep)).isZero();
         harness.assertOnBattlefield(player1, "Festercreep");
     }
 

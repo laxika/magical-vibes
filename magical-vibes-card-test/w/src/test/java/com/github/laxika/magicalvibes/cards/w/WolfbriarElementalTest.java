@@ -36,8 +36,8 @@ class WolfbriarElementalTest extends BaseCardTest {
         List<Permanent> wolves = findPermanents(player1, "Wolf");
         assertThat(wolves).hasSize(2);
         assertThat(wolves).allSatisfy(wolf -> {
-            assertThat(wolf.getEffectivePower()).isEqualTo(2);
-            assertThat(wolf.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
         });
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfErgamon;
 import com.github.laxika.magicalvibes.cards.p.PortentTracker;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -28,15 +29,15 @@ class RampagingGeodermTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(geoderm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(geoderm.getPowerModifier()).isEqualTo(1);
-        assertThat(geoderm.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, geoderm)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, geoderm)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(geoderm.getPowerModifier()).isZero();
-        assertThat(geoderm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, geoderm)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, geoderm)).isZero();
     }
 
     @Test
@@ -49,8 +50,8 @@ class RampagingGeodermTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(geoderm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(geoderm.getPowerModifier()).isZero();
-        assertThat(geoderm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, geoderm)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, geoderm)).isZero();
     }
 
     @Test
@@ -85,10 +86,10 @@ class RampagingGeodermTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, tracker.getId());
         resolveAllTriggers();
 
-        assertThat(tracker.getPowerModifier()).isEqualTo(1);
-        assertThat(tracker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, tracker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tracker)).isEqualTo(1);
         assertThat(tracker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(geoderm.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, geoderm)).isZero();
     }
 
     @Test
@@ -102,9 +103,9 @@ class RampagingGeodermTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(tracker.getPowerModifier()).isEqualTo(1);
-        assertThat(tracker.getToughnessModifier()).isEqualTo(1);
-        assertThat(geoderm.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tracker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tracker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, geoderm)).isZero();
     }
 
     @Test
@@ -118,8 +119,8 @@ class RampagingGeodermTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(tracker.getPowerModifier()).isZero();
-        assertThat(geoderm.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tracker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, geoderm)).isZero();
     }
 
     @Test
@@ -134,8 +135,8 @@ class RampagingGeodermTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, geoderm.getId());
         resolveAllTriggers();
-        assertThat(geoderm.getPowerModifier()).isEqualTo(1);
-        assertThat(tracker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, geoderm)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, tracker)).isZero();
     }
 
     @Test
@@ -149,10 +150,10 @@ class RampagingGeodermTest extends BaseCardTest {
         tracker.setAttackTarget(null);
         resolveAllTriggers();
 
-        assertThat(tracker.getPowerModifier()).isZero();
-        assertThat(tracker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tracker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tracker)).isZero();
         assertThat(tracker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(geoderm.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, geoderm)).isZero();
     }
 
     @Test
@@ -170,10 +171,10 @@ class RampagingGeodermTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(tracker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(tracker.getPowerModifier()).isZero();
-        assertThat(tracker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tracker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tracker)).isZero();
         assertThat(geoderm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(geoderm.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, geoderm)).isZero();
     }
 
     private void declareAttackersAt(Permanent battle) {

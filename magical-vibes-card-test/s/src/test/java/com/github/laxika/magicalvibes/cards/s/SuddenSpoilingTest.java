@@ -33,13 +33,13 @@ class SuddenSpoilingTest extends BaseCardTest {
 
         castSuddenSpoiling(player2.getId());
 
-        assertThat(targetCreature.getEffectivePower()).isZero();
-        assertThat(targetCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, targetCreature)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, targetCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, targetCreature, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, targetCreature, Keyword.VIGILANCE)).isFalse();
-        assertThat(targetNoncreature.getEffectiveToughness()).isZero();
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, targetNoncreature)).isZero();
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLANKING)).isTrue();
 
         harness.setLibrary(player2, List.of(new BenalishCavalry()));
@@ -55,14 +55,14 @@ class SuddenSpoilingTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
 
         castSuddenSpoiling(player2.getId());
-        assertThat(creature.getEffectivePower()).isZero();
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test

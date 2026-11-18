@@ -51,11 +51,7 @@ public class SetAllUnblockedCreaturesBasePowerToughnessEffectHandler implements 
                     continue;
                 }
                 // CR 613 layer engine: one floating layer-7b effect per affected creature locks the
-                // set at resolution time (CR 611.2c) and carries the resolution timestamp; the
-                // legacy fields stay written for direct Permanent readers.
-                permanent.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
-                permanent.setBasePowerOverride(power);
-                permanent.setBaseToughnessOverride(toughness);
+                // set at resolution time (CR 611.2c) and carries the resolution timestamp.
                 gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                         entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                         new SetBasePowerToughnessEffect(power, toughness), permanent.getId(), null, null,

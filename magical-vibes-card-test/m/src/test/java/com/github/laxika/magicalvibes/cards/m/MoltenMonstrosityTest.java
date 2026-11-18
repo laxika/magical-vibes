@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -83,7 +84,7 @@ class MoltenMonstrosityTest extends BaseCardTest {
     @Test
     void usesCurrentPowerAndCapsReductionAtGenericCost() {
         var creature = harness.addToBattlefieldAndReturn(player1, new MoltenMonstrosity());
-        creature.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, creature, 3);
         harness.setHand(player1, List.of(new MoltenMonstrosity()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -96,7 +97,7 @@ class MoltenMonstrosityTest extends BaseCardTest {
     @Test
     void negativePowerDoesNotIncreaseCost() {
         var creature = harness.addToBattlefieldAndReturn(player1, new MoltenMonstrosity());
-        creature.setPowerModifier(-6);
+        PermanentGrants.setPowerBoost(gd, creature, -6);
         harness.setHand(player1, List.of(new MoltenMonstrosity()));
         harness.addMana(player1, ManaColor.COLORLESS, 7);
         harness.addMana(player1, ManaColor.RED, 1);

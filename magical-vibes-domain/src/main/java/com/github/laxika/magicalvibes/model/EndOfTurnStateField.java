@@ -33,11 +33,6 @@ package com.github.laxika.magicalvibes.model;
  */
 public enum EndOfTurnStateField {
 
-    POWER_MODIFIER(Kind.ADDITIVE),
-    TOUGHNESS_MODIFIER(Kind.ADDITIVE),
-    BASE_POWER_TOUGHNESS_OVERRIDDEN(Kind.FLAG),
-    BASE_POWER_OVERRIDE(Kind.VALUE),
-    BASE_TOUGHNESS_OVERRIDE(Kind.VALUE),
     BLOCKED_WITHOUT_BLOCKERS(Kind.FLAG),
     TEMPORARY_ABILITIES(Kind.LIST),
     SADDLED(Kind.FLAG),
@@ -69,11 +64,8 @@ public enum EndOfTurnStateField {
     public enum Kind {
         /** A {@code boolean}: credited to the player active when it became true. */
         FLAG,
-        /** An {@code int} sum of contributions (P/T modifiers): each player keeps their own delta. */
+        /** An {@code int} sum of contributions (regeneration and exile counts): each player keeps their own delta. */
         ADDITIVE,
-        /** A single value that the latest effect overwrites (base P/T, chosen type): kept by the player
-         *  active when it was last changed. */
-        VALUE,
         /** A set: each element is credited to the player active when it was added. */
         SET,
         /** A list compared by {@code equals}: each added element is credited to the active player. */

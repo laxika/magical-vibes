@@ -42,15 +42,11 @@ public class SetSelfBaseToughnessToAmountIndefinitelyEffectHandler implements No
 
         int toughness = amountEvaluationService.evaluate(gameData, e.toughness(),
                 AmountContext.forStackEntry(entry, source));
-        source.setBaseToughnessOverriddenPermanently(true);
-        source.setPermanentBaseToughnessOverride(toughness);
-
         SetBasePowerToughnessEffect setter = new SetBasePowerToughnessEffect(
                 null, toughness, GrantScope.SELF, Duration.PERMANENT);
-        FloatingContinuousEffect floating = gameData.addFloatingEffect(new FloatingContinuousEffect(
+        gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), source.getId(), entry.getControllerId(),
                 setter, source.getId(), null, null, Duration.PERMANENT, 0));
-        source.setPermanentBaseToughnessOverrideTimestamp(floating.timestamp());
 
         gameLogService.append(gameData, GameLog.builder().card(source.getCard())
                 .text(" has base toughness " + toughness + " indefinitely.").build());

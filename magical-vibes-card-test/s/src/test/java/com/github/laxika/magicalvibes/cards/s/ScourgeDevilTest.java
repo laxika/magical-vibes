@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DregscapeZombie;
 import com.github.laxika.magicalvibes.cards.e.ExecutionersCapsule;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -38,10 +39,10 @@ class ScourgeDevilTest extends BaseCardTest {
 
         Permanent devil = findPermanent(player1, "Scourge Devil");
 
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(devil.getPowerModifier()).isEqualTo(1);
-        assertThat(devil.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, devil)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, devil)).isEqualTo(0);
     }
 
     @Test
@@ -53,7 +54,7 @@ class ScourgeDevilTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(opponentBears.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBears)).isEqualTo(0);
     }
 
     @Test
@@ -67,7 +68,7 @@ class ScourgeDevilTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -115,11 +116,11 @@ class ScourgeDevilTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
-        assertThat(zombie.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, zombie)).isZero();
         harness.passBothPriorities();
 
-        assertThat(zombie.getPowerModifier()).isEqualTo(1);
-        assertThat(findPermanent(player1, "Scourge Devil").getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, zombie)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Scourge Devil"))).isEqualTo(1);
     }
 
     @Test
@@ -134,8 +135,8 @@ class ScourgeDevilTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Dregscape Zombie").getPowerModifier()).isZero();
-        assertThat(findPermanent(player1, "Scourge Devil").getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Dregscape Zombie"))).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Scourge Devil"))).isEqualTo(1);
     }
 
     @Test

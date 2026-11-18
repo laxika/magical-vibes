@@ -33,8 +33,8 @@ class InnerFlameAcolyteTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent bears = findPermanent(player2, "Woodland Changeling");
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player1, "Inner-Flame Acolyte");
     }
@@ -52,15 +52,15 @@ class InnerFlameAcolyteTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent bears = findPermanent(player2, "Woodland Changeling");
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
@@ -79,7 +79,7 @@ class InnerFlameAcolyteTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent bears = findPermanent(player2, "Woodland Changeling");
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
         harness.assertNotOnBattlefield(player1, "Inner-Flame Acolyte");
         harness.assertInGraveyard(player1, "Inner-Flame Acolyte");
@@ -134,8 +134,8 @@ class InnerFlameAcolyteTest extends BaseCardTest {
         harness.castCreature(player1, 0, List.of(target.getId()));
         resolveAllTriggers();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player1, "Inner-Flame Acolyte");
     }

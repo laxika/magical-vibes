@@ -42,9 +42,9 @@ class ProvisionsMerchantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Food")).isZero();
-        assertThat(merchant.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(nonattacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, merchant)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, merchant, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, nonattacker, Keyword.TRAMPLE)).isFalse();
@@ -53,8 +53,8 @@ class ProvisionsMerchantTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(merchant.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, merchant)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, merchant, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
     }
@@ -71,7 +71,7 @@ class ProvisionsMerchantTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(countPermanents(player1, "Food")).isOne();
-        assertThat(merchant.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, merchant)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, merchant, Keyword.TRAMPLE)).isFalse();
     }
 

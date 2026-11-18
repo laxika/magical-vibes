@@ -37,8 +37,8 @@ class ArmedDangerousTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, ARMED, bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
@@ -70,8 +70,8 @@ class ArmedDangerousTest extends BaseCardTest {
         harness.castModalSorcery(player1, 0, FUSE, List.of(armedTarget.getId(), dangerousTarget.getId()));
         harness.passBothPriorities();
 
-        assertThat(armedTarget.getEffectivePower()).isEqualTo(3);
-        assertThat(armedTarget.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, armedTarget)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, armedTarget)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, armedTarget, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(armedTarget.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
         assertThat(gd.hasFloatingEffectOnPermanent(dangerousTarget.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
@@ -90,8 +90,8 @@ class ArmedDangerousTest extends BaseCardTest {
         harness.castModalSorcery(player1, 0, FUSE, List.of(bears.getId(), bears.getId()));
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
@@ -122,8 +122,8 @@ class ArmedDangerousTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isFalse();
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }
@@ -168,7 +168,7 @@ class ArmedDangerousTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.hasFloatingEffectOnPermanent(dangerousTarget.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
-        assertThat(dangerousTarget.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, dangerousTarget)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, dangerousTarget, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
@@ -186,8 +186,8 @@ class ArmedDangerousTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).add(dangerousTarget.getCard());
         harness.passBothPriorities();
 
-        assertThat(armedTarget.getEffectivePower()).isEqualTo(3);
-        assertThat(armedTarget.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, armedTarget)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, armedTarget)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, armedTarget, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(armedTarget.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BloodstoneGoblin;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -30,8 +31,8 @@ class CoruscationMageTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(1);
-        assertThat(tokens.getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tokens.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tokens.getFirst())).isEqualTo(1);
     }
 
     @Test
@@ -123,8 +124,8 @@ class CoruscationMageTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Coruscation Mage")).singleElement()
                 .satisfies(token -> {
                     assertThat(token.getCard().isToken()).isTrue();
-                    assertThat(token.getEffectivePower()).isEqualTo(1);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
                 });
     }
 
@@ -138,8 +139,8 @@ class CoruscationMageTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(goblin.getPowerModifier()).isZero();
-        assertThat(goblin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isZero();
         assertThat(findPermanents(player1, "Coruscation Mage")).hasSize(2);
     }
 }

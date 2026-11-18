@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class GreaterForgelingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(forgeling.getPowerModifier()).isEqualTo(3);
-        assertThat(forgeling.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, forgeling)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, forgeling)).isEqualTo(-3);
     }
 
     @Test
@@ -39,8 +40,8 @@ class GreaterForgelingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(forgeling.getPowerModifier()).isEqualTo(6);
-        assertThat(forgeling.getToughnessModifier()).isEqualTo(-6);
+        assertThat(PermanentGrants.powerBoostOf(gd, forgeling)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, forgeling)).isEqualTo(-6);
     }
 
     @Test
@@ -53,8 +54,8 @@ class GreaterForgelingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(forgeling.getPowerModifier()).isEqualTo(3);
-        assertThat(forgeling.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, forgeling)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, forgeling)).isEqualTo(-3);
     }
 
     @Test
@@ -76,15 +77,15 @@ class GreaterForgelingTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(forgeling.getPowerModifier()).isEqualTo(3);
-        assertThat(forgeling.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, forgeling)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, forgeling)).isEqualTo(-3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(forgeling.getPowerModifier()).isZero();
-        assertThat(forgeling.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, forgeling)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, forgeling)).isZero();
     }
 
     @Test
@@ -114,12 +115,12 @@ class GreaterForgelingTest extends BaseCardTest {
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(forgeling.getPowerModifier()).isZero();
-        assertThat(forgeling.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, forgeling)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, forgeling)).isZero();
         harness.passBothPriorities();
 
-        assertThat(forgeling.getPowerModifier()).isEqualTo(3);
-        assertThat(forgeling.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, forgeling)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, forgeling)).isEqualTo(-3);
         harness.assertOnBattlefield(player1, "Greater Forgeling");
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -59,10 +60,10 @@ class FieryHellhoundTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hellhound.getEffectivePower()).isEqualTo(3);
-        assertThat(hellhound.getEffectiveToughness()).isEqualTo(2);
-        assertThat(hellhound.getPowerModifier()).isEqualTo(1);
-        assertThat(hellhound.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hellhound)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellhound)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hellhound)).isEqualTo(0);
     }
 
     @Test
@@ -78,10 +79,10 @@ class FieryHellhoundTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hellhound.getEffectivePower()).isEqualTo(5);
-        assertThat(hellhound.getEffectiveToughness()).isEqualTo(2);
-        assertThat(hellhound.getPowerModifier()).isEqualTo(3);
-        assertThat(hellhound.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, hellhound)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellhound)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hellhound)).isEqualTo(0);
     }
 
     @Test
@@ -95,17 +96,17 @@ class FieryHellhoundTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hellhound.getEffectivePower()).isEqualTo(4);
-        assertThat(hellhound.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hellhound)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(hellhound.getPowerModifier()).isEqualTo(0);
-        assertThat(hellhound.getToughnessModifier()).isEqualTo(0);
-        assertThat(hellhound.getEffectivePower()).isEqualTo(2);
-        assertThat(hellhound.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellhound)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hellhound)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hellhound)).isEqualTo(2);
     }
 
     @Test
@@ -135,8 +136,8 @@ class FieryHellhoundTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hellhound.getEffectivePower()).isEqualTo(3);
-        assertThat(hellhound.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hellhound)).isEqualTo(2);
         assertThat(hellhound.isTapped()).isTrue();
     }
 
@@ -150,17 +151,17 @@ class FieryHellhoundTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(hellhound.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isEqualTo(2);
         assertThat(gd.stack).hasSize(2);
 
         harness.passBothPriorities();
-        assertThat(hellhound.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isEqualTo(3);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
-        assertThat(hellhound.getEffectivePower()).isEqualTo(4);
-        assertThat(hellhound.getEffectiveToughness()).isEqualTo(2);
-        assertThat(other.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hellhound)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -175,6 +176,6 @@ class FieryHellhoundTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(hellhound.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hellhound)).isEqualTo(2);
     }
 }

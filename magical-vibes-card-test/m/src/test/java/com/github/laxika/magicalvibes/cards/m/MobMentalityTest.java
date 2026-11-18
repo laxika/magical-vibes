@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RollingStones;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -42,8 +43,8 @@ class MobMentalityTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 2));
         harness.passBothPriorities();
 
-        assertThat(enchanted.getPowerModifier()).isEqualTo(2);
-        assertThat(enchanted.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, enchanted)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enchanted)).isEqualTo(0);
     }
 
     @Test
@@ -58,7 +59,7 @@ class MobMentalityTest extends BaseCardTest {
 
         assertThat(gd.stack)
                 .noneMatch(se -> se.getCard().getName().equals("Mob Mentality"));
-        assertThat(enchanted.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, enchanted)).isEqualTo(0);
     }
 
     @Test
@@ -72,7 +73,7 @@ class MobMentalityTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(enchanted.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, enchanted)).isEqualTo(1);
     }
 
     @Test
@@ -88,7 +89,7 @@ class MobMentalityTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 2));
         harness.passBothPriorities();
 
-        assertThat(enchanted.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, enchanted)).isEqualTo(2);
     }
 
     @Test
@@ -100,13 +101,13 @@ class MobMentalityTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
-        assertThat(enchanted.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, enchanted)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(enchanted.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, enchanted)).isEqualTo(0);
     }
 
     @Test
@@ -137,7 +138,7 @@ class MobMentalityTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(enchanted.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, enchanted)).isZero();
     }
 
     @Test
@@ -151,7 +152,7 @@ class MobMentalityTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(enchanted.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, enchanted)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, enchanted, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -165,7 +166,7 @@ class MobMentalityTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(enchanted.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, enchanted)).isZero();
     }
 
     @Test
@@ -183,7 +184,7 @@ class MobMentalityTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(other.getCard());
         harness.passBothPriorities();
 
-        assertThat(enchanted.getPowerModifier()).isEqualTo(1);
-        assertThat(enchanted.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, enchanted)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enchanted)).isZero();
     }
 }

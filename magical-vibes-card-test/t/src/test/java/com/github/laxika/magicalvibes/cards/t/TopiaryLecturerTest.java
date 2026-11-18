@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OneWithTheStars;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -62,7 +63,7 @@ class TopiaryLecturerTest extends BaseCardTest {
     @Test
     void manaSpentGreaterThanOnlyToughnessStillIncrements() {
         Permanent lecturer = harness.addToBattlefieldAndReturn(player1, new TopiaryLecturer());
-        lecturer.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, lecturer, 3);
 
         harness.castFromHand(player1, new TopiaryLecturer(), "{2}{G}");
         harness.passBothPriorities();

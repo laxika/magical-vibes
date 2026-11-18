@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.g.GameTrailChangeling;
 import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
@@ -30,9 +31,9 @@ class SharedAnimosityTest extends BaseCardTest {
         resolveAllTriggers();
 
         // Two Goblins attack: each has exactly one other attacker sharing a type -> +1/+0.
-        assertThat(goblin1.getPowerModifier()).isEqualTo(1);
-        assertThat(goblin1.getToughnessModifier()).isEqualTo(0);
-        assertThat(goblin2.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin1)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin1)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin2)).isEqualTo(1);
     }
 
     @Test
@@ -47,9 +48,9 @@ class SharedAnimosityTest extends BaseCardTest {
         resolveAllTriggers();
 
         // Each Goblin sees two other sharing attackers -> +2/+0.
-        assertThat(goblin1.getPowerModifier()).isEqualTo(2);
-        assertThat(goblin2.getPowerModifier()).isEqualTo(2);
-        assertThat(goblin3.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin1)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin2)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin3)).isEqualTo(2);
     }
 
     @Test
@@ -65,8 +66,8 @@ class SharedAnimosityTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, removedGoblin));
         resolveAllTriggers();
 
-        assertThat(goblin1.getPowerModifier()).isEqualTo(1);
-        assertThat(goblin2.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin1)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin2)).isEqualTo(1);
     }
 
     @Test
@@ -84,8 +85,8 @@ class SharedAnimosityTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(goblin1.getPowerModifier()).isZero();
-        assertThat(goblin2.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin1)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin2)).isZero();
     }
 
     @Test
@@ -98,8 +99,8 @@ class SharedAnimosityTest extends BaseCardTest {
         declareAttackers(List.of(1, 2));
         resolveAllTriggers();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(0);
-        assertThat(elf.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isEqualTo(0);
     }
 
     @Test
@@ -114,10 +115,10 @@ class SharedAnimosityTest extends BaseCardTest {
         resolveAllTriggers();
 
         // Each Goblin sees one other Goblin (the Elf doesn't count) -> +1/+0.
-        assertThat(goblin1.getPowerModifier()).isEqualTo(1);
-        assertThat(goblin2.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin1)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin2)).isEqualTo(1);
         // The Elf shares with nobody -> no boost.
-        assertThat(elf.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isEqualTo(0);
     }
 
     @Test
@@ -131,8 +132,8 @@ class SharedAnimosityTest extends BaseCardTest {
         resolveAllTriggers();
 
         // Changeling has every creature type, so it shares with the Goblin and vice versa -> +1 each.
-        assertThat(changeling.getPowerModifier()).isEqualTo(1);
-        assertThat(goblin.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, changeling)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(1);
     }
 
     @Test
@@ -145,15 +146,15 @@ class SharedAnimosityTest extends BaseCardTest {
         declareAttackers(List.of(1, 2));
         resolveAllTriggers();
 
-        assertThat(goblin1.getPowerModifier()).isEqualTo(1);
-        assertThat(goblin2.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin1)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin2)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(goblin1.getPowerModifier()).isZero();
-        assertThat(goblin2.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin1)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin2)).isZero();
     }
 
     private void addSharedAnimosity() {
@@ -171,9 +172,9 @@ class SharedAnimosityTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(ally.getPowerModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -186,8 +187,8 @@ class SharedAnimosityTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(goblin1.getPowerModifier()).isZero();
-        assertThat(goblin2.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin1)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin2)).isZero();
     }
 
     @Test
@@ -201,10 +202,10 @@ class SharedAnimosityTest extends BaseCardTest {
         declareAttackers(List.of(2, 3));
         resolveAllTriggers();
 
-        assertThat(goblin1.getPowerModifier()).isEqualTo(2);
-        assertThat(goblin2.getPowerModifier()).isEqualTo(2);
-        assertThat(goblin1.getToughnessModifier()).isZero();
-        assertThat(goblin2.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin1)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin2)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin1)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin2)).isZero();
     }
 
     @Test
@@ -219,7 +220,7 @@ class SharedAnimosityTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, enchantment));
         resolveAllTriggers();
 
-        assertThat(goblin1.getPowerModifier()).isEqualTo(1);
-        assertThat(goblin2.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin1)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin2)).isEqualTo(1);
     }
 }

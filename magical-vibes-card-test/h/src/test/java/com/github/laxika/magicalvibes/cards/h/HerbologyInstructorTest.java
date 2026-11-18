@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.MaladyInvoker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -115,7 +116,7 @@ class HerbologyInstructorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
-        instructor.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, instructor, 1);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Halo-Charged Skaab");
@@ -133,7 +134,7 @@ class HerbologyInstructorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
-        instructor.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, instructor, -4);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
@@ -168,8 +169,8 @@ class HerbologyInstructorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
-        instructor.setPowerModifier(1);
-        instructor.setToughnessModifier(-3);
+        PermanentGrants.setPowerBoost(gd, instructor, 1);
+        PermanentGrants.setToughnessBoost(gd, instructor, -3);
         harness.runStateBasedActions();
         harness.assertNotOnBattlefield(player1, "Malady Invoker");
         harness.passBothPriorities();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class PardicSwordsmithTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(swordsmith.getPowerModifier()).isEqualTo(2);
-        assertThat(swordsmith.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, swordsmith)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, swordsmith)).isEqualTo(0);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Forest");
     }
@@ -44,11 +45,11 @@ class PardicSwordsmithTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(swordsmith.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, swordsmith)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(swordsmith.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, swordsmith)).isEqualTo(2);
     }
 
     @Test
@@ -64,8 +65,8 @@ class PardicSwordsmithTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(swordsmith.getPowerModifier()).isEqualTo(0);
-        assertThat(swordsmith.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, swordsmith)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, swordsmith)).isEqualTo(0);
     }
 
     @Test
@@ -91,7 +92,7 @@ class PardicSwordsmithTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Forest");
         harness.assertNotInGraveyard(player1, "Forest");
-        assertThat(swordsmith.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, swordsmith)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -108,13 +109,13 @@ class PardicSwordsmithTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(swordsmith.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, swordsmith)).isZero();
 
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(swordsmith.getPowerModifier()).isEqualTo(4);
-        assertThat(swordsmith.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, swordsmith)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, swordsmith)).isZero();
         assertThat(swordsmith.isTapped()).isTrue();
     }
 }

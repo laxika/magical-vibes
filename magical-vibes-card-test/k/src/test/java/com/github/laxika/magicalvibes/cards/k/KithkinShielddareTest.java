@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.z.ZealousGuardian;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,8 +27,8 @@ class KithkinShielddareTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(2);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -40,8 +41,8 @@ class KithkinShielddareTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(2);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -58,8 +59,8 @@ class KithkinShielddareTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(0);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(0);
     }
 
     @Test
@@ -97,8 +98,8 @@ class KithkinShielddareTest extends BaseCardTest {
         blocker.setBlocking(false);
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(0);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(0);
     }
 
     @Test
@@ -113,8 +114,8 @@ class KithkinShielddareTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(shielddare.isTapped()).isTrue();
-        assertThat(shielddare.getPowerModifier()).isEqualTo(2);
-        assertThat(shielddare.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, shielddare)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shielddare)).isEqualTo(2);
     }
 
     @Test
@@ -128,8 +129,8 @@ class KithkinShielddareTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(2);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(2);
     }
 
     @Test

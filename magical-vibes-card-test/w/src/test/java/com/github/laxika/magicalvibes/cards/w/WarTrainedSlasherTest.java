@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ComingInHot;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -29,8 +30,8 @@ class WarTrainedSlasherTest extends BaseCardTest {
         declareAttackersAt(battle);
         resolveAllTriggers();
 
-        assertThat(slasher.getPowerModifier()).isEqualTo(4);
-        assertThat(slasher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, slasher)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, slasher)).isZero();
     }
 
     @Test
@@ -40,8 +41,8 @@ class WarTrainedSlasherTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(slasher.getPowerModifier()).isZero();
-        assertThat(slasher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, slasher)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, slasher)).isZero();
     }
 
     @Test
@@ -51,15 +52,15 @@ class WarTrainedSlasherTest extends BaseCardTest {
 
         declareAttackersAt(battle);
         resolveAllTriggers();
-        assertThat(slasher.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, slasher)).isEqualTo(4);
         harness.handleMayAbilityChosen(player1, false); // the defeated battle's cast-transformed offer
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(slasher.getPowerModifier()).isZero();
-        assertThat(slasher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, slasher)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, slasher)).isZero();
     }
 
     @Test
@@ -75,34 +76,34 @@ class WarTrainedSlasherTest extends BaseCardTest {
         harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(slasher.getPowerModifier()).isEqualTo(6);
-        assertThat(slasher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, slasher)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, slasher)).isZero();
     }
 
     @Test
     void doublesNegativePower() {
         Permanent battle = addBattle(player1);
         Permanent slasher = addCreatureReady(player1, new WarTrainedSlasher());
-        slasher.setPowerModifier(-5);
+        PermanentGrants.setPowerBoost(gd, slasher, -5);
 
         declareAttackersAt(battle);
         resolveAllTriggers();
 
-        assertThat(slasher.getPowerModifier()).isEqualTo(-6);
-        assertThat(slasher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, slasher)).isEqualTo(-6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, slasher)).isZero();
     }
 
     @Test
     void zeroPowerRemainsZero() {
         Permanent battle = addBattle(player1);
         Permanent slasher = addCreatureReady(player1, new WarTrainedSlasher());
-        slasher.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, slasher, -4);
 
         declareAttackersAt(battle);
         resolveAllTriggers();
 
-        assertThat(slasher.getPowerModifier()).isEqualTo(-4);
-        assertThat(slasher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, slasher)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, slasher)).isZero();
     }
 
     @Test
@@ -114,7 +115,7 @@ class WarTrainedSlasherTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(battle);
         resolveAllTriggers();
 
-        assertThat(slasher.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, slasher)).isEqualTo(4);
     }
 
     @Test

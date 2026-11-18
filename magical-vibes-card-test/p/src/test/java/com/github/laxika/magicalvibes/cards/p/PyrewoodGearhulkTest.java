@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -34,13 +35,13 @@ class PyrewoodGearhulkTest extends BaseCardTest {
         castGearhulk();
 
         Permanent gearhulk = findPermanent(player1, "Pyrewood Gearhulk");
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isTrue();
-        assertThat(gearhulk.getPowerModifier()).isZero();
-        assertThat(gearhulk.getToughnessModifier()).isZero();
-        assertThat(opponentBears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gearhulk)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gearhulk)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBears)).isZero();
         assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.MENACE)).isFalse();
     }
 
@@ -50,15 +51,15 @@ class PyrewoodGearhulkTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castGearhulk();
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isFalse();
     }
@@ -86,8 +87,8 @@ class PyrewoodGearhulkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isFalse();
     }
@@ -101,10 +102,10 @@ class PyrewoodGearhulkTest extends BaseCardTest {
 
         castGearhulk();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(4);
-        assertThat(bears.getToughnessModifier()).isEqualTo(4);
-        assertThat(firstGearhulk.getPowerModifier()).isEqualTo(2);
-        assertThat(firstGearhulk.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstGearhulk)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstGearhulk)).isEqualTo(2);
     }
 
     @Test

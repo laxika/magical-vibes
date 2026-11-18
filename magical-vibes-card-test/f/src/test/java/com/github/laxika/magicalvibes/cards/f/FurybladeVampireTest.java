@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -42,8 +43,8 @@ class FurybladeVampireTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(3);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(0);
         harness.assertInGraveyard(player1, "Mountain");
     }
 
@@ -57,7 +58,7 @@ class FurybladeVampireTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(0);
         harness.assertInHand(player1, "Mountain");
     }
 
@@ -71,8 +72,8 @@ class FurybladeVampireTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(0);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(0);
     }
 
     @Test
@@ -86,13 +87,13 @@ class FurybladeVampireTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(0);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(0);
     }
 
     @Test
@@ -105,7 +106,7 @@ class FurybladeVampireTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(vampire.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(0);
     }
 
     @Test
@@ -121,7 +122,7 @@ class FurybladeVampireTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 1);
 
-        assertThat(first.getPowerModifier() + second.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, first) + PermanentGrants.powerBoostOf(gd, second)).isEqualTo(3);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
 
@@ -129,8 +130,8 @@ class FurybladeVampireTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(first.getPowerModifier()).isEqualTo(3);
-        assertThat(second.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(3);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }

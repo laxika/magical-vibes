@@ -42,7 +42,7 @@ class EnterTheGodEternalsTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(army.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, army)).isEqualTo(4);
     }
 
     @Test

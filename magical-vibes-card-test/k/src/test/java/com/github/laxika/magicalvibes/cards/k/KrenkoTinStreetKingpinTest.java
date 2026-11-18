@@ -26,7 +26,7 @@ class KrenkoTinStreetKingpinTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(krenko.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(krenko.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, krenko)).isEqualTo(2);
         assertThat(findPermanents(player1, "Goblin")).hasSize(2);
     }
 
@@ -39,7 +39,7 @@ class KrenkoTinStreetKingpinTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(krenko.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(krenko.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, krenko)).isEqualTo(4);
         assertThat(findPermanents(player1, "Goblin")).hasSize(4);
     }
 

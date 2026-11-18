@@ -27,8 +27,8 @@ class IronWillTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, cockroach.getId());
 
-        assertThat(cockroach.getEffectivePower()).isEqualTo(4);
-        assertThat(cockroach.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, cockroach)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, cockroach)).isEqualTo(6);
     }
 
     @Test
@@ -40,8 +40,8 @@ class IronWillTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, opponentCockroach.getId());
 
-        assertThat(opponentCockroach.getEffectivePower()).isEqualTo(4);
-        assertThat(opponentCockroach.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opponentCockroach)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCockroach)).isEqualTo(6);
     }
 
     @Test
@@ -56,8 +56,8 @@ class IronWillTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(cockroach.getEffectivePower()).isEqualTo(4);
-        assertThat(cockroach.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, cockroach)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, cockroach)).isEqualTo(2);
     }
 
     @Test
@@ -133,9 +133,9 @@ class IronWillTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(10);
-        assertThat(other.getEffectivePower()).isEqualTo(4);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
     }
 }

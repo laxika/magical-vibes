@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -123,7 +124,7 @@ class SnarlingGorehoundTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
         Permanent entering = gd.playerBattlefields.get(player1.getId()).getLast();
-        entering.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, entering, 2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 

@@ -27,8 +27,8 @@ class WarmindInfantryTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(infantry.getEffectivePower()).isEqualTo(4);
-        assertThat(infantry.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, infantry)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, infantry)).isEqualTo(3);
     }
 
     @Test
@@ -40,7 +40,7 @@ class WarmindInfantryTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(infantry.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, infantry)).isEqualTo(2);
     }
 
     @Test
@@ -52,13 +52,13 @@ class WarmindInfantryTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
-        assertThat(infantry.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, infantry)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(infantry.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, infantry)).isEqualTo(2);
     }
 
     @Test
@@ -70,7 +70,7 @@ class WarmindInfantryTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         assertThat(gd.stack).isEmpty();
-        assertThat(infantry.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, infantry)).isEqualTo(2);
     }
 
     @Test
@@ -84,10 +84,10 @@ class WarmindInfantryTest extends BaseCardTest {
         declareAttackers(player1, List.of(1, 2, 3));
         resolveAllTriggers();
 
-        assertThat(infantry.getEffectivePower()).isEqualTo(2);
-        assertThat(firstAttacker.getEffectivePower()).isEqualTo(4);
-        assertThat(secondAttacker.getEffectivePower()).isEqualTo(4);
-        assertThat(thirdAttacker.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, infantry)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, firstAttacker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, secondAttacker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, thirdAttacker)).isEqualTo(4);
     }
 
     @Test
@@ -101,12 +101,12 @@ class WarmindInfantryTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1, 2));
         assertThat(gd.stack).isNotEmpty();
-        assertThat(infantry.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, infantry)).isEqualTo(2);
         harness.castAndResolveInstant(player2, 0, otherAttacker.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(otherAttacker);
         resolveAllTriggers();
 
-        assertThat(infantry.getEffectivePower()).isEqualTo(4);
-        assertThat(infantry.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, infantry)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, infantry)).isEqualTo(3);
     }
 }

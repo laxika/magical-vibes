@@ -41,8 +41,8 @@ class MartyrOfSporesTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(firstGreenCard.getId(), secondGreenCard.getId()));
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(martyr);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard());
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstGreenCard, secondGreenCard);
@@ -52,8 +52,8 @@ class MartyrOfSporesTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -84,8 +84,8 @@ class MartyrOfSporesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(martyr);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard());
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(nonGreenCard);
@@ -118,8 +118,8 @@ class MartyrOfSporesTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(greenCard.getId()));
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(martyr);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(greenCard, nonGreenCard);
     }
@@ -139,12 +139,12 @@ class MartyrOfSporesTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard());
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstGreenCard, secondGreenCard);
-        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
         harness.setHand(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -162,8 +162,8 @@ class MartyrOfSporesTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(greenCard.getId()));
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard());
     }
 
@@ -190,8 +190,8 @@ class MartyrOfSporesTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(firstGreenCard.getId(), secondGreenCard.getId()));
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard());
     }
 }

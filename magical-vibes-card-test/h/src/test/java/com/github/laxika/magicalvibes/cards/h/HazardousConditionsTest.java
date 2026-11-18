@@ -36,12 +36,12 @@ class HazardousConditionsTest extends BaseCardTest {
 
         castHazardousConditions();
 
-        assertThat(ownUncountered.getEffectivePower()).isEqualTo(1);
-        assertThat(ownUncountered.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponentUncountered.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentUncountered.getEffectiveToughness()).isEqualTo(1);
-        assertThat(ownCountered.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCountered.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownUncountered)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownUncountered)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentUncountered)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentUncountered)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCountered)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCountered)).isEqualTo(3);
     }
 
     @Test
@@ -51,15 +51,15 @@ class HazardousConditionsTest extends BaseCardTest {
 
         castHazardousConditions();
 
-        assertThat(giant.getEffectivePower()).isEqualTo(1);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(giant.getEffectivePower()).isEqualTo(3);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     @Test
@@ -72,10 +72,10 @@ class HazardousConditionsTest extends BaseCardTest {
         affected.setCounterCount(CounterType.CHARGE, 1);
         protectedCreature.setCounterCount(CounterType.CHARGE, 0);
 
-        assertThat(affected.getEffectivePower()).isEqualTo(1);
-        assertThat(affected.getEffectiveToughness()).isEqualTo(1);
-        assertThat(protectedCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(protectedCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, affected)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, affected)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, protectedCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, protectedCreature)).isEqualTo(3);
     }
 
     @Test
@@ -93,10 +93,10 @@ class HazardousConditionsTest extends BaseCardTest {
         losesCounter.setCounterCount(CounterType.CHARGE, 0);
         harness.passBothPriorities();
 
-        assertThat(gainsCounter.getEffectivePower()).isEqualTo(3);
-        assertThat(gainsCounter.getEffectiveToughness()).isEqualTo(3);
-        assertThat(losesCounter.getEffectivePower()).isEqualTo(1);
-        assertThat(losesCounter.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, gainsCounter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, gainsCounter)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, losesCounter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, losesCounter)).isEqualTo(1);
     }
 
     @Test
@@ -105,8 +105,8 @@ class HazardousConditionsTest extends BaseCardTest {
 
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player2, new BrazenScourge());
 
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(3);
     }
 
     @Test
@@ -120,7 +120,7 @@ class HazardousConditionsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Dhund Operative");
         harness.assertInGraveyard(player1, "Dhund Operative");
         harness.assertOnBattlefield(player2, "Dhund Operative");
-        assertThat(protectedCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(protectedCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, protectedCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, protectedCreature)).isEqualTo(3);
     }
 }

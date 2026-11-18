@@ -55,8 +55,8 @@ class TitaniaProtectorOfArgothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent elemental = findPermanent(player1, "Elemental");
-        assertThat(elemental.getEffectivePower()).isEqualTo(5);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(3);
     }
 
     @Test
@@ -141,7 +141,7 @@ class TitaniaProtectorOfArgothTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
         Permanent elemental = findPermanent(player1, "Elemental");
-        assertThat(elemental.getEffectivePower()).isEqualTo(5);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(3);
     }
 }

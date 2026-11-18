@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -34,15 +35,15 @@ class ManaChargedDragonTest extends BaseCardTest {
                 .isEqualTo(player2.getId());
         harness.handleXValueChosen(player2, 1);
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(3);
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(dragon.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
     }
 
     @Test
@@ -61,8 +62,8 @@ class ManaChargedDragonTest extends BaseCardTest {
                 .isEqualTo(player1.getId());
         harness.handleXValueChosen(player1, 2);
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(2);
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
     }
 
     @Test
@@ -74,8 +75,8 @@ class ManaChargedDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(dragon.getPowerModifier()).isZero();
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
     }
 
     @Test
@@ -89,14 +90,14 @@ class ManaChargedDragonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 0);
 
-        assertThat(dragon.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
                 .isEqualTo(player2.getId());
         harness.handleXValueChosen(player2, 3);
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(3);
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -112,8 +113,8 @@ class ManaChargedDragonTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 0);
         harness.handleXValueChosen(player2, 0);
 
-        assertThat(dragon.getPowerModifier()).isZero();
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -133,13 +134,13 @@ class ManaChargedDragonTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
                 .isEqualTo(player2.getId());
         harness.handleXValueChosen(player2, 2);
-        assertThat(dragon.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleXValueChosen(player1, 1);
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(3);
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
     }
 
     @Test
@@ -161,8 +162,8 @@ class ManaChargedDragonTest extends BaseCardTest {
         gs.tapPermanent(gd, player2, 0);
         harness.handleXValueChosen(player2, 1);
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(2);
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }

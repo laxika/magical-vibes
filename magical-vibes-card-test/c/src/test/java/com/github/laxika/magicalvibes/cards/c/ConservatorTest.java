@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
@@ -100,8 +101,8 @@ class ConservatorTest extends BaseCardTest {
 
         // Opponent attacks with a 5/5 → 2 prevented, 3 gets through.
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
-        attacker.setPowerModifier(3);
-        attacker.setToughnessModifier(3);
+        PermanentGrants.setPowerBoost(gd, attacker, 3);
+        PermanentGrants.setToughnessBoost(gd, attacker, 3);
         attacker.setAttacking(true);
 
         resolveCombat(player2);

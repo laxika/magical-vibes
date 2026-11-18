@@ -338,8 +338,8 @@ class TetzinGnomeChampionTest extends BaseCardTest {
                 p.getCard().isToken() && p.getCard().hasType(CardType.ARTIFACT)
                         && p.getCard().getSubtypes().contains(CardSubtype.GNOME))
                 .hasSize(count).allSatisfy(p -> {
-                    assertThat(p.getEffectivePower()).isEqualTo(1);
-                    assertThat(p.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(1);
                     assertThat(p.getCard().getColor()).isNull();
                 });
     }

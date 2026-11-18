@@ -41,8 +41,8 @@ class FreyaliseLlanowarsFuryTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(token.getCard().getName()).isEqualTo("Elf Druid");
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ELF, CardSubtype.DRUID);
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(freyalise.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
 
         token.setSummoningSick(false);

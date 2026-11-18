@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -69,9 +70,9 @@ class ExpelTheInterlopersTest extends BaseCardTest {
     @DisplayName("Choosing ten uses modified power and includes the threshold")
     void choosingTenUsesModifiedPower() {
         var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setPowerModifier(8);
+        PermanentGrants.setPowerBoost(gd, bears, 8);
         var giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        giant.setPowerModifier(6);
+        PermanentGrants.setPowerBoost(gd, giant, 6);
 
         castExpelTheInterlopers();
         harness.handleListChoice(player1, "10");
@@ -86,9 +87,9 @@ class ExpelTheInterlopersTest extends BaseCardTest {
     @DisplayName("Choosing zero spares negative power but destroys zero power")
     void choosingZeroSparesNegativePower() {
         var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, bears, -3);
         var giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        giant.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, giant, -3);
 
         castExpelTheInterlopers();
         harness.handleListChoice(player1, "0");

@@ -68,18 +68,18 @@ class NissaNaturesArtisanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(nissa.getCounterCount(CounterType.LOYALTY)).isZero();
-        assertThat(ownBear.getEffectivePower()).isEqualTo(7);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.TRAMPLE)).isTrue();
-        assertThat(opponentBear.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentBear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opponentBear, Keyword.TRAMPLE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownBear.getEffectivePower()).isEqualTo(2);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.TRAMPLE)).isFalse();
     }
 

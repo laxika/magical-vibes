@@ -152,8 +152,8 @@ class CrawlingSensationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .allSatisfy(permanent -> {
-                    assertThat(permanent.getEffectivePower()).isEqualTo(1);
-                    assertThat(permanent.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(1);
                 });
     }
 

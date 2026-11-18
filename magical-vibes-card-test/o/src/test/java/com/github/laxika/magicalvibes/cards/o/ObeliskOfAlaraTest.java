@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CanyonMinotaur;
 import com.github.laxika.magicalvibes.cards.c.CylianSunsinger;
 import com.github.laxika.magicalvibes.cards.n.NicolBolasPlaneswalker;
@@ -125,8 +126,8 @@ class ObeliskOfAlaraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Cylian Sunsinger");
-        assertThat(bear.getPowerModifier()).isEqualTo(4);
-        assertThat(bear.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -145,8 +146,8 @@ class ObeliskOfAlaraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Cylian Sunsinger");
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -198,14 +199,14 @@ class ObeliskOfAlaraTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(-2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(-2);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         harness.assertOnBattlefield(player1, "Canyon Minotaur");
     }
 
@@ -218,8 +219,8 @@ class ObeliskOfAlaraTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 4, null, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(4);
-        assertThat(creature.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(4);
     }
 
     @Test

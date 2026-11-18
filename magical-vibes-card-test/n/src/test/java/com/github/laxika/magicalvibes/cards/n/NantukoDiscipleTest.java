@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,8 +28,8 @@ class NantukoDiscipleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -91,8 +92,8 @@ class NantukoDiscipleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentBear.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentBear.getPowerModifier()).isEqualTo(2);
-        assertThat(opponentBear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentBear)).isEqualTo(2);
     }
 
     @Test
@@ -121,8 +122,8 @@ class NantukoDiscipleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     private void setupDisciple() {
@@ -138,13 +139,13 @@ class NantukoDiscipleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, disciple.getId());
 
         assertThat(disciple.isTapped()).isTrue();
-        assertThat(disciple.getPowerModifier()).isZero();
-        assertThat(disciple.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(disciple.getPowerModifier()).isEqualTo(2);
-        assertThat(disciple.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isEqualTo(2);
     }
 
     @Test
@@ -159,8 +160,8 @@ class NantukoDiscipleTest extends BaseCardTest {
         harness.activateAbility(player1, 2, null, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(4);
-        assertThat(bear.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(4);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
 

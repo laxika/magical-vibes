@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WeiEliteCompanions;
 import com.github.laxika.magicalvibes.cards.w.WeiInfantry;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -40,8 +41,8 @@ class ZhangHeWeiGeneralTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(other.getPowerModifier()).isEqualTo(1);
-        assertThat(other.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isEqualTo(0);
     }
 
     @Test
@@ -54,8 +55,8 @@ class ZhangHeWeiGeneralTest extends BaseCardTest {
         Permanent newcomer = addCreatureReady(player1, new WeiInfantry());
         resolveAllTriggers();
 
-        assertThat(newcomer.getPowerModifier()).isEqualTo(1);
-        assertThat(newcomer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newcomer)).isZero();
     }
 
     @Test
@@ -68,9 +69,9 @@ class ZhangHeWeiGeneralTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent newcomer = addCreatureReady(player1, new WeiInfantry());
 
-        assertThat(existing.getPowerModifier()).isEqualTo(1);
-        assertThat(newcomer.getPowerModifier()).isZero();
-        assertThat(newcomer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, existing)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newcomer)).isZero();
     }
 
     @Test
@@ -81,7 +82,7 @@ class ZhangHeWeiGeneralTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(zhangHe.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, zhangHe)).isEqualTo(0);
     }
 
     @Test
@@ -93,7 +94,7 @@ class ZhangHeWeiGeneralTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(enemy.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, enemy)).isEqualTo(0);
     }
 
     @Test
@@ -105,14 +106,14 @@ class ZhangHeWeiGeneralTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(other.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(other.getPowerModifier()).isEqualTo(0);
-        assertThat(other.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isEqualTo(0);
     }
 
     @Test
@@ -124,7 +125,7 @@ class ZhangHeWeiGeneralTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
 
-        assertThat(other.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(0);
     }
 
     @Test

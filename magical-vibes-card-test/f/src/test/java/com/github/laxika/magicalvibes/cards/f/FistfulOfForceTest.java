@@ -48,8 +48,8 @@ class FistfulOfForceTest extends BaseCardTest {
         keepBothRevealedCardsOnTop();
 
         Permanent target = findPermanent(player1, "Woodland Changeling");
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.TRAMPLE);
     }
 
@@ -64,8 +64,8 @@ class FistfulOfForceTest extends BaseCardTest {
         placeRevealedCard(player2, true);
 
         Permanent target = findPermanent(player2, "Woodland Changeling");
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.TRAMPLE);
         assertThat(gd.playerDecks.get(player1.getId()).getLast()).isInstanceOf(WoodlandChangeling.class);
         harness.assertInGraveyard(player1, "Fistful of Force");
@@ -82,7 +82,7 @@ class FistfulOfForceTest extends BaseCardTest {
         placeRevealedCard(player2, false);
         placeRevealedCard(player1, false);
 
-        assertThat(findPermanent(player1, "Woodland Changeling").getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Woodland Changeling"))).isEqualTo(4);
     }
 
     private void prepare() {
@@ -106,7 +106,7 @@ class FistfulOfForceTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         harness.assertInHand(player2, "Woodland Changeling");
-        assertThat(findPermanent(player1, "Woodland Changeling").getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Woodland Changeling"))).isEqualTo(2);
     }
 
     @Test
@@ -120,8 +120,8 @@ class FistfulOfForceTest extends BaseCardTest {
         placeRevealedCard(player2, false);
 
         Permanent target = findPermanent(player1, "Woodland Changeling");
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.TRAMPLE);
     }
 
@@ -167,8 +167,8 @@ class FistfulOfForceTest extends BaseCardTest {
         keepBothRevealedCardsOnTop();
 
         Permanent bear = findPermanent(player1, "Woodland Changeling");
-        assertThat(bear.getPowerModifier()).isEqualTo(4);
-        assertThat(bear.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.TRAMPLE);
     }
 
@@ -184,8 +184,8 @@ class FistfulOfForceTest extends BaseCardTest {
         keepBothRevealedCardsOnTop();
 
         Permanent bear = findPermanent(player1, "Woodland Changeling");
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.TRAMPLE);
     }
 
@@ -205,8 +205,8 @@ class FistfulOfForceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Woodland Changeling");
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.TRAMPLE);
     }
 

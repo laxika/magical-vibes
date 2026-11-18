@@ -40,10 +40,10 @@ class ProfitLossTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, PROFIT, List.of());
         harness.passBothPriorities();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(3);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(3);
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 
     @Test
@@ -59,7 +59,7 @@ class ProfitLossTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, LOSS, List.of());
         harness.passBothPriorities();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
@@ -74,8 +74,8 @@ class ProfitLossTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, LOSS, List.of());
         harness.passBothPriorities();
 
-        assertThat(theirs.getEffectivePower()).isEqualTo(1);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -93,10 +93,10 @@ class ProfitLossTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, FUSE, List.of());
         harness.passBothPriorities();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(3);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(3);
-        assertThat(theirs.getEffectivePower()).isEqualTo(1);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(1);
     }
 
     @Test
@@ -127,10 +127,10 @@ class ProfitLossTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(2);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(2);
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 
     @Test
@@ -161,10 +161,10 @@ class ProfitLossTest extends BaseCardTest {
         Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.passBothPriorities();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(3);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(3);
-        assertThat(theirs.getEffectivePower()).isEqualTo(1);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(1);
     }
 
     @Test
@@ -180,9 +180,9 @@ class ProfitLossTest extends BaseCardTest {
         Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThat(mine.getEffectivePower()).isEqualTo(2);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(2);
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BairdArgivianRecruiter;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -35,19 +36,19 @@ class ToriDAvenantFuryRiderTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2, 3));
         resolveAllTriggers();
 
-        assertThat(tori.getPowerModifier()).isZero();
-        assertThat(redAttacker.getPowerModifier()).isEqualTo(1);
-        assertThat(redAttacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, tori)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, redAttacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, redAttacker)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, redAttacker, Keyword.TRAMPLE)).isTrue();
-        assertThat(whiteAttacker.getPowerModifier()).isEqualTo(1);
-        assertThat(whiteAttacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, whiteAttacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, whiteAttacker)).isEqualTo(1);
         assertThat(whiteAttacker.isTapped()).isFalse();
-        assertThat(greenAttacker.getPowerModifier()).isEqualTo(1);
-        assertThat(greenAttacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, greenAttacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, greenAttacker)).isEqualTo(1);
         assertThat(greenAttacker.isTapped()).isTrue();
-        assertThat(redNonAttacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, redNonAttacker)).isZero();
         assertThat(gqs.hasKeyword(gd, redNonAttacker, Keyword.TRAMPLE)).isFalse();
-        assertThat(opponentRed.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentRed)).isZero();
         assertThat(gqs.hasKeyword(gd, opponentRed, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -60,15 +61,15 @@ class ToriDAvenantFuryRiderTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(redAttacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, redAttacker)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, redAttacker, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(redAttacker.getPowerModifier()).isZero();
-        assertThat(redAttacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, redAttacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, redAttacker)).isZero();
         assertThat(gqs.hasKeyword(gd, redAttacker, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -87,14 +88,14 @@ class ToriDAvenantFuryRiderTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(tori.getPowerModifier()).isZero();
-        assertThat(tori.getToughnessModifier()).isZero();
-        assertThat(baird.getPowerModifier()).isEqualTo(1);
-        assertThat(baird.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, tori)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tori)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, baird)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, baird)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, baird, Keyword.TRAMPLE)).isTrue();
         assertThat(baird.isTapped()).isFalse();
         assertThat(baird.isAttacking()).isTrue();
-        assertThat(opponentBaird.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBaird)).isZero();
         assertThat(gqs.hasKeyword(gd, opponentBaird, Keyword.TRAMPLE)).isFalse();
         assertThat(opponentBaird.isTapped()).isTrue();
     }
@@ -109,8 +110,8 @@ class ToriDAvenantFuryRiderTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
 
-        assertThat(baird.getPowerModifier()).isZero();
-        assertThat(baird.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, baird)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, baird)).isZero();
         assertThat(gqs.hasKeyword(gd, baird, Keyword.TRAMPLE)).isFalse();
         assertThat(baird.isTapped()).isTrue();
     }
@@ -130,8 +131,8 @@ class ToriDAvenantFuryRiderTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Tori D'Avenant, Fury Rider");
         resolveAllTriggers();
 
-        assertThat(baird.getPowerModifier()).isEqualTo(1);
-        assertThat(baird.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, baird)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, baird)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, baird, Keyword.TRAMPLE)).isTrue();
         assertThat(baird.isTapped()).isFalse();
     }

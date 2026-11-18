@@ -24,11 +24,11 @@ class NaktamunShinesAgainTest extends BaseCardTest {
 
         triggerChapter();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gd.perpetualCardPowerModifiers).containsEntry(bears.getCard().getId(), 1);
 
         bears.resetModifiers();
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
     }
 
     @Test
@@ -72,7 +72,7 @@ class NaktamunShinesAgainTest extends BaseCardTest {
 
         triggerChapter();
 
-        assertThat(token.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
         assertThat(gd.perpetualCardPowerModifiers).doesNotContainKey(tokenCopy.getId());
     }
 
@@ -101,8 +101,8 @@ class NaktamunShinesAgainTest extends BaseCardTest {
             assertThat(gd.perpetualCardPowerModifiers).containsEntry(card.getId(), 1);
         }
         assertThat(gd.perpetualCardPowerModifiers).doesNotContainKeys(giant.getId(), opposing.getId());
-        assertThat(stolen.getEffectivePower()).isEqualTo(3);
-        assertThat(borrowed.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, stolen)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, borrowed)).isEqualTo(2);
     }
 
     @Test
@@ -129,7 +129,7 @@ class NaktamunShinesAgainTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof GrizzlyBears)
                 .findFirst().orElseThrow();
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
     }
 
     @Test

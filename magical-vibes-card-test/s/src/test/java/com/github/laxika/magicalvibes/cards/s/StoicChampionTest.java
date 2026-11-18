@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.Hundroog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class StoicChampionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent champion = findPermanent(player1, "Stoic Champion");
-        assertThat(champion.getPowerModifier()).isEqualTo(2);
-        assertThat(champion.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, champion)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, champion)).isEqualTo(2);
     }
 
     @Test
@@ -44,8 +45,8 @@ class StoicChampionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent champion = findPermanent(player1, "Stoic Champion");
-        assertThat(champion.getPowerModifier()).isEqualTo(2);
-        assertThat(champion.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, champion)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, champion)).isEqualTo(2);
     }
 
     @Test
@@ -62,16 +63,16 @@ class StoicChampionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent champion = findPermanent(player1, "Stoic Champion");
-        assertThat(champion.getPowerModifier()).isEqualTo(4);
-        assertThat(champion.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, champion)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, champion)).isEqualTo(4);
 
         resolveAllTriggers();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(champion.getPowerModifier()).isEqualTo(0);
-        assertThat(champion.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, champion)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, champion)).isEqualTo(0);
     }
 
     @Test
@@ -82,22 +83,22 @@ class StoicChampionTest extends BaseCardTest {
 
         harness.activateHandAbility(player1, 0, null);
 
-        assertThat(champion.getPowerModifier()).isZero();
-        assertThat(champion.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, champion)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, champion)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Hundroog");
 
         harness.passBothPriorities();
 
-        assertThat(champion.getPowerModifier()).isEqualTo(2);
-        assertThat(champion.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, champion)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, champion)).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Hundroog");
-        assertThat(champion.getPowerModifier()).isEqualTo(2);
-        assertThat(champion.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, champion)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, champion)).isEqualTo(2);
     }
 
     @Test
@@ -110,10 +111,10 @@ class StoicChampionTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(2);
     }
 
     @Test
@@ -128,8 +129,8 @@ class StoicChampionTest extends BaseCardTest {
         Permanent returned = harness.addToBattlefieldAndReturn(player1, card);
         resolveAllTriggers();
 
-        assertThat(returned.getPowerModifier()).isZero();
-        assertThat(returned.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, returned)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, returned)).isZero();
         harness.assertInHand(player1, "Hundroog");
     }
 

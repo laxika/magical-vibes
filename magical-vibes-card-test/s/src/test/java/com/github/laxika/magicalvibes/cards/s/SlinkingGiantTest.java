@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrabappleCohort;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class SlinkingGiantTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(-3);
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(4);
     }
@@ -43,8 +44,8 @@ class SlinkingGiantTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(-3);
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
     }
 
@@ -56,8 +57,8 @@ class SlinkingGiantTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(giant.getPowerModifier()).isZero();
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4);
     }
 
@@ -71,14 +72,14 @@ class SlinkingGiantTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(-3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isZero();
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4);
     }
 
@@ -110,7 +111,7 @@ class SlinkingGiantTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
-        assertThat(giant.getPowerModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(-3);
     }
 
     @Test

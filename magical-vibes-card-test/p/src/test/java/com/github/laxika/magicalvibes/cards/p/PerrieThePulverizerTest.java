@@ -47,8 +47,8 @@ class PerrieThePulverizerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.TRAMPLE);
     }
 
@@ -70,8 +70,8 @@ class PerrieThePulverizerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, perrie.getId());
         resolveAllTriggers();
 
-        assertThat(perrie.getPowerModifier()).isZero();
-        assertThat(perrie.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, perrie)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, perrie)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, perrie)).contains(Keyword.TRAMPLE);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -97,15 +97,15 @@ class PerrieThePulverizerTest extends BaseCardTest {
         resolveAllTriggers();
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.TRAMPLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.TRAMPLE);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
@@ -124,8 +124,8 @@ class PerrieThePulverizerTest extends BaseCardTest {
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.TRAMPLE);
     }
 }

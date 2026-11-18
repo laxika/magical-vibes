@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -47,12 +47,11 @@ public class BoostSelfEffectHandler implements NormalEffectHandlerBean {
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
 
         if (Duration.UNTIL_END_OF_TURN.equals(boost.duration())) {
-            self.setPowerModifier(self.getPowerModifier() + powerBoost);
-            self.setToughnessModifier(self.getToughnessModifier() + toughnessBoost);
+            gameData.addPowerToughnessBoost(entry, self.getId(), powerBoost, toughnessBoost);
         } else {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
-                    new BuffTargetCreatureIndefinitelyEffect(powerBoost, toughnessBoost),
+                    new PowerToughnessBoostEffect(powerBoost, toughnessBoost),
                     self.getId(), null, null, boost.duration(), 0));
         }
 

@@ -24,8 +24,8 @@ class HedronRoverTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(rover.getEffectivePower()).isEqualTo(4);
-        assertThat(rover.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rover)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rover)).isEqualTo(4);
     }
 
     @Test
@@ -38,8 +38,8 @@ class HedronRoverTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(rover.getEffectivePower()).isEqualTo(2);
-        assertThat(rover.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rover)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rover)).isEqualTo(2);
     }
 
     @Test
@@ -50,15 +50,15 @@ class HedronRoverTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        assertThat(rover.getEffectivePower()).isEqualTo(4);
-        assertThat(rover.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rover)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rover)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(rover.getEffectivePower()).isEqualTo(2);
-        assertThat(rover.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rover)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rover)).isEqualTo(2);
     }
 
     @Test
@@ -69,13 +69,13 @@ class HedronRoverTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(rover.getEffectivePower()).isEqualTo(2);
-        assertThat(rover.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rover)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rover)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(rover.getEffectivePower()).isEqualTo(4);
-        assertThat(rover.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rover)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rover)).isEqualTo(4);
     }
 
     @Test
@@ -88,18 +88,18 @@ class HedronRoverTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
 
         harness.passBothPriorities();
-        assertThat(rover.getEffectivePower()).isEqualTo(4);
-        assertThat(rover.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rover)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rover)).isEqualTo(4);
         harness.passBothPriorities();
-        assertThat(rover.getEffectivePower()).isEqualTo(6);
-        assertThat(rover.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, rover)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, rover)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(rover.getEffectivePower()).isEqualTo(2);
-        assertThat(rover.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rover)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rover)).isEqualTo(2);
     }
 
     @Test
@@ -113,11 +113,11 @@ class HedronRoverTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
     }
 }

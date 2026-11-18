@@ -58,10 +58,10 @@ class PlatedOnslaughtTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(findPermanent(player1, "Adaptive Sporesinger").getEffectivePower()).isEqualTo(4);
-        assertThat(findPermanent(player1, "Adaptive Sporesinger").getEffectiveToughness()).isEqualTo(3);
-        assertThat(findPermanent(player2, "Adaptive Sporesinger").getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanent(player2, "Adaptive Sporesinger").getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Adaptive Sporesinger"))).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Adaptive Sporesinger"))).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Adaptive Sporesinger"))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Adaptive Sporesinger"))).isEqualTo(2);
     }
 
     @Test
@@ -77,8 +77,8 @@ class PlatedOnslaughtTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Adaptive Sporesinger").getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Adaptive Sporesinger").getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Adaptive Sporesinger"))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Adaptive Sporesinger"))).isEqualTo(2);
     }
 
     @Test
@@ -127,10 +127,10 @@ class PlatedOnslaughtTest extends BaseCardTest {
         harness.passBothPriorities();
         var arrivingLater = harness.addToBattlefieldAndReturn(player1, new AdaptiveSporesinger());
 
-        assertThat(presentAtResolution.getEffectivePower()).isEqualTo(4);
-        assertThat(presentAtResolution.getEffectiveToughness()).isEqualTo(3);
-        assertThat(arrivingLater.getEffectivePower()).isEqualTo(2);
-        assertThat(arrivingLater.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, presentAtResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, presentAtResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, arrivingLater)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, arrivingLater)).isEqualTo(2);
     }
 
     @Test
@@ -144,8 +144,8 @@ class PlatedOnslaughtTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Plated Onslaught");
-        assertThat(arrivingLater.getEffectivePower()).isEqualTo(2);
-        assertThat(arrivingLater.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, arrivingLater)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, arrivingLater)).isEqualTo(2);
     }
 
     private void addArtifacts(Player player, int count) {

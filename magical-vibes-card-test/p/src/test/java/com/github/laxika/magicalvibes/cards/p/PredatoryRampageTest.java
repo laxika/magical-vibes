@@ -29,10 +29,10 @@ class PredatoryRampageTest extends BaseCardTest {
         Permanent theirs = addCreatureReady(player2, new WalkingCorpse());
         castRampage();
 
-        assertThat(own.getEffectivePower()).isEqualTo(5);
-        assertThat(own.getEffectiveToughness()).isEqualTo(5);
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 
     @Test
@@ -82,7 +82,7 @@ class PredatoryRampageTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(own.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(2);
         assertThat(gd.hasFloatingEffectOnPermanent(theirs.getId(), MustBlockEachCombatEffect.class)).isFalse();
     }
 
@@ -102,8 +102,8 @@ class PredatoryRampageTest extends BaseCardTest {
 
         Permanent later = addCreatureReady(player1, new WalkingCorpse());
 
-        assertThat(later.getEffectivePower()).isEqualTo(2);
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
     }
 
     @Test

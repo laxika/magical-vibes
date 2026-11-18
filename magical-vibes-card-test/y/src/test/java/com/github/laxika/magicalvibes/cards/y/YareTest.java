@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.n.NobleElephant;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -29,8 +30,8 @@ class YareTest extends BaseCardTest {
 
         castYare(player2, blocker);
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(3);
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
         assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isEqualTo(2);
     }
 
@@ -89,7 +90,7 @@ class YareTest extends BaseCardTest {
 
         castYare(player1, blocker);
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(3);
         assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isEqualTo(2);
     }
 
@@ -104,7 +105,7 @@ class YareTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
         assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isZero();
     }
 
@@ -157,7 +158,7 @@ class YareTest extends BaseCardTest {
 
         castYare(player2, blocker);
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(3);
         assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isEqualTo(2);
     }
 
@@ -170,7 +171,7 @@ class YareTest extends BaseCardTest {
 
         castYare(player2, blocker);
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(3);
         assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isEqualTo(2);
     }
 
@@ -189,7 +190,7 @@ class YareTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
-        assertThat(blocker.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(3);
         assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isEqualTo(2);
     }
 
@@ -208,7 +209,7 @@ class YareTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
-        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
         assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isZero();
         assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(card -> card instanceof Yare);
     }
@@ -228,7 +229,7 @@ class YareTest extends BaseCardTest {
         harness.castInstant(player2, 0, blocker.getId());
         resolveAllTriggers();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(6);
         assertThat(gd.additionalBlocksThisTurn(blocker.getId())).isEqualTo(4);
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -213,11 +216,11 @@ class AscendantEvincarTest extends BaseCardTest {
         Permanent skeletons = addCreatureReady(player1, new DrudgeSkeletons());
 
         // Simulate a temporary spell boost
-        skeletons.setPowerModifier(skeletons.getPowerModifier() + 3);
+        PermanentGrants.setPowerBoost(gd, skeletons, PermanentGrants.powerBoostOf(gd, skeletons) + 3);
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(5); // 1 base + 3 spell + 1 static
 
-        // Reset end-of-turn modifiers
-        skeletons.resetModifiers();
+        // The cleanup step ends the until-end-of-turn effects
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         // Spell bonus gone, static bonus still computed
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(2); // 1 base + 1 static

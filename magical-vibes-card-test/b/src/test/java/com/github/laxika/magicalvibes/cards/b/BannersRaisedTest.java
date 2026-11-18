@@ -27,8 +27,8 @@ class BannersRaisedTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         for (Permanent p : gd.playerBattlefields.get(player1.getId())) {
-            assertThat(p.getEffectivePower()).isEqualTo(3);
-            assertThat(p.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(2);
         }
         harness.assertInGraveyard(player1, "Banners Raised");
     }
@@ -43,8 +43,8 @@ class BannersRaisedTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getEffectivePower()).isEqualTo(3);
-        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, gd.playerBattlefields.get(player1.getId()).getFirst())).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, gd.playerBattlefields.get(player2.getId()).getFirst())).isEqualTo(2);
     }
 
     @Test
@@ -61,8 +61,8 @@ class BannersRaisedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -86,10 +86,10 @@ class BannersRaisedTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         Permanent later = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(original.getEffectivePower()).isEqualTo(3);
-        assertThat(original.getEffectiveToughness()).isEqualTo(2);
-        assertThat(later.getEffectivePower()).isEqualTo(2);
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
     }
 
     @Test
@@ -102,7 +102,7 @@ class BannersRaisedTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }

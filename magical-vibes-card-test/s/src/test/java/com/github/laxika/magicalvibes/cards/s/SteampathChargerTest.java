@@ -31,8 +31,8 @@ class SteampathChargerTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .singleElement()
                 .satisfies(token -> {
-                    assertThat(token.getEffectivePower()).isEqualTo(1);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
                 });
     }
 
@@ -123,8 +123,8 @@ class SteampathChargerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .singleElement().satisfies(token -> {
                     assertThat(token.getCard().isToken()).isTrue();
-                    assertThat(token.getEffectivePower()).isEqualTo(1);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
                 });
         assertThat(gd.stack).isEmpty();
     }
@@ -154,8 +154,8 @@ class SteampathChargerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .singleElement().satisfies(token -> {
-                    assertThat(token.getEffectivePower()).isEqualTo(1);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
                 });
     }
 }

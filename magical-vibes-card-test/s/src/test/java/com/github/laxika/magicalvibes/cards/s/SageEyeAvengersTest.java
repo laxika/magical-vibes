@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Cloudshift;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -104,7 +105,7 @@ class SageEyeAvengersTest extends BaseCardTest {
     void attackTriggerDoesNotReturnEqualPowerCreature() {
         addReadyAvengers();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, 2);
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());
@@ -167,7 +168,7 @@ class SageEyeAvengersTest extends BaseCardTest {
     void attackTriggerUsesSourcePowerAtResolution() {
         Permanent avengers = addReadyAvengers();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, 2);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -191,7 +192,7 @@ class SageEyeAvengersTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());
-        target.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, 2);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);

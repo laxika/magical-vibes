@@ -44,8 +44,8 @@ class StoneIdolGeneratorTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(6);
-        assertThat(token.getEffectiveToughness()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(12);
         assertThat(token.getCard().getColor()).isNull();
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.CONSTRUCT);
         assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();

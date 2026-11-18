@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -60,15 +61,15 @@ class CripplingFearTest extends BaseCardTest {
         castCripplingFear(player1);
         harness.handleListChoice(player1, "BEAR");
 
-        assertThat(avatar.getPowerModifier()).isEqualTo(-3);
-        assertThat(avatar.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, avatar)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, avatar)).isEqualTo(-3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(avatar.getPowerModifier()).isEqualTo(0);
-        assertThat(avatar.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, avatar)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, avatar)).isEqualTo(0);
     }
 
     @Test

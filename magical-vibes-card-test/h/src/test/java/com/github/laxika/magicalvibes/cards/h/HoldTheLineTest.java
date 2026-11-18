@@ -30,12 +30,12 @@ class HoldTheLineTest extends BaseCardTest {
 
         castHoldTheLine();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(12);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(12);
-        assertThat(attacker.getEffectivePower()).isEqualTo(5);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(5);
-        assertThat(bystander.getEffectivePower()).isEqualTo(5);
-        assertThat(bystander.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bystander)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bystander)).isEqualTo(5);
     }
 
     @Test
@@ -49,15 +49,15 @@ class HoldTheLineTest extends BaseCardTest {
 
         castHoldTheLine();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(12);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(12);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(5);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(5);
     }
 
     @Test
@@ -74,10 +74,10 @@ class HoldTheLineTest extends BaseCardTest {
         harness.castFromHand(player2, new HoldTheLine(), "{1}{W}{W}");
         harness.passBothPriorities();
 
-        assertThat(firstBlocker.getEffectivePower()).isEqualTo(12);
-        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(12);
-        assertThat(secondBlocker.getEffectivePower()).isEqualTo(12);
-        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, firstBlocker)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, firstBlocker)).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, secondBlocker)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, secondBlocker)).isEqualTo(12);
     }
 
     @Test
@@ -91,8 +91,8 @@ class HoldTheLineTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(5);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(5);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof HoldTheLine);
     }
@@ -114,8 +114,8 @@ class HoldTheLineTest extends BaseCardTest {
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(blocker.isBlocking()).isFalse();
-        assertThat(blocker.getEffectivePower()).isEqualTo(12);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(12);
     }
 
     private void castHoldTheLine() {

@@ -1,9 +1,14 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
 import com.github.laxika.magicalvibes.cards.s.SealOfDoom;
 import com.github.laxika.magicalvibes.cards.w.WakestoneGargoyle;
 import com.github.laxika.magicalvibes.cards.w.Windreaver;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +16,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ProperBurial.class, SealOfDoom.class, WakestoneGargoyle.class, Windreaver.class})
+@CardUsed({ProperBurial.class, SealOfDoom.class, WakestoneGargoyle.class, Windreaver.class, GrizzlyBears.class,
+        HolyStrength.class, MarchOfTheMachines.class, MycosynthLattice.class})
 class ProperBurialTest extends BaseCardTest {
 
     @Test
@@ -98,5 +104,27 @@ class ProperBurialTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Windreaver");
         harness.assertLife(player1, 20);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An Aura made a creature dies with the toughness it had as it left")
+    void animatedAuraDiesWithItsLastKnownToughness() {
+        harness.addToBattlefield(player1, new ProperBurial());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(bears.getId());
+        harness.addToBattlefield(player1, new MycosynthLattice());
+        harness.setLife(player1, 20);
+
+        // Every permanent is an artifact, so March makes Holy Strength a 1/1 artifact creature (its mana value). An
+        // Aura that's also a creature can't enchant anything: it becomes unattached and is put into its owner's
+        // graveyard (CR 303.4d, 704.5m), dying as a creature with toughness 1 as it last existed (CR 603.10a).
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Holy Strength");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 21);
     }
 }

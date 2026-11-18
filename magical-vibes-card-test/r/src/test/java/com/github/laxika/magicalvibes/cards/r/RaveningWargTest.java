@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -20,7 +21,7 @@ class RaveningWargTest extends BaseCardTest {
     void ferociousGainsLife() {
         Permanent warg = addCreatureReady(player1, new RaveningWarg());
         Permanent largeCreature = addCreatureReady(player1, new GrizzlyBears());
-        largeCreature.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, largeCreature, 2);
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(warg)));
         resolveAllTriggers();
@@ -43,7 +44,7 @@ class RaveningWargTest extends BaseCardTest {
     @Test
     void wargCanSatisfyItsOwnPowerCondition() {
         Permanent warg = addCreatureReady(player1, new RaveningWarg());
-        warg.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, warg, 2);
         declareAttackers(List.of(0));
         resolveAllTriggers();
         assertThat(gd.getLife(player1.getId())).isEqualTo(22);
@@ -53,7 +54,7 @@ class RaveningWargTest extends BaseCardTest {
     void opponentsLargeCreatureDoesNotEnableLifeGain() {
         addCreatureReady(player1, new RaveningWarg());
         Permanent opposingWarg = addCreatureReady(player2, new RaveningWarg());
-        opposingWarg.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, opposingWarg, 2);
         declareAttackers(List.of(0));
         resolveAllTriggers();
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
@@ -62,11 +63,11 @@ class RaveningWargTest extends BaseCardTest {
     @Test
     void losingQualifyingPowerAfterAttackingDoesNotPreventLifeGain() {
         Permanent warg = addCreatureReady(player1, new RaveningWarg());
-        warg.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, warg, 2);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> declareAttackers(List.of(0)));
         assertThat(gd.stack).hasSize(1);
-        warg.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, warg, 0);
         resolveAllTriggers();
         assertThat(gd.getLife(player1.getId())).isEqualTo(22);
     }
@@ -74,11 +75,11 @@ class RaveningWargTest extends BaseCardTest {
     @Test
     void gainingQualifyingPowerAfterAttackingDoesNotCreateTrigger() {
         Permanent warg = addCreatureReady(player1, new RaveningWarg());
-        warg.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, warg, 1);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> declareAttackers(List.of(0)));
         assertThat(gd.stack).isEmpty();
-        warg.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, warg, 2);
         resolveAllTriggers();
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }

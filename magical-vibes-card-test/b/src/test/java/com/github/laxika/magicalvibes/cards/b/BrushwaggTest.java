@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WildElephant;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -26,8 +27,8 @@ class BrushwaggTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(brushwagg.getPowerModifier()).isEqualTo(-2);
-        assertThat(brushwagg.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, brushwagg)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, brushwagg)).isEqualTo(2);
     }
 
     @Test
@@ -40,8 +41,8 @@ class BrushwaggTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(brushwagg.getPowerModifier()).isEqualTo(-2);
-        assertThat(brushwagg.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, brushwagg)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, brushwagg)).isEqualTo(2);
     }
 
     @Test
@@ -53,8 +54,8 @@ class BrushwaggTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(brushwagg.getPowerModifier()).isZero();
-        assertThat(brushwagg.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, brushwagg)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, brushwagg)).isZero();
     }
 
     @Test
@@ -71,8 +72,8 @@ class BrushwaggTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(brushwagg.getPowerModifier()).isZero();
-        assertThat(brushwagg.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, brushwagg)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, brushwagg)).isZero();
     }
 
     @Test
@@ -88,8 +89,8 @@ class BrushwaggTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(brushwagg.getPowerModifier()).isEqualTo(-2);
-        assertThat(brushwagg.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, brushwagg)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, brushwagg)).isEqualTo(2);
     }
 
     @Test
@@ -102,16 +103,16 @@ class BrushwaggTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(-2);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(2);
-        assertThat(blocker.getPowerModifier()).isEqualTo(-2);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(2);
     }
 }

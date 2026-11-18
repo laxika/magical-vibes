@@ -73,18 +73,18 @@ class ChampionsFromBeyondTest extends BaseCardTest {
                 .toList();
         assertThat(attackers).hasSize(8);
         assertThat(attackers).allSatisfy(attacker -> {
-            assertThat(attacker.getEffectivePower()).isEqualTo(6);
-            assertThat(attacker.getEffectiveToughness()).isEqualTo(6);
+            assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(6);
+            assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(6);
         });
-        assertThat(nonAttacker.getEffectivePower()).isEqualTo(2);
-        assertThat(nonAttacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonAttacker)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         gs.advanceStep(gd);
 
         assertThat(attackers).allSatisfy(attacker -> {
-            assertThat(attacker.getEffectivePower()).isEqualTo(2);
-            assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         });
     }
 
@@ -134,7 +134,7 @@ class ChampionsFromBeyondTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(third);
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(Permanent::isAttacking)).allSatisfy(attacker ->
-                assertThat(attacker.getEffectivePower()).isEqualTo(2));
+                assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2));
     }
 
     @Test
@@ -165,8 +165,8 @@ class ChampionsFromBeyondTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(removedAttacker.getEffectivePower()).isEqualTo(6);
-        assertThat(removedAttacker.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, removedAttacker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, removedAttacker)).isEqualTo(6);
     }
 
     @Test
@@ -186,8 +186,8 @@ class ChampionsFromBeyondTest extends BaseCardTest {
             }
             resolveAllTriggers();
 
-            assertThat(laterAttacker.getEffectivePower()).isEqualTo(2);
-            assertThat(laterAttacker.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, laterAttacker)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, laterAttacker)).isEqualTo(2);
         });
     }
 

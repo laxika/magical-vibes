@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HuntedWitness;
 import com.github.laxika.magicalvibes.cards.j.JusticeStrike;
 import com.github.laxika.magicalvibes.cards.j.JusticiarsPortal;
@@ -94,7 +95,7 @@ class SunhomeStalwartTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         harness.handlePermanentChosen(player1, witness.getId());
-        stalwart.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, stalwart, -1);
         resolveAllTriggers();
 
         assertThat(witness.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -123,7 +124,7 @@ class SunhomeStalwartTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         harness.handlePermanentChosen(player1, witness.getId());
-        stalwart.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, stalwart, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castAndResolveInstant(player1, 0, stalwart.getId());

@@ -71,8 +71,8 @@ class FrolickingFamiliarTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(familiar.getEffectivePower()).isEqualTo(3);
-        assertThat(familiar.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, familiar)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, familiar)).isEqualTo(3);
     }
 
     @Test
@@ -84,8 +84,8 @@ class FrolickingFamiliarTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(familiar.getEffectivePower()).isEqualTo(2);
-        assertThat(familiar.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, familiar)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, familiar)).isEqualTo(2);
     }
 
     @Test
@@ -95,15 +95,15 @@ class FrolickingFamiliarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(familiar.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, familiar)).isEqualTo(3);
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(familiar.getEffectivePower()).isEqualTo(2);
-        assertThat(familiar.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, familiar)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, familiar)).isEqualTo(2);
     }
 
     @Test
@@ -116,8 +116,8 @@ class FrolickingFamiliarTest extends BaseCardTest {
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(familiar.getEffectivePower()).isEqualTo(3);
-        assertThat(familiar.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, familiar)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, familiar)).isEqualTo(3);
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
     }
@@ -130,8 +130,8 @@ class FrolickingFamiliarTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(familiar.getEffectivePower()).isEqualTo(2);
-        assertThat(familiar.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, familiar)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, familiar)).isEqualTo(2);
     }
 
     @Test
@@ -144,8 +144,8 @@ class FrolickingFamiliarTest extends BaseCardTest {
         harness.castAdventure(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(familiar.getEffectivePower()).isEqualTo(3);
-        assertThat(familiar.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, familiar)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, familiar)).isEqualTo(3);
         harness.passBothPriorities();
         harness.assertLife(player2, 19);
         assertThat(gd.findExiledCard(adventureCard.getId())).isNotNull();

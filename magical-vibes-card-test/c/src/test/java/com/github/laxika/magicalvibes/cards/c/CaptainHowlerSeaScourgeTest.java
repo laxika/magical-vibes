@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DangerousWager;
 import com.github.laxika.magicalvibes.cards.b.BounceOff;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -42,7 +43,7 @@ class CaptainHowlerSeaScourgeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(4);
         int handBeforeCombat = gd.playerHands.get(player1.getId()).size();
 
         declareAttackers(player1, List.of(1));
@@ -118,7 +119,7 @@ class CaptainHowlerSeaScourgeTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
         assertThat(choice.validPermanentIds()).contains(bears.getId()).doesNotContain(land.getId());
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -150,7 +151,7 @@ class CaptainHowlerSeaScourgeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
         int controllerHand = gd.playerHands.get(player1.getId()).size();
         int opponentHand = gd.playerHands.get(player2.getId()).size();
         declareAttackersAndPrepareBlockers(player2, List.of(0));
@@ -178,7 +179,7 @@ class CaptainHowlerSeaScourgeTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(bears.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(4);
         int handBeforeCombat = gd.playerHands.get(player1.getId()).size();
         declareAttackers(player1, List.of(1));
         resolveCombat(player1);

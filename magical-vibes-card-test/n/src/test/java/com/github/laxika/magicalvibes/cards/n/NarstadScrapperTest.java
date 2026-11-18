@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class NarstadScrapperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(scrapper.getPowerModifier()).isEqualTo(1);
-        assertThat(scrapper.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, scrapper)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scrapper)).isEqualTo(0);
     }
 
     @Test
@@ -39,8 +40,8 @@ class NarstadScrapperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(scrapper.getPowerModifier()).isEqualTo(2);
-        assertThat(scrapper.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, scrapper)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scrapper)).isEqualTo(0);
     }
 
     @Test
@@ -51,13 +52,13 @@ class NarstadScrapperTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(scrapper.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, scrapper)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(scrapper.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, scrapper)).isEqualTo(0);
     }
 
     @Test
@@ -79,12 +80,12 @@ class NarstadScrapperTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(scrapper.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, scrapper)).isZero();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(scrapper.getPowerModifier()).isEqualTo(1);
-        assertThat(scrapper.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, scrapper)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scrapper)).isZero();
         assertThat(scrapper.isTapped()).isTrue();
     }
 
@@ -100,7 +101,7 @@ class NarstadScrapperTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(scrapper.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, scrapper)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -115,9 +116,9 @@ class NarstadScrapperTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isZero();
-        assertThat(opposing.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isZero();
     }
 }

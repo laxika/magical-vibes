@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BorderPatrol;
 import com.github.laxika.magicalvibes.cards.r.RiftstonePortal;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
@@ -30,8 +31,8 @@ class SuddenStrengthTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, hawk.getId());
 
-        assertThat(hawk.getPowerModifier()).isEqualTo(3);
-        assertThat(hawk.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, hawk)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hawk)).isEqualTo(3);
         assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(1);
     }
 
@@ -45,8 +46,8 @@ class SuddenStrengthTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, hawk.getId());
 
-        assertThat(hawk.getPowerModifier()).isEqualTo(3);
-        assertThat(hawk.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, hawk)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hawk)).isEqualTo(3);
         assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(1);
     }
 
@@ -81,8 +82,8 @@ class SuddenStrengthTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(hawk.getPowerModifier()).isZero();
-        assertThat(hawk.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hawk)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hawk)).isZero();
     }
 
     @Test
@@ -112,16 +113,16 @@ class SuddenStrengthTest extends BaseCardTest {
         harness.castInstant(player1, 0, hawk.getId());
         harness.passBothPriorities();
 
-        assertThat(hawk.getPowerModifier()).isEqualTo(3);
-        assertThat(hawk.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, hawk)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hawk)).isEqualTo(3);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(hawk.getPowerModifier()).isEqualTo(6);
-        assertThat(hawk.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, hawk)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hawk)).isEqualTo(6);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
@@ -142,8 +143,8 @@ class SuddenStrengthTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(3);
         assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(1);
     }
 }

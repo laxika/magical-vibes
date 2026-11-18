@@ -34,8 +34,8 @@ class FeveredConvulsionsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(armodon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(armodon.getEffectivePower()).isEqualTo(2);
-        assertThat(armodon.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, armodon)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, armodon)).isEqualTo(2);
     }
 
     @Test
@@ -58,8 +58,8 @@ class FeveredConvulsionsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(armodon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
-        assertThat(armodon.getEffectivePower()).isEqualTo(1);
-        assertThat(armodon.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, armodon)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, armodon)).isEqualTo(1);
     }
 
     @Test
@@ -76,8 +76,8 @@ class FeveredConvulsionsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(armodon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(armodon.getEffectivePower()).isEqualTo(2);
-        assertThat(armodon.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, armodon)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, armodon)).isEqualTo(2);
     }
 
     @Test

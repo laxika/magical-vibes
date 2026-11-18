@@ -34,8 +34,8 @@ class HundredHandedOneTest extends BaseCardTest {
 
         assertThat(hundredHandedOne.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(hundredHandedOne.isMonstrous()).isTrue();
-        assertThat(hundredHandedOne.getEffectivePower()).isEqualTo(6);
-        assertThat(hundredHandedOne.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, hundredHandedOne)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, hundredHandedOne)).isEqualTo(8);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -29,10 +30,10 @@ class DefendTheCampusTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 0, List.of());
         harness.passBothPriorities();
 
-        assertThat(mine.getPowerModifier()).isEqualTo(1);
-        assertThat(mine.getToughnessModifier()).isEqualTo(1);
-        assertThat(theirs.getPowerModifier()).isZero();
-        assertThat(theirs.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mine)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mine)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, theirs)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, theirs)).isZero();
     }
 
     @Test
@@ -132,7 +133,7 @@ class DefendTheCampusTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castModalInstant(player1, 0, 1, List.of(elemental.getId()));
-        elemental.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, elemental, -1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Air Elemental");

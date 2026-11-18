@@ -43,8 +43,8 @@ class SoulSnuffersTest extends BaseCardTest {
 
         Permanent snuffers = findSnuffers(player1);
         assertThat(snuffers.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(snuffers.getEffectivePower()).isEqualTo(2);
-        assertThat(snuffers.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, snuffers)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, snuffers)).isEqualTo(2);
     }
 
     @Test

@@ -27,8 +27,8 @@ class ThwipTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
         cast(spider);
 
-        assertThat(spider.getEffectivePower()).isEqualTo(4);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, spider, Keyword.FLYING)).isTrue();
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
     }
@@ -40,8 +40,8 @@ class ThwipTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
         cast(bear);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
     }
@@ -56,8 +56,8 @@ class ThwipTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
     }
 
@@ -81,8 +81,8 @@ class ThwipTest extends BaseCardTest {
 
         cast(spider);
 
-        assertThat(spider.getEffectivePower()).isEqualTo(4);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, spider, Keyword.FLYING)).isTrue();
         assertThat(gd.getLife(player1.getId())).isEqualTo(casterLife + 2);
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife);

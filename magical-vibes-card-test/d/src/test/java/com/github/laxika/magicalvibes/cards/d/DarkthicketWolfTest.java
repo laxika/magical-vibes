@@ -40,8 +40,8 @@ class DarkthicketWolfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(4);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(4);
     }
 
     @Test
@@ -97,8 +97,8 @@ class DarkthicketWolfTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(2);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
     }
 
     @Test
@@ -113,8 +113,8 @@ class DarkthicketWolfTest extends BaseCardTest {
                 .hasMessageContaining("only once each turn");
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(wolf.getEffectivePower()).isEqualTo(4);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(4);
     }
 
     @Test
@@ -126,15 +126,15 @@ class DarkthicketWolfTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
     }
 
     @Test
@@ -150,8 +150,8 @@ class DarkthicketWolfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(4);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(4);
         assertThat(wolf.isTapped()).isTrue();
     }
 }

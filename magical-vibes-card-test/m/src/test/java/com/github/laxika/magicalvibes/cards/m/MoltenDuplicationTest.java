@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SundialOfTheInfinite;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -116,16 +117,16 @@ class MoltenDuplicationTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.tap();
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        bears.setPowerModifier(3);
-        bears.setToughnessModifier(3);
+        PermanentGrants.setPowerBoost(gd, bears, 3);
+        PermanentGrants.setToughnessBoost(gd, bears, 3);
 
         castDuplication(bears.getId());
 
         Permanent token = tokenCopy();
         assertThat(token.isTapped()).isFalse();
         assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(token.getPowerModifier()).isZero();
-        assertThat(token.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, token)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, token)).isZero();
     }
 
     @Test

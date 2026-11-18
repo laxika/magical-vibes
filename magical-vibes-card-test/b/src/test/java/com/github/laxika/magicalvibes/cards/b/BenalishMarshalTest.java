@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InBolassClutches;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -129,10 +132,10 @@ class BenalishMarshalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BenalishMarshal());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        bears.setPowerModifier(bears.getPowerModifier() + 3);
+        PermanentGrants.setPowerBoost(gd, bears, PermanentGrants.powerBoostOf(gd, bears) + 3);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6); // 2 base + 3 spell + 1 static
 
-        bears.resetModifiers();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3); // 2 base + 1 static
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);

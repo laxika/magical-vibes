@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.MightOfTheMeek;
@@ -117,7 +118,7 @@ class BrambleguardCaptainTest extends BaseCardTest {
     @DisplayName("Negative source power gives a zero boost")
     void negativeSourcePowerDoesNotReduceItsOwnPower() {
         Permanent captain = addCaptain();
-        captain.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, captain, -3);
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, captain.getId());

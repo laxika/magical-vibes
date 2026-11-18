@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -93,7 +94,7 @@ class KotisTheFangkeeperTest extends BaseCardTest {
     @DisplayName("Exile count and mana value limit use damage dealt before Kotis's power changes")
     void usesDamageAmountRatherThanPowerAtResolution() {
         Permanent kotis = addAttackingKotis();
-        kotis.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, kotis, 1);
         Divination first = new Divination();
         Divination second = new Divination();
         Divination third = new Divination();
@@ -101,7 +102,7 @@ class KotisTheFangkeeperTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(first, second, third, remaining));
 
         resolveCombat();
-        kotis.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, kotis, 0);
         resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
@@ -151,7 +152,7 @@ class KotisTheFangkeeperTest extends BaseCardTest {
     @DisplayName("Zero combat damage does not trigger Kotis")
     void doesNotTriggerForZeroDamage() {
         Permanent kotis = addAttackingKotis();
-        kotis.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, kotis, -2);
         KotisTheFangkeeper top = new KotisTheFangkeeper();
         harness.setLibrary(player2, List.of(top));
 
@@ -167,7 +168,7 @@ class KotisTheFangkeeperTest extends BaseCardTest {
     @DisplayName("An eligible sorcery can be cast during combat without paying mana")
     void castsSorceryDuringCombat() {
         Permanent kotis = addAttackingKotis();
-        kotis.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, kotis, 1);
         Divination spell = new Divination();
         Forest firstDraw = new Forest();
         Forest secondDraw = new Forest();

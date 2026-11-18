@@ -24,8 +24,8 @@ class IcecaveCrasherTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(crasher.getEffectivePower()).isEqualTo(5);
-        assertThat(crasher.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, crasher)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, crasher)).isEqualTo(4);
     }
 
     @Test
@@ -38,8 +38,8 @@ class IcecaveCrasherTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(crasher.getEffectivePower()).isEqualTo(4);
-        assertThat(crasher.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, crasher)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, crasher)).isEqualTo(4);
     }
 
     @Test
@@ -53,8 +53,8 @@ class IcecaveCrasherTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(crasher.getEffectivePower()).isEqualTo(4);
-        assertThat(crasher.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, crasher)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, crasher)).isEqualTo(4);
     }
 
     @Test
@@ -63,15 +63,15 @@ class IcecaveCrasherTest extends BaseCardTest {
         Permanent crasher = harness.addToBattlefieldAndReturn(player1, new IcecaveCrasher());
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
-        assertThat(crasher.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, crasher)).isEqualTo(4);
         harness.passBothPriorities();
-        assertThat(crasher.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, crasher)).isEqualTo(5);
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.passBothPriorities();
 
-        assertThat(crasher.getEffectivePower()).isEqualTo(6);
-        assertThat(crasher.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, crasher)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, crasher)).isEqualTo(4);
     }
 
     @Test
@@ -86,9 +86,9 @@ class IcecaveCrasherTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(5);
-        assertThat(first.getEffectiveToughness()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(5);
-        assertThat(second.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
     }
 }

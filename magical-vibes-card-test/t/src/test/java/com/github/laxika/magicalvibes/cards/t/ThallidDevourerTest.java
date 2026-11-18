@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -74,8 +75,8 @@ class ThallidDevourerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
-        assertThat(devourer.getPowerModifier()).isEqualTo(1);
-        assertThat(devourer.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, devourer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, devourer)).isEqualTo(2);
     }
 
     @Test
@@ -124,8 +125,8 @@ class ThallidDevourerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(devourer.getPowerModifier()).isZero();
-        assertThat(devourer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, devourer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, devourer)).isZero();
     }
 
     @Test
@@ -162,14 +163,14 @@ class ThallidDevourerTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 1, null, null);
 
             assertThat(findPermanents(player1, "Saproling")).isEmpty();
-            assertThat(devourer.getPowerModifier()).isEqualTo(activation);
-            assertThat(devourer.getToughnessModifier()).isEqualTo(2 * activation);
+            assertThat(PermanentGrants.powerBoostOf(gd, devourer)).isEqualTo(activation);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, devourer)).isEqualTo(2 * activation);
             harness.passBothPriorities();
         }
 
         assertThat(devourer.getCounterCount(CounterType.FUNGUS)).isZero();
-        assertThat(devourer.getPowerModifier()).isEqualTo(2);
-        assertThat(devourer.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, devourer)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, devourer)).isEqualTo(4);
     }
 
     @Test
@@ -185,8 +186,8 @@ class ThallidDevourerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(findPermanents(player2, "Saproling")).hasSize(1);
-        assertThat(devourer.getPowerModifier()).isZero();
-        assertThat(devourer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, devourer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, devourer)).isZero();
     }
 
     private Permanent addDevourer() {

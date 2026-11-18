@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
@@ -34,10 +35,10 @@ class KingHaraldsRevengeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
@@ -53,8 +54,8 @@ class KingHaraldsRevengeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -70,8 +71,8 @@ class KingHaraldsRevengeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
@@ -99,13 +100,13 @@ class KingHaraldsRevengeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
 
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -116,8 +117,8 @@ class KingHaraldsRevengeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }

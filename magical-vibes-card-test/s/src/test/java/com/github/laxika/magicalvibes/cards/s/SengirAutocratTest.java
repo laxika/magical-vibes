@@ -29,8 +29,8 @@ class SengirAutocratTest extends BaseCardTest {
         assertThat(serf.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(serf.getCard().getSubtypes()).containsExactly(CardSubtype.SERF);
         assertThat(serf.getCard().getColor()).isEqualTo(CardColor.BLACK);
-        assertThat(serf.getEffectivePower()).isEqualTo(0);
-        assertThat(serf.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, serf)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, serf)).isEqualTo(1);
     }
 
     @Test

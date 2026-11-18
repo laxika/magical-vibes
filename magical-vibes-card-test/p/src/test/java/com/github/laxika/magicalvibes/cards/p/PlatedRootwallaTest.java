@@ -161,7 +161,7 @@ class PlatedRootwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(6);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(6);
     }
 }

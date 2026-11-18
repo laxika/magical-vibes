@@ -23,12 +23,12 @@ class LavafumeInvokerTest extends BaseCardTest {
 
         activate();
 
-        assertThat(invoker.getEffectivePower()).isEqualTo(5);
-        assertThat(invoker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponentBears.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentBears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, invoker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, invoker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
     }
 
     @Test
@@ -42,8 +42,8 @@ class LavafumeInvokerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -69,8 +69,8 @@ class LavafumeInvokerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(invoker.getEffectivePower()).isEqualTo(8);
-        assertThat(invoker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, invoker)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, invoker)).isEqualTo(2);
         assertThat(invoker.isTapped()).isFalse();
     }
 
@@ -88,8 +88,8 @@ class LavafumeInvokerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(invoker.getEffectivePower()).isEqualTo(5);
-        assertThat(invoker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, invoker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, invoker)).isEqualTo(2);
         assertThat(invoker.isTapped()).isTrue();
     }
 
@@ -103,9 +103,9 @@ class LavafumeInvokerTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.enterBattlefieldAndReturn(player1, new LavafumeInvoker());
 
-        assertThat(invoker.getEffectivePower()).isEqualTo(5);
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(5);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, invoker)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
     }
     private void activate() {
         harness.addMana(player1, ManaColor.COLORLESS, 8);

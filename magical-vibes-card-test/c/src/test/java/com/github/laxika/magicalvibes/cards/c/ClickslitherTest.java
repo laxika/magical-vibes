@@ -28,8 +28,8 @@ class ClickslitherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(clickslither).doesNotContain(goblin);
-        assertThat(clickslither.getEffectivePower()).isEqualTo(5);
-        assertThat(clickslither.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, clickslither)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, clickslither)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, clickslither, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -46,8 +46,8 @@ class ClickslitherTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(clickslither.getEffectivePower()).isEqualTo(3);
-        assertThat(clickslither.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, clickslither)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, clickslither)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, clickslither, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -89,8 +89,8 @@ class ClickslitherTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .contains(clickslither)
                 .doesNotContain(firstGoblin, secondGoblin);
-        assertThat(clickslither.getEffectivePower()).isEqualTo(7);
-        assertThat(clickslither.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, clickslither)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, clickslither)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, clickslither, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -105,8 +105,8 @@ class ClickslitherTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(clickslither).doesNotContain(goblin);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(goblin.getCard());
-        assertThat(clickslither.getEffectivePower()).isEqualTo(5);
-        assertThat(clickslither.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, clickslither)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, clickslither)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, clickslither, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -122,14 +122,14 @@ class ClickslitherTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(goblin);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(goblin.getCard());
-        assertThat(clickslither.getEffectivePower()).isEqualTo(3);
-        assertThat(clickslither.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, clickslither)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, clickslither)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, clickslither, Keyword.TRAMPLE)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(clickslither.getEffectivePower()).isEqualTo(5);
-        assertThat(clickslither.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, clickslither)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, clickslither)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, clickslither, Keyword.TRAMPLE)).isTrue();
     }
 }

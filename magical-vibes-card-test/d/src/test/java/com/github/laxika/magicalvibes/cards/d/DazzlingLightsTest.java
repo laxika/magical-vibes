@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.v.VernadiShieldmate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -32,8 +33,8 @@ class DazzlingLightsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        assertThat(bears.getPowerModifier()).isEqualTo(-3);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
         PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(surveil).isNotNull();
         assertThat(surveil.cards()).containsExactly(topCard, secondCard);
@@ -61,8 +62,8 @@ class DazzlingLightsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -93,7 +94,7 @@ class DazzlingLightsTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
 
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-3);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first, third);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second);
     }
@@ -135,7 +136,7 @@ class DazzlingLightsTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(onlyCard);
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-3);
     }
 
     @Test
@@ -149,8 +150,8 @@ class DazzlingLightsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);

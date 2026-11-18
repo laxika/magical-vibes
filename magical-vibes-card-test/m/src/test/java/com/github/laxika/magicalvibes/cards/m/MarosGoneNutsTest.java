@@ -74,8 +74,8 @@ class MarosGoneNutsTest extends BaseCardTest {
         harness.castFromHand(player1, new DoubleTrouble(), "{4}{R}");
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -88,8 +88,8 @@ class MarosGoneNutsTest extends BaseCardTest {
         harness.castFromHand(player1, new DoubleTrouble(), "{4}{R}");
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(8);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -148,8 +148,8 @@ class MarosGoneNutsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     @Test

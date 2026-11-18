@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 
 import com.github.laxika.magicalvibes.cards.n.NessianAsp;
@@ -63,8 +64,8 @@ class LoathsomeCatoblepasTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
-        assertThat(target.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-3);
     }
 
     @Test
@@ -76,8 +77,8 @@ class LoathsomeCatoblepasTest extends BaseCardTest {
         killCatoblepas(catoblepasId);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
     }
 
     @Test
@@ -145,16 +146,16 @@ class LoathsomeCatoblepasTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
-        assertThat(target.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Nessian Asp");
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -172,10 +173,10 @@ class LoathsomeCatoblepasTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getToughnessModifier()).isZero();
-        assertThat(opponentCreature.getPowerModifier()).isEqualTo(-3);
-        assertThat(opponentCreature.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isEqualTo(-3);
     }
 
     private void killCatoblepas(UUID catoblepasId) {

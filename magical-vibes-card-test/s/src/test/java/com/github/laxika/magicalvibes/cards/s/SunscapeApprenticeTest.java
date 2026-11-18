@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RagingKavu;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,8 +31,8 @@ class SunscapeApprenticeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(apprentice.isTapped()).isTrue();
-        assertThat(kavu.getPowerModifier()).isEqualTo(1);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(1);
     }
 
     @Test
@@ -45,8 +46,8 @@ class SunscapeApprenticeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(apprentice.isTapped()).isTrue();
-        assertThat(kavu.getPowerModifier()).isEqualTo(1);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(1);
     }
 
     @Test
@@ -90,13 +91,13 @@ class SunscapeApprenticeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, kavu.getId());
         harness.passBothPriorities();
-        assertThat(kavu.getPowerModifier()).isEqualTo(1);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(kavu.getPowerModifier()).isZero();
-        assertThat(kavu.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isZero();
     }
 
     @Test

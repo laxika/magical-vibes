@@ -35,8 +35,8 @@ class LeechBonderTest extends BaseCardTest {
         assertThat(bonder.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bonder.getEffectivePower()).isEqualTo(1);
-        assertThat(bonder.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bonder)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bonder)).isEqualTo(1);
     }
 
     @Test

@@ -42,8 +42,8 @@ class MoleManMoloidMasterTest extends BaseCardTest {
 
         Permanent moloid = findPermanent(player1, "Moloid");
         assertThat(moloid.getCard().isToken()).isTrue();
-        assertThat(moloid.getEffectivePower()).isEqualTo(1);
-        assertThat(moloid.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, moloid)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, moloid)).isEqualTo(1);
     }
 
     @Test

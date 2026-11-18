@@ -31,7 +31,7 @@ class SahaginTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(sahagin.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sahagin)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, sahagin)).isFalse();
     }
 
@@ -46,14 +46,14 @@ class SahaginTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 3);
         harness.passBothPriorities();
 
-        assertThat(sahagin.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, sahagin)).isEqualTo(2);
         assertThat(gqs.hasCantBeBlocked(gd, sahagin)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(sahagin.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, sahagin)).isEqualTo(2);
         assertThat(gqs.hasCantBeBlocked(gd, sahagin)).isFalse();
     }
 
@@ -68,7 +68,7 @@ class SahaginTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(sahagin.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sahagin)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, sahagin)).isFalse();
     }
 

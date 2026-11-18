@@ -53,9 +53,6 @@ public class SetTargetBasePowerToughnessToAmountUntilEndOfTurnEffectHandler impl
             if (target == null) {
                 continue;
             }
-            target.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
-            target.setBasePowerOverride(power);
-            target.setBaseToughnessOverride(toughness);
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                     entry.getControllerId(), new SetBasePowerToughnessEffect(power, toughness),

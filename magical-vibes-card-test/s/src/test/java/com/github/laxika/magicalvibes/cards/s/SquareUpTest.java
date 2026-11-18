@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -27,21 +28,21 @@ class SquareUpTest extends BaseCardTest {
 
         castSquareUp(bear);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
     @DisplayName("Keeps power and toughness modifiers on top of the new base")
     void modifiersApplyOnTopOfNewBase() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bear.setPowerModifier(2);
-        bear.setToughnessModifier(2);
+        PermanentGrants.setPowerBoost(gd, bear, 2);
+        PermanentGrants.setToughnessBoost(gd, bear, 2);
 
         castSquareUp(bear);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(6);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(6);
     }
 
     @Test
@@ -50,15 +51,15 @@ class SquareUpTest extends BaseCardTest {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castSquareUp(bear);
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test

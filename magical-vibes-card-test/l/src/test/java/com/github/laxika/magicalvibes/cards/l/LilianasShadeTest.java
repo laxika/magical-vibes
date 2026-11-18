@@ -81,15 +81,15 @@ class LilianasShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(3);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(1);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(1);
     }
 
     @Test
@@ -160,14 +160,14 @@ class LilianasShadeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(shade.getEffectivePower()).isEqualTo(1);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(1);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(2);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
-        assertThat(otherShade.getEffectivePower()).isEqualTo(1);
-        assertThat(otherShade.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherShade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, otherShade)).isEqualTo(1);
         assertThat(shade.isTapped()).isFalse();
     }
 

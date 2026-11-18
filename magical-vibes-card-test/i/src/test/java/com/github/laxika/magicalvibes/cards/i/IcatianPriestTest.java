@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DwarvenHold;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -75,10 +76,10 @@ class IcatianPriestTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -93,8 +94,8 @@ class IcatianPriestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -111,10 +112,10 @@ class IcatianPriestTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
     }
 
     // ===== End of turn cleanup =====
@@ -131,16 +132,16 @@ class IcatianPriestTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     // ===== Validation =====
@@ -169,8 +170,8 @@ class IcatianPriestTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentInfantry.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentInfantry.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentInfantry.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentInfantry)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentInfantry)).isEqualTo(2);
     }
 
     @Test
@@ -182,8 +183,8 @@ class IcatianPriestTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, priest.getId());
         harness.passBothPriorities();
 
-        assertThat(priest.getEffectivePower()).isEqualTo(2);
-        assertThat(priest.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, priest)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, priest)).isEqualTo(2);
     }
 
     @Test
@@ -222,8 +223,8 @@ class IcatianPriestTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, priest.getId());
         harness.passBothPriorities();
 
-        assertThat(priest.getEffectivePower()).isEqualTo(2);
-        assertThat(priest.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, priest)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, priest)).isEqualTo(2);
         assertThat(priest.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -240,8 +241,8 @@ class IcatianPriestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test

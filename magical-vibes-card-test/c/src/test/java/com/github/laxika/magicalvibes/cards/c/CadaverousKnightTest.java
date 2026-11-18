@@ -94,8 +94,8 @@ class CadaverousKnightTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player1);
 
-        assertThat(blocker.getEffectivePower()).isZero();
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
     }
 
     @Test
@@ -109,8 +109,8 @@ class CadaverousKnightTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player1);
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -141,10 +141,10 @@ class CadaverousKnightTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isZero();
-        assertThat(first.getEffectiveToughness()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isZero();
-        assertThat(second.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
     }
 
     @Test
@@ -158,8 +158,8 @@ class CadaverousKnightTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(1);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
         harness.assertOnBattlefield(player1, "Cadaverous Knight");
     }
 

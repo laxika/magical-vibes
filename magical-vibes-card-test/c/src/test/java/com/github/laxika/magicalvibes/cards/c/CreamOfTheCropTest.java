@@ -96,7 +96,7 @@ class CreamOfTheCropTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castAndResolveInstant(player1, 0, banneret.getId());
-        assertThat(banneret.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, banneret)).isEqualTo(5);
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

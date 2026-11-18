@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CreakwoodGhoul;
 import com.github.laxika.magicalvibes.cards.t.Talonrend;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -117,7 +118,7 @@ class NeedleSpecterTest extends BaseCardTest {
     @DisplayName("Zero combat damage does not make the defending player discard")
     void zeroPowerDoesNotTrigger() {
         Permanent specter = addAttackingSpecter(player1);
-        specter.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, specter, -1);
         harness.setHand(player2, List.of(new CreakwoodGhoul()));
 
         resolveCombatAndTrigger();

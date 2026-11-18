@@ -68,8 +68,8 @@ class MultipleChoiceTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 3);
 
         Permanent elemental = findPermanent(player1, "Elemental");
-        assertThat(elemental.getEffectivePower()).isEqualTo(4);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(4);
         assertThat(elemental.getCard().getColors()).containsExactlyInAnyOrder(CardColor.BLUE, CardColor.RED);
         assertThat(elemental.getCard().getSubtypes()).contains(CardSubtype.ELEMENTAL);
     }

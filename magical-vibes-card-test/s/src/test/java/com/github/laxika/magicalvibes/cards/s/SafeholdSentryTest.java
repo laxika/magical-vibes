@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -25,8 +26,8 @@ class SafeholdSentryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sentry.getPowerModifier()).isEqualTo(0);
-        assertThat(sentry.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentry)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry)).isEqualTo(2);
         // Paying {Q} untapped the source.
         assertThat(sentry.isTapped()).isFalse();
     }
@@ -40,13 +41,13 @@ class SafeholdSentryTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(sentry.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(sentry.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry)).isEqualTo(0);
     }
 
     @Test
@@ -71,7 +72,7 @@ class SafeholdSentryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(sentry.isTapped()).isTrue();
-        assertThat(sentry.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -100,7 +101,7 @@ class SafeholdSentryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(sentry.isTapped()).isFalse();
-        assertThat(sentry.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry)).isZero();
         assertThat(gd.stack).hasSize(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -108,8 +109,8 @@ class SafeholdSentryTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(sentry.getPowerModifier()).isZero();
-        assertThat(sentry.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentry)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry)).isEqualTo(2);
     }
 
     @Test
@@ -123,7 +124,7 @@ class SafeholdSentryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(sentry.isTapped()).isTrue();
-        assertThat(sentry.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -139,8 +140,8 @@ class SafeholdSentryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sentry.isTapped()).isFalse();
-        assertThat(sentry.getPowerModifier()).isZero();
-        assertThat(sentry.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentry)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry)).isEqualTo(2);
     }
 
     private Permanent addTappedSentry() {

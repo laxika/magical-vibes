@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -28,7 +29,7 @@ class HelmutZemoMastermindTest extends BaseCardTest {
         Card shock = new Shock();
         Card counsel = new CounselOfTheSoratami();
         Card creature = new GrizzlyBears();
-        helmut.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, helmut, 2);
         harness.setGraveyard(player1, List.of(shock, counsel, creature));
         harness.setGraveyard(player2, List.of(new Shock()));
 
@@ -44,7 +45,7 @@ class HelmutZemoMastermindTest extends BaseCardTest {
     @DisplayName("Casts the chosen card with mana payment, exiles it, and puts a counter on Helmut")
     void castsChosenCardAndPutsCounterOnHelmut() {
         Permanent helmut = addReadyHelmut();
-        helmut.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, helmut, 2);
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.setGraveyard(player1, List.of(counsel));
@@ -68,12 +69,12 @@ class HelmutZemoMastermindTest extends BaseCardTest {
     void targetMustStillFitPowerOnResolution() {
         Permanent helmut = addReadyHelmut();
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
-        helmut.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, helmut, 2);
         harness.setGraveyard(player1, List.of(counsel));
 
         declareAttack();
         harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
-        helmut.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, helmut, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -84,7 +85,7 @@ class HelmutZemoMastermindTest extends BaseCardTest {
     @DisplayName("Cannot cast the chosen spell without enough mana")
     void cannotCastWithoutMana() {
         Permanent helmut = addReadyHelmut();
-        helmut.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, helmut, 1);
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
         harness.setGraveyard(player1, List.of(counsel));
 
@@ -102,7 +103,7 @@ class HelmutZemoMastermindTest extends BaseCardTest {
     @DisplayName("Declining the cast leaves the card in the graveyard and adds no counter")
     void decliningCastAddsNoCounter() {
         Permanent helmut = addReadyHelmut();
-        helmut.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, helmut, 1);
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
         harness.setGraveyard(player1, List.of(counsel));
 
@@ -120,7 +121,7 @@ class HelmutZemoMastermindTest extends BaseCardTest {
     @DisplayName("The counter is placed during the attack ability's resolution")
     void counterIsPlacedBeforePlayersReceivePriority() {
         Permanent helmut = addReadyHelmut();
-        helmut.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, helmut, 1);
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
         harness.setGraveyard(player1, List.of(counsel));
 

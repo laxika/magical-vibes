@@ -27,8 +27,8 @@ class BlackOakOfOdunosTest extends BaseCardTest {
 
         assertThat(helper.isTapped()).isTrue();
         assertThat(oak.isTapped()).isFalse();
-        assertThat(oak.getEffectivePower()).isEqualTo(1);
-        assertThat(oak.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, oak)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, oak)).isEqualTo(6);
     }
 
     @Test
@@ -52,15 +52,15 @@ class BlackOakOfOdunosTest extends BaseCardTest {
         int oakIndex = gd.playerBattlefields.get(player1.getId()).indexOf(oak);
         harness.activateAbility(player1, oakIndex, null, null);
         harness.passBothPriorities();
-        assertThat(oak.getEffectivePower()).isEqualTo(1);
-        assertThat(oak.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, oak)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, oak)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(oak.getEffectivePower()).isEqualTo(0);
-        assertThat(oak.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, oak)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, oak)).isEqualTo(5);
     }
 
     @Test
@@ -75,14 +75,14 @@ class BlackOakOfOdunosTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(helper.isTapped()).isTrue();
-        assertThat(oak.getEffectivePower()).isZero();
+        assertThat(gqs.getEffectivePower(gd, oak)).isZero();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         assertThat(oak.isTapped()).isTrue();
-        assertThat(oak.getEffectivePower()).isEqualTo(1);
-        assertThat(oak.getEffectiveToughness()).isEqualTo(6);
-        assertThat(helper.getEffectivePower()).isZero();
+        assertThat(gqs.getEffectivePower(gd, oak)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, oak)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, helper)).isZero();
     }
 
     @Test
@@ -136,8 +136,8 @@ class BlackOakOfOdunosTest extends BaseCardTest {
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
         assertThat(oak.isTapped()).isFalse();
-        assertThat(oak.getEffectivePower()).isEqualTo(2);
-        assertThat(oak.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, oak)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, oak)).isEqualTo(7);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }

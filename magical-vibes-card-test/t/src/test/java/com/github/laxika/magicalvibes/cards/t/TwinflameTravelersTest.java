@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CeaselessSearblades;
 import com.github.laxika.magicalvibes.cards.f.FireBellyChangeling;
 import com.github.laxika.magicalvibes.cards.f.FlamekinHarbinger;
@@ -95,7 +96,7 @@ class TwinflameTravelersTest extends BaseCardTest {
         harness.activateAbility(player1, 2, null, null);
         resolveAllTriggers();
 
-        assertThat(searblades.getPowerModifier()).isEqualTo(2);
-        assertThat(searblades.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, searblades)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, searblades)).isZero();
     }
 }

@@ -25,7 +25,7 @@ class RampagingAetherhoodTest extends BaseCardTest {
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
         assertThat(aetherhood.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(aetherhood.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, aetherhood)).isEqualTo(6);
     }
 
     @Test

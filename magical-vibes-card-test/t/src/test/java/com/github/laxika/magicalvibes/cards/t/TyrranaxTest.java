@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,8 +25,8 @@ class TyrranaxTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(tyrranax.getPowerModifier()).isEqualTo(-1);
-        assertThat(tyrranax.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, tyrranax)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tyrranax)).isEqualTo(1);
     }
 
     @Test
@@ -40,8 +41,8 @@ class TyrranaxTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(tyrranax.getPowerModifier()).isEqualTo(-2);
-        assertThat(tyrranax.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, tyrranax)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tyrranax)).isEqualTo(2);
     }
 
     @Test
@@ -53,8 +54,8 @@ class TyrranaxTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(tyrranax.getPowerModifier()).isEqualTo(-1);
-        assertThat(tyrranax.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, tyrranax)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tyrranax)).isEqualTo(1);
     }
 
     @Test
@@ -70,8 +71,8 @@ class TyrranaxTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(tyrranax.getPowerModifier()).isZero();
-        assertThat(tyrranax.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tyrranax)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tyrranax)).isZero();
     }
 
     @Test
@@ -96,19 +97,19 @@ class TyrranaxTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(-1);
-        assertThat(source.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(1);
         assertThat(source.isTapped()).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
-        assertThat(opposing.getPowerModifier()).isZero();
-        assertThat(opposing.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposing)).isZero();
     }
 
     @Test
@@ -122,8 +123,8 @@ class TyrranaxTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(tyrranax.getPowerModifier()).isZero();
-        assertThat(tyrranax.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tyrranax)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tyrranax)).isZero();
     }
     private Permanent addReadyTyrranax(Player player) {
         return addCreatureReady(player, new Tyrranax());

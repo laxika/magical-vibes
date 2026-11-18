@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -55,7 +56,7 @@ class TigerTribeHunterTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0, 1));
-        bear.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, bear, -2);
         resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
@@ -69,7 +70,7 @@ class TigerTribeHunterTest extends BaseCardTest {
         Permanent hunter = addCreatureReady(player1, new TigerTribeHunter());
         addCreatureReady(player1, new GrizzlyBears());
         Permanent sacrificed = addCreatureReady(player1, new GrizzlyBears());
-        sacrificed.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, sacrificed, 1);
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();

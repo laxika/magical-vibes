@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.w.WallOfKelp;
@@ -101,7 +102,7 @@ class DoormanTest extends BaseCardTest {
         Permanent doorman = addCreatureReady(player1, new Doorman());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         Permanent blocker = addCreatureReady(player2, new WallOfKelp());
-        blocker.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, blocker, 3);
 
         activate(doorman, target);
         target.setAttacking(true);
@@ -119,7 +120,7 @@ class DoormanTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         activate(doorman, target);
-        blocker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, blocker, 1);
         target.setAttacking(true);
         prepareDeclareBlockers();
         declareBlock(blocker, target);
@@ -135,7 +136,7 @@ class DoormanTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new HillGiant());
 
         activate(doorman, target);
-        blocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
         target.setAttacking(true);
         prepareDeclareBlockers();
 

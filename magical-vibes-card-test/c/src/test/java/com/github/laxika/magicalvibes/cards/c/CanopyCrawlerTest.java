@@ -90,8 +90,8 @@ class CanopyCrawlerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(crawler.isTapped()).isTrue();
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -107,8 +107,8 @@ class CanopyCrawlerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -150,8 +150,8 @@ class CanopyCrawlerTest extends BaseCardTest {
         harness.passBothPriorities();
         crawler.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -166,8 +166,8 @@ class CanopyCrawlerTest extends BaseCardTest {
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, crawler));
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -178,8 +178,8 @@ class CanopyCrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, crawler.getId());
         harness.passBothPriorities();
 
-        assertThat(crawler.getEffectivePower()).isEqualTo(6);
-        assertThat(crawler.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, crawler)).isEqualTo(6);
     }
 
     @Test
@@ -192,8 +192,8 @@ class CanopyCrawlerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(crawler.isTapped()).isTrue();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test

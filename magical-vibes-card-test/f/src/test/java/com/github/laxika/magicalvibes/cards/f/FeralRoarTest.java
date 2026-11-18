@@ -28,8 +28,8 @@ class FeralRoarTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(6);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
     }
 
     @Test
@@ -46,8 +46,8 @@ class FeralRoarTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -73,10 +73,10 @@ class FeralRoarTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, opposingBears.getId());
 
-        assertThat(opposingBears.getEffectivePower()).isEqualTo(6);
-        assertThat(opposingBears.getEffectiveToughness()).isEqualTo(6);
-        assertThat(ownBears.getEffectivePower()).isEqualTo(2);
-        assertThat(ownBears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, opposingBears)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownBears)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Feral Roar");
     }
 
@@ -92,8 +92,8 @@ class FeralRoarTest extends BaseCardTest {
         Permanent replacement = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.passBothPriorities();
 
-        assertThat(replacement.getEffectivePower()).isEqualTo(2);
-        assertThat(replacement.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, replacement)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Feral Roar");
     }

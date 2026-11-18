@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -57,8 +58,8 @@ class AutumnWillowTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, willow.getId());
 
-        assertThat(willow.getPowerModifier()).isEqualTo(3);
-        assertThat(willow.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, willow)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, willow)).isEqualTo(1);
     }
 
     @Test
@@ -91,8 +92,8 @@ class AutumnWillowTest extends BaseCardTest {
 
         giveTowerTo(player1);
         harness.castAndResolveInstant(player1, 0, willow.getId());
-        assertThat(willow.getPowerModifier()).isEqualTo(3);
-        assertThat(willow.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, willow)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, willow)).isEqualTo(1);
 
         giveTowerTo(player2);
         harness.passPriority(player1);
@@ -138,8 +139,8 @@ class AutumnWillowTest extends BaseCardTest {
         harness.ensurePriority(player2);
         harness.castAndResolveInstant(player2, 0, willow.getId());
 
-        assertThat(willow.getPowerModifier()).isEqualTo(3);
-        assertThat(willow.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, willow)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, willow)).isEqualTo(1);
     }
 
     @Test
@@ -159,8 +160,8 @@ class AutumnWillowTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, willow.getId());
 
-        assertThat(willow.getPowerModifier()).isEqualTo(6);
-        assertThat(willow.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, willow)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, willow)).isEqualTo(2);
     }
 
     private Permanent addWillow() {

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.Anarchist;
 import com.github.laxika.magicalvibes.cards.a.ArcaneAdaptation;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
@@ -226,10 +229,10 @@ class CoatOfArmsTest extends BaseCardTest {
         Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
         harness.addToBattlefield(player1, new RagingGoblin());
 
-        goblin.setPowerModifier(goblin.getPowerModifier() + 3);
+        PermanentGrants.setPowerBoost(gd, goblin, PermanentGrants.powerBoostOf(gd, goblin) + 3);
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(5);
 
-        goblin.resetModifiers();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);

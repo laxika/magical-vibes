@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -69,7 +70,7 @@ class ZiatoraTheIncineratorTest extends BaseCardTest {
     void zeroPowerStillCreatesTreasures() {
         harness.addToBattlefield(player1, new ZiatoraTheIncinerator());
         Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        fodder.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, fodder, -2);
         int lifeBefore = gd.getLife(player2.getId());
 
         resolveEndStepTrigger(player1);
@@ -88,7 +89,7 @@ class ZiatoraTheIncineratorTest extends BaseCardTest {
     void usesModifiedPowerAtSacrifice() {
         harness.addToBattlefield(player1, new ZiatoraTheIncinerator());
         Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        fodder.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, fodder, 3);
         int lifeBefore = gd.getLife(player2.getId());
 
         resolveEndStepTrigger(player1);

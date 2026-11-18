@@ -78,14 +78,14 @@ class BroodKeeperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent token = findPermanents(player1, "Dragon").getFirst();
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(token.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
     }
 
     @Test
@@ -101,10 +101,10 @@ class BroodKeeperTest extends BaseCardTest {
         harness.activateAbility(player1, tokenIndex, null, null);
         resolveAllTriggers();
 
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         assertThat(token.isTapped()).isFalse();
-        assertThat(keeper.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, keeper)).isEqualTo(2);
     }
 
     @Test

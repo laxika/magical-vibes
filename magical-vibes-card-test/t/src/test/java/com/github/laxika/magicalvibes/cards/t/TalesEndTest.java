@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
+
 import com.github.laxika.magicalvibes.cards.a.AdelizTheCinderWind;
 import com.github.laxika.magicalvibes.cards.c.ChandraAwakenedInferno;
 import com.github.laxika.magicalvibes.cards.j.JhoiraWeatherlightCaptain;
@@ -134,8 +136,8 @@ class TalesEndTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().stack).isEmpty();
-        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()).getFirst()
-                .getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, harness.getGameData().playerBattlefields.get(player1.getId()).getFirst()))
+                .isEqualTo(1);
     }
 
     @Test

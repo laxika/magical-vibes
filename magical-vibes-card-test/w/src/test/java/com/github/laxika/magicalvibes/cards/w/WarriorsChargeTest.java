@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,10 +24,10 @@ class WarriorsChargeTest extends BaseCardTest {
         harness.castFromHand(player1, new WarriorsCharge(), "{2}{W}");
         harness.passBothPriorities();
 
-        assertThat(firstCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(firstCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(secondCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(secondCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(3);
     }
 
     @Test
@@ -38,10 +39,10 @@ class WarriorsChargeTest extends BaseCardTest {
         harness.castFromHand(player1, new WarriorsCharge(), "{2}{W}");
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(1);
-        assertThat(opponentCreature.getPowerModifier()).isZero();
-        assertThat(opponentCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isZero();
     }
 
     @Test
@@ -52,8 +53,8 @@ class WarriorsChargeTest extends BaseCardTest {
         harness.castFromHand(player1, new WarriorsCharge(), "{2}{W}");
         harness.passBothPriorities();
 
-        assertThat(land.getPowerModifier()).isZero();
-        assertThat(land.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, land)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, land)).isZero();
     }
 
     @Test
@@ -66,10 +67,10 @@ class WarriorsChargeTest extends BaseCardTest {
 
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(existingCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(existingCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, existingCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, existingCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
     }
 
     @Test
@@ -84,8 +85,8 @@ class WarriorsChargeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -96,8 +97,8 @@ class WarriorsChargeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -110,8 +111,8 @@ class WarriorsChargeTest extends BaseCardTest {
         harness.castFromHand(player1, new WarriorsCharge(), "{2}{W}");
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -123,7 +124,7 @@ class WarriorsChargeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Warrior's Charge");
         assertThat(gd.stack).isEmpty();
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }

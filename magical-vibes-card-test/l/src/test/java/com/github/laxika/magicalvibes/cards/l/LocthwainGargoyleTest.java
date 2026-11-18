@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,8 +24,8 @@ class LocthwainGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getPowerModifier()).isEqualTo(2);
-        assertThat(gargoyle.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gargoyle)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isZero();
         assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isTrue();
     }
 
@@ -38,7 +39,7 @@ class LocthwainGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, gargoyle)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isTrue();
     }
 
@@ -54,8 +55,8 @@ class LocthwainGargoyleTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getPowerModifier()).isZero();
-        assertThat(gargoyle.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gargoyle)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isZero();
         assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isFalse();
     }
 
@@ -78,7 +79,7 @@ class LocthwainGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gargoyle)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isTrue();
         assertThat(gargoyle.isTapped()).isTrue();
     }
@@ -92,16 +93,16 @@ class LocthwainGargoyleTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gargoyle.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gargoyle)).isZero();
         assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gargoyle)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
         assertThat(gqs.hasKeyword(gd, opponent, Keyword.FLYING)).isFalse();
     }
 

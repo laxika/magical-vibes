@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -114,14 +115,14 @@ class DreamPillagerTest extends BaseCardTest {
     @DisplayName("The exile count uses damage dealt even if power changes before resolution")
     void exileCountSnapshotsCombatDamage() {
         Permanent pillager = addAttackingPillager(player1);
-        pillager.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, pillager, -2);
         Card first = new Shock();
         Card second = new Forest();
         Card third = new Shock();
         harness.setLibrary(player1, List.of(first, second, third));
 
         resolveCombat();
-        pillager.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, pillager, 3);
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);

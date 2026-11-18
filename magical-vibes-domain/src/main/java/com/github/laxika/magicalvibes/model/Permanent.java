@@ -147,8 +147,6 @@ public class Permanent {
     @Setter private int persistentPowerModifier;
     /** Class progression is permanent state and is independent of counters. */
     @Setter private int classLevel = 1;
-    @Setter private int powerModifier;
-    @Setter private int toughnessModifier;
     /** How many times this permanent has regenerated this turn (CR 701.19). Incremented every time a
      *  regeneration shield is actually applied; reset at turn cleanup. Read by
      *  {@code TimesSourceRegeneratedThisTurn} for Spiny Starfish. */
@@ -363,9 +361,6 @@ public class Permanent {
      *  because the duration belongs to the resolving ability's controller. */
     @Getter(AccessLevel.NONE)
     private final Map<UUID, List<Ability>> untilNextUpkeepAbilities = new HashMap<>();
-    @Setter private boolean basePowerToughnessOverriddenUntilEndOfTurn;
-    @Setter private int basePowerOverride;
-    @Setter private int baseToughnessOverride;
     /** Current base toughness used as loyalty by an attached Planeswalkerificate-style Aura. */
     @Setter private Integer toughnessAsLoyalty;
     private boolean faceDown;
@@ -473,21 +468,6 @@ public class Permanent {
     /** Dealt damage by a source with deathtouch since the last state-based action check (CR 704.5h).
      *  Consumed by each SBA check; also cleared by regeneration and during the cleanup step. */
     @Setter private boolean damagedByDeathtouch;
-    /** When true, the creature's base power has been permanently overridden (e.g. by an exchange effect
-     *  like Evra, Halcyon Witness). NOT cleared by {@link #resetModifiers()} — survives turn resets.
-     *  Participates in CR 613.7 layer-7b ordering via {@link #permanentBasePowerOverrideTimestamp}. */
-    @Setter private boolean basePowerOverriddenPermanently;
-    @Setter private int permanentBasePowerOverride;
-    /** CR 613.7 timestamp of the exchange that set {@link #basePowerOverriddenPermanently} — the
-     *  layered 7b pass orders the override against other base-P/T setters with it. */
-    @Setter private long permanentBasePowerOverrideTimestamp;
-    /** When true, the creature's base toughness has been permanently overridden (e.g. by an exchange effect
-     *  like Tree of Redemption). NOT cleared by {@link #resetModifiers()} — survives turn resets.
-     *  Participates in CR 613.7 layer-7b ordering via {@link #permanentBaseToughnessOverrideTimestamp}. */
-    @Setter private boolean baseToughnessOverriddenPermanently;
-    @Setter private int permanentBaseToughnessOverride;
-    /** CR 613.7 timestamp of the exchange that set {@link #baseToughnessOverriddenPermanently}. */
-    @Setter private long permanentBaseToughnessOverrideTimestamp;
     private boolean transformed;
     /** Number of face changes, used to prevent an older ability from transforming this object again. */
     @Setter private int transformationSequence;
@@ -816,8 +796,6 @@ public class Permanent {
         this.enteredBattlefieldTurnNumber = source.enteredBattlefieldTurnNumber;
         this.persistentPowerModifier = source.persistentPowerModifier;
         this.classLevel = source.classLevel;
-        this.powerModifier = source.powerModifier;
-        this.toughnessModifier = source.toughnessModifier;
         this.timesRegeneratedThisTurn = source.timesRegeneratedThisTurn;
         this.attachedTo = source.attachedTo;
         this.lastAttachedTo = source.lastAttachedTo;
@@ -884,9 +862,6 @@ public class Permanent {
         this.sacrificeAtNextCleanup = source.sacrificeAtNextCleanup;
         this.returnToHandAtNextCleanup = source.returnToHandAtNextCleanup;
         this.returnToHandAtNextUntapPlayerId = source.returnToHandAtNextUntapPlayerId;
-        this.basePowerToughnessOverriddenUntilEndOfTurn = source.basePowerToughnessOverriddenUntilEndOfTurn;
-        this.basePowerOverride = source.basePowerOverride;
-        this.baseToughnessOverride = source.baseToughnessOverride;
         this.toughnessAsLoyalty = source.toughnessAsLoyalty;
         this.faceDown = source.faceDown;
         this.pendingAutomaticTurnFaceUp = source.pendingAutomaticTurnFaceUp;
@@ -930,12 +905,6 @@ public class Permanent {
         this.markedDamage = source.markedDamage;
         this.markedDamageBySource.putAll(source.markedDamageBySource);
         this.damagedByDeathtouch = source.damagedByDeathtouch;
-        this.basePowerOverriddenPermanently = source.basePowerOverriddenPermanently;
-        this.permanentBasePowerOverride = source.permanentBasePowerOverride;
-        this.permanentBasePowerOverrideTimestamp = source.permanentBasePowerOverrideTimestamp;
-        this.baseToughnessOverriddenPermanently = source.baseToughnessOverriddenPermanently;
-        this.permanentBaseToughnessOverride = source.permanentBaseToughnessOverride;
-        this.permanentBaseToughnessOverrideTimestamp = source.permanentBaseToughnessOverrideTimestamp;
         this.transformed = source.transformed;
         this.transformationSequence = source.transformationSequence;
         this.lastKnownToughness = source.lastKnownToughness;
@@ -1470,12 +1439,13 @@ public class Permanent {
     }
 
     /**
-     * Returns only the modifier portion of power (perpetual, counter, and temporary modifiers),
-     * without the base power. Used by static base P/T override effects (e.g. Deep Freeze)
+     * Returns only the modifier portion of power this permanent itself holds (perpetual and counter
+     * modifiers), without the base power. Effects that modify power ("gets +2/+0 until end of turn") are
+     * floating effects, which the layered pass adds (CR 613.4c). Used by static base P/T override effects (e.g. Deep Freeze)
      * that replace the base but preserve modifiers on top.
      */
     public int getPowerModifiers() {
-        return SaturatingMath.clamp((long) persistentPowerModifier + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
+        return SaturatingMath.clamp((long) persistentPowerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
                 - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
@@ -1487,12 +1457,12 @@ public class Permanent {
     }
 
     /**
-     * Returns only the modifier portion of toughness (counters + temporary modifiers),
-     * without the base toughness. Used by static base P/T override effects (e.g. Deep Freeze)
+     * Returns only the modifier portion of toughness this permanent itself holds (counters), without the
+     * base toughness. Effects that modify toughness are floating effects, which the layered pass adds. Used by static base P/T override effects (e.g. Deep Freeze)
      * that replace the base but preserve modifiers on top.
      */
     public int getToughnessModifiers() {
-        return SaturatingMath.clamp((long) toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+        return SaturatingMath.clamp((long) getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
                 + 2 * getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
@@ -1504,14 +1474,13 @@ public class Permanent {
     }
 
     /**
-     * This permanent's power from its own stored state (base + modifiers + counters), WITHOUT
-     * layer-7d switches: P/T switching lives in floating continuous effects applied by the
-     * layered pass ({@code GameQueryService.getEffectivePower} swaps the finished values per
-     * CR 613.4d). This accessor is the legacy pre-switch fallback for direct {@code Permanent}
-     * readers (views' raw term, last-known-information reads, predicate leaves).
+     * This permanent's power from its own stored state (intrinsic base + perpetual modifier + counters).
+     * Effects that set, modify or switch power (CR 613.4b-d) are floating effects the layered pass applies
+     * ({@code GameQueryService.getEffectivePower}); this accessor sees none of them. It is the term views add
+     * the layered difference to; last-known reads of a departed permanent ask {@code GameQueryService.ownPower}.
      */
     public int getEffectivePower() {
-        return SaturatingMath.clamp((long) getBasePower() + persistentPowerModifier + powerModifier
+        return SaturatingMath.clamp((long) getBasePower() + persistentPowerModifier
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)
@@ -1524,7 +1493,7 @@ public class Permanent {
 
     /** The toughness counterpart of {@link #getEffectivePower()} — same pre-switch caveat. */
     public int getEffectiveToughness() {
-        return SaturatingMath.clamp((long) getBaseToughness() + toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+        return SaturatingMath.clamp((long) getBaseToughness() + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
                 + 2 * getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)
                 + 2 * getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)
                 + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)
@@ -1536,21 +1505,12 @@ public class Permanent {
     }
 
     /**
-     * The base power of this permanent from its own stored state, WITHOUT modifiers or counters.
-     * This is NOT the CR 613 layer-7b precedence decision — that lives in the layered pass
-     * ({@code LayerSystemService}), which orders every base-P/T setter (static, one-shot,
-     * animation, exchange) by timestamp and surfaces the winner through
-     * {@code GameQueryService.getEffectivePower}. This accessor is the legacy fallback used by
-     * direct {@code Permanent} readers (views, last-known-information reads, predicate leaves)
-     * when no layered 7b entry applies; when only one of these fields is set, the two agree.
+     * The intrinsic base power of this permanent (printed, face-down or awakened), WITHOUT modifiers or
+     * counters. Every effect that sets base power (static, one-shot, animation, exchange) is a layer-7b entry the
+     * layered pass ({@code LayerSystemService}) orders by timestamp (CR 613.4b, 613.7); this accessor is what
+     * applies when no 7b entry does.
      */
     public int getBasePower() {
-        if (basePowerToughnessOverriddenUntilEndOfTurn) {
-            return basePowerOverride;
-        }
-        if (basePowerOverriddenPermanently) {
-            return permanentBasePowerOverride;
-        }
         if (faceDown) {
             return faceDownPower;
         }
@@ -1562,12 +1522,6 @@ public class Permanent {
 
     /** The base toughness counterpart of {@link #getBasePower()} — same fallback caveats. */
     public int getBaseToughness() {
-        if (basePowerToughnessOverriddenUntilEndOfTurn) {
-            return baseToughnessOverride;
-        }
-        if (baseToughnessOverriddenPermanently) {
-            return permanentBaseToughnessOverride;
-        }
         if (faceDown) {
             return faceDownToughness;
         }
@@ -1879,11 +1833,6 @@ public class Permanent {
     }
 
     public void resetModifiers() {
-        this.powerModifier = 0;
-        this.toughnessModifier = 0;
-        this.basePowerToughnessOverriddenUntilEndOfTurn = false;
-        this.basePowerOverride = 0;
-        this.baseToughnessOverride = 0;
         this.blockedWithoutBlockers = false;
         this.creaturesThatCrewedThisTurn.clear();
         this.temporaryAbilities.clear();
@@ -1922,11 +1871,6 @@ public class Permanent {
 
     private Object endOfTurnStateValue(EndOfTurnStateField field) {
         return switch (field) {
-            case POWER_MODIFIER -> powerModifier;
-            case TOUGHNESS_MODIFIER -> toughnessModifier;
-            case BASE_POWER_TOUGHNESS_OVERRIDDEN -> basePowerToughnessOverriddenUntilEndOfTurn;
-            case BASE_POWER_OVERRIDE -> basePowerOverride;
-            case BASE_TOUGHNESS_OVERRIDE -> baseToughnessOverride;
             case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers;
             case TEMPORARY_ABILITIES -> temporaryAbilities;
             case SADDLED -> saddled;
@@ -1945,11 +1889,6 @@ public class Permanent {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void addEndOfTurnStateValue(EndOfTurnStateField field, Object value) {
         switch (field) {
-            case POWER_MODIFIER -> powerModifier = SaturatingMath.add(powerModifier, (Integer) value);
-            case TOUGHNESS_MODIFIER -> toughnessModifier = SaturatingMath.add(toughnessModifier, (Integer) value);
-            case BASE_POWER_TOUGHNESS_OVERRIDDEN -> basePowerToughnessOverriddenUntilEndOfTurn = true;
-            case BASE_POWER_OVERRIDE -> basePowerOverride = (Integer) value;
-            case BASE_TOUGHNESS_OVERRIDE -> baseToughnessOverride = (Integer) value;
             case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers = true;
             case TEMPORARY_ABILITIES -> temporaryAbilities.addAll((List<Ability>) value);
             case SADDLED -> saddled = true;

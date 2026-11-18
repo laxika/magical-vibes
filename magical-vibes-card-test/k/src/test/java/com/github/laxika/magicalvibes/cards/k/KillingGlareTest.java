@@ -46,7 +46,7 @@ class KillingGlareTest extends BaseCardTest {
         Permanent target = addCreature(player2, 2, 2);
 
         castKillingGlare(2, target);
-        target.setPowerModifier(target.getPowerModifier() + 1);
+        PermanentGrants.setPowerBoost(gd, target, PermanentGrants.powerBoostOf(gd, target) + 1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Millennial Gargoyle");
@@ -121,7 +121,7 @@ class KillingGlareTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MillennialGargoyle());
 
         castKillingGlare(2, target);
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Millennial Gargoyle");
@@ -164,8 +164,8 @@ class KillingGlareTest extends BaseCardTest {
 
     private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player, int power, int toughness) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player, new MillennialGargoyle());
-        permanent.setPowerModifier(power - 2);
-        permanent.setToughnessModifier(toughness - 2);
+        PermanentGrants.setPowerBoost(gd, permanent, power - 2);
+        PermanentGrants.setToughnessBoost(gd, permanent, toughness - 2);
         return permanent;
     }
 }

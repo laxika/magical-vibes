@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.Arachnoid;
 import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
 import com.github.laxika.magicalvibes.model.Card;
@@ -31,8 +32,8 @@ class StandFirmTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(2);
     }
@@ -69,8 +70,8 @@ class StandFirmTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -82,8 +83,8 @@ class StandFirmTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, opponentCreature.getId());
 
-        assertThat(opponentCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(opponentCreature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
@@ -174,8 +175,8 @@ class StandFirmTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -189,8 +190,8 @@ class StandFirmTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Stand Firm");

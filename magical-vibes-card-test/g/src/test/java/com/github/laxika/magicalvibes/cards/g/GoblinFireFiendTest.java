@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -64,8 +65,8 @@ class GoblinFireFiendTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(fiend.getPowerModifier()).isEqualTo(1);
-        assertThat(fiend.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isEqualTo(0);
     }
 
     @Test
@@ -88,13 +89,13 @@ class GoblinFireFiendTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(fiend.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(fiend.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(0);
     }
 
     @Test
@@ -123,9 +124,9 @@ class GoblinFireFiendTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(fiend.getPowerModifier()).isEqualTo(2);
-        assertThat(fiend.getToughnessModifier()).isZero();
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fiend)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fiend)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
     }
 
     @Test

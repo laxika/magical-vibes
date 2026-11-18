@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CentaurNurturer;
 import com.github.laxika.magicalvibes.cards.c.CharmedStray;
 import com.github.laxika.magicalvibes.cards.j.JayaVeneratedFiremage;
@@ -58,8 +59,8 @@ class TibaltsRagerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rager.getPowerModifier()).isEqualTo(2);
-        assertThat(rager.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, rager)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rager)).isEqualTo(0);
     }
 
     @Test
@@ -75,7 +76,7 @@ class TibaltsRagerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(rager.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, rager)).isEqualTo(0);
     }
 
     @Test
@@ -118,8 +119,8 @@ class TibaltsRagerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rager.getPowerModifier()).isEqualTo(4);
-        assertThat(rager.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rager)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rager)).isZero();
         assertThat(rager.isTapped()).isTrue();
     }
 

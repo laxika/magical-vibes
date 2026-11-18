@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -24,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MarchOfTheMachines.class, AngelsFeather.class, GloriousAnthem.class,
         FountainOfYouth.class, GrizzlyBears.class, IcyManipulator.class, LeoninScimitar.class,
-        Ornithopter.class, MycosynthLattice.class})
+        Ornithopter.class, MycosynthLattice.class, HolyStrength.class})
 class MarchOfTheMachinesTest extends BaseCardTest {
 
     @Test
@@ -169,6 +170,26 @@ class MarchOfTheMachinesTest extends BaseCardTest {
         assertThat(scimitar.isAttached()).isFalse();
         assertThat(scimitar.getAttachedTo()).isNull();
         harness.assertOnBattlefield(player1, "Leonin Scimitar");
+    }
+
+    @Test
+    @DisplayName("An Aura animated by March can't enchant anything and is put into its owner's graveyard")
+    void animatedAuraIsPutIntoTheGraveyard() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(bears.getId());
+        harness.addToBattlefield(player1, new MycosynthLattice());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+
+        assertThat(gqs.isCreature(gd, aura)).isTrue();
+
+        // CR 303.4d: an Aura that's also a creature can't enchant anything; it becomes unattached and is put into
+        // its owner's graveyard as a state-based action.
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Holy Strength");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test

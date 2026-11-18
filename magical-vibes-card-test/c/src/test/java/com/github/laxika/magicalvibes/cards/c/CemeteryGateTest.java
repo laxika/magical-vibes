@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlibansTower;
 import com.github.laxika.magicalvibes.cards.d.DrySpell;
 import com.github.laxika.magicalvibes.cards.s.SengirAutocrat;
@@ -128,8 +129,8 @@ class CemeteryGateTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gate.getPowerModifier()).isEqualTo(3);
-        assertThat(gate.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, gate)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gate)).isEqualTo(1);
     }
 
     @Test

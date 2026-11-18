@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DeadbridgeGoliath;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class AquusSteedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player2, "Deadbridge Goliath");
-        assertThat(bear.getPowerModifier()).isEqualTo(-2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -56,8 +57,8 @@ class AquusSteedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player2, "Deadbridge Goliath");
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -149,8 +150,8 @@ class AquusSteedTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player2, "Deadbridge Goliath").getPowerModifier()).isEqualTo(-2);
-        assertThat(findPermanent(player2, "Deadbridge Goliath").getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player2, "Deadbridge Goliath"))).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player2, "Deadbridge Goliath"))).isZero();
     }
 
     private void setupSteed() {

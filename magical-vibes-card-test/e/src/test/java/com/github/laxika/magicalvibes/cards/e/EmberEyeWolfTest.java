@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,12 +25,12 @@ class EmberEyeWolfTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(wolf.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isZero();
         assertThat(wolf.isTapped()).isFalse();
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(2);
-        assertThat(wolf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isZero();
     }
 
     @Test
@@ -44,8 +45,8 @@ class EmberEyeWolfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(4);
-        assertThat(wolf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isZero();
     }
 
     @Test
@@ -57,11 +58,11 @@ class EmberEyeWolfTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        assertThat(wolf.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(2);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(wolf.getPowerModifier()).isZero();
-        assertThat(wolf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isZero();
     }
 
     @Test
@@ -75,9 +76,9 @@ class EmberEyeWolfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(2);
-        assertThat(otherWolf.getPowerModifier()).isZero();
-        assertThat(opposingWolf.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherWolf)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingWolf)).isZero();
     }
 
     @Test
@@ -90,7 +91,7 @@ class EmberEyeWolfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(2);
         assertThat(wolf.isTapped()).isTrue();
     }
 
@@ -103,7 +104,7 @@ class EmberEyeWolfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(2);
         assertThat(wolf.isTapped()).isFalse();
     }
 

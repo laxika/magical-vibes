@@ -45,15 +45,15 @@ class SkyclavePickAxeTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -130,10 +130,10 @@ class SkyclavePickAxeTest extends BaseCardTest {
         equipment.setAttachedTo(secondCreature.getId());
         resolveAllTriggers();
 
-        assertThat(firstCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(firstCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(secondCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(secondCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(4);
     }
 
     @Test
@@ -151,10 +151,10 @@ class SkyclavePickAxeTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(equipment.getAttachedTo()).isEqualTo(secondCreature.getId());
-        assertThat(firstCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(firstCreature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(secondCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(secondCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(2);
     }
 
     @Test
@@ -167,8 +167,8 @@ class SkyclavePickAxeTest extends BaseCardTest {
         equipment.setAttachedTo(null);
         resolveAllTriggers();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -180,8 +180,8 @@ class SkyclavePickAxeTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player2, new Forest());
         assertThat(gd.stack).isEmpty();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -194,8 +194,8 @@ class SkyclavePickAxeTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         resolveAllTriggers();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(6);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
     }
 
     @Test
@@ -221,8 +221,8 @@ class SkyclavePickAxeTest extends BaseCardTest {
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, equipment));
         resolveAllTriggers();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test

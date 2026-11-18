@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WorldspineWurm;
@@ -28,10 +29,10 @@ class RuthlessDisposalTest extends BaseCardTest {
 
         castRuthlessDisposal(List.of(first.getId(), second.getId()), sacrifice.getId());
 
-        assertThat(first.getPowerModifier()).isEqualTo(-13);
-        assertThat(first.getToughnessModifier()).isEqualTo(-13);
-        assertThat(second.getPowerModifier()).isEqualTo(-13);
-        assertThat(second.getToughnessModifier()).isEqualTo(-13);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(-13);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(-13);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(-13);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(-13);
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Air Elemental");
     }
@@ -61,10 +62,10 @@ class RuthlessDisposalTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(0);
-        assertThat(first.getToughnessModifier()).isEqualTo(0);
-        assertThat(second.getPowerModifier()).isEqualTo(0);
-        assertThat(second.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(0);
     }
 
     @Test
@@ -122,8 +123,8 @@ class RuthlessDisposalTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Air Elemental");
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -137,8 +138,8 @@ class RuthlessDisposalTest extends BaseCardTest {
                 sacrificedTarget.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(survivingTarget.getPowerModifier()).isEqualTo(-13);
-        assertThat(survivingTarget.getToughnessModifier()).isEqualTo(-13);
+        assertThat(PermanentGrants.powerBoostOf(gd, survivingTarget)).isEqualTo(-13);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivingTarget)).isEqualTo(-13);
     }
 
     @Test

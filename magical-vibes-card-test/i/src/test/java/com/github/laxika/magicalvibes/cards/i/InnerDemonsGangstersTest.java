@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -28,8 +29,8 @@ class InnerDemonsGangstersTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gangsters.getPowerModifier()).isEqualTo(1);
-        assertThat(gangsters.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gangsters)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gangsters)).isZero();
         assertThat(gqs.hasKeyword(gd, gangsters, Keyword.MENACE)).isTrue();
         harness.assertInGraveyard(player1, "Inner Demons Gangsters");
     }
@@ -49,8 +50,8 @@ class InnerDemonsGangstersTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gangsters.getPowerModifier()).isZero();
-        assertThat(gangsters.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gangsters)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gangsters)).isZero();
         assertThat(gqs.hasKeyword(gd, gangsters, Keyword.MENACE)).isFalse();
     }
 
@@ -91,12 +92,12 @@ class InnerDemonsGangstersTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Inner Demons Gangsters");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gangsters.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gangsters)).isZero();
         assertThat(gqs.hasKeyword(gd, gangsters, Keyword.MENACE)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(gangsters.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, gangsters)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, gangsters, Keyword.MENACE)).isTrue();
     }
 
@@ -116,8 +117,8 @@ class InnerDemonsGangstersTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gangsters.getPowerModifier()).isEqualTo(2);
-        assertThat(gangsters.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gangsters)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gangsters)).isZero();
         assertThat(gqs.hasKeyword(gd, gangsters, Keyword.MENACE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);

@@ -33,7 +33,7 @@ class MyriadConstructTest extends BaseCardTest {
 
         Permanent myriad = findPermanent(player1, "Myriad Construct");
         assertThat(myriad.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(myriad.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, myriad)).isEqualTo(6);
     }
 
     @Test
@@ -52,8 +52,8 @@ class MyriadConstructTest extends BaseCardTest {
         assertThat(constructs).allSatisfy(construct -> {
             assertThat(construct.getCard().getSubtypes()).containsExactly(CardSubtype.CONSTRUCT);
             assertThat(construct.getCard().hasType(CardType.ARTIFACT)).isTrue();
-            assertThat(construct.getEffectivePower()).isEqualTo(1);
-            assertThat(construct.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, construct)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, construct)).isEqualTo(1);
         });
     }
 

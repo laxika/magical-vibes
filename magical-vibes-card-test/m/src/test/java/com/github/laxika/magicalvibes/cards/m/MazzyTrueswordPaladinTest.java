@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
@@ -35,8 +36,8 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -52,7 +53,7 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
         declareAttackers(player1, List.of(attackerIndex), Map.of(attackerIndex, planeswalker.getId()));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -93,7 +94,7 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -107,7 +108,7 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
     }
 

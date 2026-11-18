@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DrudgeBeetle;
 import com.github.laxika.magicalvibes.cards.s.SewerShambler;
 import com.github.laxika.magicalvibes.cards.u.UltimatePrice;
@@ -44,10 +45,10 @@ class GolgariCharmTest extends BaseCardTest {
 
             Permanent own = findPermanent(player1, "Drudge Beetle");
             Permanent opp = findPermanent(player2, "Drudge Beetle");
-            assertThat(own.getPowerModifier()).isEqualTo(-1);
-            assertThat(own.getToughnessModifier()).isEqualTo(-1);
-            assertThat(opp.getPowerModifier()).isEqualTo(-1);
-            assertThat(opp.getToughnessModifier()).isEqualTo(-1);
+            assertThat(PermanentGrants.powerBoostOf(gd, own)).isEqualTo(-1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, own)).isEqualTo(-1);
+            assertThat(PermanentGrants.powerBoostOf(gd, opp)).isEqualTo(-1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, opp)).isEqualTo(-1);
         }
 
         @Test
@@ -65,8 +66,8 @@ class GolgariCharmTest extends BaseCardTest {
             harness.passBothPriorities();
 
             Permanent bears = findPermanent(player1, "Drudge Beetle");
-            assertThat(bears.getPowerModifier()).isEqualTo(0);
-            assertThat(bears.getToughnessModifier()).isEqualTo(0);
+            assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
         }
 
         @Test
@@ -98,8 +99,8 @@ class GolgariCharmTest extends BaseCardTest {
 
             harness.addToBattlefield(player2, new DrudgeBeetle());
 
-            assertThat(findPermanent(player1, "Drudge Beetle").getToughnessModifier()).isEqualTo(-1);
-            assertThat(findPermanent(player2, "Drudge Beetle").getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player1, "Drudge Beetle"))).isEqualTo(-1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player2, "Drudge Beetle"))).isZero();
         }
     }
 

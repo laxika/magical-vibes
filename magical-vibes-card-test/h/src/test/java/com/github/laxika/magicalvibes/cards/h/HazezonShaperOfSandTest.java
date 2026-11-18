@@ -75,8 +75,8 @@ class HazezonShaperOfSandTest extends BaseCardTest {
         List<Permanent> tokens = findPermanents(player1, "Sand Warrior");
         assertThat(tokens).hasSize(2);
         for (Permanent token : tokens) {
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
             assertThat(token.getCard().getColors())
                     .containsExactlyInAnyOrder(CardColor.RED, CardColor.GREEN, CardColor.WHITE);
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.WARRIOR);

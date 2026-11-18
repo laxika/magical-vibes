@@ -30,8 +30,8 @@ class SpincrusherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(spincrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(spincrusher.getEffectivePower()).isEqualTo(1);
-        assertThat(spincrusher.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, spincrusher)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, spincrusher)).isEqualTo(3);
     }
 
     @Test

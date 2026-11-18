@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.f.FightingDrake;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -28,8 +29,8 @@ class MoggRaiderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, goblin.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Mogg Raider");
     }
 
@@ -43,7 +44,7 @@ class MoggRaiderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Mogg Raider");
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -59,8 +60,8 @@ class MoggRaiderTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(0);
-        assertThat(creature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(0);
     }
 
     @Test
@@ -77,8 +78,8 @@ class MoggRaiderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Boggart Shenanigans");
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -101,13 +102,13 @@ class MoggRaiderTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Mogg Raider");
         harness.assertInGraveyard(player1, "Mogg Raider");
         assertThat(gd.stack).hasSize(1);
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -126,8 +127,8 @@ class MoggRaiderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player1, "Mogg Raider");
     }
@@ -146,8 +147,8 @@ class MoggRaiderTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player1, "Mogg Raider");
-        assertThat(raider.getPowerModifier()).isZero();
-        assertThat(raider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raider)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raider)).isZero();
     }
 
     @Test
@@ -170,8 +171,8 @@ class MoggRaiderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Mogg Raider");
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
     }
 
     private void setupRaider() {

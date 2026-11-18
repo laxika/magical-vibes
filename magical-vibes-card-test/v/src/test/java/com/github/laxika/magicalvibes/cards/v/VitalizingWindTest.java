@@ -29,8 +29,8 @@ class VitalizingWindTest extends BaseCardTest {
         Permanent razorback = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
         castVitalizingWind();
 
-        assertThat(razorback.getEffectivePower()).isEqualTo(9);
-        assertThat(razorback.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, razorback)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, razorback)).isEqualTo(8);
     }
 
     @Test
@@ -39,8 +39,8 @@ class VitalizingWindTest extends BaseCardTest {
         Permanent razorback = harness.addToBattlefieldAndReturn(player2, new PygmyRazorback());
         castVitalizingWind();
 
-        assertThat(razorback.getEffectivePower()).isEqualTo(2);
-        assertThat(razorback.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, razorback)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, razorback)).isEqualTo(1);
     }
 
     @Test
@@ -50,8 +50,8 @@ class VitalizingWindTest extends BaseCardTest {
 
         Permanent razorback = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
 
-        assertThat(razorback.getEffectivePower()).isEqualTo(2);
-        assertThat(razorback.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, razorback)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, razorback)).isEqualTo(1);
     }
 
     @Test
@@ -62,10 +62,10 @@ class VitalizingWindTest extends BaseCardTest {
 
         castVitalizingWind();
 
-        assertThat(first.getEffectivePower()).isEqualTo(9);
-        assertThat(first.getEffectiveToughness()).isEqualTo(8);
-        assertThat(second.getEffectivePower()).isEqualTo(9);
-        assertThat(second.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(8);
     }
 
     @Test
@@ -79,8 +79,8 @@ class VitalizingWindTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(razorback.getEffectivePower()).isEqualTo(9);
-        assertThat(razorback.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, razorback)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, razorback)).isEqualTo(8);
     }
 
     @Test
@@ -91,14 +91,14 @@ class VitalizingWindTest extends BaseCardTest {
         castVitalizingWind();
         castVitalizingWind();
 
-        assertThat(razorback.getEffectivePower()).isEqualTo(16);
-        assertThat(razorback.getEffectiveToughness()).isEqualTo(15);
+        assertThat(gqs.getEffectivePower(gd, razorback)).isEqualTo(16);
+        assertThat(gqs.getEffectiveToughness(gd, razorback)).isEqualTo(15);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(razorback.getEffectivePower()).isEqualTo(2);
-        assertThat(razorback.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, razorback)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, razorback)).isEqualTo(1);
     }
 
     @Test
@@ -110,7 +110,7 @@ class VitalizingWindTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(razorback.getEffectivePower()).isEqualTo(2);
-        assertThat(razorback.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, razorback)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, razorback)).isEqualTo(1);
     }
 }

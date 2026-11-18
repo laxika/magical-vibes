@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.ForceAway;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -41,7 +42,7 @@ class DragonThroneOfTarkirTest extends BaseCardTest {
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent throne = addThroneReady(player1);
         throne.setAttachedTo(creature.getId());
-        creature.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, creature, 2);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
@@ -108,12 +109,12 @@ class DragonThroneOfTarkirTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
-        creature.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, creature, 3);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(7);
-        creature.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, creature, 0);
         assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(7);
         Permanent lateCreature = addCreatureReady(player1, new GrizzlyBears());
@@ -127,7 +128,7 @@ class DragonThroneOfTarkirTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent other = addCreatureReady(player1, new GrizzlyBears());
         addThroneReady(player1).setAttachedTo(creature.getId());
-        creature.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, creature, -3);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
@@ -168,7 +169,7 @@ class DragonThroneOfTarkirTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
-        creature.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, creature, 3);
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.castInstant(player2, 0, creature.getId());
         harness.passBothPriorities();

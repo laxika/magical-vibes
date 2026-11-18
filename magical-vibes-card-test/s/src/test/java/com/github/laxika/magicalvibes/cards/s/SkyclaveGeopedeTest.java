@@ -26,8 +26,8 @@ class SkyclaveGeopedeTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(geopede.getEffectivePower()).isEqualTo(5);
-        assertThat(geopede.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, geopede)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, geopede)).isEqualTo(3);
     }
 
     @Test
@@ -40,8 +40,8 @@ class SkyclaveGeopedeTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(geopede.getEffectivePower()).isEqualTo(3);
-        assertThat(geopede.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, geopede)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, geopede)).isEqualTo(1);
     }
 
     @Test
@@ -52,14 +52,14 @@ class SkyclaveGeopedeTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        assertThat(geopede.getEffectivePower()).isEqualTo(5);
-        assertThat(geopede.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, geopede)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, geopede)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(geopede.getEffectivePower()).isEqualTo(3);
-        assertThat(geopede.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, geopede)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, geopede)).isEqualTo(1);
     }
 
     @Test
@@ -69,13 +69,13 @@ class SkyclaveGeopedeTest extends BaseCardTest {
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.enterBattlefieldAndReturn(player1, new Forest());
-        assertThat(geopede.getEffectivePower()).isEqualTo(3);
-        assertThat(geopede.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, geopede)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, geopede)).isEqualTo(1);
 
         resolveAllTriggers();
 
-        assertThat(geopede.getEffectivePower()).isEqualTo(7);
-        assertThat(geopede.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, geopede)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, geopede)).isEqualTo(5);
     }
 
     @Test
@@ -88,10 +88,10 @@ class SkyclaveGeopedeTest extends BaseCardTest {
         harness.playLand(player1, 0);
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(5);
-        assertThat(first.getEffectiveToughness()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(5);
-        assertThat(second.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
     }
 
     @Test

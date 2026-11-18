@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -39,10 +40,10 @@ class SunhomeGuildmageTest extends BaseCardTest {
         harness.activateAbility(player1, sourceIndex, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(3);
-        assertThat(ownGuildmage.getEffectivePower()).isEqualTo(3);
-        assertThat(ownGuildmage.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opposingGuildmage.getPowerModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownGuildmage)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownGuildmage)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingGuildmage)).isEqualTo(0);
     }
 
     @Test
@@ -56,13 +57,13 @@ class SunhomeGuildmageTest extends BaseCardTest {
         int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(source);
         harness.activateAbility(player1, sourceIndex, 0, null, null);
         harness.passBothPriorities();
-        assertThat(source.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(0);
-        assertThat(source.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
     }
 
     @Test
@@ -79,8 +80,8 @@ class SunhomeGuildmageTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Soldier");
 
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.SOLDIER);
         assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
     }
@@ -104,11 +105,11 @@ class SunhomeGuildmageTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(source.getEffectivePower()).isEqualTo(4);
-        assertThat(source.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(2);
         assertThat(source.isTapped()).isTrue();
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
     }
 
     @Test
@@ -125,9 +126,9 @@ class SunhomeGuildmageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).get(1);
-        assertThat(source.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
     }
 
     @Test
@@ -142,12 +143,12 @@ class SunhomeGuildmageTest extends BaseCardTest {
 
         harness.passBothPriorities();
         Permanent token = gd.playerBattlefields.get(player1.getId()).get(1);
-        assertThat(token.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
     }
 
     @Test
@@ -171,8 +172,8 @@ class SunhomeGuildmageTest extends BaseCardTest {
             assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
             assertThat(token.isTapped()).isFalse();
             assertThat(token.isAttacking()).isFalse();
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         });
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
@@ -21,10 +22,10 @@ class FolkOfAnHavvaTest extends BaseCardTest {
     void blockTriggerGivesPlusTwoPlusZero() {
         Permanent folk = block();
 
-        assertThat(folk.getPowerModifier()).isEqualTo(2);
-        assertThat(folk.getToughnessModifier()).isEqualTo(0);
-        assertThat(folk.getEffectivePower()).isEqualTo(3);
-        assertThat(folk.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, folk)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, folk)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, folk)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, folk)).isEqualTo(1);
     }
 
     @Test
@@ -36,8 +37,8 @@ class FolkOfAnHavvaTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(folk.getPowerModifier()).isEqualTo(0);
-        assertThat(folk.getEffectivePower()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, folk)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, folk)).isEqualTo(1);
     }
 
     @Test
@@ -45,8 +46,8 @@ class FolkOfAnHavvaTest extends BaseCardTest {
     void noBoostWithoutBlocking() {
         Permanent folk = addCreatureReady(player2, new FolkOfAnHavva());
 
-        assertThat(folk.getPowerModifier()).isEqualTo(0);
-        assertThat(folk.getEffectivePower()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, folk)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, folk)).isEqualTo(1);
     }
 
     @Test
@@ -67,7 +68,7 @@ class FolkOfAnHavvaTest extends BaseCardTest {
                 new BlockerAssignment(0, 1)));
         harness.passUntil(TurnStep.COMBAT_DAMAGE);
 
-        assertThat(folk.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, folk)).isEqualTo(2);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ClockworkGnomes;
 import com.github.laxika.magicalvibes.cards.d.DwarvenTrader;
 import com.github.laxika.magicalvibes.model.Card;
@@ -76,8 +77,8 @@ class BrokenVisageTest extends BaseCardTest {
     @DisplayName("Spirit token's power/toughness reflect the destroyed creature's modified stats")
     void spiritCopiesModifiedStats() {
         Permanent attacker = addAttacker(player1);
-        attacker.setPowerModifier(3);   // 1 + 3 = 4
-        attacker.setToughnessModifier(1); // 1 + 1 = 2
+        PermanentGrants.setPowerBoost(gd, attacker, 3);   // 1 + 3 = 4
+        PermanentGrants.setToughnessBoost(gd, attacker, 1); // 1 + 1 = 2
 
         castBrokenVisage(attacker.getId());
         harness.passBothPriorities();

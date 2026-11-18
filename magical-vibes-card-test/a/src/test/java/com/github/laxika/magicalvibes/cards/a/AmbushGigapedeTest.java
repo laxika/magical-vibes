@@ -30,8 +30,8 @@ class AmbushGigapedeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent giant = findPermanent(player2, "Hill Giant");
-        assertThat(giant.getEffectivePower()).isEqualTo(1);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
     }
 
     @Test
@@ -65,8 +65,8 @@ class AmbushGigapedeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent giant = findPermanent(player2, "Hill Giant");
-        assertThat(giant.getEffectivePower()).isEqualTo(3);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     @Test
@@ -96,8 +96,8 @@ class AmbushGigapedeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Ambush Gigapede");
         Permanent giant = findPermanent(player2, "Hill Giant");
-        assertThat(giant.getEffectivePower()).isEqualTo(1);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
     }
 
     @Test
@@ -128,8 +128,8 @@ class AmbushGigapedeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Ambush Gigapede");
         Permanent bear = findPermanent(player2, "Grizzly Bears");
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 

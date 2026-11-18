@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.i.IronStar;
@@ -49,8 +50,8 @@ class FallenAngelTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         harness.assertOnBattlefield(player1, "Fallen Angel");
-        assertThat(angel.getPowerModifier()).isEqualTo(2);
-        assertThat(angel.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, angel)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, angel)).isEqualTo(1);
     }
 
     @Test
@@ -70,8 +71,8 @@ class FallenAngelTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(angel.getPowerModifier()).isEqualTo(4);
-        assertThat(angel.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, angel)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, angel)).isEqualTo(2);
     }
 
     @Test
@@ -95,8 +96,8 @@ class FallenAngelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(angel.getPowerModifier()).isZero();
-        assertThat(angel.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, angel)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, angel)).isZero();
     }
 
     @Test
@@ -117,8 +118,8 @@ class FallenAngelTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(angel.getPowerModifier()).isEqualTo(2);
-        assertThat(angel.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, angel)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, angel)).isEqualTo(1);
     }
 
     @Test
@@ -138,8 +139,8 @@ class FallenAngelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Iron Star");
-        assertThat(angel.getPowerModifier()).isEqualTo(2);
-        assertThat(angel.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, angel)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, angel)).isEqualTo(1);
     }
 
     @Test
@@ -160,8 +161,8 @@ class FallenAngelTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Howling Mine");
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(angel.getPowerModifier()).isEqualTo(2);
-        assertThat(angel.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, angel)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, angel)).isEqualTo(1);
     }
 
     @Test
@@ -174,15 +175,15 @@ class FallenAngelTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(angel.getPowerModifier()).isEqualTo(2);
-        assertThat(angel.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, angel)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, angel)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(angel.getPowerModifier()).isEqualTo(0);
-        assertThat(angel.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, angel)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, angel)).isEqualTo(0);
     }
 
     @Test
@@ -201,15 +202,15 @@ class FallenAngelTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.stack).hasSize(1);
-        assertThat(angel.getPowerModifier()).isZero();
-        assertThat(angel.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, angel)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, angel)).isZero();
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(angel.isTapped()).isTrue();
-        assertThat(angel.getPowerModifier()).isEqualTo(2);
-        assertThat(angel.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, angel)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, angel)).isEqualTo(1);
     }
 
     @Test
@@ -226,7 +227,7 @@ class FallenAngelTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(angel.getPowerModifier()).isEqualTo(2);
-        assertThat(angel.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, angel)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, angel)).isEqualTo(1);
     }
 }

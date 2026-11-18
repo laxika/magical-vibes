@@ -25,8 +25,8 @@ class LochKorriganTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent korrigan = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(korrigan.getEffectivePower()).isEqualTo(2);
-        assertThat(korrigan.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, korrigan)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, korrigan)).isEqualTo(2);
     }
 
     @Test
@@ -39,8 +39,8 @@ class LochKorriganTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent korrigan = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(korrigan.getEffectivePower()).isEqualTo(2);
-        assertThat(korrigan.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, korrigan)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, korrigan)).isEqualTo(2);
     }
 
     @Test
@@ -55,8 +55,8 @@ class LochKorriganTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent korrigan = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(korrigan.getEffectivePower()).isEqualTo(3);
-        assertThat(korrigan.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, korrigan)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, korrigan)).isEqualTo(3);
     }
 
     @Test
@@ -69,14 +69,14 @@ class LochKorriganTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent korrigan = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(korrigan.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, korrigan)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(korrigan.getEffectivePower()).isEqualTo(1);
-        assertThat(korrigan.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, korrigan)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, korrigan)).isEqualTo(1);
     }
 
     @Test
@@ -111,8 +111,8 @@ class LochKorriganTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(korrigan.getEffectivePower()).isEqualTo(2);
-        assertThat(korrigan.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, korrigan)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, korrigan)).isEqualTo(2);
         assertThat(korrigan.isTapped()).isTrue();
     }
 
@@ -127,12 +127,12 @@ class LochKorriganTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(2);
-        assertThat(source.getEffectiveToughness()).isEqualTo(2);
-        assertThat(other.getEffectivePower()).isEqualTo(1);
-        assertThat(other.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opposing.getEffectivePower()).isEqualTo(1);
-        assertThat(opposing.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");

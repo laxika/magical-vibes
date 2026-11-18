@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SatyrWayfinder;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -90,7 +91,7 @@ class JyotiMoagAncientTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent opposingJyoti = harness.enterBattlefieldAndReturn(player2, new JyotiMoagAncient());
         resolveAllTriggers();
-        opposingJyoti.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, opposingJyoti, 3);
         Permanent ownDryad = findPermanent(player1, "Forest Dryad");
         Permanent opposingDryad = findPermanent(player2, "Forest Dryad");
 
@@ -117,12 +118,12 @@ class JyotiMoagAncientTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
-        jyoti.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, jyoti, 3);
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, dryad)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, dryad)).isEqualTo(6);
-        jyoti.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, jyoti, 0);
         assertThat(gqs.getEffectivePower(gd, dryad)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, dryad)).isEqualTo(6);
     }
@@ -132,7 +133,7 @@ class JyotiMoagAncientTest extends BaseCardTest {
         gd.recordCommanderCastFromCommandZone(player1.getId());
         Permanent jyoti = harness.enterBattlefieldAndReturn(player1, new JyotiMoagAncient());
         resolveAllTriggers();
-        jyoti.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, jyoti, -3);
         Permanent dryad = findPermanent(player1, "Forest Dryad");
 
         harness.forceActivePlayer(player1);

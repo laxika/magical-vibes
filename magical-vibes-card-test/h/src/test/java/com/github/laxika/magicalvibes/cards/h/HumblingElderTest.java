@@ -49,8 +49,8 @@ class HumblingElderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(0);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -68,8 +68,8 @@ class HumblingElderTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -107,13 +107,13 @@ class HumblingElderTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(-1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
-        assertThat(other.getEffectivePower()).isEqualTo(1);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
     }
 
     @Test
@@ -129,8 +129,8 @@ class HumblingElderTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(-1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 }

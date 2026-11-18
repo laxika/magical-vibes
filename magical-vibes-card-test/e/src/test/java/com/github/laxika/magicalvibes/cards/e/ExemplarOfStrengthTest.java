@@ -33,8 +33,8 @@ class ExemplarOfStrengthTest extends BaseCardTest {
 
         // Air Elemental (4/4) with three -1/-1 counters → 1/1.
         assertThat(elemental.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
-        assertThat(elemental.getEffectivePower()).isEqualTo(1);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
     }
 
     @Test

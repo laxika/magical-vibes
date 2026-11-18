@@ -21,23 +21,23 @@ class ThunderDrakeTest extends BaseCardTest {
     @DisplayName("Puts a +1/+1 counter on itself when you cast your second spell each turn")
     void putsCounterOnSecondSpell() {
         Permanent drake = addCreatureReady(player1, new ThunderDrake());
-        int initialPower = drake.getEffectivePower();
-        int initialToughness = drake.getEffectiveToughness();
+        int initialPower = gqs.getEffectivePower(gd, drake);
+        int initialToughness = gqs.getEffectiveToughness(gd, drake);
 
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(drake.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(drake.getEffectiveToughness()).isEqualTo(initialToughness);
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(initialPower);
+        assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(initialToughness);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(drake.getEffectivePower()).isEqualTo(initialPower + 1);
-        assertThat(drake.getEffectiveToughness()).isEqualTo(initialToughness + 1);
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(initialPower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(initialToughness + 1);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(drake.getEffectivePower()).isEqualTo(initialPower + 1);
-        assertThat(drake.getEffectiveToughness()).isEqualTo(initialToughness + 1);
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(initialPower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(initialToughness + 1);
     }
 
     @Test

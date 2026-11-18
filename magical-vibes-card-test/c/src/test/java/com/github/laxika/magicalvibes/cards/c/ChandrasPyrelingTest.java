@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,7 +29,7 @@ class ChandrasPyrelingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent pyreling = findPermanent(player1, "Chandra's Pyreling");
-        assertThat(pyreling.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, pyreling)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, pyreling, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
@@ -58,7 +59,7 @@ class ChandrasPyrelingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent pyreling = findPermanent(player1, "Chandra's Pyreling");
-        assertThat(pyreling.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, pyreling)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, pyreling, Keyword.DOUBLE_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -66,7 +67,7 @@ class ChandrasPyrelingTest extends BaseCardTest {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passBothPriorities();
 
-        assertThat(pyreling.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pyreling)).isZero();
         assertThat(gqs.hasKeyword(gd, pyreling, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
@@ -77,16 +78,16 @@ class ChandrasPyrelingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(pyreling.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pyreling)).isZero();
         assertThat(gqs.hasKeyword(gd, pyreling, Keyword.DOUBLE_STRIKE)).isFalse();
         harness.passBothPriorities();
-        assertThat(pyreling.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, pyreling)).isEqualTo(1);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(pyreling.getPowerModifier()).isEqualTo(2);
-        assertThat(pyreling.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pyreling)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pyreling)).isZero();
         assertThat(gqs.hasKeyword(gd, pyreling, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
@@ -99,7 +100,7 @@ class ChandrasPyrelingTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(harness.getGameData().stack).isEmpty();
-        assertThat(pyreling.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pyreling)).isZero();
         assertThat(gqs.hasKeyword(gd, pyreling, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
@@ -113,9 +114,9 @@ class ChandrasPyrelingTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(harness.getGameData().stack).isEmpty();
-        assertThat(pyreling.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pyreling)).isZero();
         assertThat(gqs.hasKeyword(gd, pyreling, Keyword.DOUBLE_STRIKE)).isFalse();
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
@@ -131,7 +132,7 @@ class ChandrasPyrelingTest extends BaseCardTest {
 
         harness.assertLife(player2, 19);
         assertThat(harness.getGameData().stack).isEmpty();
-        assertThat(pyreling.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pyreling)).isZero();
         assertThat(gqs.hasKeyword(gd, pyreling, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }

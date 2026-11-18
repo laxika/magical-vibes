@@ -37,8 +37,8 @@ class HauntTheNetworkTest extends BaseCardTest {
             assertThat(thopter.getCard().hasType(CardType.CREATURE)).isTrue();
             assertThat(thopter.getCard().getSubtypes()).contains(CardSubtype.THOPTER);
             assertThat(thopter.getCard().getColors()).isEmpty();
-            assertThat(thopter.getEffectivePower()).isEqualTo(1);
-            assertThat(thopter.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(1);
             assertThat(gqs.hasKeyword(gd, thopter, Keyword.FLYING)).isTrue();
         });
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();

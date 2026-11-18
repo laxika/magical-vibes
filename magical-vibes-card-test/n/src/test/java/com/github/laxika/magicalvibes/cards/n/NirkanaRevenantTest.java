@@ -49,15 +49,15 @@ class NirkanaRevenantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(revenant.getEffectivePower()).isEqualTo(6);
-        assertThat(revenant.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, revenant)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, revenant)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(revenant.getEffectivePower()).isEqualTo(4);
-        assertThat(revenant.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, revenant)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, revenant)).isEqualTo(4);
     }
 
     @Test
@@ -106,13 +106,13 @@ class NirkanaRevenantTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
         assertThat(gd.stack).hasSize(1);
-        assertThat(revenant.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, revenant)).isEqualTo(4);
 
         harness.passBothPriorities();
 
-        assertThat(revenant.getEffectivePower()).isEqualTo(5);
-        assertThat(revenant.getEffectiveToughness()).isEqualTo(5);
-        assertThat(other.getEffectivePower()).isEqualTo(4);
-        assertThat(other.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, revenant)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, revenant)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
     }
 }

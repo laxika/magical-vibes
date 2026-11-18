@@ -26,8 +26,8 @@ class GodsireTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Beast")).isEqualTo(1);
         Permanent token = findPermanent(player1, "Beast");
-        assertThat(token.getEffectivePower()).isEqualTo(8);
-        assertThat(token.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(8);
     }
 
     @Test

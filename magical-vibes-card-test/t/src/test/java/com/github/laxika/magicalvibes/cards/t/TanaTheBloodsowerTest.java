@@ -32,8 +32,8 @@ class TanaTheBloodsowerTest extends BaseCardTest {
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SAPROLING);
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         });
     }
 

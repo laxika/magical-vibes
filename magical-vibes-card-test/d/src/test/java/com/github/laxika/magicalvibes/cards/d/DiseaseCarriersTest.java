@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BraidwoodCup;
 import com.github.laxika.magicalvibes.cards.c.CinderSeer;
 import com.github.laxika.magicalvibes.cards.g.GoblinBerserker;
@@ -36,8 +37,8 @@ class DiseaseCarriersTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
     }
 
     @Test
@@ -56,7 +57,7 @@ class DiseaseCarriersTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ownCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(-2);
     }
 
     @Test
@@ -85,14 +86,14 @@ class DiseaseCarriersTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -142,8 +143,8 @@ class DiseaseCarriersTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Goblin Berserker");
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -165,8 +166,8 @@ class DiseaseCarriersTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
         harness.assertOnBattlefield(player1, "Hulking Ogre");
     }
 

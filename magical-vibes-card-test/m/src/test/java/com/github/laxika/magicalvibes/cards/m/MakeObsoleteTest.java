@@ -25,10 +25,10 @@ class MakeObsoleteTest extends BaseCardTest {
 
         castMakeObsolete();
 
-        assertThat(ownBear.getEffectivePower()).isEqualTo(2);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(enemyBear.getEffectivePower()).isEqualTo(1);
-        assertThat(enemyBear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, enemyBear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, enemyBear)).isEqualTo(1);
     }
 
     @Test
@@ -49,15 +49,15 @@ class MakeObsoleteTest extends BaseCardTest {
 
         castMakeObsolete();
 
-        assertThat(enemyBear.getEffectivePower()).isEqualTo(1);
-        assertThat(enemyBear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, enemyBear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, enemyBear)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(enemyBear.getEffectivePower()).isEqualTo(2);
-        assertThat(enemyBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, enemyBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, enemyBear)).isEqualTo(2);
     }
 
     @Test
@@ -67,8 +67,8 @@ class MakeObsoleteTest extends BaseCardTest {
 
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player2, new NightMarketLookout());
 
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Night Market Lookout");
     }
 

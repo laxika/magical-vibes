@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GoForTheThroat;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,14 +28,14 @@ class LoxodonPartisanTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(partisan.getId());
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isZero();
-        assertThat(partisan.getPowerModifier()).isZero();
-        assertThat(nonattacker.getPowerModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, partisan)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -44,7 +45,7 @@ class LoxodonPartisanTest extends BaseCardTest {
         addCreatureReady(player2, new LeoninSkyhunter());
         declareAttackers(List.of(1));
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -54,8 +55,8 @@ class LoxodonPartisanTest extends BaseCardTest {
         declareAttackers(List.of(0));
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(partisan.getPowerModifier()).isZero();
-        assertThat(partisan.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, partisan)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, partisan)).isZero();
     }
 
     @Test
@@ -67,10 +68,10 @@ class LoxodonPartisanTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -80,12 +81,12 @@ class LoxodonPartisanTest extends BaseCardTest {
         addCreatureReady(player2, new LeoninSkyhunter());
         declareAttackers(List.of(0, 1));
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -100,8 +101,8 @@ class LoxodonPartisanTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Loxodon Partisan");
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -112,7 +113,7 @@ class LoxodonPartisanTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         attacker.setAttacking(false);
         harness.passBothPriorities();
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 }

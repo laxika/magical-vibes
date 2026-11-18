@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -34,9 +35,9 @@ class ElvenPalisadeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, forest.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(-3);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
-        assertThat(attacker.getEffectivePower()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(-2);
         assertThat(palisade.isTapped()).isFalse();
         harness.assertInGraveyard(player1, "Forest");
     }
@@ -77,8 +78,8 @@ class ElvenPalisadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(-3);
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         harness.assertInGraveyard(player1, "Forest");
     }
 
@@ -94,8 +95,8 @@ class ElvenPalisadeTest extends BaseCardTest {
         attacker.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getEffectivePower()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Forest");
     }
 
@@ -109,14 +110,14 @@ class ElvenPalisadeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
-        assertThat(attacker.getPowerModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getEffectivePower()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
     }
 
     @Test
@@ -145,11 +146,11 @@ class ElvenPalisadeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.assertInGraveyard(player1, "Forest");
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(-3);
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -164,7 +165,7 @@ class ElvenPalisadeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertOnBattlefield(player2, "Forest");
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -181,8 +182,8 @@ class ElvenPalisadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, attacker.getId());
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(-6);
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(card -> card instanceof Forest).hasSize(2);
     }

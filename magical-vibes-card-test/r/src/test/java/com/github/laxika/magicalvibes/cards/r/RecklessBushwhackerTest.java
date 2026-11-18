@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -34,17 +35,17 @@ class RecklessBushwhackerTest extends BaseCardTest {
 
         harness.passBothPriorities();
         Permanent bushwhacker = findPermanent(player1, "Reckless Bushwhacker");
-        assertThat(ally.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
-        assertThat(bushwhacker.getPowerModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bushwhacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
         assertThat(gqs.hasKeyword(gd, opponent, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         gs.advanceStep(gd);
 
-        assertThat(ally.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isZero();
         assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isFalse();
     }
 
@@ -59,7 +60,7 @@ class RecklessBushwhackerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(ally.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isZero();
         assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isFalse();
     }
 
@@ -87,7 +88,7 @@ class RecklessBushwhackerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(ally.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isZero();
         assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isFalse();
     }
 
@@ -123,7 +124,7 @@ class RecklessBushwhackerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Reckless Bushwhacker");
         harness.passBothPriorities();
 
-        assertThat(ally.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
     }
 
@@ -146,9 +147,9 @@ class RecklessBushwhackerTest extends BaseCardTest {
                 .filter(permanent -> !permanent.getId().equals(ally.getId()))
                 .filter(permanent -> permanent.getCard() instanceof GrizzlyBears)
                 .findFirst().orElseThrow();
-        assertThat(ally.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
-        assertThat(laterCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, laterCreature)).isZero();
         assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.HASTE)).isFalse();
     }
 }

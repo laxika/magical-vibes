@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -34,8 +35,8 @@ class LumaretsFavorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(4);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("A copy of Lumaret's Favor"));
         assertThat(gd.stack).isEmpty();
     }
@@ -67,8 +68,8 @@ class LumaretsFavorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(4);
-        assertThat(bear.getToughnessModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(8);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -84,12 +85,12 @@ class LumaretsFavorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, other.getId());
         harness.passBothPriorities();
-        assertThat(other.getPowerModifier()).isEqualTo(2);
-        assertThat(other.getToughnessModifier()).isEqualTo(4);
-        assertThat(original.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, original)).isZero();
         harness.passBothPriorities();
-        assertThat(original.getPowerModifier()).isEqualTo(2);
-        assertThat(original.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, original)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, original)).isEqualTo(4);
         assertThat(harness.getGameData().stack).isEmpty();
     }
 
@@ -109,8 +110,8 @@ class LumaretsFavorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(8);
         assertThat(harness.getGameData().stack).isEmpty();
     }
 
@@ -125,8 +126,8 @@ class LumaretsFavorTest extends BaseCardTest {
         assertThat(harness.getGameData().interaction.isAwaitingInput()).isFalse();
         assertThat(harness.getGameData().stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
         assertThat(harness.getGameData().stack).isEmpty();
     }
 
@@ -146,8 +147,8 @@ class LumaretsFavorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(other.getPowerModifier()).isEqualTo(2);
-        assertThat(other.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isEqualTo(4);
         assertThat(harness.getGameData().stack).isEmpty();
         harness.assertInGraveyard(player1, "Lumaret's Favor");
     }
@@ -162,11 +163,11 @@ class LumaretsFavorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(8);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 }

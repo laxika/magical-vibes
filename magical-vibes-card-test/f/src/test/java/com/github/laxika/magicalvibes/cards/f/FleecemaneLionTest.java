@@ -32,8 +32,8 @@ class FleecemaneLionTest extends BaseCardTest {
 
         assertThat(lion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(lion.isMonstrous()).isTrue();
-        assertThat(lion.getEffectivePower()).isEqualTo(4);
-        assertThat(lion.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, lion)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, lion)).isEqualTo(4);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -93,7 +94,7 @@ class VineSnareTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         castVineSnare();
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of());
@@ -109,7 +110,7 @@ class VineSnareTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         castVineSnare();
-        attacker.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, attacker, -4);
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of());

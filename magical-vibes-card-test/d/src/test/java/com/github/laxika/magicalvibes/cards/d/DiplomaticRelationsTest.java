@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -26,7 +27,7 @@ class DiplomaticRelationsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LlanowarElves());
         castDiplomaticRelations(bears, harness.getPermanentId(player2, "Llanowar Elves"));
 
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
@@ -42,7 +43,7 @@ class DiplomaticRelationsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -85,7 +86,7 @@ class DiplomaticRelationsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, source, Keyword.VIGILANCE)).isTrue();
         harness.assertInGraveyard(player1, "Diplomatic Relations");
     }
@@ -120,7 +121,7 @@ class DiplomaticRelationsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
         assertThat(gqs.hasKeyword(gd, source, Keyword.VIGILANCE)).isFalse();
         harness.assertOnBattlefield(player2, "Llanowar Elves");
         assertThat(victim.getMarkedDamage()).isZero();
@@ -139,11 +140,11 @@ class DiplomaticRelationsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, source, Keyword.VIGILANCE)).isTrue();
         harness.assertOnBattlefield(player1, "Llanowar Elves");
         assertThat(victim.getMarkedDamage()).isZero();
-        assertThat(victim.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, victim)).isZero();
         assertThat(gqs.hasKeyword(gd, victim, Keyword.VIGILANCE)).isFalse();
     }
 

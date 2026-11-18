@@ -28,8 +28,8 @@ class ManifestationSageTest extends BaseCardTest {
 
         Permanent fractal = findPermanent(player1, "Fractal");
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(fractal.getEffectivePower()).isEqualTo(3);
-        assertThat(fractal.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(3);
     }
 
     @Test
@@ -65,8 +65,8 @@ class ManifestationSageTest extends BaseCardTest {
 
         harness.setHand(player1, List.of());
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(fractal.getEffectivePower()).isEqualTo(2);
-        assertThat(fractal.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(2);
     }
 
     @Test

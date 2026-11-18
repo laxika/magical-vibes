@@ -38,8 +38,8 @@ class FountainportTest extends BaseCardTest {
         Permanent fish = findPermanent(player1, "Fish");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
         assertThat(fish.getCard().getColor()).isEqualTo(CardColor.BLUE);
-        assertThat(fish.getEffectivePower()).isEqualTo(1);
-        assertThat(fish.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, fish)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, fish)).isEqualTo(1);
         assertThat(fish.isTapped()).isFalse();
     }
 

@@ -36,8 +36,8 @@ class BarkshellBlessingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -56,8 +56,8 @@ class BarkshellBlessingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -127,9 +127,9 @@ class BarkshellBlessingTest extends BaseCardTest {
 
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
-        assertThat(first.getEffectivePower()).isEqualTo(6);
-        assertThat(first.getEffectiveToughness()).isEqualTo(6);
-        assertThat(second.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -148,10 +148,10 @@ class BarkshellBlessingTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponent.getId());
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opponent.getEffectivePower()).isEqualTo(4);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -198,8 +198,8 @@ class BarkshellBlessingTest extends BaseCardTest {
 
         assertThat(bear.isTapped()).isTrue();
         assertThat(moth.isTapped()).isTrue();
-        assertThat(moth.getEffectivePower()).isEqualTo(4);
-        assertThat(moth.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, moth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, moth)).isEqualTo(5);
         assertThat(gd.stack).isEmpty();
     }
 }

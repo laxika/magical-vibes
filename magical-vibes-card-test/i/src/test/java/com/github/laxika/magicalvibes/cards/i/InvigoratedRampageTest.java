@@ -28,8 +28,8 @@ class InvigoratedRampageTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getEffectivePower()).isEqualTo(6);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -44,9 +44,9 @@ class InvigoratedRampageTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isTrue();
-        assertThat(second.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -62,7 +62,7 @@ class InvigoratedRampageTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -111,10 +111,10 @@ class InvigoratedRampageTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(first);
         harness.passBothPriorities();
 
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
-        assertThat(first.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -131,9 +131,9 @@ class InvigoratedRampageTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isFalse();
-        assertThat(second.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isFalse();
     }
 }

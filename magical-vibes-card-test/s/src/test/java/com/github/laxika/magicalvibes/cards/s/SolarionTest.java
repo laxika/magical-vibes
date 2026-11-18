@@ -33,8 +33,8 @@ class SolarionTest extends BaseCardTest {
         Permanent solarion = findPermanent(player1, "Solarion");
 
         assertThat(solarion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
-        assertThat(solarion.getEffectivePower()).isEqualTo(5);
-        assertThat(solarion.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, solarion)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, solarion)).isEqualTo(5);
     }
 
     @Test

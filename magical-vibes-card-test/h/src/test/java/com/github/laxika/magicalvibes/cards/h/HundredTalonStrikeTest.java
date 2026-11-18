@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FirstVolley;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.cards.g.GodsEyeGateToTheReikai;
@@ -33,8 +34,8 @@ class HundredTalonStrikeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, mass.getId());
 
-        assertThat(mass.getPowerModifier()).isEqualTo(1);
-        assertThat(mass.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mass)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mass)).isZero();
         assertThat(gqs.hasKeyword(gd, mass, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -51,7 +52,7 @@ class HundredTalonStrikeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mass.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mass)).isZero();
         assertThat(gqs.hasKeyword(gd, mass, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -79,8 +80,8 @@ class HundredTalonStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(whiteCreature.isTapped()).isTrue();
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
@@ -157,11 +158,11 @@ class HundredTalonStrikeTest extends BaseCardTest {
         harness.castWithSplice(player1, 0, samurai.getId(), List.of(1), List.of(samurai.getId()));
 
         assertThat(samurai.isTapped()).isTrue();
-        assertThat(samurai.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, samurai)).isZero();
         harness.passBothPriorities();
 
-        assertThat(samurai.getPowerModifier()).isEqualTo(1);
-        assertThat(samurai.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, samurai)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, samurai)).isZero();
         assertThat(gqs.hasKeyword(gd, samurai, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(samurai.getMarkedDamage()).isEqualTo(1);
         harness.assertLife(player1, 19);
@@ -171,7 +172,7 @@ class HundredTalonStrikeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(samurai.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, samurai)).isZero();
         assertThat(gqs.hasKeyword(gd, samurai, Keyword.FIRST_STRIKE)).isFalse();
     }
 

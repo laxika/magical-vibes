@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,8 +26,8 @@ class MarbleGargoyleTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, gargoyle)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, gargoyle)).isEqualTo(3);
-        assertThat(gargoyle.getPowerModifier()).isZero();
-        assertThat(gargoyle.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, gargoyle)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isEqualTo(1);
     }
 
     @Test
@@ -41,7 +42,7 @@ class MarbleGargoyleTest extends BaseCardTest {
         }
 
         assertThat(gqs.getEffectiveToughness(gd, gargoyle)).isEqualTo(5);
-        assertThat(gargoyle.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isEqualTo(3);
     }
 
     @Test
@@ -59,7 +60,7 @@ class MarbleGargoyleTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isZero();
         assertThat(gqs.getEffectiveToughness(gd, gargoyle)).isEqualTo(2);
     }
 

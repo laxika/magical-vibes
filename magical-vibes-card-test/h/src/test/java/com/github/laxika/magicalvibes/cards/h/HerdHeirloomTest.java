@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.SaguPummeler;
 import com.github.laxika.magicalvibes.cards.s.SaguWildling;
@@ -114,7 +115,7 @@ class HerdHeirloomTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, 1, null, creature.getId());
-        creature.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, creature, -1);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
@@ -134,7 +135,7 @@ class HerdHeirloomTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, creature.getId());
         harness.passBothPriorities();
-        creature.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, creature, -1);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
         declareAttackers(List.of(1));
@@ -148,7 +149,7 @@ class HerdHeirloomTest extends BaseCardTest {
     void boostedCreatureQualifies() {
         harness.addToBattlefield(player1, new HerdHeirloom());
         Permanent creature = addCreatureReady(player1, new SaguWildling());
-        creature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, creature, 1);
 
         harness.activateAbility(player1, 0, 1, null, creature.getId());
         harness.passBothPriorities();

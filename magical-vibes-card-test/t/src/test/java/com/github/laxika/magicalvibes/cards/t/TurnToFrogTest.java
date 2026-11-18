@@ -35,8 +35,8 @@ class TurnToFrogTest extends BaseCardTest {
 
         castTurnToFrog(angel.getId());
 
-        assertThat(angel.getEffectivePower()).isEqualTo(1);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(1);
     }
 
     @Test
@@ -69,13 +69,13 @@ class TurnToFrogTest extends BaseCardTest {
         Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
         castTurnToFrog(angel.getId());
 
-        assertThat(angel.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(angel.getEffectivePower()).isEqualTo(4);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isTrue();
         assertThat(gd.floatingEffectsOnPermanent(angel.getId(), GrantSubtypeEffect.class)).isEmpty();

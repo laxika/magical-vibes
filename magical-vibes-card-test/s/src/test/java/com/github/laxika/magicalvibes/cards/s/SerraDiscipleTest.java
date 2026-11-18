@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -49,8 +50,8 @@ class SerraDiscipleTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         Permanent disciple = findPermanent(player1, "Serra Disciple");
-        assertThat(disciple.getPowerModifier()).isEqualTo(1);
-        assertThat(disciple.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isEqualTo(1);
     }
 
     @Test
@@ -116,8 +117,8 @@ class SerraDiscipleTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent disciple = findPermanent(player1, "Serra Disciple");
-        assertThat(disciple.getPowerModifier()).isEqualTo(2);
-        assertThat(disciple.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isEqualTo(2);
     }
 
     @Test
@@ -134,8 +135,8 @@ class SerraDiscipleTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         Permanent disciple = findPermanent(player1, "Serra Disciple");
-        assertThat(disciple.getPowerModifier()).isEqualTo(1);
-        assertThat(disciple.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isEqualTo(1);
     }
 
     @Test
@@ -151,8 +152,8 @@ class SerraDiscipleTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent disciple = findPermanent(player1, "Serra Disciple");
-        assertThat(disciple.getPowerModifier()).isEqualTo(1);
-        assertThat(disciple.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isEqualTo(1);
     }
 
     @Test
@@ -169,8 +170,8 @@ class SerraDiscipleTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Serra Disciple")).allSatisfy(disciple -> {
-            assertThat(disciple.getPowerModifier()).isEqualTo(1);
-            assertThat(disciple.getToughnessModifier()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isEqualTo(1);
         });
     }
 
@@ -182,8 +183,8 @@ class SerraDiscipleTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         Permanent disciple = findPermanent(player1, "Serra Disciple");
-        assertThat(disciple.getPowerModifier()).isZero();
-        assertThat(disciple.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isZero();
     }
 
     @Test
@@ -198,12 +199,12 @@ class SerraDiscipleTest extends BaseCardTest {
         Permanent disciple = findPermanent(player1, "Serra Disciple");
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(disciple.getPowerModifier()).isEqualTo(1);
-        assertThat(disciple.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(disciple.getPowerModifier()).isZero();
-        assertThat(disciple.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isZero();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.PrimordialWurm;
@@ -49,8 +50,8 @@ class ViciousOfferingTest extends BaseCardTest {
 
         // Hill Giant is 3/3, -2/-2 makes it 1/1 → survives
         Permanent giant = findPermanent(player2, "Hill Giant");
-        assertThat(giant.getToughnessModifier()).isEqualTo(-2);
-        assertThat(giant.getPowerModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(-2);
     }
 
     // ===== Cast with kicker =====
@@ -117,13 +118,13 @@ class ViciousOfferingTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(7);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
     }
 
     @Test
@@ -139,18 +140,18 @@ class ViciousOfferingTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Primordial Wurm");
         harness.assertOnBattlefield(player2, "Primordial Wurm");
         assertThat(gd.stack).hasSize(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
 
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Primordial Wurm");
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(7);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
     }
 
     @Test

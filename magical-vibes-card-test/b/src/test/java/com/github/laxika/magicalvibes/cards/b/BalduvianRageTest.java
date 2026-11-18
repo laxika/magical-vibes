@@ -27,8 +27,8 @@ class BalduvianRageTest extends BaseCardTest {
         castRage(attacker, 3);
         GameData gd = harness.getGameData();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(5);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
@@ -42,7 +42,7 @@ class BalduvianRageTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -81,8 +81,8 @@ class BalduvianRageTest extends BaseCardTest {
         attacker.setAttacking(true);
         castRage(attacker, 0);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
     }
 
@@ -97,7 +97,7 @@ class BalduvianRageTest extends BaseCardTest {
         attacker.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
 
@@ -108,8 +108,8 @@ class BalduvianRageTest extends BaseCardTest {
         attacker.setAttacking(true);
         castRage(attacker, 4);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(6);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     @Test

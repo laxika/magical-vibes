@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.t.Terror;
@@ -175,7 +176,7 @@ class SelvalaHeartOfTheWildsTest extends BaseCardTest {
     void zeroPowerAddsNoMana() {
         Permanent selvala = harness.addToBattlefieldAndReturn(player1, new SelvalaHeartOfTheWilds());
         selvala.setSummoningSick(false);
-        selvala.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, selvala, -2);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);

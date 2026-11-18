@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.o.Opt;
@@ -186,7 +187,7 @@ class PapalymoTotolymoTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
-        bears.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, bears, 2);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");

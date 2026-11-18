@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,12 +28,12 @@ class KyoshiWarriorExemplarsTest extends BaseCardTest {
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(kyoshi)));
         resolveAllTriggers();
 
-        assertThat(kyoshi.getPowerModifier()).isEqualTo(2);
-        assertThat(kyoshi.getToughnessModifier()).isEqualTo(2);
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(2);
-        assertThat(opponent.getPowerModifier()).isEqualTo(0);
-        assertThat(opponent.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, kyoshi)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kyoshi)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isEqualTo(0);
     }
 
     @Test
@@ -45,8 +46,8 @@ class KyoshiWarriorExemplarsTest extends BaseCardTest {
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(kyoshi)));
         resolveAllTriggers();
 
-        assertThat(kyoshi.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, kyoshi)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -58,15 +59,15 @@ class KyoshiWarriorExemplarsTest extends BaseCardTest {
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(kyoshi)));
         resolveAllTriggers();
 
-        assertThat(kyoshi.getPowerModifier()).isEqualTo(2);
-        assertThat(kyoshi.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, kyoshi)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kyoshi)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(kyoshi.getPowerModifier()).isEqualTo(0);
-        assertThat(kyoshi.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, kyoshi)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kyoshi)).isEqualTo(0);
     }
 
     @Test
@@ -83,8 +84,8 @@ class KyoshiWarriorExemplarsTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(eighthLand.getCard());
         resolveAllTriggers();
 
-        assertThat(kyoshi.getPowerModifier()).isZero();
-        assertThat(kyoshi.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kyoshi)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kyoshi)).isZero();
     }
 
     @Test
@@ -99,8 +100,8 @@ class KyoshiWarriorExemplarsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         resolveAllTriggers();
 
-        assertThat(kyoshi.getPowerModifier()).isZero();
-        assertThat(kyoshi.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kyoshi)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kyoshi)).isZero();
     }
 
     @Test
@@ -114,8 +115,8 @@ class KyoshiWarriorExemplarsTest extends BaseCardTest {
                 () -> declareAttackers(player1, List.of(0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(kyoshi.getPowerModifier()).isZero();
-        assertThat(kyoshi.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kyoshi)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kyoshi)).isZero();
     }
 
     @Test
@@ -131,12 +132,12 @@ class KyoshiWarriorExemplarsTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new KyoshiWarriorExemplars());
 
-        assertThat(kyoshi.getPowerModifier()).isEqualTo(2);
-        assertThat(kyoshi.getToughnessModifier()).isEqualTo(2);
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(2);
-        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(2);
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kyoshi)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kyoshi)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
     }
 
     private void addForests(com.github.laxika.magicalvibes.model.Player player, int count) {

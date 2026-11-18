@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.ShuFootSoldiers;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -29,8 +30,8 @@ class TrainedCheetahTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(cheetah.getPowerModifier()).isZero();
-        assertThat(cheetah.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cheetah)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cheetah)).isZero();
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getSourcePermanentId()).isEqualTo(cheetah.getId());
@@ -47,10 +48,10 @@ class TrainedCheetahTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(cheetah.getPowerModifier()).isEqualTo(1);
-        assertThat(cheetah.getToughnessModifier()).isEqualTo(1);
-        assertThat(cheetah.getEffectivePower()).isEqualTo(3);
-        assertThat(cheetah.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, cheetah)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cheetah)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, cheetah)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cheetah)).isEqualTo(3);
     }
 
     @Test
@@ -68,8 +69,8 @@ class TrainedCheetahTest extends BaseCardTest {
         ));
         resolveAllTriggers();
 
-        assertThat(cheetah.getPowerModifier()).isEqualTo(1);
-        assertThat(cheetah.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cheetah)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cheetah)).isEqualTo(1);
     }
 
     @Test
@@ -82,8 +83,8 @@ class TrainedCheetahTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(cheetah.getPowerModifier()).isZero();
-        assertThat(cheetah.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cheetah)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cheetah)).isZero();
     }
 
     @Test
@@ -97,8 +98,8 @@ class TrainedCheetahTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(cheetah.getPowerModifier()).isZero();
-        assertThat(cheetah.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cheetah)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cheetah)).isZero();
     }
 
     @Test
@@ -112,14 +113,14 @@ class TrainedCheetahTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(cheetah.getPowerModifier()).isEqualTo(1);
-        assertThat(cheetah.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cheetah)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cheetah)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(cheetah.getPowerModifier()).isZero();
-        assertThat(cheetah.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cheetah)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cheetah)).isZero();
     }
 }

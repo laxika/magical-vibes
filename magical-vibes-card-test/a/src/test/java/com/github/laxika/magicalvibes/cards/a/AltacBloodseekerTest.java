@@ -30,8 +30,8 @@ class AltacBloodseekerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bloodseeker = findBloodseeker();
-        assertThat(bloodseeker.getPowerModifier()).isEqualTo(2);
-        assertThat(bloodseeker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bloodseeker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bloodseeker)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, bloodseeker)).contains(Keyword.FIRST_STRIKE, Keyword.HASTE);
         assertThat(gd.stack).isEmpty();
     }
@@ -49,7 +49,7 @@ class AltacBloodseekerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Runeclaw Bear");
         assertThat(gd.stack).isEmpty();
         Permanent bloodseeker = findBloodseeker();
-        assertThat(bloodseeker.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bloodseeker)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, bloodseeker)).doesNotContain(Keyword.FIRST_STRIKE, Keyword.HASTE);
     }
 
@@ -65,13 +65,13 @@ class AltacBloodseekerTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
 
         Permanent bloodseeker = findBloodseeker();
-        assertThat(bloodseeker.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bloodseeker)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, bloodseeker)).contains(Keyword.FIRST_STRIKE, Keyword.HASTE);
 
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(bloodseeker.getPowerModifier()).isEqualTo(0);
-        assertThat(bloodseeker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bloodseeker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bloodseeker)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, bloodseeker)).doesNotContain(Keyword.FIRST_STRIKE, Keyword.HASTE);
     }
 
@@ -91,8 +91,8 @@ class AltacBloodseekerTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         Permanent bloodseeker = findBloodseeker();
-        assertThat(bloodseeker.getPowerModifier()).isEqualTo(4);
-        assertThat(bloodseeker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bloodseeker)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bloodseeker)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, bloodseeker)).contains(Keyword.FIRST_STRIKE, Keyword.HASTE);
     }
 
@@ -111,7 +111,7 @@ class AltacBloodseekerTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
 
         Permanent replacement = findBloodseeker();
-        assertThat(replacement.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, replacement)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, replacement)).doesNotContain(Keyword.FIRST_STRIKE, Keyword.HASTE);
     }
 

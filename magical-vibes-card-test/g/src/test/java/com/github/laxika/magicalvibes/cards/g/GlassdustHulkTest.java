@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -27,8 +28,8 @@ class GlassdustHulkTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve spell and collect the artifact-entry ability
         harness.passBothPriorities(); // resolve the artifact-entry ability
 
-        assertThat(hulk.getPowerModifier()).isEqualTo(1);
-        assertThat(hulk.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hulk)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hulk)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, hulk)).isTrue();
     }
 
@@ -40,7 +41,7 @@ class GlassdustHulkTest extends BaseCardTest {
         harness.castFromHand(player1, new GlazeFiend(), "{1}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(hulk.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hulk)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, hulk)).isTrue();
 
         harness.setHand(player1, new ArrayList<>());
@@ -48,8 +49,8 @@ class GlassdustHulkTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(hulk.getPowerModifier()).isEqualTo(0);
-        assertThat(hulk.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, hulk)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hulk)).isEqualTo(0);
         assertThat(gqs.hasCantBeBlocked(gd, hulk)).isFalse();
     }
 
@@ -64,7 +65,7 @@ class GlassdustHulkTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(hulk.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, hulk)).isEqualTo(0);
         assertThat(gqs.hasCantBeBlocked(gd, hulk)).isFalse();
     }
 
@@ -77,14 +78,14 @@ class GlassdustHulkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(hulk.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hulk)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, hulk)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(hulk.getPowerModifier()).isEqualTo(1);
-        assertThat(hulk.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hulk)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hulk)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, hulk)).isTrue();
     }
 
@@ -96,8 +97,8 @@ class GlassdustHulkTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         Permanent hulk = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(hulk.getPowerModifier()).isZero();
-        assertThat(hulk.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hulk)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hulk)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, hulk)).isFalse();
     }
 

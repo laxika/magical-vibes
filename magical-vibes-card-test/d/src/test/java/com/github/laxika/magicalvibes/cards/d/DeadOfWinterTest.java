@@ -30,12 +30,12 @@ class DeadOfWinterTest extends BaseCardTest {
 
         castDeadOfWinter();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(snowCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(snowCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, snowCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, snowCreature)).isEqualTo(2);
     }
 
     @Test
@@ -57,15 +57,15 @@ class DeadOfWinterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SnowCoveredSwamp());
 
         castDeadOfWinter();
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -77,10 +77,10 @@ class DeadOfWinterTest extends BaseCardTest {
 
         castDeadOfWinter();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -91,11 +91,11 @@ class DeadOfWinterTest extends BaseCardTest {
 
         castDeadOfWinter();
 
-        assertThat(nonsnowCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(nonsnowCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, nonsnowCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, nonsnowCreature)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Icehide Golem");
-        assertThat(snowCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(snowCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, snowCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, snowCreature)).isEqualTo(2);
     }
 
     @Test

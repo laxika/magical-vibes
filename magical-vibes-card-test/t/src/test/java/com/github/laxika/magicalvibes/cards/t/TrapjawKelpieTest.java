@@ -48,8 +48,8 @@ class TrapjawKelpieTest extends BaseCardTest {
         Permanent kelpie = kelpieOnBattlefield();
         assertThat(kelpie).isNotNull();
         assertThat(kelpie.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(kelpie.getEffectivePower()).isEqualTo(2);
-        assertThat(kelpie.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, kelpie)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kelpie)).isEqualTo(2);
     }
 
     @Test

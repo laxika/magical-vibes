@@ -85,7 +85,7 @@ class BogardanPhoenixTest extends BaseCardTest {
     void exileTriggerDoesNotFollowCardIntoNewGraveyardEntry() {
         Permanent phoenix = harness.addToBattlefieldAndReturn(player1, new BogardanPhoenix());
         phoenix.setCounterCount(CounterType.DEATH, 1);
-        phoenix.setMarkedDamage(phoenix.getEffectiveToughness());
+        phoenix.setMarkedDamage(gqs.getEffectiveToughness(gd, phoenix));
         harness.runStateBasedActions();
 
         // Model the card leaving for a hand and being discarded before the trigger resolves.
@@ -101,7 +101,7 @@ class BogardanPhoenixTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Bogardan Phoenix");
     }
     private void killPhoenix(Permanent phoenix) {
-        phoenix.setMarkedDamage(phoenix.getEffectiveToughness());
+        phoenix.setMarkedDamage(gqs.getEffectiveToughness(gd, phoenix));
         harness.runStateBasedActions();
         harness.passBothPriorities(); // resolve death trigger
     }

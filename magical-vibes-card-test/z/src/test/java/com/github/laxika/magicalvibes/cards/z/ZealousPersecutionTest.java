@@ -30,10 +30,10 @@ class ZealousPersecutionTest extends BaseCardTest {
 
         castPersecution();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(3);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(3);
-        assertThat(theirs.getEffectivePower()).isEqualTo(1);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(1);
     }
 
     @Test
@@ -53,17 +53,17 @@ class ZealousPersecutionTest extends BaseCardTest {
         Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()); // 2/2
 
         castPersecution();
-        assertThat(mine.getEffectivePower()).isEqualTo(3);
-        assertThat(theirs.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(2);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(2);
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 
     @Test
@@ -76,8 +76,8 @@ class ZealousPersecutionTest extends BaseCardTest {
         castPersecution();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(mine);
-        assertThat(mine.getEffectivePower()).isEqualTo(2);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
     }
@@ -91,10 +91,10 @@ class ZealousPersecutionTest extends BaseCardTest {
         Permanent theirs = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
         harness.runStateBasedActions();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(1);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(1);
-        assertThat(theirs.getEffectivePower()).isEqualTo(1);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(theirs);
     }
 
@@ -107,8 +107,8 @@ class ZealousPersecutionTest extends BaseCardTest {
         castPersecution();
         castPersecution();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(4);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(4);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
@@ -125,9 +125,9 @@ class ZealousPersecutionTest extends BaseCardTest {
         harness.castFromHand(player2, new ZealousPersecution(), "{W}{B}");
         harness.passBothPriorities();
 
-        assertThat(activePlayersCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(activePlayersCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(castersCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(castersCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, activePlayersCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, activePlayersCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, castersCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, castersCreature)).isEqualTo(3);
     }
 }

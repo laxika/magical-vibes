@@ -33,8 +33,8 @@ class ScuzzbackMaraudersTest extends BaseCardTest {
         Permanent marauders = findPermanent(player1, "Scuzzback Marauders");
         assertThat(marauders).isNotNull();
         assertThat(marauders.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(marauders.getEffectivePower()).isEqualTo(4);
-        assertThat(marauders.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, marauders)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, marauders)).isEqualTo(1);
     }
 
     @Test

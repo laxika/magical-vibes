@@ -34,8 +34,8 @@ class BlurOfBladesTest extends BaseCardTest {
         // Grizzly Bears (2/2) with one -1/-1 counter → 1/1, survives
         Permanent target = findPermanent(player2, "Grizzly Bears");
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         // Controller takes 2 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }

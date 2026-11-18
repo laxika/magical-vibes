@@ -29,7 +29,7 @@ class AlgorithmicFerocityTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(ownCreature.getId(), opponentCreature.getId()));
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isTrue();
         harness.assertOnBattlefield(player1, "Hill Giant");
         harness.assertNotOnBattlefield(player2, "Air Elemental");
@@ -44,14 +44,14 @@ class AlgorithmicFerocityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castAndResolveSorcery(player1, 0, List.of(ownCreature.getId(), opponentCreature.getId()));
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -64,7 +64,7 @@ class AlgorithmicFerocityTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(ownCreature.getId(), opponentCreature.getId()));
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
         assertThat(ownCreature.getMarkedDamage()).isEqualTo(4);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Air Elemental");
@@ -82,7 +82,7 @@ class AlgorithmicFerocityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(opponentCreature.getMarkedDamage()).isEqualTo(2);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -100,7 +100,7 @@ class AlgorithmicFerocityTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(opponentCreature);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(ownCreature.getMarkedDamage()).isZero();
     }
@@ -118,7 +118,7 @@ class AlgorithmicFerocityTest extends BaseCardTest {
 
         assertThat(opponentCreature.getMarkedDamage()).isZero();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(4);
         harness.assertOnBattlefield(player2, "Air Elemental");
     }
 

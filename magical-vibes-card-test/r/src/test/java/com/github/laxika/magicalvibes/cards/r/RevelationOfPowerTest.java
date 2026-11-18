@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.o.OminousParcel;
 import com.github.laxika.magicalvibes.cards.w.WreckingCrew;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -26,8 +27,8 @@ class RevelationOfPowerTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, new WreckingCrew());
         castRevelation(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
@@ -39,8 +40,8 @@ class RevelationOfPowerTest extends BaseCardTest {
         target.setCounterCount(CounterType.CHARGE, 1);
         castRevelation(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
     }
@@ -56,8 +57,8 @@ class RevelationOfPowerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
@@ -86,8 +87,8 @@ class RevelationOfPowerTest extends BaseCardTest {
         target.setCounterCount(CounterType.SHIELD, 1);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
     }
@@ -104,8 +105,8 @@ class RevelationOfPowerTest extends BaseCardTest {
         target.setCounterCount(CounterType.SHIELD, 0);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
@@ -119,8 +120,8 @@ class RevelationOfPowerTest extends BaseCardTest {
 
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
     }
@@ -133,8 +134,8 @@ class RevelationOfPowerTest extends BaseCardTest {
 
         target.setCounterCount(CounterType.SHIELD, 1);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
@@ -146,8 +147,8 @@ class RevelationOfPowerTest extends BaseCardTest {
         target.setCounterCount(CounterType.SHIELD, 1);
         castRevelation(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
     }

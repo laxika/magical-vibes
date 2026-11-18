@@ -33,8 +33,8 @@ class ManticoreOfTheGauntletTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         // Opponent takes 3 damage.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }

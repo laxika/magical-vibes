@@ -28,8 +28,8 @@ class RenegadesGetawayTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         Permanent servo = findPermanent(player1, "Servo");
-        assertThat(servo.getEffectivePower()).isEqualTo(1);
-        assertThat(servo.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, servo)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, servo)).isEqualTo(1);
     }
 
     @Test
@@ -94,8 +94,8 @@ class RenegadesGetawayTest extends BaseCardTest {
         assertThat(servo.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(servo.getCard().getColors()).isEmpty();
         assertThat(servo.getCard().getSubtypes()).containsExactly(CardSubtype.SERVO);
-        assertThat(servo.getEffectivePower()).isEqualTo(1);
-        assertThat(servo.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, servo)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, servo)).isEqualTo(1);
         assertThat(servo.isTapped()).isFalse();
     }
 

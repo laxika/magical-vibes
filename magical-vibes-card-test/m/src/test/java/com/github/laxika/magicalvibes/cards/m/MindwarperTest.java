@@ -34,8 +34,8 @@ class MindwarperTest extends BaseCardTest {
 
         Permanent mindwarper = findPermanent(player1, "Mindwarper");
         assertThat(mindwarper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(mindwarper.getEffectivePower()).isEqualTo(3);
-        assertThat(mindwarper.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mindwarper)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mindwarper)).isEqualTo(3);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MagneticTheft;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -68,7 +69,7 @@ class SwordOfHoursTest extends BaseCardTest {
     @Test
     void naturalTwelveDoublesCountersEvenWhenNotGreaterThanDamage() {
         Permanent creature = prepareCombat(12);
-        creature.setPowerModifier(8);
+        PermanentGrants.setPowerBoost(gd, creature, 8);
 
         resolveCombat();
         harness.passBothPriorities();

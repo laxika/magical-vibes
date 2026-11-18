@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -149,7 +150,7 @@ class VenomsacLagacTest extends BaseCardTest {
     void insufficientPowerCannotSaddle() {
         Permanent lagac = addCreatureReady(player1, new VenomsacLagac());
         Permanent helper = addCreatureReady(player1, new VenomsacLagac());
-        helper.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, helper, -1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -164,8 +165,8 @@ class VenomsacLagacTest extends BaseCardTest {
         Permanent lagac = addCreatureReady(player1, new VenomsacLagac());
         Permanent first = addCreatureReady(player1, new VenomsacLagac());
         Permanent second = addCreatureReady(player1, new VenomsacLagac());
-        first.setPowerModifier(-1);
-        second.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, first, -1);
+        PermanentGrants.setPowerBoost(gd, second, -1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

@@ -29,12 +29,12 @@ class BattleFrenzyTest extends BaseCardTest {
         castBattleFrenzy();
 
         Permanent bears = findPermanent(player1, "Balduvian Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
 
         Permanent barbarians = findPermanent(player1, "Balduvian Barbarians");
-        assertThat(barbarians.getEffectivePower()).isEqualTo(4);
-        assertThat(barbarians.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, barbarians)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, barbarians)).isEqualTo(2);
     }
 
     @Test
@@ -46,12 +46,12 @@ class BattleFrenzyTest extends BaseCardTest {
         castBattleFrenzy();
 
         Permanent frostbeast = findPermanent(player1, "Kjeldoran Frostbeast");
-        assertThat(frostbeast.getEffectivePower()).isEqualTo(3);
-        assertThat(frostbeast.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, frostbeast)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, frostbeast)).isEqualTo(5);
 
         Permanent wall = findPermanent(player1, "Wall of Shields");
-        assertThat(wall.getEffectivePower()).isEqualTo(1);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(4);
     }
 
     @Test
@@ -62,8 +62,8 @@ class BattleFrenzyTest extends BaseCardTest {
 
         castBattleFrenzy();
 
-        assertThat(findPermanent(player2, "Balduvian Bears").getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanent(player2, "Balduvian Barbarians").getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Balduvian Bears"))).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Balduvian Barbarians"))).isEqualTo(3);
     }
 
     @Test
@@ -76,9 +76,9 @@ class BattleFrenzyTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(findPermanent(player1, "Balduvian Bears").getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Balduvian Bears").getEffectiveToughness()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Balduvian Bears"))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Balduvian Bears"))).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(3);
     }
 
     @Test
@@ -90,18 +90,18 @@ class BattleFrenzyTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
-        assertThat(barbarians.getEffectivePower()).isEqualTo(4);
-        assertThat(barbarians.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, barbarians)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, barbarians)).isEqualTo(2);
 
         Permanent laterBears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
         Permanent laterBarbarians = harness.addToBattlefieldAndReturn(player1, new BalduvianBarbarians());
 
-        assertThat(laterBears.getEffectivePower()).isEqualTo(2);
-        assertThat(laterBears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(laterBarbarians.getEffectivePower()).isEqualTo(3);
-        assertThat(laterBarbarians.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterBears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterBarbarians)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, laterBarbarians)).isEqualTo(2);
     }
 
     @Test
@@ -113,9 +113,9 @@ class BattleFrenzyTest extends BaseCardTest {
         castBattleFrenzy();
         castBattleFrenzy();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(4);
-        assertThat(barbarians.getEffectivePower()).isEqualTo(5);
-        assertThat(barbarians.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, barbarians)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, barbarians)).isEqualTo(2);
     }
 }

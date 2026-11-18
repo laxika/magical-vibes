@@ -66,8 +66,8 @@ class SidewinderSliverTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
     }
 
     @Test

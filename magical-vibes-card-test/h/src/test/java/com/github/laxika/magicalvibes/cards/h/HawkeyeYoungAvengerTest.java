@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -22,7 +23,7 @@ class HawkeyeYoungAvengerTest extends BaseCardTest {
     @DisplayName("Adds Hawkeye's power to noncombat damage dealt to an opponent")
     void addsPowerToNoncombatDamageToOpponent() {
         Permanent hawkeye = harness.addToBattlefieldAndReturn(player1, new HawkeyeYoungAvenger());
-        hawkeye.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, hawkeye, 1);
         harness.setLife(player2, 20);
         castShock(player2.getId());
 
@@ -59,7 +60,7 @@ class HawkeyeYoungAvengerTest extends BaseCardTest {
     @Test
     void negativePowerReducesDamageToOpponent() {
         Permanent hawkeye = harness.addToBattlefieldAndReturn(player1, new HawkeyeYoungAvenger());
-        hawkeye.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, hawkeye, -3);
         harness.setLife(player2, 20);
 
         castShock(player2.getId());
@@ -70,7 +71,7 @@ class HawkeyeYoungAvengerTest extends BaseCardTest {
     @Test
     void sufficientlyNegativePowerReducesDamageToZero() {
         Permanent hawkeye = harness.addToBattlefieldAndReturn(player1, new HawkeyeYoungAvenger());
-        hawkeye.setPowerModifier(-5);
+        PermanentGrants.setPowerBoost(gd, hawkeye, -5);
         harness.setLife(player2, 20);
 
         castShock(player2.getId());
@@ -81,7 +82,7 @@ class HawkeyeYoungAvengerTest extends BaseCardTest {
     @Test
     void negativePowerReducesDamageToOpponentPermanent() {
         Permanent hawkeye = harness.addToBattlefieldAndReturn(player1, new HawkeyeYoungAvenger());
-        hawkeye.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, hawkeye, -3);
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castShock(bears.getId());
@@ -93,7 +94,7 @@ class HawkeyeYoungAvengerTest extends BaseCardTest {
     @Test
     void losingAbilitiesDisablesBonusEvenWithPositivePower() {
         Permanent hawkeye = harness.addToBattlefieldAndReturn(player1, new HawkeyeYoungAvenger());
-        hawkeye.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, hawkeye, 1);
         harness.setHand(player1, List.of(new Humble()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castAndResolveInstant(player1, 0, hawkeye.getId());
@@ -143,7 +144,7 @@ class HawkeyeYoungAvengerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
-        hawkeye.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, hawkeye, 2);
 
         harness.passBothPriorities();
 
@@ -154,7 +155,7 @@ class HawkeyeYoungAvengerTest extends BaseCardTest {
     void bonusKillsOpponentCreatureThatWouldSurviveUnmodifiedDamage() {
         harness.addToBattlefield(player1, new HawkeyeYoungAvenger());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, bears, 1);
 
         castShock(bears.getId());
 

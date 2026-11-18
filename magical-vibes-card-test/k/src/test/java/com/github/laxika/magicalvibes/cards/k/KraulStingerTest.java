@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -54,7 +55,7 @@ class KraulStingerTest extends BaseCardTest {
     @DisplayName("Zero power deals no damage and does not destroy a blocker")
     void zeroPowerDoesNotDestroyBlocker() {
         Permanent stinger = addCreatureReady(player1, new KraulStinger());
-        stinger.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, stinger, -2);
         Permanent blocker = addCreatureReady(player2, new ColossalDreadmaw());
 
         declareAttackersAndPrepareBlockers(List.of(0));

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -52,8 +53,8 @@ class TemmetVizierOfNaktamunTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, token.getId());
         harness.passBothPriorities(); // resolve the trigger
 
-        assertThat(token.getPowerModifier()).isEqualTo(1);
-        assertThat(token.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, token)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, token)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, token)).isTrue();
     }
 
@@ -67,15 +68,15 @@ class TemmetVizierOfNaktamunTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, token.getId());
         harness.passBothPriorities();
 
-        assertThat(token.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, token)).isEqualTo(1);
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(token.getPowerModifier()).isEqualTo(0);
-        assertThat(token.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, token)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, token)).isEqualTo(0);
     }
 
     @Test
@@ -89,7 +90,7 @@ class TemmetVizierOfNaktamunTest extends BaseCardTest {
         // No creature token to target Ă˘â‚¬â€ť the trigger is skipped, nothing awaits input.
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(nontoken.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, nontoken)).isEqualTo(0);
     }
 
     @Test
@@ -102,7 +103,7 @@ class TemmetVizierOfNaktamunTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(token.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, token)).isEqualTo(0);
     }
 
     // ===== Embalm =====
@@ -139,7 +140,7 @@ class TemmetVizierOfNaktamunTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(token.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, token)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, token)).isFalse();
     }
 
@@ -161,8 +162,8 @@ class TemmetVizierOfNaktamunTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, token.getId());
         harness.passBothPriorities();
 
-        assertThat(token.getPowerModifier()).isEqualTo(1);
-        assertThat(token.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, token)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, token)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, token)).isTrue();
     }
 

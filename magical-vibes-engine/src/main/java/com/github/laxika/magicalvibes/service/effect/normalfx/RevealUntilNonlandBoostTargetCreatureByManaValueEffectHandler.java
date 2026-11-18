@@ -67,8 +67,7 @@ public class RevealUntilNonlandBoostTargetCreatureByManaValueEffectHandler
             entry.setEventValue(manaValue);
             Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (target != null) {
-                target.setPowerModifier(target.getPowerModifier() + manaValue);
-                target.setToughnessModifier(target.getToughnessModifier() - manaValue);
+                gameData.addPowerToughnessBoost(entry, target.getId(), manaValue, -manaValue);
                 gameLogService.append(gameData, GameLog.builder()
                         .card(target.getCard())
                         .text(String.format(" gets +%d/-%d until end of turn.", manaValue, manaValue))

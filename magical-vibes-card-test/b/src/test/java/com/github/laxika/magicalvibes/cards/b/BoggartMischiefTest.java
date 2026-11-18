@@ -35,8 +35,8 @@ class BoggartMischiefTest extends BaseCardTest {
             assertThat(goblin.getCard().getColor()).isEqualTo(CardColor.BLACK);
             assertThat(goblin.getCard().getColors()).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.RED);
             assertThat(goblin.getCard().getSubtypes()).contains(CardSubtype.GOBLIN);
-            assertThat(goblin.getEffectivePower()).isEqualTo(1);
-            assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
         });
     }
 

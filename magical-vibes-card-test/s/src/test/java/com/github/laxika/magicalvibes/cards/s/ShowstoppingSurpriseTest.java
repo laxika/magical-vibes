@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -94,7 +95,7 @@ class ShowstoppingSurpriseTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ShowstoppingSurprise()));
         harness.addMana(player1, ManaColor.RED, 5);
         harness.castInstant(player1, 0, target.getId());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
 
         harness.passBothPriorities();
 
@@ -105,7 +106,7 @@ class ShowstoppingSurpriseTest extends BaseCardTest {
     @Test
     void zeroPowerDealsNoDamage() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        target.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, target, -2);
         Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castAndResolve(target);

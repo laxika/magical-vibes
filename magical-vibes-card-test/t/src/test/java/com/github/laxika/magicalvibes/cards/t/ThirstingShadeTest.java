@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -26,8 +27,8 @@ class ThirstingShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getPowerModifier()).isEqualTo(1);
-        assertThat(shade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(1);
     }
 
     @Test
@@ -42,8 +43,8 @@ class ThirstingShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getPowerModifier()).isEqualTo(2);
-        assertThat(shade.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(2);
     }
 
     @Test
@@ -71,8 +72,8 @@ class ThirstingShadeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shade.getPowerModifier()).isEqualTo(0);
-        assertThat(shade.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(0);
     }
 
     @Test
@@ -103,8 +104,8 @@ class ThirstingShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getPowerModifier()).isEqualTo(1);
-        assertThat(shade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(1);
         assertThat(shade.isTapped()).isTrue();
     }
 

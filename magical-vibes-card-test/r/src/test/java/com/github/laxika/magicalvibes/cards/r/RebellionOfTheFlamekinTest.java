@@ -43,8 +43,8 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
 
         Permanent token = token();
         assertThat(token).isNotNull();
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.g.GiantCindermaw;
@@ -110,7 +111,7 @@ class SwordsToPlowsharesTest extends BaseCardTest {
         giveSwords();
 
         harness.castInstant(player1, 0, target.getId());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 23);
@@ -120,7 +121,7 @@ class SwordsToPlowsharesTest extends BaseCardTest {
     @DisplayName("Does not gain life when the target's power is negative")
     void doesNotGainLifeForNegativePower() {
         Permanent target = addCreatureReady(player2, new BalduvianBears());
-        target.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, target, -3);
         harness.setLife(player2, 20);
         giveSwords();
 
@@ -163,7 +164,7 @@ class SwordsToPlowsharesTest extends BaseCardTest {
     @DisplayName("Exiles a zero-power creature without gaining life")
     void exilesZeroPowerCreature() {
         Permanent target = addCreatureReady(player2, new BalduvianBears());
-        target.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, target, -2);
         harness.setLife(player2, 20);
         giveSwords();
 

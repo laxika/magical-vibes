@@ -29,10 +29,10 @@ class VedalkenHumiliatorTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(angel.getEffectivePower()).isEqualTo(1);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isFalse();
-        assertThat(humiliator.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, humiliator)).isEqualTo(3);
     }
 
     @Test
@@ -44,8 +44,8 @@ class VedalkenHumiliatorTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(angel.getEffectivePower()).isEqualTo(4);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
     }
 
@@ -58,14 +58,14 @@ class VedalkenHumiliatorTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
-        assertThat(angel.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(1);
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(angel.getEffectivePower()).isEqualTo(4);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
     }
 
@@ -81,7 +81,7 @@ class VedalkenHumiliatorTest extends BaseCardTest {
         addArtifacts(player1, 1);
         resolveAllTriggers();
 
-        assertThat(angel.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
     }
 
@@ -97,8 +97,8 @@ class VedalkenHumiliatorTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(3);
         resolveAllTriggers();
 
-        assertThat(angel.getEffectivePower()).isEqualTo(4);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, angel, Keyword.VIGILANCE)).isTrue();
     }
@@ -115,8 +115,8 @@ class VedalkenHumiliatorTest extends BaseCardTest {
         Permanent arrivingAngel = addCreatureReady(player2, new SerraAngel());
         resolveAllTriggers();
 
-        assertThat(arrivingAngel.getEffectivePower()).isEqualTo(1);
-        assertThat(arrivingAngel.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, arrivingAngel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, arrivingAngel)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, arrivingAngel, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, arrivingAngel, Keyword.VIGILANCE)).isFalse();
     }
@@ -132,9 +132,9 @@ class VedalkenHumiliatorTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent arrivingAngel = addCreatureReady(player2, new SerraAngel());
 
-        assertThat(originalAngel.getEffectivePower()).isEqualTo(1);
-        assertThat(arrivingAngel.getEffectivePower()).isEqualTo(4);
-        assertThat(arrivingAngel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, originalAngel)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, arrivingAngel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, arrivingAngel)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, arrivingAngel, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, arrivingAngel, Keyword.VIGILANCE)).isTrue();
     }
@@ -184,9 +184,9 @@ class VedalkenHumiliatorTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(opposingAngel.getEffectivePower()).isEqualTo(1);
-        assertThat(ownAngel.getEffectivePower()).isEqualTo(4);
-        assertThat(ownAngel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingAngel)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownAngel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownAngel)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ownAngel, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, ownAngel, Keyword.VIGILANCE)).isTrue();
     }

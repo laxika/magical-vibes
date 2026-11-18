@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.Abrade;
 import com.github.laxika.magicalvibes.cards.u.UnholyOfficiant;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -32,8 +33,8 @@ class TravelingMinisterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Unholy Officiant");
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
         assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife + 1);
     }
 
@@ -50,8 +51,8 @@ class TravelingMinisterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Unholy Officiant");
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -66,7 +67,7 @@ class TravelingMinisterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player2, "Unholy Officiant").getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player2, "Unholy Officiant"))).isEqualTo(1);
         assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLife + 1);
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife);
     }
@@ -102,8 +103,8 @@ class TravelingMinisterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, minister.getId());
         harness.passBothPriorities();
 
-        assertThat(minister.getPowerModifier()).isEqualTo(1);
-        assertThat(minister.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, minister)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, minister)).isZero();
         assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife + 1);
     }
 
@@ -136,7 +137,7 @@ class TravelingMinisterTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Traveling Minister");
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
         assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife + 1);
     }
 

@@ -33,7 +33,7 @@ class RetchedWretchTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        returned.setMarkedDamage(returned.getEffectiveToughness());
+        returned.setMarkedDamage(gqs.getEffectiveToughness(gd, returned));
         harness.runStateBasedActions();
 
         assertThat(findPermanentOrNull(player1)).isNull();
@@ -89,7 +89,7 @@ class RetchedWretchTest extends BaseCardTest {
     void doesNotReturnFromExile() {
         Permanent wretch = harness.addToBattlefieldAndReturn(player1, new RetchedWretch());
         wretch.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        wretch.setMarkedDamage(wretch.getEffectiveToughness());
+        wretch.setMarkedDamage(gqs.getEffectiveToughness(gd, wretch));
         harness.runStateBasedActions();
         harness.assertInGraveyard(player1, "Retched Wretch");
         harness.setGraveyard(player1, List.of());
@@ -102,7 +102,7 @@ class RetchedWretchTest extends BaseCardTest {
     }
 
     private void kill(Permanent wretch) {
-        wretch.setMarkedDamage(wretch.getEffectiveToughness());
+        wretch.setMarkedDamage(gqs.getEffectiveToughness(gd, wretch));
         harness.runStateBasedActions();
         harness.passBothPriorities();
     }

@@ -28,8 +28,8 @@ class StoneshockGiantTest extends BaseCardTest {
 
         assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(giant.isMonstrous()).isTrue();
-        assertThat(giant.getEffectivePower()).isEqualTo(8);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(7);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AppetiteForTheUnnatural;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -29,8 +30,8 @@ class BuiltToLastTest extends BaseCardTest {
 
         castResolve(ornithopter);
 
-        assertThat(ornithopter.getPowerModifier()).isEqualTo(2);
-        assertThat(ornithopter.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ornithopter)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ornithopter)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ornithopter, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
@@ -41,8 +42,8 @@ class BuiltToLastTest extends BaseCardTest {
 
         castResolve(bears);
 
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -56,8 +57,8 @@ class BuiltToLastTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ornithopter.getPowerModifier()).isZero();
-        assertThat(ornithopter.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ornithopter)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ornithopter)).isZero();
         assertThat(gqs.hasKeyword(gd, ornithopter, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -67,8 +68,8 @@ class BuiltToLastTest extends BaseCardTest {
 
         castResolve(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
@@ -98,8 +99,8 @@ class BuiltToLastTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Bastion Mastodon");
         harness.assertInGraveyard(player1, "Built to Last");
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }

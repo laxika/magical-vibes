@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.j.JointAssault;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,8 +30,8 @@ class YewSpiritTest extends BaseCardTest {
 
         Permanent spirit = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         // Base 3/3, X = 3 → +3/+3 → 6/6.
-        assertThat(spirit.getEffectivePower()).isEqualTo(6);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(6);
     }
 
     @Test
@@ -46,8 +47,8 @@ class YewSpiritTest extends BaseCardTest {
 
         Permanent spirit = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         // After first: 6/6; second X = 6 → +6/+6 → 12/12.
-        assertThat(spirit.getEffectivePower()).isEqualTo(12);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(12);
     }
 
     @Test
@@ -60,14 +61,14 @@ class YewSpiritTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent spirit = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(spirit.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(spirit.getEffectivePower()).isEqualTo(3);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(3);
     }
 
     @Test
@@ -82,28 +83,28 @@ class YewSpiritTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(spirit.getEffectivePower()).isEqualTo(10);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(10);
 
         harness.castInstant(player1, 0, spirit.getId());
         harness.passBothPriorities();
 
-        assertThat(spirit.getEffectivePower()).isEqualTo(12);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(12);
     }
 
     @Test
     @DisplayName("Negative power gives a zero bonus to both stats")
     void negativePowerGivesZeroBonus() {
         Permanent spirit = addSpiritReady(player1);
-        spirit.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, spirit, -4);
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(spirit.getEffectivePower()).isEqualTo(-1);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(3);
     }
 
     @Test
@@ -117,8 +118,8 @@ class YewSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(spirit.getEffectivePower()).isEqualTo(6);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(6);
         assertThat(spirit.isTapped()).isTrue();
     }
 

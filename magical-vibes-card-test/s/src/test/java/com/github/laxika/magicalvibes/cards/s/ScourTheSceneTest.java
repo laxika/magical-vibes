@@ -27,8 +27,8 @@ class ScourTheSceneTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent detective = findPermanent(player1, "Detective");
-        assertThat(detective.getEffectivePower()).isEqualTo(2);
-        assertThat(detective.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, detective)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, detective)).isEqualTo(2);
     }
 
     @Test

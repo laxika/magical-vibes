@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.cards.k.KamiOfAncientLaw;
@@ -32,7 +33,7 @@ class StrangeInversionTest extends BaseCardTest {
     @DisplayName("Switches target creature's power and toughness")
     void switchesPowerAndToughness() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new KamiOfAncientLaw());
-        creature.setPowerModifier(1); // 3/2
+        PermanentGrants.setPowerBoost(gd, creature, 1); // 3/2
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new StrangeInversion()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -48,7 +49,7 @@ class StrangeInversionTest extends BaseCardTest {
     @DisplayName("Switch wears off at end of turn")
     void switchWearsOff() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new KamiOfAncientLaw());
-        creature.setPowerModifier(1); // 3/2
+        PermanentGrants.setPowerBoost(gd, creature, 1); // 3/2
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new StrangeInversion()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -113,7 +114,7 @@ class StrangeInversionTest extends BaseCardTest {
     @DisplayName("Splices onto an Arcane spell and stays in hand")
     void splicesOntoArcaneSpell() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new KamiOfAncientLaw());
-        creature.setPowerModifier(1); // 3/2
+        PermanentGrants.setPowerBoost(gd, creature, 1); // 3/2
         StrangeInversion inversion = new StrangeInversion();
         harness.forceActivePlayer(player1);
         gd.playerDecks.get(player1.getId()).add(new KamiOfAncientLaw());
@@ -172,7 +173,7 @@ class StrangeInversionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
-        creature.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, creature, 2);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);

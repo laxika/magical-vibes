@@ -35,8 +35,8 @@ class SparkspitterTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         Permanent token = findPermanent(player1, "Spark Elemental");
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ELEMENTAL);
         assertThat(token.hasKeyword(Keyword.TRAMPLE)).isTrue();

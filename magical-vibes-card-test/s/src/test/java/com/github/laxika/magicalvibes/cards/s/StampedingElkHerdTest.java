@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ColossodonYearling;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -71,7 +72,7 @@ class StampedingElkHerdTest extends BaseCardTest {
     void triggersAtExactlyEightTotalPower() {
         Permanent herd = addCreatureReady(player1, new StampedingElkHerd());
         Permanent yearling = addCreatureReady(player1, new ColossodonYearling());
-        yearling.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, yearling, 1);
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
@@ -85,11 +86,11 @@ class StampedingElkHerdTest extends BaseCardTest {
     void doesNothingIfTotalPowerDropsBeforeResolution() {
         Permanent herd = addCreatureReady(player1, new StampedingElkHerd());
         Permanent yearling = addCreatureReady(player1, new ColossodonYearling());
-        yearling.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, yearling, 1);
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         assertThat(gd.stack).hasSize(1);
-        yearling.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, yearling, 0);
         resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, herd, Keyword.TRAMPLE)).isFalse();

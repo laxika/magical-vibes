@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WhiteLotusTile;
 import com.github.laxika.magicalvibes.cards.p.PlatypusBear;
 import com.github.laxika.magicalvibes.cards.w.WaterTribeRallier;
@@ -28,8 +29,8 @@ class YipYipTest extends BaseCardTest {
         harness.castInstant(player1, 0, ally.getId());
         harness.passBothPriorities();
 
-        assertThat(ally.getPowerModifier()).isEqualTo(2);
-        assertThat(ally.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ally)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ally, Keyword.FLYING)).isTrue();
     }
 
@@ -43,8 +44,8 @@ class YipYipTest extends BaseCardTest {
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
 
@@ -59,8 +60,8 @@ class YipYipTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(ally.getPowerModifier()).isZero();
-        assertThat(ally.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ally)).isZero();
         assertThat(gqs.hasKeyword(gd, ally, Keyword.FLYING)).isFalse();
     }
 
@@ -99,11 +100,11 @@ class YipYipTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
     }
 
@@ -119,14 +120,14 @@ class YipYipTest extends BaseCardTest {
         harness.castInstant(player1, 0, ally.getId());
         harness.passBothPriorities();
 
-        assertThat(ally.getPowerModifier()).isEqualTo(4);
-        assertThat(ally.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ally)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ally, Keyword.FLYING)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(ally.getPowerModifier()).isZero();
-        assertThat(ally.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ally)).isZero();
         assertThat(gqs.hasKeyword(gd, ally, Keyword.FLYING)).isFalse();
     }
 
@@ -143,8 +144,8 @@ class YipYipTest extends BaseCardTest {
         harness.setGraveyard(player1, java.util.List.of(target.getCard()));
         harness.passBothPriorities();
 
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
         harness.assertInGraveyard(player1, "Yip Yip!");
         assertThat(gd.stack).isEmpty();

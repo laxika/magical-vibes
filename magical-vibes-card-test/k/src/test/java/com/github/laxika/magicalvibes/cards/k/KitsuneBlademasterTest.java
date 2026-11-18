@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SireOfTheStorm;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class KitsuneBlademasterTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blademaster.getPowerModifier()).isEqualTo(1);
-        assertThat(blademaster.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blademaster)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blademaster)).isEqualTo(1);
     }
 
     @Test
@@ -41,8 +42,8 @@ class KitsuneBlademasterTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blademaster.getPowerModifier()).isEqualTo(1);
-        assertThat(blademaster.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blademaster)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blademaster)).isEqualTo(1);
     }
 
     @Test
@@ -57,8 +58,8 @@ class KitsuneBlademasterTest extends BaseCardTest {
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(blademaster.getPowerModifier()).isEqualTo(1);
-        assertThat(blademaster.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blademaster)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blademaster)).isEqualTo(1);
     }
 
     @Test
@@ -69,8 +70,8 @@ class KitsuneBlademasterTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(blademaster.getPowerModifier()).isZero();
-        assertThat(blademaster.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blademaster)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blademaster)).isZero();
     }
 
     @Test
@@ -98,10 +99,10 @@ class KitsuneBlademasterTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
-        assertThat(blocker.getPowerModifier()).isEqualTo(1);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(1);
 
         resolveCombat();
 
@@ -121,14 +122,14 @@ class KitsuneBlademasterTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blademaster.getPowerModifier()).isEqualTo(1);
-        assertThat(blademaster.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blademaster)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blademaster)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blademaster.getPowerModifier()).isZero();
-        assertThat(blademaster.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blademaster)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blademaster)).isZero();
     }
 }

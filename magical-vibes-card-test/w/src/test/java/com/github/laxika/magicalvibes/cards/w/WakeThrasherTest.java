@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.MerrowLevitator;
 import com.github.laxika.magicalvibes.cards.s.SlipperyBogle;
 import com.github.laxika.magicalvibes.cards.s.SpringjackPasture;
@@ -28,8 +29,8 @@ class WakeThrasherTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         assertThat(pasture.isTapped()).isFalse();
-        assertThat(thrasher.getPowerModifier()).isEqualTo(1);
-        assertThat(thrasher.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, thrasher)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thrasher)).isEqualTo(1);
     }
     @Test
     @DisplayName("Already untapped permanents do not trigger Wake Thrasher")
@@ -39,8 +40,8 @@ class WakeThrasherTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        assertThat(thrasher.getPowerModifier()).isZero();
-        assertThat(thrasher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, thrasher)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thrasher)).isZero();
     }
 
     @Test
@@ -53,10 +54,10 @@ class WakeThrasherTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(1);
     }
 
     @Test
@@ -73,8 +74,8 @@ class WakeThrasherTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(levitator.isTapped()).isFalse();
-        assertThat(thrasher.getPowerModifier()).isZero();
-        assertThat(thrasher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, thrasher)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thrasher)).isZero();
     }
 
     @Test
@@ -86,8 +87,8 @@ class WakeThrasherTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        assertThat(thrasher.getPowerModifier()).isEqualTo(1);
-        assertThat(thrasher.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, thrasher)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thrasher)).isEqualTo(1);
     }
 
     @Test
@@ -100,8 +101,8 @@ class WakeThrasherTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        assertThat(thrasher.getPowerModifier()).isEqualTo(2);
-        assertThat(thrasher.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, thrasher)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thrasher)).isEqualTo(2);
     }
 
     @Test
@@ -119,8 +120,8 @@ class WakeThrasherTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(levitator.isTapped()).isFalse();
-        assertThat(thrasher.getPowerModifier()).isEqualTo(1);
-        assertThat(thrasher.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, thrasher)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thrasher)).isEqualTo(1);
     }
 
     @Test
@@ -131,7 +132,7 @@ class WakeThrasherTest extends BaseCardTest {
         bogle.tap();
 
         advanceToUpkeep(player1);
-        assertThat(thrasher.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, thrasher)).isEqualTo(1);
 
         // Advance into cleanup, emptying the hand so no discard-to-hand-size choice interrupts it.
         harness.setHand(player1, List.of());
@@ -139,8 +140,8 @@ class WakeThrasherTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(thrasher.getPowerModifier()).isEqualTo(0);
-        assertThat(thrasher.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, thrasher)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thrasher)).isEqualTo(0);
     }
 
     @Test
@@ -152,7 +153,7 @@ class WakeThrasherTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
-        assertThat(thrasher.getPowerModifier()).isEqualTo(0);
-        assertThat(thrasher.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, thrasher)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thrasher)).isEqualTo(0);
     }
 }

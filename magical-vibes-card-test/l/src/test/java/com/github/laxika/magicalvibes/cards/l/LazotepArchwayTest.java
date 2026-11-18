@@ -58,8 +58,8 @@ class LazotepArchwayTest extends BaseCardTest {
         Permanent token = findPermanent(player1, "Lazotep Archway");
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.isTapped()).isTrue();
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
         assertThat(token.getCard().hasType(CardType.LAND)).isTrue();

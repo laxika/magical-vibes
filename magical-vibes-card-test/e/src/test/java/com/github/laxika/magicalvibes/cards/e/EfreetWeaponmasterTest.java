@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BringLow;
 import com.github.laxika.magicalvibes.cards.s.SmokeTeller;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,8 +28,8 @@ class EfreetWeaponmasterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -57,8 +58,8 @@ class EfreetWeaponmasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(efreet.isFaceDown()).isFalse();
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -73,8 +74,8 @@ class EfreetWeaponmasterTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Efreet Weaponmaster").isFaceDown()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -85,12 +86,12 @@ class EfreetWeaponmasterTest extends BaseCardTest {
         harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -105,8 +106,8 @@ class EfreetWeaponmasterTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Efreet Weaponmaster");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(findPermanent(player1, "Efreet Weaponmaster").getPowerModifier()).isZero();
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Efreet Weaponmaster"))).isZero();
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -127,8 +128,8 @@ class EfreetWeaponmasterTest extends BaseCardTest {
         assertThat(efreet.isFaceDown()).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(efreet.getPowerModifier()).isZero();
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, efreet)).isZero();
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -148,8 +149,8 @@ class EfreetWeaponmasterTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Efreet Weaponmaster");
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -170,8 +171,8 @@ class EfreetWeaponmasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(otherCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(otherCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
     }
 
     private void addNormalManaCost() {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AncientBrontodon;
 import com.github.laxika.magicalvibes.cards.q.QueensBaySoldier;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -28,10 +29,10 @@ class VampiresZealTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
-        assertThat(creature.getEffectivePower()).isEqualTo(11);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(11);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(11);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -44,8 +45,8 @@ class VampiresZealTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, vampire.getId());
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(2);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -59,14 +60,14 @@ class VampiresZealTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, vampire.getId());
 
         harness.forceStep(TurnStep.END_STEP);
-        assertThat(vampire.getPowerModifier()).isEqualTo(2);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isTrue();
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(0);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -98,8 +99,8 @@ class VampiresZealTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, vampire.getId());
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(2);
-        assertThat(vampire.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -114,19 +115,19 @@ class VampiresZealTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, vampire.getId());
         harness.castAndResolveInstant(player1, 0, vampire.getId());
 
-        assertThat(vampire.getEffectivePower()).isEqualTo(6);
-        assertThat(vampire.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.FIRST_STRIKE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(vampire.getPowerModifier()).isZero();
-        assertThat(vampire.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vampire)).isZero();
         assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -139,8 +140,8 @@ class VampiresZealTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
     }
 }

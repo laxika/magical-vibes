@@ -32,8 +32,8 @@ class DjinnOfTheFountainTest extends BaseCardTest {
     @DisplayName("Casting an instant lets Djinn of the Fountain get +1/+1 until end of turn")
     void boostMode() {
         Permanent djinn = addReadyDjinn();
-        int initialPower = djinn.getEffectivePower();
-        int initialToughness = djinn.getEffectiveToughness();
+        int initialPower = gqs.getEffectivePower(gd, djinn);
+        int initialToughness = gqs.getEffectiveToughness(gd, djinn);
 
         castShock();
         harness.handleListChoice(player1, BOOST_MODE);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -60,8 +61,8 @@ class EsperBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        attacker.setPowerModifier(3);
-        attacker.setToughnessModifier(3);
+        PermanentGrants.setPowerBoost(gd, attacker, 3);
+        PermanentGrants.setToughnessBoost(gd, attacker, 3);
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
 
@@ -103,8 +104,8 @@ class EsperBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(-1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(-1);
     }
 
     @Test
@@ -138,8 +139,8 @@ class EsperBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -212,8 +213,8 @@ class EsperBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent mage = findPermanent(player1, "Esper Battlemage");
-        assertThat(mage.getPowerModifier()).isEqualTo(-1);
-        assertThat(mage.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mage)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mage)).isEqualTo(-1);
         assertThat(mage.isTapped()).isTrue();
     }
 

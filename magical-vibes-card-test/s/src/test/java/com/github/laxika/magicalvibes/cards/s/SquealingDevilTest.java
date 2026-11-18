@@ -34,15 +34,15 @@ class SquealingDevilTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
         harness.handleXValueChosen(player1, 2);
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.assertOnBattlefield(player1, "Squealing Devil");
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -59,7 +59,7 @@ class SquealingDevilTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 0);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         harness.assertOnBattlefield(player1, "Squealing Devil");
     }
 
@@ -158,7 +158,7 @@ class SquealingDevilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         harness.assertOnBattlefield(player1, "Squealing Devil");
         harness.assertNotInGraveyard(player1, "Squealing Devil");
     }
@@ -182,8 +182,8 @@ class SquealingDevilTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 2);
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

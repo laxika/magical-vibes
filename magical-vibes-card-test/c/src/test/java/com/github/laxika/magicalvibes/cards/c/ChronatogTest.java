@@ -25,15 +25,15 @@ class ChronatogTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(chronatog), null, null);
         harness.passBothPriorities();
 
-        assertThat(chronatog.getEffectivePower()).isEqualTo(4);
-        assertThat(chronatog.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, chronatog)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, chronatog)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(chronatog.getEffectivePower()).isEqualTo(1);
-        assertThat(chronatog.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, chronatog)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, chronatog)).isEqualTo(2);
     }
 
     @Test
@@ -102,8 +102,8 @@ class ChronatogTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(chronatog), null, null);
         harness.passBothPriorities();
 
-        assertThat(chronatog.getEffectivePower()).isEqualTo(4);
-        assertThat(chronatog.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, chronatog)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, chronatog)).isEqualTo(5);
         assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
     }
 
@@ -121,7 +121,7 @@ class ChronatogTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(chronatog.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, chronatog)).isEqualTo(4);
         assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(1);
     }
 
@@ -139,8 +139,8 @@ class ChronatogTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(chronatog), null, null);
         harness.passBothPriorities();
 
-        assertThat(chronatog.getEffectivePower()).isEqualTo(4);
-        assertThat(chronatog.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, chronatog)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, chronatog)).isEqualTo(5);
         assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(2);
         assertThat(gd.skipNextCount(player2.getId(), SkipKind.TURN)).isZero();
 
@@ -163,16 +163,16 @@ class ChronatogTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(first), null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
 
         harness.activateAbility(player1, battlefieldIndex(second), null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(5);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
         assertThat(gd.skipNextCount(player1.getId(), SkipKind.TURN)).isEqualTo(2);
     }
 

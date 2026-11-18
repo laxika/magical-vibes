@@ -23,8 +23,8 @@ class YouCannotHideFromMeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
@@ -43,8 +43,8 @@ class YouCannotHideFromMeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
@@ -81,7 +81,7 @@ class YouCannotHideFromMeTest extends BaseCardTest {
 
         advanceToCombat(player2);
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
 
         advanceToEndStep(player1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -97,7 +97,7 @@ class YouCannotHideFromMeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
@@ -111,7 +111,7 @@ class YouCannotHideFromMeTest extends BaseCardTest {
         advanceToCombat(player1);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
     }
 
     @Test

@@ -48,8 +48,8 @@ class AdderStaffBoggartTest extends BaseCardTest {
         Permanent boggart = castAdderStaffBoggart();
 
         assertThat(boggart.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(boggart.getEffectivePower()).isEqualTo(3);
-        assertThat(boggart.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, boggart)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, boggart)).isEqualTo(2);
     }
 
     @Test
@@ -62,8 +62,8 @@ class AdderStaffBoggartTest extends BaseCardTest {
         Permanent boggart = castAdderStaffBoggart();
 
         assertThat(boggart.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
-        assertThat(boggart.getEffectivePower()).isEqualTo(2);
-        assertThat(boggart.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, boggart)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, boggart)).isEqualTo(1);
     }
 
     @Test

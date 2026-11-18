@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
@@ -105,8 +106,8 @@ class SidarKondoOfJamuraaTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(sidar))));
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(-1);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(-1);
     }
 
     @Test
@@ -173,9 +174,9 @@ class SidarKondoOfJamuraaTest extends BaseCardTest {
                 new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(-1);
-        assertThat(first.getToughnessModifier()).isEqualTo(-1);
-        assertThat(second.getPowerModifier()).isEqualTo(-1);
-        assertThat(second.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(-1);
     }
 }

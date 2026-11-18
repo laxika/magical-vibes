@@ -32,8 +32,8 @@ class VastwoodHydraTest extends BaseCardTest {
 
         Permanent hydra = findPermanent(player1, "Vastwood Hydra");
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(hydra.getEffectivePower()).isEqualTo(3);
-        assertThat(hydra.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hydra)).isEqualTo(3);
     }
 
     @Test

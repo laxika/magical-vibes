@@ -187,7 +187,7 @@ class DropOfHoneyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DropOfHoney());
 
         advanceToUpkeep(player1);
-        bears.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, bears, 2);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);

@@ -31,8 +31,8 @@ class OltecMatterweaverTest extends BaseCardTest {
         Permanent gnome = findPermanent(player1, "Gnome");
         assertThat(gnome.getCard().isToken()).isTrue();
         assertThat(gnome.getCard().getColors()).isEmpty();
-        assertThat(gnome.getEffectivePower()).isEqualTo(1);
-        assertThat(gnome.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, gnome)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, gnome)).isEqualTo(1);
     }
 
     @Test

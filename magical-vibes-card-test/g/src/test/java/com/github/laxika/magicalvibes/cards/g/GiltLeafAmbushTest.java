@@ -62,8 +62,8 @@ class GiltLeafAmbushTest extends BaseCardTest {
         List<Permanent> tokens = elfWarriors();
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allSatisfy(t -> {
-            assertThat(t.getEffectivePower()).isEqualTo(1);
-            assertThat(t.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, t)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, t)).isEqualTo(1);
         });
     }
 

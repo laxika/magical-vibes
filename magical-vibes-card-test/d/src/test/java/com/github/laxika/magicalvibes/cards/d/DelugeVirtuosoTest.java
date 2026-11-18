@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -60,8 +61,8 @@ class DelugeVirtuosoTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(virtuoso.getPowerModifier()).isEqualTo(1);
-        assertThat(virtuoso.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, virtuoso)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, virtuoso)).isEqualTo(1);
     }
 
     @Test
@@ -75,8 +76,8 @@ class DelugeVirtuosoTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 3);
         harness.passBothPriorities();
 
-        assertThat(virtuoso.getPowerModifier()).isEqualTo(1);
-        assertThat(virtuoso.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, virtuoso)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, virtuoso)).isEqualTo(1);
     }
 
     @Test
@@ -90,8 +91,8 @@ class DelugeVirtuosoTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 4);
         harness.passBothPriorities();
 
-        assertThat(virtuoso.getPowerModifier()).isEqualTo(2);
-        assertThat(virtuoso.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, virtuoso)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, virtuoso)).isEqualTo(2);
     }
 
     @Test
@@ -105,8 +106,8 @@ class DelugeVirtuosoTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(virtuoso.getPowerModifier()).isZero();
-        assertThat(virtuoso.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, virtuoso)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, virtuoso)).isZero();
     }
     @Test
     @DisplayName("Two enters abilities put two stun counters on an already tapped creature")
@@ -145,8 +146,8 @@ class DelugeVirtuosoTest extends BaseCardTest {
         harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(virtuoso.getPowerModifier()).isZero();
-        assertThat(virtuoso.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, virtuoso)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, virtuoso)).isZero();
         harness.assertLife(player1, 18);
     }
 }

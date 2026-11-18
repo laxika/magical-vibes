@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MuckRats;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -53,7 +54,7 @@ class FleetFootedMonkTest extends BaseCardTest {
     void reducedPowerCreatureCanBlock(int powerModifier) {
         attackingMonk();
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setPowerModifier(powerModifier);
+        PermanentGrants.setPowerBoost(gd, blocker, powerModifier);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -68,7 +69,7 @@ class FleetFootedMonkTest extends BaseCardTest {
     void increasedPowerCreatureCannotBlock(int powerModifier) {
         attackingMonk();
         Permanent blocker = addCreatureReady(player2, new MuckRats());
-        blocker.setPowerModifier(powerModifier);
+        PermanentGrants.setPowerBoost(gd, blocker, powerModifier);
 
         prepareDeclareBlockers();
 

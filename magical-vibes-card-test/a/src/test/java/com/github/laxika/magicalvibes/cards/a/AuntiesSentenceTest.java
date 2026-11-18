@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
@@ -37,8 +38,8 @@ class AuntiesSentenceTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 1, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(-2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(-2);
     }
 
     @Test

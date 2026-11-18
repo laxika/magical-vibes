@@ -43,8 +43,8 @@ class HazoretsFavorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent bears = findPermanent(player1, "Colossapede");
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.HASTE);
     }
 
@@ -84,7 +84,7 @@ class HazoretsFavorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         Permanent bears = findPermanent(player1, "Colossapede");
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.HASTE);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);

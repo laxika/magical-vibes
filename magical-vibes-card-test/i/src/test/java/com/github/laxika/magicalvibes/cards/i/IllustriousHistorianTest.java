@@ -49,8 +49,8 @@ class IllustriousHistorianTest extends BaseCardTest {
         Permanent token = findPermanent(player1, "Spirit");
 
         assertThat(token.getCard().isToken()).isTrue();
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         assertThat(token.getCard().getColors()).containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SPIRIT);
         assertThat(token.isTapped()).isTrue();

@@ -61,8 +61,7 @@ public class BoostTargetCreatureByTargetPlayerCountEffectHandler implements Norm
             if (target == null) {
                 continue;
             }
-            target.setPowerModifier(target.getPowerModifier() + powerBoost);
-            target.setToughnessModifier(target.getToughnessModifier() + toughnessBoost);
+            gameData.addPowerToughnessBoost(entry, target.getId(), powerBoost, toughnessBoost);
             gameLogService.append(gameData, GameLog.builder()
                     .card(target.getCard())
                     .text(String.format(" gets %+d/%+d until end of turn.", powerBoost, toughnessBoost))

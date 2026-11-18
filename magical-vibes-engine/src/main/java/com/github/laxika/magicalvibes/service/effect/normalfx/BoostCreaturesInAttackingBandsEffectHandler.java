@@ -40,8 +40,7 @@ public class BoostCreaturesInAttackingBandsEffectHandler implements NormalEffect
                 .toList();
         int boost = survivingBand.size();
         for (Permanent permanent : survivingBand) {
-            permanent.setPowerModifier(permanent.getPowerModifier() + boost);
-            permanent.setToughnessModifier(permanent.getToughnessModifier() + boost);
+            gameData.addPowerToughnessBoost(entry, permanent.getId(), boost, boost);
         }
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " gives creatures in the attacking band +" + boost + "/+" + boost + " until end of turn."));

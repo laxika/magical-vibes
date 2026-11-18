@@ -69,7 +69,7 @@ class LesserMasticoreTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Lesser Masticore");
         assertThat(returned.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(returned.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(1);
     }
 
     @Test

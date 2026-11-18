@@ -28,8 +28,8 @@ class AliriosEnrapturedTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Reflection")).isEqualTo(1);
         Permanent reflection = findPermanent(player1, "Reflection");
         assertThat(reflection.getCard().isToken()).isTrue();
-        assertThat(reflection.getEffectivePower()).isEqualTo(3);
-        assertThat(reflection.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, reflection)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, reflection)).isEqualTo(2);
         assertThat(reflection.getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(reflection.getCard().getSubtypes()).contains(CardSubtype.REFLECTION);
     }

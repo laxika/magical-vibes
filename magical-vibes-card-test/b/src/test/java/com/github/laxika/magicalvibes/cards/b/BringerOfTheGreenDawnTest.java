@@ -119,8 +119,8 @@ class BringerOfTheGreenDawnTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Beast");
         assertThat(token.getCard().isToken()).isTrue();
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.BEAST);
     }

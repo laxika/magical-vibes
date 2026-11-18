@@ -33,8 +33,8 @@ class BoroughBackupTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Hero")).hasSize(2).allSatisfy(hero -> {
             assertThat(hero.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(hero.getCard().getSubtypes()).contains(CardSubtype.HERO);
-            assertThat(hero.getEffectivePower()).isEqualTo(3);
-            assertThat(hero.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(2);
             assertThat(hero.hasKeyword(Keyword.VIGILANCE)).isTrue();
         });
     }

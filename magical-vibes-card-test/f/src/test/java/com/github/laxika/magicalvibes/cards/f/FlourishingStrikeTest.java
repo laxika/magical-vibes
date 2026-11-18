@@ -35,14 +35,14 @@ class FlourishingStrikeTest extends BaseCardTest {
 
         cast(new int[]{1}, List.of(target.getId()), false);
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -53,8 +53,8 @@ class FlourishingStrikeTest extends BaseCardTest {
         cast(new int[]{0, 1}, List.of(flyingCreature.getId(), creature.getId()), true);
 
         harness.assertNotOnBattlefield(player2, "Air Elemental");
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
@@ -92,8 +92,8 @@ class FlourishingStrikeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Air Elemental");
         assertThat(target.getMarkedDamage()).isEqualTo(5);
-        assertThat(target.getEffectivePower()).isEqualTo(7);
-        assertThat(target.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
     }
 
     @Test
@@ -128,8 +128,8 @@ class FlourishingStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player2, "Air Elemental");
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
         harness.assertInGraveyard(player1, "Flourishing Strike");
     }
 

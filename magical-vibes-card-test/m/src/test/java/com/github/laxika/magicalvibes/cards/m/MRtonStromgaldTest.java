@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -28,8 +29,8 @@ class MRtonStromgaldTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(marton.getPowerModifier()).isZero();
-        assertThat(marton.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, marton)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marton)).isZero();
     }
 
     @Test
@@ -42,12 +43,12 @@ class MRtonStromgaldTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(bearA.getPowerModifier()).isEqualTo(2);
-        assertThat(bearA.getToughnessModifier()).isEqualTo(2);
-        assertThat(bearB.getPowerModifier()).isEqualTo(2);
-        assertThat(bearB.getToughnessModifier()).isEqualTo(2);
-        assertThat(marton.getPowerModifier()).isZero();
-        assertThat(marton.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bearA)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bearA)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bearB)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bearB)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, marton)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marton)).isZero();
     }
 
     @Test
@@ -60,8 +61,8 @@ class MRtonStromgaldTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(attackingBear.getPowerModifier()).isEqualTo(1);
-        assertThat(homeBear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attackingBear)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, homeBear)).isZero();
     }
 
     @Test
@@ -76,12 +77,12 @@ class MRtonStromgaldTest extends BaseCardTest {
         secondBear.setAttacking(true);
         resolveAllTriggers();
 
-        assertThat(firstBear.getPowerModifier()).isEqualTo(2);
-        assertThat(firstBear.getToughnessModifier()).isEqualTo(2);
-        assertThat(secondBear.getPowerModifier()).isEqualTo(2);
-        assertThat(secondBear.getToughnessModifier()).isEqualTo(2);
-        assertThat(marton.getPowerModifier()).isZero();
-        assertThat(marton.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstBear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstBear)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondBear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondBear)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, marton)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marton)).isZero();
     }
 
     @Test
@@ -92,14 +93,14 @@ class MRtonStromgaldTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -119,10 +120,10 @@ class MRtonStromgaldTest extends BaseCardTest {
                 new BlockerAssignment(1, 1)));
         harness.passBothPriorities();
 
-        assertThat(blockingBear.getPowerModifier()).isEqualTo(1);
-        assertThat(blockingBear.getToughnessModifier()).isEqualTo(1);
-        assertThat(marton.getPowerModifier()).isZero();
-        assertThat(marton.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blockingBear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blockingBear)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, marton)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marton)).isZero();
     }
 
     @Test
@@ -137,8 +138,8 @@ class MRtonStromgaldTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(marton.getPowerModifier()).isZero();
-        assertThat(marton.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, marton)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marton)).isZero();
     }
 
     @Test
@@ -161,12 +162,12 @@ class MRtonStromgaldTest extends BaseCardTest {
         secondBlocker.setBlocking(true);
         harness.passBothPriorities();
 
-        assertThat(firstBlocker.getPowerModifier()).isEqualTo(2);
-        assertThat(firstBlocker.getToughnessModifier()).isEqualTo(2);
-        assertThat(secondBlocker.getPowerModifier()).isEqualTo(2);
-        assertThat(secondBlocker.getToughnessModifier()).isEqualTo(2);
-        assertThat(marton.getPowerModifier()).isZero();
-        assertThat(marton.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstBlocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstBlocker)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondBlocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondBlocker)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, marton)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marton)).isZero();
     }
 
     @Test
@@ -182,10 +183,10 @@ class MRtonStromgaldTest extends BaseCardTest {
         reenteredMarton.setAttacking(true);
         resolveAllTriggers();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
-        assertThat(reenteredMarton.getPowerModifier()).isEqualTo(2);
-        assertThat(reenteredMarton.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, reenteredMarton)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, reenteredMarton)).isEqualTo(2);
     }
 
     @Test
@@ -209,10 +210,10 @@ class MRtonStromgaldTest extends BaseCardTest {
         reenteredMarton.setBlocking(true);
         resolveAllTriggers();
 
-        assertThat(firstBlocker.getPowerModifier()).isEqualTo(2);
-        assertThat(firstBlocker.getToughnessModifier()).isEqualTo(2);
-        assertThat(reenteredMarton.getPowerModifier()).isEqualTo(2);
-        assertThat(reenteredMarton.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstBlocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstBlocker)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, reenteredMarton)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, reenteredMarton)).isEqualTo(2);
     }
 
     @Test
@@ -233,10 +234,10 @@ class MRtonStromgaldTest extends BaseCardTest {
                 new BlockerAssignment(1, 2)));
         resolveAllTriggers();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
-        assertThat(marton.getPowerModifier()).isZero();
-        assertThat(marton.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, marton)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, marton)).isZero();
     }
 
     @Test
@@ -250,10 +251,10 @@ class MRtonStromgaldTest extends BaseCardTest {
         removed.setAttacking(false);
         resolveAllTriggers();
 
-        assertThat(remaining.getPowerModifier()).isEqualTo(1);
-        assertThat(remaining.getToughnessModifier()).isEqualTo(1);
-        assertThat(removed.getPowerModifier()).isZero();
-        assertThat(removed.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, remaining)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, remaining)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, removed)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, removed)).isZero();
     }
 
     @Test
@@ -268,9 +269,9 @@ class MRtonStromgaldTest extends BaseCardTest {
         Permanent laterAttacker = addCreatureReady(player1, new BalduvianBears());
         laterAttacker.setAttacking(true);
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
-        assertThat(laterAttacker.getPowerModifier()).isZero();
-        assertThat(laterAttacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, laterAttacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterAttacker)).isZero();
     }
 }

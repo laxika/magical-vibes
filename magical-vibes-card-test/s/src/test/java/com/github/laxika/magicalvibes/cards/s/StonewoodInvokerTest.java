@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -21,8 +22,8 @@ class StonewoodInvokerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(invoker.getPowerModifier()).isEqualTo(5);
-        assertThat(invoker.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, invoker)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, invoker)).isEqualTo(5);
     }
 
     @Test
@@ -35,8 +36,8 @@ class StonewoodInvokerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(invoker.getPowerModifier()).isEqualTo(10);
-        assertThat(invoker.getToughnessModifier()).isEqualTo(10);
+        assertThat(PermanentGrants.powerBoostOf(gd, invoker)).isEqualTo(10);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, invoker)).isEqualTo(10);
     }
 
     @Test
@@ -60,8 +61,8 @@ class StonewoodInvokerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(invoker.getPowerModifier()).isEqualTo(5);
-        assertThat(invoker.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, invoker)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, invoker)).isEqualTo(5);
         assertThat(invoker.isTapped()).isFalse();
     }
 
@@ -75,12 +76,12 @@ class StonewoodInvokerTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(0);
-        assertThat(first.getToughnessModifier()).isEqualTo(0);
-        assertThat(second.getPowerModifier()).isEqualTo(5);
-        assertThat(second.getToughnessModifier()).isEqualTo(5);
-        assertThat(opposing.getPowerModifier()).isEqualTo(0);
-        assertThat(opposing.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposing)).isEqualTo(0);
     }
 
     @Test
@@ -115,8 +116,8 @@ class StonewoodInvokerTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(invoker.getPowerModifier()).isEqualTo(0);
-        assertThat(invoker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, invoker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, invoker)).isEqualTo(0);
     }
 
     private void addActivationMana() {

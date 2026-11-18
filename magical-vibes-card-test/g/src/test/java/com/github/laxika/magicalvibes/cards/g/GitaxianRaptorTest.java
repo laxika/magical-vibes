@@ -36,15 +36,15 @@ class GitaxianRaptorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(raptor.getCounterCount(CounterType.OIL)).isEqualTo(2);
-        assertThat(raptor.getEffectivePower()).isEqualTo(2);
-        assertThat(raptor.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, raptor)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, raptor)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(raptor.getEffectivePower()).isEqualTo(1);
-        assertThat(raptor.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, raptor)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, raptor)).isEqualTo(4);
     }
 
     @Test
@@ -63,14 +63,14 @@ class GitaxianRaptorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(raptor.getCounterCount(CounterType.OIL)).isEqualTo(2);
-        assertThat(raptor.getEffectivePower()).isEqualTo(1);
-        assertThat(raptor.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, raptor)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, raptor)).isEqualTo(4);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(raptor.getEffectivePower()).isEqualTo(2);
-        assertThat(raptor.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, raptor)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, raptor)).isEqualTo(3);
     }
 
     @Test
@@ -83,8 +83,8 @@ class GitaxianRaptorTest extends BaseCardTest {
         }
 
         assertThat(raptor.getCounterCount(CounterType.OIL)).isZero();
-        assertThat(raptor.getEffectivePower()).isEqualTo(4);
-        assertThat(raptor.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, raptor)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, raptor)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Gitaxian Raptor");
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -100,8 +100,8 @@ class GitaxianRaptorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(raptor.getCounterCount(CounterType.OIL)).isEqualTo(2);
-        assertThat(raptor.getEffectivePower()).isEqualTo(2);
-        assertThat(raptor.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, raptor)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, raptor)).isEqualTo(3);
         assertThat(raptor.isTapped()).isTrue();
     }
     private Permanent addReadyRaptor(Player player) {

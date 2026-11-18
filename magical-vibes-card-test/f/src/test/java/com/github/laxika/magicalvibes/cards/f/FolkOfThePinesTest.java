@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,8 +25,8 @@ class FolkOfThePinesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(folk.getPowerModifier()).isEqualTo(1);
-        assertThat(folk.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, folk)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, folk)).isEqualTo(0);
     }
 
     @Test
@@ -38,7 +39,7 @@ class FolkOfThePinesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(folk.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, folk)).isEqualTo(1);
     }
 
     @Test
@@ -53,7 +54,7 @@ class FolkOfThePinesTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(folk.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, folk)).isEqualTo(3);
     }
 
     @Test
@@ -66,14 +67,14 @@ class FolkOfThePinesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(folk.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, folk)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(folk.getPowerModifier()).isEqualTo(0);
-        assertThat(folk.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, folk)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, folk)).isEqualTo(0);
     }
 
     @Test
@@ -85,7 +86,7 @@ class FolkOfThePinesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(folk.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, folk)).isEqualTo(0);
     }
 
     @Test
@@ -98,8 +99,8 @@ class FolkOfThePinesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(folk.getPowerModifier()).isEqualTo(1);
-        assertThat(folk.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, folk)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, folk)).isEqualTo(0);
         assertThat(folk.isTapped()).isTrue();
     }
 
@@ -112,7 +113,7 @@ class FolkOfThePinesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(folk.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, folk)).isEqualTo(0);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -128,13 +129,13 @@ class FolkOfThePinesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(folk.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, folk)).isEqualTo(0);
 
         harness.passBothPriorities();
 
-        assertThat(folk.getPowerModifier()).isEqualTo(1);
-        assertThat(folk.getToughnessModifier()).isEqualTo(0);
-        assertThat(other.getPowerModifier()).isEqualTo(0);
-        assertThat(opponent.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, folk)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, folk)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isEqualTo(0);
     }
 }

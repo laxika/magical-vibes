@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RaccoonRallier;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -36,14 +37,14 @@ class BrambleguardVeteranTest extends BaseCardTest {
         Permanent veteran = findPermanent(player1, "Brambleguard Veteran");
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(veteran.getPowerModifier()).isEqualTo(1);
-        assertThat(veteran.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, veteran)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, veteran)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, veteran, Keyword.VIGILANCE)).isTrue();
-        assertThat(raccoon.getPowerModifier()).isEqualTo(1);
-        assertThat(raccoon.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, raccoon)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raccoon)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, raccoon, Keyword.VIGILANCE)).isTrue();
-        assertThat(nonRaccoon.getPowerModifier()).isZero();
-        assertThat(nonRaccoon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonRaccoon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonRaccoon)).isZero();
         assertThat(gqs.hasKeyword(gd, nonRaccoon, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -58,8 +59,8 @@ class BrambleguardVeteranTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(veteran.getPowerModifier()).isZero();
-        assertThat(veteran.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, veteran)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, veteran)).isZero();
         assertThat(gqs.hasKeyword(gd, veteran, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -76,16 +77,16 @@ class BrambleguardVeteranTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0, player2.getId());
         }
 
-        assertThat(veteran.getPowerModifier()).isEqualTo(1);
-        assertThat(veteran.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, veteran)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, veteran)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, veteran, Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(veteran.getPowerModifier()).isZero();
-        assertThat(veteran.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, veteran)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, veteran)).isZero();
         assertThat(gqs.hasKeyword(gd, veteran, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -117,19 +118,19 @@ class BrambleguardVeteranTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(veteran.getPowerModifier()).isEqualTo(1);
-        assertThat(veteran.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, veteran)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, veteran)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, veteran, Keyword.VIGILANCE)).isTrue();
-        assertThat(firstRaccoon.getPowerModifier()).isEqualTo(1);
-        assertThat(firstRaccoon.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstRaccoon)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstRaccoon)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, firstRaccoon, Keyword.VIGILANCE)).isTrue();
-        assertThat(opposingRaccoon.getPowerModifier()).isZero();
-        assertThat(opposingRaccoon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingRaccoon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingRaccoon)).isZero();
         assertThat(gqs.hasKeyword(gd, opposingRaccoon, Keyword.VIGILANCE)).isFalse();
         for (Permanent permanent : gd.playerBattlefields.get(player1.getId())) {
             if (permanent != veteran && permanent != firstRaccoon) {
-                assertThat(permanent.getPowerModifier()).isZero();
-                assertThat(permanent.getToughnessModifier()).isZero();
+                assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isZero();
+                assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isZero();
                 assertThat(gqs.hasKeyword(gd, permanent, Keyword.VIGILANCE)).isFalse();
             }
         }
@@ -156,15 +157,15 @@ class BrambleguardVeteranTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(firstVeteran.getPowerModifier()).isEqualTo(1);
-        assertThat(firstVeteran.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstVeteran)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstVeteran)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, firstVeteran, Keyword.VIGILANCE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
         Permanent secondVeteran = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent != firstVeteran)
                 .findFirst().orElseThrow();
-        assertThat(secondVeteran.getPowerModifier()).isZero();
-        assertThat(secondVeteran.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, secondVeteran)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondVeteran)).isZero();
         assertThat(gqs.hasKeyword(gd, secondVeteran, Keyword.VIGILANCE)).isFalse();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BeastWalkers;
 import com.github.laxika.magicalvibes.cards.d.DwarvenTrader;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -25,8 +26,8 @@ class GrandmotherSengirTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(-1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(-1);
     }
 
     @Test
@@ -50,8 +51,8 @@ class GrandmotherSengirTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, sengir.getId());
         harness.passBothPriorities();
 
-        assertThat(sengir.getPowerModifier()).isEqualTo(-1);
-        assertThat(sengir.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, sengir)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sengir)).isEqualTo(-1);
     }
 
     @Test
@@ -67,8 +68,8 @@ class GrandmotherSengirTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -90,14 +91,14 @@ class GrandmotherSengirTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
     }
 
     @Test
@@ -113,7 +114,7 @@ class GrandmotherSengirTest extends BaseCardTest {
                 .hasMessageContaining("tapped");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test

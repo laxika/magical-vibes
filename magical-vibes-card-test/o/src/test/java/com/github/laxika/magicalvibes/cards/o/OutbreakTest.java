@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -36,9 +37,9 @@ class OutbreakTest extends BaseCardTest {
         castOutbreak(player1);
         harness.handleListChoice(player1, "BEAR");
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getPowerModifier()).isEqualTo(-1);
-        assertThat(findPermanent(player2, "Grizzly Bears").getPowerModifier()).isEqualTo(-1);
-        assertThat(findPermanent(player1, "Hill Giant").getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player2, "Grizzly Bears"))).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Hill Giant"))).isZero();
     }
 
     @Test
@@ -61,14 +62,14 @@ class OutbreakTest extends BaseCardTest {
         castOutbreak(player1);
         harness.handleListChoice(player1, "BEAR");
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -83,7 +84,7 @@ class OutbreakTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Outbreak");
         harness.assertInGraveyard(player1, "Swamp");
-        assertThat(findPermanent(player2, "Grizzly Bears").getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player2, "Grizzly Bears"))).isEqualTo(-1);
     }
 
     @Test
@@ -103,8 +104,8 @@ class OutbreakTest extends BaseCardTest {
         castOutbreak(player1);
         harness.handleListChoice(player1, "INSECT");
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         harness.assertInGraveyard(player1, "Outbreak");
     }
 
@@ -117,10 +118,10 @@ class OutbreakTest extends BaseCardTest {
         harness.handleListChoice(player1, "BEAR");
         Permanent laterBear = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThat(originalBear.getPowerModifier()).isEqualTo(-1);
-        assertThat(originalBear.getToughnessModifier()).isEqualTo(-1);
-        assertThat(laterBear.getPowerModifier()).isZero();
-        assertThat(laterBear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, originalBear)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, originalBear)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, laterBear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterBear)).isZero();
     }
 
     @Test
@@ -148,14 +149,14 @@ class OutbreakTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Swamp");
         harness.assertNotInHand(player1, "Swamp");
         harness.assertNotInGraveyard(player1, "Outbreak");
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
 
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BEAR");
 
-        assertThat(bear.getPowerModifier()).isEqualTo(-1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(-1);
         harness.assertInGraveyard(player1, "Outbreak");
     }
 }

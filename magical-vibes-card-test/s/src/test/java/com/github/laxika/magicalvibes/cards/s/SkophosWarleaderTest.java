@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NyxbornBrute;
@@ -39,8 +40,8 @@ class SkophosWarleaderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(warleader.getPowerModifier()).isEqualTo(1);
-        assertThat(warleader.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warleader)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warleader)).isZero();
         assertThat(gqs.hasKeyword(gd, warleader, Keyword.MENACE)).isTrue();
     }
 
@@ -54,7 +55,7 @@ class SkophosWarleaderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Glorious Anthem");
-        assertThat(warleader.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, warleader)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, warleader, Keyword.MENACE)).isTrue();
     }
 
@@ -70,7 +71,7 @@ class SkophosWarleaderTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(warleader.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warleader)).isZero();
         assertThat(gqs.hasKeyword(gd, warleader, Keyword.MENACE)).isFalse();
     }
 
@@ -122,13 +123,13 @@ class SkophosWarleaderTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrifice);
         harness.assertInGraveyard(player1, "Nyxborn Brute");
         assertThat(gd.stack).hasSize(1);
-        assertThat(warleader.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warleader)).isZero();
         assertThat(gqs.hasKeyword(gd, warleader, Keyword.MENACE)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(warleader.getPowerModifier()).isEqualTo(1);
-        assertThat(warleader.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warleader)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warleader)).isZero();
         assertThat(gqs.hasKeyword(gd, warleader, Keyword.MENACE)).isTrue();
     }
 
@@ -146,16 +147,16 @@ class SkophosWarleaderTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstSacrifice, secondSacrifice);
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
-        assertThat(warleader.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, warleader)).isEqualTo(1);
         harness.passBothPriorities();
-        assertThat(warleader.getPowerModifier()).isEqualTo(2);
-        assertThat(warleader.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warleader)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warleader)).isZero();
         assertThat(gqs.hasKeyword(gd, warleader, Keyword.MENACE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(warleader.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warleader)).isZero();
         assertThat(gqs.hasKeyword(gd, warleader, Keyword.MENACE)).isFalse();
     }
 

@@ -52,8 +52,8 @@ class NathsEliteTest extends BaseCardTest {
         Permanent elite = castNathsElite();
 
         assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(elite.getEffectivePower()).isEqualTo(5);
-        assertThat(elite.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, elite)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elite)).isEqualTo(3);
     }
 
     @Test
@@ -66,8 +66,8 @@ class NathsEliteTest extends BaseCardTest {
         Permanent elite = castNathsElite();
 
         assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
-        assertThat(elite.getEffectivePower()).isEqualTo(4);
-        assertThat(elite.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, elite)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elite)).isEqualTo(2);
     }
 
     @Test

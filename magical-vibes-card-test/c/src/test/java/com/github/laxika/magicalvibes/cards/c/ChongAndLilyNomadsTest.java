@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FoundingOfOmashu;
 import com.github.laxika.magicalvibes.cards.h.HippoCows;
 import com.github.laxika.magicalvibes.model.Card;
@@ -64,10 +65,10 @@ class ChongAndLilyNomadsTest extends BaseCardTest {
         harness.handleListChoice(player1, BOOST_CREATURES);
         harness.passBothPriorities();
 
-        assertThat(chongAndLily.getPowerModifier()).isEqualTo(2);
-        assertThat(bard.getPowerModifier()).isEqualTo(2);
-        assertThat(chongAndLily.getToughnessModifier()).isZero();
-        assertThat(bard.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, chongAndLily)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bard)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, chongAndLily)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bard)).isZero();
     }
 
     @Test
@@ -95,7 +96,7 @@ class ChongAndLilyNomadsTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.passBothPriorities();
-        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
     }
 
     @Test
@@ -116,16 +117,16 @@ class ChongAndLilyNomadsTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(opposingCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isZero();
         saga.setCounterCount(CounterType.LORE, 1);
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -138,8 +139,8 @@ class ChongAndLilyNomadsTest extends BaseCardTest {
         harness.handleListChoice(player1, BOOST_CREATURES);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
     }
 
     @Test

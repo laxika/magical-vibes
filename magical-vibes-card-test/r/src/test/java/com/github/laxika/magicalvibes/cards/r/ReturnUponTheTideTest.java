@@ -45,8 +45,8 @@ class ReturnUponTheTideTest extends BaseCardTest {
         assertThat(tokens).hasSize(2).allSatisfy(token -> {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ELF, CardSubtype.WARRIOR);
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         });
     }
 

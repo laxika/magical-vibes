@@ -88,9 +88,9 @@ class JoelResoluteSurvivorTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        firstToken.setMarkedDamage(firstToken.getEffectiveToughness());
+        firstToken.setMarkedDamage(gqs.getEffectiveToughness(gd, firstToken));
         harness.runStateBasedActions();
-        secondToken.setMarkedDamage(secondToken.getEffectiveToughness());
+        secondToken.setMarkedDamage(gqs.getEffectiveToughness(gd, secondToken));
         harness.runStateBasedActions();
 
         assertThat(gd.stack).hasSize(1);
@@ -109,9 +109,9 @@ class JoelResoluteSurvivorTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        joel.setMarkedDamage(joel.getEffectiveToughness());
-        firstToken.setMarkedDamage(firstToken.getEffectiveToughness());
-        secondToken.setMarkedDamage(secondToken.getEffectiveToughness());
+        joel.setMarkedDamage(gqs.getEffectiveToughness(gd, joel));
+        firstToken.setMarkedDamage(gqs.getEffectiveToughness(gd, firstToken));
+        secondToken.setMarkedDamage(gqs.getEffectiveToughness(gd, secondToken));
         harness.runStateBasedActions();
         resolveAllTriggers();
 
@@ -144,7 +144,7 @@ class JoelResoluteSurvivorTest extends BaseCardTest {
     }
 
     private void kill(Permanent creature) {
-        creature.setMarkedDamage(creature.getEffectiveToughness());
+        creature.setMarkedDamage(gqs.getEffectiveToughness(gd, creature));
         harness.runStateBasedActions();
         resolveAllTriggers();
     }

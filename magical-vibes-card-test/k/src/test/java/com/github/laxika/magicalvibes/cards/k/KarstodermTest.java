@@ -20,8 +20,8 @@ class KarstodermTest extends BaseCardTest {
     void entersWithFiveCounters() {
         Permanent karstoderm = castKarstoderm();
 
-        assertThat(karstoderm.getEffectivePower()).isEqualTo(5);
-        assertThat(karstoderm.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, karstoderm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, karstoderm)).isEqualTo(5);
     }
 
     @Test
@@ -32,8 +32,8 @@ class KarstodermTest extends BaseCardTest {
         harness.castFromHand(player1, new DarksteelBrute(), "{2}");
         resolveAllTriggers();
 
-        assertThat(karstoderm.getEffectivePower()).isEqualTo(4);
-        assertThat(karstoderm.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, karstoderm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, karstoderm)).isEqualTo(4);
     }
 
     @Test
@@ -47,8 +47,8 @@ class KarstodermTest extends BaseCardTest {
         harness.castFromHand(player2, new DarksteelBrute(), "{2}");
         resolveAllTriggers();
 
-        assertThat(karstoderm.getEffectivePower()).isEqualTo(4);
-        assertThat(karstoderm.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, karstoderm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, karstoderm)).isEqualTo(4);
     }
 
     @Test
@@ -59,8 +59,8 @@ class KarstodermTest extends BaseCardTest {
         harness.castFromHand(player1, new CrazedGoblin(), "{R}");
         harness.passBothPriorities();
 
-        assertThat(karstoderm.getEffectivePower()).isEqualTo(5);
-        assertThat(karstoderm.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, karstoderm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, karstoderm)).isEqualTo(5);
     }
 
     @Test

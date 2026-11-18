@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.MillennialGargoyle;
 import com.github.laxika.magicalvibes.cards.s.Smite;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,8 +30,8 @@ class GuardianOfTheGatelessTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(guardian.getPowerModifier()).isEqualTo(1);
-        assertThat(guardian.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, guardian)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, guardian)).isEqualTo(1);
     }
 
     @Test
@@ -52,8 +53,8 @@ class GuardianOfTheGatelessTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(guardian.getPowerModifier()).isEqualTo(3);
-        assertThat(guardian.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, guardian)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, guardian)).isEqualTo(3);
     }
 
     @Test
@@ -66,8 +67,8 @@ class GuardianOfTheGatelessTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(guardian.getPowerModifier()).isZero();
-        assertThat(guardian.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, guardian)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, guardian)).isZero();
     }
 
     @Test
@@ -81,13 +82,13 @@ class GuardianOfTheGatelessTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(guardian.getPowerModifier()).isEqualTo(1);
-        assertThat(guardian.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, guardian)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, guardian)).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(guardian.getPowerModifier()).isZero();
-        assertThat(guardian.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, guardian)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, guardian)).isZero();
     }
 
     @Test
@@ -108,8 +109,8 @@ class GuardianOfTheGatelessTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(removedAttacker);
         harness.passBothPriorities();
 
-        assertThat(guardian.getPowerModifier()).isEqualTo(1);
-        assertThat(guardian.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, guardian)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, guardian)).isEqualTo(1);
     }
 
     private Permanent addReadyGuardian(Player player) {

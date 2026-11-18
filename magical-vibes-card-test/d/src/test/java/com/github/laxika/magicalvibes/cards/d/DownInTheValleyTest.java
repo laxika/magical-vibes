@@ -100,8 +100,8 @@ class DownInTheValleyTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Elf")).isEqualTo(1);
         Permanent elf = findPermanent(player1, "Elf");
-        assertThat(elf.getEffectivePower()).isEqualTo(1);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(1);
     }
 
     @Test

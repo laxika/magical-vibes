@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,12 +30,12 @@ class WildfireElementalTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(1);
-        assertThat(elemental.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(opponentBears.getPowerModifier()).isEqualTo(0);
-        assertThat(opponentBears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentBears)).isEqualTo(0);
     }
 
     @Test
@@ -47,14 +48,14 @@ class WildfireElementalTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -66,7 +67,7 @@ class WildfireElementalTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         assertThat(gd.stack).isEmpty();
-        assertThat(elemental.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isZero();
     }
 
     @Test
@@ -79,7 +80,7 @@ class WildfireElementalTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Greenwood Sentinel");
         assertThat(gd.stack).isEmpty();
-        assertThat(elemental.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isZero();
     }
 
     @Test
@@ -92,8 +93,8 @@ class WildfireElementalTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(elemental.getPowerModifier()).isEqualTo(1);
-        assertThat(elemental.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isZero();
     }
 
     @Test
@@ -107,8 +108,8 @@ class WildfireElementalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 16);
-        assertThat(elemental.getPowerModifier()).isEqualTo(2);
-        assertThat(elemental.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isZero();
     }
 
     @Test
@@ -122,9 +123,9 @@ class WildfireElementalTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GreenwoodSentinel());
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
-        assertThat(afterResolution.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
     }
 
     @Test
@@ -138,7 +139,7 @@ class WildfireElementalTest extends BaseCardTest {
 
         harness.assertLife(player2, 17);
         assertThat(gd.stack).isEmpty();
-        assertThat(elemental.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isZero();
     }
 
     @Test
@@ -152,9 +153,9 @@ class WildfireElementalTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 }

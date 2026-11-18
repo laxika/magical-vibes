@@ -31,8 +31,8 @@ class JoyfulStormsculptorTest extends BaseCardTest {
         List<Permanent> tokens = findPermanents(player1, "Elemental");
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allSatisfy(token -> {
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
             assertThat(token.getCard().getColors())
                     .containsExactlyInAnyOrder(CardColor.BLUE, CardColor.RED);
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ELEMENTAL);

@@ -1645,8 +1645,7 @@ public class CardChoiceHandlerService {
                 if (bf == null) continue;
                 for (Permanent p : bf) {
                     if (p.getId().equals(permanentId)) {
-                        p.setPowerModifier(p.getPowerModifier() + powerBoost);
-                        p.setToughnessModifier(p.getToughnessModifier() + toughnessBoost);
+                        gameData.addPowerToughnessBoost(p, powerBoost, toughnessBoost);
                         gameLogService.append(gameData, GameLog.builder()
                                 .card(p.getCard())
                                 .text(String.format(" gets %+d/%+d until end of turn.",
@@ -3415,7 +3414,7 @@ public class CardChoiceHandlerService {
         if (source == null) {
             return;
         }
-        source.setPowerModifier(source.getPowerModifier() + boost);
+        gameData.addPowerToughnessBoost(source, boost, 0);
         gameLogService.append(gameData, GameLog.builder()
                 .card(source.getCard())
                 .text(String.format(" gets +%d/+0 until end of turn.", boost))

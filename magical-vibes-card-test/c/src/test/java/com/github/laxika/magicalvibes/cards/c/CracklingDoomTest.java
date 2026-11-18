@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -109,8 +110,8 @@ class CracklingDoomTest extends BaseCardTest {
     void sacrificesGreatestPowerWhenAllPowersAreNegative() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new HillGiant());
-        findPermanent(player2, "Grizzly Bears").setPowerModifier(-3);
-        findPermanent(player2, "Hill Giant").setPowerModifier(-5);
+        PermanentGrants.setPowerBoost(gd, findPermanent(player2, "Grizzly Bears"), -3);
+        PermanentGrants.setPowerBoost(gd, findPermanent(player2, "Hill Giant"), -5);
 
         castCracklingDoom();
 

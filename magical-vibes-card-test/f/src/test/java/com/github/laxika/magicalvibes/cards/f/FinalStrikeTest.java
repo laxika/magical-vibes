@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChandraBoldPyromancer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
@@ -160,7 +161,7 @@ class FinalStrikeTest extends BaseCardTest {
     @DisplayName("A zero-power sacrifice deals no damage but still pays the cost")
     void zeroPowerDealsNoDamage() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        sacrifice.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, sacrifice, -2);
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new FinalStrike()));
         addManaForFinalStrike();
@@ -177,7 +178,7 @@ class FinalStrikeTest extends BaseCardTest {
     @DisplayName("A negative-power sacrifice deals no damage and does not grant life")
     void negativePowerDealsNoDamage() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        sacrifice.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, sacrifice, -3);
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new FinalStrike()));
         addManaForFinalStrike();

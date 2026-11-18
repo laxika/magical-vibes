@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BearDown;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -148,7 +149,7 @@ class StormkeldVanguardTest extends BaseCardTest {
     @Test
     void creatureWithPrintedPowerOneCanBlockAfterItsPowerIncreases() {
         Permanent blocker = addCreatureReady(player2, new RootriderFaun());
-        blocker.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, blocker, 2);
         Permanent vanguard = addCreatureReady(player1, new StormkeldVanguard());
         vanguard.setAttacking(true);
         prepareDeclareBlockers();
@@ -161,7 +162,7 @@ class StormkeldVanguardTest extends BaseCardTest {
     @Test
     void creatureWithPrintedPowerSixCannotBlockAfterItsPowerDecreases() {
         Permanent blocker = addCreatureReady(player2, new StormkeldVanguard());
-        blocker.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, blocker, -4);
         Permanent vanguard = addCreatureReady(player1, new StormkeldVanguard());
         vanguard.setAttacking(true);
         prepareDeclareBlockers();

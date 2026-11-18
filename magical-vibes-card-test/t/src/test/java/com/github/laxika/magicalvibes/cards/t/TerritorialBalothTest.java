@@ -24,8 +24,8 @@ class TerritorialBalothTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(baloth.getEffectivePower()).isEqualTo(6);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(6);
     }
 
     @Test
@@ -38,8 +38,8 @@ class TerritorialBalothTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(baloth.getEffectivePower()).isEqualTo(4);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(4);
     }
 
     @Test
@@ -54,8 +54,8 @@ class TerritorialBalothTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(baloth.getEffectivePower()).isEqualTo(4);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(4);
     }
 
     @Test
@@ -67,18 +67,18 @@ class TerritorialBalothTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(baloth.getEffectivePower()).isEqualTo(4);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(4);
 
         harness.passBothPriorities();
 
-        assertThat(baloth.getEffectivePower()).isEqualTo(6);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(6);
 
         harness.passBothPriorities();
 
-        assertThat(baloth.getEffectivePower()).isEqualTo(8);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(8);
     }
 
     @Test
@@ -89,7 +89,7 @@ class TerritorialBalothTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new TerritorialBaloth());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(baloth.getEffectivePower()).isEqualTo(4);
-        assertThat(baloth.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(4);
     }
 }

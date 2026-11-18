@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BallyrushBanneret;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.e.EgoErasure;
@@ -47,8 +48,8 @@ class KithkinZephyrnautTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(zephyrnaut.getPowerModifier()).isEqualTo(2);
-        assertThat(zephyrnaut.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, zephyrnaut)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, zephyrnaut)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.VIGILANCE)).isTrue();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
@@ -68,8 +69,8 @@ class KithkinZephyrnautTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(zephyrnaut.getPowerModifier()).isZero();
-        assertThat(zephyrnaut.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, zephyrnaut)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, zephyrnaut)).isZero();
         assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.VIGILANCE)).isFalse();
     }
@@ -84,7 +85,7 @@ class KithkinZephyrnautTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(zephyrnaut.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, zephyrnaut)).isZero();
         assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.FLYING)).isFalse();
     }
 
@@ -123,8 +124,8 @@ class KithkinZephyrnautTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(zephyrnaut.getPowerModifier()).isEqualTo(2);
-        assertThat(zephyrnaut.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, zephyrnaut)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, zephyrnaut)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.VIGILANCE)).isTrue();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
@@ -140,7 +141,7 @@ class KithkinZephyrnautTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(zephyrnaut.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, zephyrnaut)).isZero();
         assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.VIGILANCE)).isFalse();
     }
@@ -160,7 +161,7 @@ class KithkinZephyrnautTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(zephyrnaut.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, zephyrnaut)).isZero();
         assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.VIGILANCE)).isFalse();
     }

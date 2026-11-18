@@ -30,8 +30,8 @@ class BeastmasterAscensionTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(ascension.getCounterCount(CounterType.QUEST)).isEqualTo(1);
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     @Test

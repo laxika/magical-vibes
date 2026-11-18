@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -62,7 +63,7 @@ class HardHittingQuestionTest extends BaseCardTest {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         castWithoutResolving(source, target);
-        source.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, source, 1);
 
         harness.passBothPriorities();
 
@@ -116,7 +117,7 @@ class HardHittingQuestionTest extends BaseCardTest {
     void dealsNoDamageWithZeroPower() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        source.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, source, -2);
 
         cast(source, target);
 

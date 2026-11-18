@@ -20,8 +20,8 @@ class ArborealAllianceTest extends BaseCardTest {
         castAlliance(2);
 
         Permanent treefolk = findPermanent(player1, "Treefolk");
-        assertThat(treefolk.getEffectivePower()).isEqualTo(2);
-        assertThat(treefolk.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, treefolk)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, treefolk)).isEqualTo(2);
     }
 
     @Test

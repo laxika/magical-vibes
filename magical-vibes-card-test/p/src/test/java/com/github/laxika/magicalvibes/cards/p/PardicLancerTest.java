@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,8 +26,8 @@ class PardicLancerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(lancer.getPowerModifier()).isEqualTo(1);
-        assertThat(lancer.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, lancer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lancer)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, lancer, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Pardic Arsonist");
@@ -42,14 +43,14 @@ class PardicLancerTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Pardic Arsonist");
-        assertThat(lancer.getPowerModifier()).isEqualTo(0);
-        assertThat(lancer.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, lancer)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lancer)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, lancer, Keyword.FIRST_STRIKE)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(lancer.getPowerModifier()).isEqualTo(1);
-        assertThat(lancer.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, lancer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lancer)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, lancer, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -65,8 +66,8 @@ class PardicLancerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(lancer.getPowerModifier()).isEqualTo(0);
-        assertThat(lancer.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, lancer)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lancer)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, lancer, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -86,7 +87,7 @@ class PardicLancerTest extends BaseCardTest {
                 .isIn(arsonist, handLancer);
         assertThat(gd.playerHands.get(player1.getId()).getFirst())
                 .isNotSameAs(gd.playerGraveyards.get(player1.getId()).getFirst());
-        assertThat(lancer.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, lancer)).isZero();
 
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, null, null);
@@ -95,8 +96,8 @@ class PardicLancerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .containsExactlyInAnyOrder(arsonist, handLancer);
-        assertThat(lancer.getPowerModifier()).isEqualTo(2);
-        assertThat(lancer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, lancer)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lancer)).isZero();
         assertThat(gqs.hasKeyword(gd, lancer, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(lancer.isTapped()).isFalse();
     }

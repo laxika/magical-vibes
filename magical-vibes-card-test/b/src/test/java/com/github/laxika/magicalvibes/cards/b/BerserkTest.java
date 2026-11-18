@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
@@ -91,7 +92,7 @@ class BerserkTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
         assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
 
@@ -195,7 +196,7 @@ class BerserkTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
-        target.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, target, -3);
         harness.setHand(player1, List.of(new Berserk()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 

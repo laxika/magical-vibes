@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DwynensElite;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -32,8 +33,8 @@ class SomberwaldAlphaTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(1);
     }
 
     @Test
@@ -47,7 +48,7 @@ class SomberwaldAlphaTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -90,15 +91,15 @@ class SomberwaldAlphaTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(alpha.getPowerModifier()).isEqualTo(1);
-        assertThat(alpha.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, alpha)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, alpha)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(alpha.getPowerModifier()).isZero();
-        assertThat(alpha.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, alpha)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, alpha)).isZero();
     }
 
     @Test
@@ -113,8 +114,8 @@ class SomberwaldAlphaTest extends BaseCardTest {
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(alpha.getPowerModifier()).isEqualTo(1);
-        assertThat(alpha.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, alpha)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, alpha)).isEqualTo(1);
     }
 
     @Test
@@ -128,10 +129,10 @@ class SomberwaldAlphaTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(2);
-        assertThat(otherAlpha.getPowerModifier()).isZero();
-        assertThat(otherAlpha.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAlpha)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherAlpha)).isZero();
     }
 
     @Test
@@ -144,8 +145,8 @@ class SomberwaldAlphaTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(defendingAlpha.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, defendingAlpha)).isZero();
     }
 
     @Test

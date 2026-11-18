@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HedgeTroll;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,8 +30,8 @@ class MantleOfLeadershipTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(enchantedCreature.getPowerModifier()).isEqualTo(2);
-        assertThat(enchantedCreature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, enchantedCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enchantedCreature)).isEqualTo(2);
     }
 
     @Test
@@ -50,8 +51,8 @@ class MantleOfLeadershipTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(enchantedCreature.getPowerModifier()).isEqualTo(4);
-        assertThat(enchantedCreature.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, enchantedCreature)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enchantedCreature)).isEqualTo(4);
     }
 
     @Test
@@ -70,8 +71,8 @@ class MantleOfLeadershipTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(enchantedCreature.getPowerModifier()).isEqualTo(2);
-        assertThat(enchantedCreature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, enchantedCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enchantedCreature)).isEqualTo(2);
     }
 
     @Test
@@ -87,15 +88,15 @@ class MantleOfLeadershipTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(enchantedCreature.getPowerModifier()).isEqualTo(2);
-        assertThat(enchantedCreature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, enchantedCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enchantedCreature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(enchantedCreature.getPowerModifier()).isZero();
-        assertThat(enchantedCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, enchantedCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enchantedCreature)).isZero();
     }
 
     @Test
@@ -107,15 +108,15 @@ class MantleOfLeadershipTest extends BaseCardTest {
         harness.clearPriorityPassed();
         castMantle(enchantedCreature);
 
-        assertThat(enchantedCreature.getPowerModifier()).isZero();
-        assertThat(enchantedCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, enchantedCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enchantedCreature)).isZero();
         Permanent enteringCreature = harness.enterBattlefieldAndReturn(player1, new HedgeTroll());
         harness.passBothPriorities();
 
-        assertThat(enchantedCreature.getPowerModifier()).isEqualTo(2);
-        assertThat(enchantedCreature.getToughnessModifier()).isEqualTo(2);
-        assertThat(enteringCreature.getPowerModifier()).isZero();
-        assertThat(enteringCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, enchantedCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enchantedCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, enteringCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enteringCreature)).isZero();
     }
 
     @Test
@@ -126,8 +127,8 @@ class MantleOfLeadershipTest extends BaseCardTest {
         castMantle(enchantedCreature);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(enchantedCreature.getPowerModifier()).isZero();
-        assertThat(enchantedCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, enchantedCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enchantedCreature)).isZero();
     }
 
     private void castMantle(Permanent enchantedCreature) {

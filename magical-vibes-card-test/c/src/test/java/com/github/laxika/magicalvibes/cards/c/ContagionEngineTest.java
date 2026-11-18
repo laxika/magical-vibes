@@ -37,8 +37,8 @@ class ContagionEngineTest extends BaseCardTest {
         for (Permanent p : opponentBattlefield) {
             if (p.getCard().getName().equals("Carapace Forger")) {
                 assertThat(p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-                assertThat(p.getEffectivePower()).isEqualTo(1);
-                assertThat(p.getEffectiveToughness()).isEqualTo(1);
+                assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(1);
+                assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(1);
             }
         }
     }

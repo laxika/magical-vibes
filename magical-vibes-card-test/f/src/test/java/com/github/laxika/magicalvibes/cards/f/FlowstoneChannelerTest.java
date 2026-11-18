@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -31,8 +32,8 @@ class FlowstoneChannelerTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(channeler.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Ashcoat Bear");
@@ -55,8 +56,8 @@ class FlowstoneChannelerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
@@ -101,13 +102,13 @@ class FlowstoneChannelerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Forest");
         assertThat(channeler.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(channeler.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, channeler)).isZero();
         assertThat(gqs.hasKeyword(gd, channeler, Keyword.HASTE)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(channeler.getPowerModifier()).isEqualTo(1);
-        assertThat(channeler.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, channeler)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, channeler)).isEqualTo(-1);
         assertThat(gqs.hasKeyword(gd, channeler, Keyword.HASTE)).isTrue();
     }
 

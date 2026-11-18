@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.ColossalGrowth;
 import com.github.laxika.magicalvibes.cards.e.ExtinguishTheLight;
@@ -39,8 +40,8 @@ class BalduvianBerserkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(supporter.isTapped()).isTrue();
-        assertThat(berserker.getPowerModifier()).isEqualTo(2);
-        assertThat(berserker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isZero();
     }
 
     @Test
@@ -78,8 +79,8 @@ class BalduvianBerserkerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(berserker.getPowerModifier()).isEqualTo(4);
-        assertThat(berserker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isZero();
     }
 
     @Test
@@ -95,7 +96,7 @@ class BalduvianBerserkerTest extends BaseCardTest {
 
         assertThat(supporter.isTapped()).isFalse();
         assertThat(berserker.isAttacking()).isTrue();
-        assertThat(berserker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

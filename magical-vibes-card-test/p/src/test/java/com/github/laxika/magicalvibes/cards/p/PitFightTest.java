@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -162,8 +163,8 @@ class PitFightTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         first.tap();
         second.tap();
-        first.setPowerModifier(-1);
-        second.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, first, -1);
+        PermanentGrants.setPowerBoost(gd, second, -2);
         harness.setHand(player1, List.of(new PitFight()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 

@@ -41,8 +41,8 @@ class JolraelsCentaurTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -83,9 +83,9 @@ class JolraelsCentaurTest extends BaseCardTest {
                 new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(firstBlocker.getEffectivePower()).isEqualTo(2);
-        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(secondBlocker.getEffectivePower()).isEqualTo(2);
-        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, firstBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondBlocker)).isEqualTo(2);
     }
 }

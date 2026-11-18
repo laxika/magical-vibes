@@ -32,10 +32,10 @@ class TheMeathookMassacreTest extends BaseCardTest {
 
         Permanent own = giant(player1);
         Permanent opp = giant(player2);
-        assertThat(own.getEffectivePower()).isEqualTo(1);
-        assertThat(own.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opp.getEffectivePower()).isEqualTo(1);
-        assertThat(opp.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opp)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opp)).isEqualTo(1);
     }
 
     @Test
@@ -63,15 +63,15 @@ class TheMeathookMassacreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent giant = giant(player1);
-        assertThat(giant.getEffectivePower()).isEqualTo(2);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.CLEANUP);
 
-        assertThat(giant.getEffectivePower()).isEqualTo(3);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     @Test
@@ -145,8 +145,8 @@ class TheMeathookMassacreTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(findPermanent(player1, "Grizzly Bears").getEffectiveToughness()).isEqualTo(2);
-        assertThat(findPermanent(player2, "Grizzly Bears").getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Grizzly Bears"))).isEqualTo(2);
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }
@@ -162,8 +162,8 @@ class TheMeathookMassacreTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test

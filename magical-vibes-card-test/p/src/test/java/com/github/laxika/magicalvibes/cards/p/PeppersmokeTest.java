@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.ChangelingTitan;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -33,10 +34,10 @@ class PeppersmokeTest extends BaseCardTest {
         Permanent elemental = harness.addToBattlefieldAndReturn(player1, new AirElemental()); // 4/4
         castOn(elemental);
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(-1);
-        assertThat(elemental.getToughnessModifier()).isEqualTo(-1);
-        assertThat(elemental.getEffectivePower()).isEqualTo(3);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(3);
     }
 
     @Test
@@ -76,14 +77,14 @@ class PeppersmokeTest extends BaseCardTest {
     void wearsOffAtEndOfTurn() {
         Permanent elemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         castOn(elemental);
-        assertThat(elemental.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(0);
-        assertThat(elemental.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isEqualTo(0);
     }
 
     @Test
@@ -106,7 +107,7 @@ class PeppersmokeTest extends BaseCardTest {
         castOn(target);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
     }
 
     @Test
@@ -149,7 +150,7 @@ class PeppersmokeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,8 +25,8 @@ class FirehoofCavalryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(cavalry.getPowerModifier()).isEqualTo(2);
-        assertThat(cavalry.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalry)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cavalry)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -42,7 +43,7 @@ class FirehoofCavalryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(cavalry.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalry)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -58,10 +59,10 @@ class FirehoofCavalryTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(cavalry.getPowerModifier()).isEqualTo(4);
-        assertThat(cavalry.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalry)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cavalry)).isZero();
         assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -77,7 +78,7 @@ class FirehoofCavalryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(cavalry.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalry)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isTrue();
         assertThat(cavalry.isTapped()).isTrue();
     }
@@ -93,7 +94,7 @@ class FirehoofCavalryTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(cavalry.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalry)).isZero();
         assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isFalse();
     }
 

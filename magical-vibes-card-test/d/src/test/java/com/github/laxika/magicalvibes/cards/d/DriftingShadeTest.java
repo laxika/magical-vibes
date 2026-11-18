@@ -41,8 +41,8 @@ class DriftingShadeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent shade = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(shade.getEffectivePower()).isEqualTo(2);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
         assertThat(shade.isTapped()).isFalse();
     }
 
@@ -58,8 +58,8 @@ class DriftingShadeTest extends BaseCardTest {
         }
 
         Permanent shade = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(shade.getEffectivePower()).isEqualTo(4);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(4);
     }
 
     @Test
@@ -74,14 +74,14 @@ class DriftingShadeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent shade = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(shade.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(1);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(1);
     }
 
     @Test
@@ -119,8 +119,8 @@ class DriftingShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(2);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
         assertThat(shade.isTapped()).isTrue();
     }
 
@@ -134,15 +134,15 @@ class DriftingShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(shade.getEffectivePower()).isEqualTo(1);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(1);
 
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(2);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
-        assertThat(otherShade.getEffectivePower()).isEqualTo(1);
-        assertThat(otherShade.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherShade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, otherShade)).isEqualTo(1);
     }
 
     @Test

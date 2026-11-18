@@ -34,8 +34,8 @@ class MasterOfTheVeilTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
 
             assertThat(master.isFaceDown()).isTrue();
-            assertThat(master.getEffectivePower()).isEqualTo(2);
-            assertThat(master.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(2);
         }
     }
 
@@ -83,8 +83,8 @@ class MasterOfTheVeilTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isFaceDown()).isTrue();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(master.isFaceDown()).isFalse();
     }
 

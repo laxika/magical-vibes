@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Disfigure;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -33,8 +34,8 @@ class VampiresBiteTest extends BaseCardTest {
         harness.castInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isFalse();
     }
 
@@ -49,8 +50,8 @@ class VampiresBiteTest extends BaseCardTest {
         harness.castKickedInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isTrue();
     }
 
@@ -69,7 +70,7 @@ class VampiresBiteTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isFalse();
     }
 
@@ -124,7 +125,7 @@ class VampiresBiteTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castKickedInstant(player1, 0, bear.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Vampire's Bite");
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isFalse();
     }
 
@@ -148,8 +149,8 @@ class VampiresBiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Vampire's Bite");
-        assertThat(replacement.getPowerModifier()).isZero();
-        assertThat(replacement.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, replacement)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, replacement)).isZero();
         assertThat(gqs.hasKeyword(gd, replacement, Keyword.LIFELINK)).isFalse();
     }
 }

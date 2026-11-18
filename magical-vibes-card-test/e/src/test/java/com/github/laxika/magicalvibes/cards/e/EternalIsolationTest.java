@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.CentaurCourser;
 import com.github.laxika.magicalvibes.cards.d.Disfigure;
@@ -111,7 +112,7 @@ class EternalIsolationTest extends BaseCardTest {
     @Test
     @DisplayName("Uses current power rather than printed power when choosing a target")
     void canTuckCreatureWithIncreasedPower() {
-        harness.addToBattlefieldAndReturn(player2, new CentaurCourser()).setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, harness.addToBattlefieldAndReturn(player2, new CentaurCourser()), 1);
         UUID targetId = harness.getPermanentId(player2, "Centaur Courser");
         harness.setHand(player1, List.of(new EternalIsolation()));
         harness.addMana(player1, ManaColor.WHITE, 2);

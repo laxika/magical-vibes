@@ -31,8 +31,8 @@ class DeekahFractalTheoristTest extends BaseCardTest {
 
         Permanent fractal = findPermanent(player1, "Fractal");
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(fractal.getEffectivePower()).isEqualTo(1);
-        assertThat(fractal.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(1);
     }
 
     @Test

@@ -37,8 +37,8 @@ class ElementalMasterpieceTest extends BaseCardTest {
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.getCard().getName()).isEqualTo("Elemental");
-            assertThat(token.getEffectivePower()).isEqualTo(4);
-            assertThat(token.getEffectiveToughness()).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
             assertThat(token.getCard().getColors())
                     .containsExactlyInAnyOrder(CardColor.BLUE, CardColor.RED);
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ELEMENTAL);

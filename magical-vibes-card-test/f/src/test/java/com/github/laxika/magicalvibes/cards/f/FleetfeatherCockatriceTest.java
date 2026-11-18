@@ -31,8 +31,8 @@ class FleetfeatherCockatriceTest extends BaseCardTest {
 
         assertThat(cockatrice.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(cockatrice.isMonstrous()).isTrue();
-        assertThat(cockatrice.getEffectivePower()).isEqualTo(6);
-        assertThat(cockatrice.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, cockatrice)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, cockatrice)).isEqualTo(6);
     }
 
     @Test

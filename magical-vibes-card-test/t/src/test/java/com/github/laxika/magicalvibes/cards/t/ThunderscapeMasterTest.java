@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -52,12 +53,12 @@ class ThunderscapeMasterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(master.getPowerModifier()).isEqualTo(2);
-        assertThat(master.getToughnessModifier()).isEqualTo(2);
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(2);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(2);
-        assertThat(opposingCreature.getPowerModifier()).isEqualTo(0);
-        assertThat(opposingCreature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, master)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, master)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingCreature)).isEqualTo(0);
     }
 
     @Test
@@ -70,8 +71,8 @@ class ThunderscapeMasterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(ownLand.getPowerModifier()).isEqualTo(0);
-        assertThat(ownLand.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownLand)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownLand)).isEqualTo(0);
     }
 
     @Test
@@ -88,8 +89,8 @@ class ThunderscapeMasterTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(0);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(0);
     }
 
     @Test
@@ -139,10 +140,10 @@ class ThunderscapeMasterTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new ThornscapeApprentice());
 
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(2);
-        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(2);
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
     }
 
     @Test

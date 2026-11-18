@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CorrosiveOoze;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -33,10 +34,10 @@ class FungalInfectionTest extends BaseCardTest {
 
         // Target creature gets -1/-1
         Permanent bear = findPermanent(player2, "Corrosive Ooze");
-        assertThat(bear.getPowerModifier()).isEqualTo(-1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(-1);
-        assertThat(bear.getEffectivePower()).isEqualTo(1);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(1);
 
         // Saproling token created under caster's control
         List<Permanent> tokens = findPermanents(player1, "Saproling");
@@ -122,9 +123,9 @@ class FungalInfectionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player2, "Corrosive Ooze");
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 }

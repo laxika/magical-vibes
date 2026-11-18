@@ -28,8 +28,8 @@ class ChocoboRacetrackTest extends BaseCardTest {
         Permanent bird = findBird(player1);
         assertThat(bird.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(bird.getCard().getSubtypes()).containsExactly(CardSubtype.BIRD);
-        assertThat(bird.getEffectivePower()).isEqualTo(2);
-        assertThat(bird.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
     }
 
     @Test
@@ -50,13 +50,13 @@ class ChocoboRacetrackTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bird.getEffectivePower()).isEqualTo(3);
-        assertThat(bird.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(bird.getEffectivePower()).isEqualTo(2);
-        assertThat(bird.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
     }
 
     @Test
@@ -88,18 +88,18 @@ class ChocoboRacetrackTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).toList())
                 .hasSize(2)
-                .extracting(Permanent::getEffectivePower).containsExactlyInAnyOrder(3, 2);
+                .extracting(p -> gqs.getEffectivePower(gd, p)).containsExactlyInAnyOrder(3, 2);
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(firstBird.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, firstBird)).isEqualTo(4);
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).toList())
                 .hasSize(3)
-                .extracting(Permanent::getEffectivePower).containsExactlyInAnyOrder(4, 3, 2);
+                .extracting(p -> gqs.getEffectivePower(gd, p)).containsExactlyInAnyOrder(4, 3, 2);
     }
 
     @Test
@@ -112,7 +112,7 @@ class ChocoboRacetrackTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player2, new Forest());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bird.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).count()).isEqualTo(1);
 
@@ -121,8 +121,8 @@ class ChocoboRacetrackTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.passBothPriorities();
 
-        assertThat(bird.getEffectivePower()).isEqualTo(3);
-        assertThat(bird.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).count()).isEqualTo(1);
     }

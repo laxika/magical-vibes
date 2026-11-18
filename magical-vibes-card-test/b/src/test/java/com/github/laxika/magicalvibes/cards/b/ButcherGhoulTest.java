@@ -39,8 +39,8 @@ class ButcherGhoulTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Butcher Ghoul");
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(returned.getEffectivePower()).isEqualTo(2);
-        assertThat(returned.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(2);
         harness.assertNotInGraveyard(player1, "Butcher Ghoul");
     }
 

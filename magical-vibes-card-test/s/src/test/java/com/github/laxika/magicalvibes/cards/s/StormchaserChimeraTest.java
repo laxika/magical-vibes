@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -36,8 +37,8 @@ class StormchaserChimeraTest extends BaseCardTest {
                 .containsExactly(topCard);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
-        assertThat(chimera.getEffectivePower()).isEqualTo(7);
-        assertThat(chimera.getPowerModifier()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, chimera)).isEqualTo(7);
+        assertThat(PermanentGrants.powerBoostOf(gd, chimera)).isEqualTo(5);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
     }
 
@@ -54,8 +55,8 @@ class StormchaserChimeraTest extends BaseCardTest {
         harness.passBothPriorities();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
-        assertThat(chimera.getEffectivePower()).isEqualTo(4);
-        assertThat(chimera.getPowerModifier()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, chimera)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, chimera)).isEqualTo(2);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(revealedCard);
     }
 
@@ -68,8 +69,8 @@ class StormchaserChimeraTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(chimera.getPowerModifier()).isZero();
-        assertThat(chimera.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, chimera)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, chimera)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -84,8 +85,8 @@ class StormchaserChimeraTest extends BaseCardTest {
         harness.passBothPriorities();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
-        assertThat(chimera.getPowerModifier()).isEqualTo(5);
-        assertThat(chimera.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, chimera)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, chimera)).isZero();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
     }
 
@@ -103,16 +104,16 @@ class StormchaserChimeraTest extends BaseCardTest {
         harness.passBothPriorities();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
-        assertThat(chimera.getPowerModifier()).isEqualTo(7);
-        assertThat(chimera.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, chimera)).isEqualTo(7);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, chimera)).isZero();
         assertThat(chimera.isTapped()).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(chimera.getPowerModifier()).isZero();
-        assertThat(chimera.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, chimera)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, chimera)).isZero();
     }
 
     private void addActivationMana() {

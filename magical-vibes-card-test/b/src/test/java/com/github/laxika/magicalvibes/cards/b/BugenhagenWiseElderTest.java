@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -72,7 +73,7 @@ class BugenhagenWiseElderTest extends BaseCardTest {
     void drawsWithExactlySevenEffectivePower() {
         harness.addToBattlefield(player1, new BugenhagenWiseElder());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new AvatarOfMight());
-        creature.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, creature, -1);
         int handSize = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player1);
@@ -90,7 +91,7 @@ class BugenhagenWiseElderTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         assertThat(gd.stack).hasSize(1);
-        creature.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, creature, -2);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
@@ -104,7 +105,7 @@ class BugenhagenWiseElderTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         assertThat(gd.stack).isEmpty();
-        creature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, creature, 1);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
@@ -164,7 +165,7 @@ class BugenhagenWiseElderTest extends BaseCardTest {
     @Test
     void elderItselfCanSatisfyPowerCondition() {
         Permanent elder = harness.addToBattlefieldAndReturn(player1, new BugenhagenWiseElder());
-        elder.setPowerModifier(6);
+        PermanentGrants.setPowerBoost(gd, elder, 6);
         int handSize = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player1);

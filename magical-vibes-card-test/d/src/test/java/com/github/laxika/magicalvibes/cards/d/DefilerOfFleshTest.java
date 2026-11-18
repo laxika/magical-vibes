@@ -33,8 +33,8 @@ class DefilerOfFleshTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
     }
 
@@ -53,8 +53,8 @@ class DefilerOfFleshTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
     }
 
@@ -91,8 +91,8 @@ class DefilerOfFleshTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isFalse();
     }
 
@@ -144,7 +144,7 @@ class DefilerOfFleshTest extends BaseCardTest {
     @DisplayName("a nonblack permanent spell neither triggers the boost nor receives a reduction")
     void nonblackPermanentDoesNotTrigger() {
         Permanent defiler = addCreatureReady(player1, new DefilerOfFlesh());
-        int originalPower = defiler.getEffectivePower();
+        int originalPower = gqs.getEffectivePower(gd, defiler);
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -154,7 +154,7 @@ class DefilerOfFleshTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
-        assertThat(defiler.getEffectivePower()).isEqualTo(originalPower);
+        assertThat(gqs.getEffectivePower(gd, defiler)).isEqualTo(originalPower);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }

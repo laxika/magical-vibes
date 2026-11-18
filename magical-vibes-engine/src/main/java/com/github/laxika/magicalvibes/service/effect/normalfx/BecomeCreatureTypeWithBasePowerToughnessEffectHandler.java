@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
 @Component
 @RequiredArgsConstructor
@@ -47,15 +48,9 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
             return;
         }
 
-        if (e.power() != null) {
-            source.setBasePowerOverriddenPermanently(true);
-            source.setPermanentBasePowerOverride(e.power());
-            source.setPermanentBasePowerOverrideTimestamp(gameData.nextTimestamp());
-        }
-        if (e.toughness() != null) {
-            source.setBaseToughnessOverriddenPermanently(true);
-            source.setPermanentBaseToughnessOverride(e.toughness());
-            source.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
+        if (e.power() != null || e.toughness() != null) {
+            gameData.addEffectOnPermanent(entry, new SetBasePowerToughnessEffect(
+                    e.power(), e.toughness(), GrantScope.TARGET, Duration.PERMANENT), source.getId(), Duration.PERMANENT);
         }
 
         if (!e.setSubtypes().isEmpty()) {

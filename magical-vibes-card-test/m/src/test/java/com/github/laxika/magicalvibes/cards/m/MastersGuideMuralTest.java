@@ -41,8 +41,8 @@ class MastersGuideMuralTest extends BaseCardTest {
         assertThat(golem.getCard().getSubtypes()).containsExactly(CardSubtype.GOLEM);
         assertThat(golem.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(golem.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
-        assertThat(golem.getEffectivePower()).isEqualTo(4);
-        assertThat(golem.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(4);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.t.ThreeTreeMascot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -24,8 +25,8 @@ class ValleyRallyTest extends BaseCardTest {
 
         cast(null, false);
 
-        assertThat(firstBear.getPowerModifier()).isEqualTo(2);
-        assertThat(secondBear.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstBear)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondBear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, firstBear, Keyword.FIRST_STRIKE)).isFalse();
         harness.assertNotOnBattlefield(player2, "Food");
     }
@@ -37,8 +38,8 @@ class ValleyRallyTest extends BaseCardTest {
 
         cast(targetBear, true);
 
-        assertThat(firstBear.getPowerModifier()).isEqualTo(2);
-        assertThat(targetBear.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstBear)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, targetBear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, firstBear, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, targetBear, Keyword.FIRST_STRIKE)).isTrue();
         harness.assertOnBattlefield(player2, "Food");
@@ -81,7 +82,7 @@ class ValleyRallyTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(target);
         harness.passBothPriorities();
 
-        assertThat(survivor.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isZero();
         harness.assertNotOnBattlefield(player2, "Food");
         harness.assertInGraveyard(player1, "Valley Rally");
     }
@@ -94,16 +95,16 @@ class ValleyRallyTest extends BaseCardTest {
         cast(target, true);
         Permanent newcomer = harness.addToBattlefieldAndReturn(player1, new ThreeTreeMascot());
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(newcomer.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isZero();
         assertThat(gqs.hasKeyword(gd, newcomer, Keyword.FIRST_STRIKE)).isFalse();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
         harness.assertOnBattlefield(player2, "Food");
     }

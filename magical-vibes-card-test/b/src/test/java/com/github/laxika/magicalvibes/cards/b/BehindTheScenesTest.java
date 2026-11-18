@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DevilthornFox;
 import com.github.laxika.magicalvibes.cards.h.HulkingDevil;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
@@ -39,11 +40,11 @@ class BehindTheScenesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(enchantment.getPowerModifier()).isEqualTo(0);
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(1);
-        assertThat(opposingCreature.getPowerModifier()).isEqualTo(0);
-        assertThat(opposingCreature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, enchantment)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingCreature)).isEqualTo(0);
     }
 
     @Test
@@ -55,13 +56,13 @@ class BehindTheScenesTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(0);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(0);
     }
 
     @Test
@@ -126,10 +127,10 @@ class BehindTheScenesTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new DevilthornFox());
 
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
         assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.SKULK)).isTrue();
     }
 
@@ -144,8 +145,8 @@ class BehindTheScenesTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.SKULK)).isFalse();
     }
 }

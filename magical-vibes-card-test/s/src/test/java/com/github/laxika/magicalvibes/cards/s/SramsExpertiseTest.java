@@ -38,8 +38,8 @@ class SramsExpertiseTest extends BaseCardTest {
             assertThat(servo.getCard().hasType(CardType.ARTIFACT)).isTrue();
             assertThat(servo.getCard().hasType(CardType.CREATURE)).isTrue();
             assertThat(servo.getCard().getSubtypes()).contains(CardSubtype.SERVO);
-            assertThat(servo.getEffectivePower()).isEqualTo(1);
-            assertThat(servo.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, servo)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, servo)).isEqualTo(1);
         });
     }
 

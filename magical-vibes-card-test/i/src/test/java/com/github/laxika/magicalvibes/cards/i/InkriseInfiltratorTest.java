@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,8 +25,8 @@ class InkriseInfiltratorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(infiltrator.getEffectivePower()).isEqualTo(3);
-        assertThat(infiltrator.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, infiltrator)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, infiltrator)).isEqualTo(4);
     }
 
     @Test
@@ -39,8 +40,8 @@ class InkriseInfiltratorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(infiltrator.getEffectivePower()).isEqualTo(5);
-        assertThat(infiltrator.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, infiltrator)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, infiltrator)).isEqualTo(6);
     }
 
     @Test
@@ -56,10 +57,10 @@ class InkriseInfiltratorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(infiltrator.getPowerModifier()).isZero();
-        assertThat(infiltrator.getToughnessModifier()).isZero();
-        assertThat(infiltrator.getEffectivePower()).isEqualTo(1);
-        assertThat(infiltrator.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, infiltrator)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, infiltrator)).isZero();
+        assertThat(gqs.getEffectivePower(gd, infiltrator)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, infiltrator)).isEqualTo(2);
     }
 
     @Test
@@ -103,8 +104,8 @@ class InkriseInfiltratorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(infiltrator.getEffectivePower()).isEqualTo(3);
-        assertThat(infiltrator.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, infiltrator)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, infiltrator)).isEqualTo(4);
         assertThat(infiltrator.isTapped()).isTrue();
     }
 
@@ -118,16 +119,16 @@ class InkriseInfiltratorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(source.getEffectivePower()).isEqualTo(1);
-        assertThat(source.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(3);
-        assertThat(source.getEffectiveToughness()).isEqualTo(4);
-        assertThat(other.getEffectivePower()).isEqualTo(1);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opposing.getEffectivePower()).isEqualTo(1);
-        assertThat(opposing.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(2);
     }
 }

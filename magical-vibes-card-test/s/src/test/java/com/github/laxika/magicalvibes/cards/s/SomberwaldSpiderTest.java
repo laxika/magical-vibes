@@ -58,8 +58,8 @@ class SomberwaldSpiderTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(spider.getEffectivePower()).isEqualTo(4);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(6);
     }
 
     @Test
@@ -88,8 +88,8 @@ class SomberwaldSpiderTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(spider.getEffectivePower()).isEqualTo(4);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(6);
     }
 
     @Test

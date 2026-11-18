@@ -34,8 +34,8 @@ class ToothAndClawTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Tooth and Claw");
 
         Permanent carnivore = findPermanent(player1, "Carnivore");
-        assertThat(carnivore.getEffectivePower()).isEqualTo(3);
-        assertThat(carnivore.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, carnivore)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, carnivore)).isEqualTo(1);
         assertThat(carnivore.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(carnivore.getCard().getSubtypes()).containsExactly(CardSubtype.BEAST);
     }

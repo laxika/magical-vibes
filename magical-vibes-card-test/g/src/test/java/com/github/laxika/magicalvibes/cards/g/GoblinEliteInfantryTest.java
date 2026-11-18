@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -77,10 +78,10 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(goblinPerm.getPowerModifier()).isEqualTo(-1);
-        assertThat(goblinPerm.getToughnessModifier()).isEqualTo(-1);
-        assertThat(goblinPerm.getEffectivePower()).isEqualTo(1);
-        assertThat(goblinPerm.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblinPerm)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblinPerm)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, goblinPerm)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblinPerm)).isEqualTo(1);
     }
 
     // ===== Becomes blocked trigger (when this creature is blocked while attacking) =====
@@ -116,10 +117,10 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(goblinPerm.getPowerModifier()).isEqualTo(-1);
-        assertThat(goblinPerm.getToughnessModifier()).isEqualTo(-1);
-        assertThat(goblinPerm.getEffectivePower()).isEqualTo(1);
-        assertThat(goblinPerm.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblinPerm)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblinPerm)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, goblinPerm)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblinPerm)).isEqualTo(1);
     }
 
     @Test
@@ -133,8 +134,8 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(goblinPerm.getPowerModifier()).isZero();
-        assertThat(goblinPerm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, goblinPerm)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblinPerm)).isZero();
     }
 
     @Test
@@ -159,8 +160,8 @@ class GoblinEliteInfantryTest extends BaseCardTest {
                 .hasSize(1);
         resolveAllTriggers();
 
-        assertThat(goblinPerm.getPowerModifier()).isEqualTo(-1);
-        assertThat(goblinPerm.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblinPerm)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblinPerm)).isEqualTo(-1);
     }
 
     // ===== Becomes blocked fires only once with multiple blockers =====
@@ -243,11 +244,11 @@ class GoblinEliteInfantryTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(attackerGoblin.getPowerModifier()).isEqualTo(-1);
-        assertThat(attackerGoblin.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attackerGoblin)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attackerGoblin)).isEqualTo(-1);
         Permanent blockingGoblin = findPermanent(player2, "Goblin Elite Infantry");
-        assertThat(blockingGoblin.getPowerModifier()).isEqualTo(-1);
-        assertThat(blockingGoblin.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blockingGoblin)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blockingGoblin)).isEqualTo(-1);
     }
 
     // ===== -1/-1 resets at end of turn =====
@@ -270,8 +271,8 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         resolveAllTriggers();
 
         // Verify -1/-1 applied (4/4 becomes 3/3 effective)
-        assertThat(goblinPerm.getPowerModifier()).isEqualTo(-1);
-        assertThat(goblinPerm.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblinPerm)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblinPerm)).isEqualTo(-1);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
@@ -279,10 +280,10 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Modifiers should be reset
-        assertThat(goblinPerm.getPowerModifier()).isEqualTo(0);
-        assertThat(goblinPerm.getToughnessModifier()).isEqualTo(0);
-        assertThat(goblinPerm.getEffectivePower()).isEqualTo(4);
-        assertThat(goblinPerm.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblinPerm)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblinPerm)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, goblinPerm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, goblinPerm)).isEqualTo(4);
     }
 
     // ===== Trigger fizzles if source removed =====
@@ -351,8 +352,8 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(goblinPerm.getPowerModifier()).isZero();
-        assertThat(goblinPerm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, goblinPerm)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblinPerm)).isZero();
     }
 
     @Test
@@ -366,13 +367,13 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(-1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(-1);
     }
 
     @Test
@@ -393,8 +394,8 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(returned.getPowerModifier()).isZero();
-        assertThat(returned.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, returned)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, returned)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(returned);
     }
 }

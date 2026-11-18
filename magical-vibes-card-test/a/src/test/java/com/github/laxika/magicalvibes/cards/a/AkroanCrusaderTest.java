@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.c.CoordinatedAssault;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -36,8 +37,8 @@ class AkroanCrusaderTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getName().equals("Soldier"))
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.SOLDIER);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
@@ -81,14 +82,14 @@ class AkroanCrusaderTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(second.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(2);
         harness.passBothPriorities();
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
     }
 
     @Test

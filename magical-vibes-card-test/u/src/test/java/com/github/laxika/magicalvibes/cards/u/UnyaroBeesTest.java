@@ -23,15 +23,15 @@ class UnyaroBeesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bees.getEffectivePower()).isEqualTo(1);
-        assertThat(bees.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bees)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bees)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bees.getEffectivePower()).isEqualTo(0);
-        assertThat(bees.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bees)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, bees)).isEqualTo(1);
     }
 
     @Test
@@ -77,8 +77,8 @@ class UnyaroBeesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(bees.getEffectivePower()).isEqualTo(2);
-        assertThat(bees.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bees)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bees)).isEqualTo(3);
     }
 
     @Test

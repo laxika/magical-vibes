@@ -34,8 +34,8 @@ class RitesOfReapingTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(bears.getId(), elves.getId()));
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
         harness.assertInGraveyard(player1, "Rites of Reaping");
@@ -52,18 +52,18 @@ class RitesOfReapingTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(own.getId(), opp.getId()));
         harness.passBothPriorities();
 
-        assertThat(own.getEffectivePower()).isEqualTo(5);
-        assertThat(opp.getEffectivePower()).isEqualTo(1);
-        assertThat(opp.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opp)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opp)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(own.getEffectivePower()).isEqualTo(2);
-        assertThat(own.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opp.getEffectivePower()).isEqualTo(4);
-        assertThat(opp.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opp)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opp)).isEqualTo(4);
     }
 
     @Test
@@ -107,8 +107,8 @@ class RitesOfReapingTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
         harness.passBothPriorities();
 
-        assertThat(second.getEffectivePower()).isEqualTo(1);
-        assertThat(second.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Rites of Reaping");
     }
 
@@ -127,8 +127,8 @@ class RitesOfReapingTest extends BaseCardTest {
         harness.assertInHand(player2, "Air Elemental");
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(5);
-        assertThat(first.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
         harness.assertInGraveyard(player1, "Rites of Reaping");
     }
 
@@ -143,10 +143,10 @@ class RitesOfReapingTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(5);
-        assertThat(first.getEffectiveToughness()).isEqualTo(5);
-        assertThat(second.getEffectivePower()).isEqualTo(1);
-        assertThat(second.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(1);
     }
 
     @Test

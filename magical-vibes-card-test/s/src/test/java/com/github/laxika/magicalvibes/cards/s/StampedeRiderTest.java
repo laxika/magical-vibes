@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.v.VoraciousTyphon;
 import com.github.laxika.magicalvibes.cards.r.RenegadeFreighter;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -95,7 +96,7 @@ class StampedeRiderTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
         assertThat(gd.stack).hasSize(1);
 
-        typhon.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, typhon, -1);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, rider)).isEqualTo(2);

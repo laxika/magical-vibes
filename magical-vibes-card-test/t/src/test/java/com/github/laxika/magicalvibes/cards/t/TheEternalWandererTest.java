@@ -66,8 +66,8 @@ class TheEternalWandererTest extends BaseCardTest {
 
         Permanent samurai = findPermanent(player1, "Samurai");
         assertThat(wanderer.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
-        assertThat(samurai.getEffectivePower()).isEqualTo(2);
-        assertThat(samurai.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, samurai)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, samurai)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, samurai, Keyword.DOUBLE_STRIKE))
                 .isTrue();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Ponder;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -36,8 +37,8 @@ class AvenWindMageTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(mage.getPowerModifier()).isEqualTo(1);
-        assertThat(mage.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mage)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mage)).isEqualTo(1);
     }
 
     @Test
@@ -50,8 +51,8 @@ class AvenWindMageTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(mage.getPowerModifier()).isEqualTo(1);
-        assertThat(mage.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mage)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mage)).isEqualTo(1);
     }
 
     @Test
@@ -64,8 +65,8 @@ class AvenWindMageTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(mage.getPowerModifier()).isEqualTo(0);
-        assertThat(mage.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mage)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mage)).isEqualTo(0);
     }
 
     @Test
@@ -78,8 +79,8 @@ class AvenWindMageTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(mage.getPowerModifier()).isZero();
-        assertThat(mage.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mage)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mage)).isZero();
     }
 
     @Test
@@ -90,23 +91,23 @@ class AvenWindMageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, player2.getId());
-        assertThat(mage.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mage)).isZero();
         harness.passBothPriorities();
-        assertThat(mage.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mage)).isEqualTo(1);
         harness.assertLife(player2, 20);
         harness.passBothPriorities();
         harness.assertLife(player2, 18);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(mage.getPowerModifier()).isEqualTo(2);
-        assertThat(mage.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, mage)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mage)).isEqualTo(2);
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
-        assertThat(mage.getPowerModifier()).isZero();
-        assertThat(mage.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mage)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mage)).isZero();
     }
 
     @Test
@@ -120,7 +121,7 @@ class AvenWindMageTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(mage.getPowerModifier()).isEqualTo(1);
-        assertThat(mage.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mage)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mage)).isEqualTo(1);
     }
 }

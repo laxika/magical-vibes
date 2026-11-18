@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FeralKrushok;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -100,8 +101,8 @@ class RuthlessInstinctsTest extends BaseCardTest {
 
             cast(1, attacker);
 
-            assertThat(attacker.getPowerModifier()).isEqualTo(2);
-            assertThat(attacker.getToughnessModifier()).isEqualTo(2);
+            assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(2);
             assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
         }
 
@@ -124,8 +125,8 @@ class RuthlessInstinctsTest extends BaseCardTest {
             harness.clearPriorityPassed();
             harness.passBothPriorities();
 
-            assertThat(attacker.getPowerModifier()).isZero();
-            assertThat(attacker.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
             assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
         }
 
@@ -138,8 +139,8 @@ class RuthlessInstinctsTest extends BaseCardTest {
 
             cast(1, attacker);
 
-            assertThat(attacker.getPowerModifier()).isEqualTo(2);
-            assertThat(attacker.getToughnessModifier()).isEqualTo(2);
+            assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(2);
             assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
             assertThat(attacker.isTapped()).isTrue();
         }
@@ -153,8 +154,8 @@ class RuthlessInstinctsTest extends BaseCardTest {
 
             harness.passBothPriorities();
 
-            assertThat(attacker.getPowerModifier()).isZero();
-            assertThat(attacker.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
             assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
             assertThat(gd.stack).isEmpty();
         }

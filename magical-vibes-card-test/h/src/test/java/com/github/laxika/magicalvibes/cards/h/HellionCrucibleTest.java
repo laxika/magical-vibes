@@ -58,8 +58,8 @@ class HellionCrucibleTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Hellion Crucible");
         Permanent token = findPermanent(player1, "Hellion");
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
     }
 

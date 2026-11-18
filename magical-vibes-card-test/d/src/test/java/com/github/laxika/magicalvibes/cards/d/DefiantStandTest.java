@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -32,10 +33,10 @@ class DefiantStandTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, blocker.getId());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(blocker.getPowerModifier()).isEqualTo(1);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(3);
-        assertThat(blocker.getEffectivePower()).isEqualTo(3);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(5);
         assertThat(blocker.isTapped()).isFalse();
     }
 
@@ -51,8 +52,8 @@ class DefiantStandTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, attacker.getId());
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(3);
         assertThat(attacker.isTapped()).isFalse();
     }
 
@@ -67,8 +68,8 @@ class DefiantStandTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         harness.castAndResolveInstant(player2, 0, target.getId());
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
@@ -76,8 +77,8 @@ class DefiantStandTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(target.isTapped()).isFalse();
     }
 
@@ -96,8 +97,8 @@ class DefiantStandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(target.isTapped()).isTrue();
         assertThat(gameLogContains("fizzles")).isTrue();
     }
@@ -158,8 +159,8 @@ class DefiantStandTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(target.isTapped()).isFalse();
     }
 
@@ -181,8 +182,8 @@ class DefiantStandTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.castAndResolveInstant(player2, 0, target.getId()));
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(target.isTapped()).isFalse();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.y.YavimayaSteelcrusher;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -29,8 +30,8 @@ class CleavingSkyriderTest extends BaseCardTest {
         harness.setLife(player2, 20);
         var firstAttacker = addCreatureReady(player1, new YavimayaSteelcrusher());
         var secondAttacker = addCreatureReady(player1, new YavimayaSteelcrusher());
-        firstAttacker.setPowerModifier(-2);
-        secondAttacker.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, firstAttacker, -2);
+        PermanentGrants.setPowerBoost(gd, secondAttacker, -2);
         firstAttacker.setAttacking(true);
         secondAttacker.setAttacking(true);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -48,8 +49,8 @@ class CleavingSkyriderTest extends BaseCardTest {
     void kickedCanDealDamageToACreature() {
         var firstAttacker = addCreatureReady(player1, new YavimayaSteelcrusher());
         var secondAttacker = addCreatureReady(player1, new YavimayaSteelcrusher());
-        firstAttacker.setPowerModifier(-2);
-        secondAttacker.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, firstAttacker, -2);
+        PermanentGrants.setPowerBoost(gd, secondAttacker, -2);
         firstAttacker.setAttacking(true);
         secondAttacker.setAttacking(true);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -83,7 +84,7 @@ class CleavingSkyriderTest extends BaseCardTest {
     void kickedCountsOpponentsAttackersWhenCastDuringTheirCombat() {
         harness.setLife(player2, 20);
         var attacker = addCreatureReady(player2, new YavimayaSteelcrusher());
-        attacker.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, attacker, -2);
         attacker.setAttacking(true);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -103,8 +104,8 @@ class CleavingSkyriderTest extends BaseCardTest {
         harness.setLife(player2, 20);
         var firstAttacker = addCreatureReady(player1, new YavimayaSteelcrusher());
         var secondAttacker = addCreatureReady(player1, new YavimayaSteelcrusher());
-        firstAttacker.setPowerModifier(-2);
-        secondAttacker.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, firstAttacker, -2);
+        PermanentGrants.setPowerBoost(gd, secondAttacker, -2);
         firstAttacker.setAttacking(true);
         secondAttacker.setAttacking(true);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -138,8 +139,8 @@ class CleavingSkyriderTest extends BaseCardTest {
     void kickedChoosesItsTargetAfterEnteringAndCanTargetItself() {
         var firstAttacker = addCreatureReady(player1, new YavimayaSteelcrusher());
         var secondAttacker = addCreatureReady(player1, new YavimayaSteelcrusher());
-        firstAttacker.setPowerModifier(-2);
-        secondAttacker.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, firstAttacker, -2);
+        PermanentGrants.setPowerBoost(gd, secondAttacker, -2);
         firstAttacker.setAttacking(true);
         secondAttacker.setAttacking(true);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

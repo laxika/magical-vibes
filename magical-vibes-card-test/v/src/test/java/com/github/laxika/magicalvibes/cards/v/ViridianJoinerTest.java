@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PredatorsStrike;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -67,7 +68,7 @@ class ViridianJoinerTest extends BaseCardTest {
     @DisplayName("Zero power produces no mana but still pays the tap cost")
     void zeroPowerProducesNoMana() {
         Permanent joiner = addCreatureReady(player1, new ViridianJoiner());
-        joiner.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, joiner, -1);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -80,7 +81,7 @@ class ViridianJoinerTest extends BaseCardTest {
     @DisplayName("Negative power produces no mana and does not remove existing mana")
     void negativePowerProducesNoMana() {
         Permanent joiner = addCreatureReady(player1, new ViridianJoiner());
-        joiner.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, joiner, -2);
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);

@@ -35,8 +35,8 @@ class ZookeeperMechanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -75,8 +75,8 @@ class ZookeeperMechanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, mechan.getId());
         harness.passBothPriorities();
 
-        assertThat(mechan.getEffectivePower()).isEqualTo(5);
-        assertThat(mechan.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mechan)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, mechan)).isEqualTo(3);
         assertThat(mechan.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -91,15 +91,15 @@ class ZookeeperMechanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, mechan.getId());
         harness.passBothPriorities();
 
-        assertThat(mechan.getEffectivePower()).isEqualTo(9);
-        assertThat(mechan.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mechan)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, mechan)).isEqualTo(3);
         assertThat(mechan.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(mechan.getEffectivePower()).isEqualTo(1);
-        assertThat(mechan.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mechan)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, mechan)).isEqualTo(3);
     }
 
     @Test
@@ -140,6 +140,6 @@ class ZookeeperMechanTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(7);
         harness.passBothPriorities();
-        assertThat(mechan.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, mechan)).isEqualTo(5);
     }
 }

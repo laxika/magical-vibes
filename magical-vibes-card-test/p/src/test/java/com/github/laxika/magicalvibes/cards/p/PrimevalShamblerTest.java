@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,8 +25,8 @@ class PrimevalShamblerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shambler.getPowerModifier()).isEqualTo(1);
-        assertThat(shambler.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shambler)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shambler)).isEqualTo(1);
     }
 
     @Test
@@ -39,8 +40,8 @@ class PrimevalShamblerTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(shambler.getPowerModifier()).isEqualTo(3);
-        assertThat(shambler.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, shambler)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shambler)).isEqualTo(3);
     }
 
     @Test
@@ -52,14 +53,14 @@ class PrimevalShamblerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shambler.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shambler)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shambler.getPowerModifier()).isEqualTo(0);
-        assertThat(shambler.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, shambler)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shambler)).isEqualTo(0);
     }
 
     @Test
@@ -120,8 +121,8 @@ class PrimevalShamblerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shambler.getPowerModifier()).isEqualTo(1);
-        assertThat(shambler.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shambler)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shambler)).isEqualTo(1);
     }
     @Test
     @DisplayName("Can activate while tapped without untapping the source")
@@ -134,8 +135,8 @@ class PrimevalShamblerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(shambler.isTapped()).isTrue();
-        assertThat(shambler.getPowerModifier()).isEqualTo(1);
-        assertThat(shambler.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shambler)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shambler)).isEqualTo(1);
     }
 
     @Test
@@ -150,23 +151,23 @@ class PrimevalShamblerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(shambler.getPowerModifier()).isZero();
-        assertThat(shambler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shambler)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shambler)).isZero();
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(shambler.getPowerModifier()).isEqualTo(1);
-        assertThat(shambler.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shambler)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shambler)).isEqualTo(1);
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(shambler.getPowerModifier()).isEqualTo(2);
-        assertThat(shambler.getToughnessModifier()).isEqualTo(2);
-        assertThat(otherShambler.getPowerModifier()).isZero();
-        assertThat(otherShambler.getToughnessModifier()).isZero();
-        assertThat(opposingShambler.getPowerModifier()).isZero();
-        assertThat(opposingShambler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shambler)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shambler)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherShambler)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherShambler)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingShambler)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingShambler)).isZero();
     }
 }

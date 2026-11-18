@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.y.YoungDeathclaws;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,8 +30,8 @@ class IdolizedTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -43,9 +44,9 @@ class IdolizedTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -56,14 +57,14 @@ class IdolizedTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -89,9 +90,9 @@ class IdolizedTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.passBothPriorities();
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -105,8 +106,8 @@ class IdolizedTest extends BaseCardTest {
         harness.addToBattlefield(player2, new YoungDeathclaws());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -121,8 +122,8 @@ class IdolizedTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -135,8 +136,8 @@ class IdolizedTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(aura);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
     }
 
     private Permanent attachIdolized(Permanent creature) {

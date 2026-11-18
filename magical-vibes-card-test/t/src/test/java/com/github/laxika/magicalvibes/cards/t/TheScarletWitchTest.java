@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AngelsMercy;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.m.MindSpring;
@@ -98,7 +99,7 @@ class TheScarletWitchTest extends BaseCardTest {
     @Test
     void negativePowerDoesNotIncreaseSpellCost() {
         var scarletWitch = harness.addToBattlefieldAndReturn(player1, new TheScarletWitch());
-        scarletWitch.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, scarletWitch, -3);
         harness.setHand(player1, List.of(new AngelsMercy()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 

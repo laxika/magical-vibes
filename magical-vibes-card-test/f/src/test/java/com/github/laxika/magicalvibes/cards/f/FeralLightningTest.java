@@ -28,8 +28,8 @@ class FeralLightningTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Elemental")).isEqualTo(3);
         for (Permanent elemental : gd.playerBattlefields.get(player1.getId())) {
             if (elemental.getCard().isToken() && elemental.getCard().getName().equals("Elemental")) {
-                assertThat(elemental.getEffectivePower()).isEqualTo(3);
-                assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+                assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(3);
+                assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
                 assertThat(elemental.hasKeyword(Keyword.HASTE)).isTrue();
             }
         }

@@ -24,8 +24,8 @@ class SeasonedWarrenguardTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(warrenguard.getEffectivePower()).isEqualTo(3);
-        assertThat(warrenguard.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, warrenguard)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, warrenguard)).isEqualTo(2);
     }
 
     @Test
@@ -36,7 +36,7 @@ class SeasonedWarrenguardTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(warrenguard.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, warrenguard)).isEqualTo(1);
     }
 
     @Test
@@ -49,8 +49,8 @@ class SeasonedWarrenguardTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(token);
         resolveAllTriggers();
 
-        assertThat(warrenguard.getEffectivePower()).isEqualTo(3);
-        assertThat(warrenguard.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, warrenguard)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, warrenguard)).isEqualTo(2);
     }
 
     @Test
@@ -63,7 +63,7 @@ class SeasonedWarrenguardTest extends BaseCardTest {
         harness.addToBattlefield(player1, createToken());
         resolveAllTriggers();
 
-        assertThat(warrenguard.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, warrenguard)).isEqualTo(1);
     }
 
     @Test
@@ -78,8 +78,8 @@ class SeasonedWarrenguardTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(warrenguard.getEffectivePower()).isEqualTo(3);
-        assertThat(warrenguard.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, warrenguard)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, warrenguard)).isEqualTo(2);
     }
 
     @Test
@@ -89,13 +89,13 @@ class SeasonedWarrenguardTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
-        assertThat(warrenguard.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, warrenguard)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(warrenguard.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, warrenguard)).isEqualTo(1);
     }
 
     private static Card createToken() {

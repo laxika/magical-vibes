@@ -26,8 +26,8 @@ class RustMonsterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rustMonster.getEffectivePower()).isEqualTo(4);
-        assertThat(rustMonster.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, rustMonster)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rustMonster)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Leather Armor");
     }
 
@@ -39,13 +39,13 @@ class RustMonsterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rustMonster.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rustMonster)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(rustMonster.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rustMonster)).isEqualTo(2);
     }
 
     @Test
@@ -77,12 +77,12 @@ class RustMonsterTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Leather Armor");
         harness.assertNotOnBattlefield(player1, "Leather Armor");
-        assertThat(rustMonster.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rustMonster)).isEqualTo(2);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(rustMonster.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rustMonster)).isEqualTo(4);
     }
 
     @Test
@@ -97,8 +97,8 @@ class RustMonsterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rustMonster.getEffectivePower()).isEqualTo(6);
-        assertThat(rustMonster.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, rustMonster)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, rustMonster)).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Leather Armor");
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DawnhartDisciple;
 import com.github.laxika.magicalvibes.cards.r.RiphookRaider;
 import com.github.laxika.magicalvibes.cards.s.SporeCrawler;
@@ -165,7 +166,7 @@ class HookhandMarinerTest extends BaseCardTest {
     @Test
     void increasedPowerAllowsAnOtherwiseProhibitedBlocker() {
         Permanent blocker = addCreatureReady(player2, new DawnhartDisciple());
-        blocker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, blocker, 1);
         Permanent raider = addTransformedMariner(player1);
         raider.setAttacking(true);
         prepareDeclareBlockers();
@@ -178,7 +179,7 @@ class HookhandMarinerTest extends BaseCardTest {
     @Test
     void decreasedPowerProhibitsAnOtherwiseLegalBlocker() {
         Permanent blocker = addCreatureReady(player2, new SporeCrawler());
-        blocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
         Permanent raider = addTransformedMariner(player1);
         raider.setAttacking(true);
         prepareDeclareBlockers();

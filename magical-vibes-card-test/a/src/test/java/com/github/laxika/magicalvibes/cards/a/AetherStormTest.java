@@ -220,7 +220,7 @@ class AetherStormTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(thopter.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Aether Storm");
     }
 }

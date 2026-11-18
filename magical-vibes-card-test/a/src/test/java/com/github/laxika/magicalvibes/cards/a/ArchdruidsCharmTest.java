@@ -63,7 +63,7 @@ class ArchdruidsCharmTest extends BaseCardTest {
                 harness.getPermanentId(player2, "Grizzly Bears")));
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(3);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 

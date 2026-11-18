@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AetherChaser;
 import com.github.laxika.magicalvibes.cards.a.AetherHerder;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -65,7 +66,7 @@ class OutlandBoarTest extends BaseCardTest {
     @DisplayName("A printed 3-power creature can't block after its power is reduced to 2")
     void reducedLargeCreatureCannotBlock() {
         Permanent blocker = addCreatureReady(player2, new AetherHerder());
-        blocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
         addCreatureReady(player1, new OutlandBoar());
 
         declareAttackersAndPrepareBlockers(List.of(0));
@@ -79,7 +80,7 @@ class OutlandBoarTest extends BaseCardTest {
     @DisplayName("Creatures with negative power can't block Outland Boar")
     void negativePowerCreatureCannotBlock() {
         Permanent blocker = addCreatureReady(player2, new AetherHerder());
-        blocker.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, blocker, -4);
         addCreatureReady(player1, new OutlandBoar());
 
         declareAttackersAndPrepareBlockers(List.of(0));

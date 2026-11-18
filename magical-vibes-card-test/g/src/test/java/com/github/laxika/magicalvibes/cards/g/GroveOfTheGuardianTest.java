@@ -45,8 +45,8 @@ class GroveOfTheGuardianTest extends BaseCardTest {
         assertThat(secondCreature.isTapped()).isTrue();
 
         Permanent token = findPermanent(player1, "Elemental");
-        assertThat(token.getEffectivePower()).isEqualTo(8);
-        assertThat(token.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(8);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(token.getCard().getColors()).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ELEMENTAL);

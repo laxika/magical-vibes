@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranSkyknight;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -46,8 +47,8 @@ class ThunderWallTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getPowerModifier()).isEqualTo(1);
-        assertThat(wall.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isEqualTo(1);
         assertThat(wall.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
@@ -61,8 +62,8 @@ class ThunderWallTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getPowerModifier()).isEqualTo(1);
-        assertThat(wall.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isEqualTo(1);
     }
 
     @Test
@@ -79,8 +80,8 @@ class ThunderWallTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getPowerModifier()).isEqualTo(3);
-        assertThat(wall.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isEqualTo(3);
     }
 
     @Test
@@ -91,15 +92,15 @@ class ThunderWallTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(wall.getPowerModifier()).isEqualTo(1);
-        assertThat(wall.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wall.getPowerModifier()).isEqualTo(0);
-        assertThat(wall.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isEqualTo(0);
     }
 
     @Test
@@ -112,8 +113,8 @@ class ThunderWallTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getPowerModifier()).isEqualTo(1);
-        assertThat(wall.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isEqualTo(1);
         assertThat(wall.isTapped()).isTrue();
     }
 
@@ -127,14 +128,14 @@ class ThunderWallTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isEqualTo(1);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 }

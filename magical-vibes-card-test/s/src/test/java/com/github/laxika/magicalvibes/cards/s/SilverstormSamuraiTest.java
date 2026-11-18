@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BileUrchin;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -33,8 +34,8 @@ class SilverstormSamuraiTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(samurai.getPowerModifier()).isEqualTo(1);
-        assertThat(samurai.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, samurai)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, samurai)).isEqualTo(1);
     }
 
     @Test
@@ -65,8 +66,8 @@ class SilverstormSamuraiTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(samurai.getPowerModifier()).isEqualTo(1);
-        assertThat(samurai.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, samurai)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, samurai)).isEqualTo(1);
     }
 
     @Test
@@ -80,8 +81,8 @@ class SilverstormSamuraiTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(samurai.getPowerModifier()).isEqualTo(1);
-        assertThat(samurai.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, samurai)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, samurai)).isEqualTo(1);
     }
 
     @Test
@@ -93,8 +94,8 @@ class SilverstormSamuraiTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(samurai.getPowerModifier()).isZero();
-        assertThat(samurai.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, samurai)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, samurai)).isZero();
     }
 
     @Test
@@ -111,8 +112,8 @@ class SilverstormSamuraiTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(samurai.getPowerModifier()).isEqualTo(1);
-        assertThat(samurai.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, samurai)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, samurai)).isEqualTo(1);
     }
 
     @Test
@@ -126,14 +127,14 @@ class SilverstormSamuraiTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(samurai.getPowerModifier()).isEqualTo(1);
-        assertThat(samurai.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, samurai)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, samurai)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(samurai.getPowerModifier()).isZero();
-        assertThat(samurai.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, samurai)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, samurai)).isZero();
     }
 }

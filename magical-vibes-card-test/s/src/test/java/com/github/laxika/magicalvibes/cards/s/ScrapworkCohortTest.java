@@ -36,8 +36,8 @@ class ScrapworkCohortTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SOLDIER);
         assertThat(gqs.getEffectiveColors(gd, token)).isEmpty();
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(gqs.isArtifact(gd, token)).isTrue();
         assertThat(gqs.isCreature(gd, token)).isTrue();
     }

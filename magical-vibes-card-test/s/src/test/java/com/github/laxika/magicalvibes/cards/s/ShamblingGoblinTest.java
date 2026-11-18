@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -34,8 +35,8 @@ class ShamblingGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player2, "Grizzly Bears");
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
     }
 
     @Test
@@ -65,15 +66,15 @@ class ShamblingGoblinTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player2, "Grizzly Bears").getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player2, "Grizzly Bears"))).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player2, "Grizzly Bears");
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -106,8 +107,8 @@ class ShamblingGoblinTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         Permanent ownCreature = findPermanent(player1, "Grizzly Bears");
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
     }
 
     @Test
@@ -127,8 +128,8 @@ class ShamblingGoblinTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(survivor);
-        assertThat(survivor.getPowerModifier()).isZero();
-        assertThat(survivor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

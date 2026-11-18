@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -31,8 +32,8 @@ class VeteransArmamentsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -49,8 +50,8 @@ class VeteransArmamentsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Three attacking creatures → +3/+3.
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -63,14 +64,14 @@ class VeteransArmamentsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(0);
-        assertThat(creature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(0);
     }
 
     @Test
@@ -92,8 +93,8 @@ class VeteransArmamentsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Two attacking creatures → +2/+2 on the blocker.
-        assertThat(blocker.getPowerModifier()).isEqualTo(2);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -106,7 +107,7 @@ class VeteransArmamentsTest extends BaseCardTest {
 
         assertThat(gd.stack)
                 .noneMatch(se -> se.getCard().getName().equals("Veteran's Armaments"));
-        assertThat(creature.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(0);
     }
 
     // ===== Trigger: "Whenever a Soldier creature enters, you may attach this Equipment to it." =====
@@ -202,10 +203,10 @@ class VeteransArmamentsTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(armaments.getAttachedTo()).isEqualTo(soldier.getId());
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
-        assertThat(soldier.getPowerModifier()).isZero();
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
     }
 
     @Test
@@ -220,8 +221,8 @@ class VeteransArmamentsTest extends BaseCardTest {
         armaments.setAttachedTo(null);
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
     }
 
     @Test
@@ -236,8 +237,8 @@ class VeteransArmamentsTest extends BaseCardTest {
         assertThat(gd.stack).singleElement()
                 .satisfies(entry -> assertThat(entry.getControllerId()).isEqualTo(player2.getId()));
         resolveAllTriggers();
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
     }
 
     @Test
@@ -253,8 +254,8 @@ class VeteransArmamentsTest extends BaseCardTest {
         otherAttacker.setAttacking(false);
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
     }
 
 }

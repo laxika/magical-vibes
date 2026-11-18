@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.n.NantukoMonastery;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,8 +26,8 @@ class DwarvenBloodboilerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bloodboiler.isTapped()).isTrue();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -53,8 +54,8 @@ class DwarvenBloodboilerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(otherDwarf.isTapped()).isTrue();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -102,13 +103,13 @@ class DwarvenBloodboilerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -124,7 +125,7 @@ class DwarvenBloodboilerTest extends BaseCardTest {
 
         assertThat(bloodboiler.isTapped()).isFalse();
         assertThat(otherDwarf.isTapped()).isTrue();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -147,11 +148,11 @@ class DwarvenBloodboilerTest extends BaseCardTest {
         assertThat(bloodboiler.isSummoningSick()).isTrue();
         harness.activateAbility(player1, 0, null, bloodboiler.getId());
         assertThat(bloodboiler.isTapped()).isTrue();
-        assertThat(bloodboiler.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bloodboiler)).isZero();
         harness.passBothPriorities();
 
-        assertThat(bloodboiler.getPowerModifier()).isEqualTo(2);
-        assertThat(bloodboiler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bloodboiler)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bloodboiler)).isZero();
     }
 
     @Test
@@ -167,8 +168,8 @@ class DwarvenBloodboilerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(dwarf.isTapped()).isTrue();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -188,8 +189,8 @@ class DwarvenBloodboilerTest extends BaseCardTest {
 
         assertThat(firstDwarf.isTapped()).isTrue();
         assertThat(secondDwarf.isTapped()).isTrue();
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -204,7 +205,7 @@ class DwarvenBloodboilerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bloodboiler.isTapped()).isTrue();
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

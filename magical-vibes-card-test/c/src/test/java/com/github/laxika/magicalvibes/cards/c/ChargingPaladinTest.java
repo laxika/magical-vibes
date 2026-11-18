@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -35,8 +36,8 @@ class ChargingPaladinTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(0);
-        assertThat(paladin.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(3);
     }
 
     @Test
@@ -46,16 +47,16 @@ class ChargingPaladinTest extends BaseCardTest {
         Permanent nonattackingPaladin = addCreatureReady(player1, new ChargingPaladin());
 
         declareAttackers(player1, List.of(0));
-        assertThat(paladin.getToughnessModifier()).isZero();
-        assertThat(nonattackingPaladin.getPowerModifier()).isEqualTo(0);
-        assertThat(nonattackingPaladin.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattackingPaladin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonattackingPaladin)).isEqualTo(0);
 
         resolveAllTriggers();
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(0);
-        assertThat(paladin.getToughnessModifier()).isEqualTo(3);
-        assertThat(nonattackingPaladin.getPowerModifier()).isEqualTo(0);
-        assertThat(nonattackingPaladin.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattackingPaladin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonattackingPaladin)).isEqualTo(0);
     }
 
     @Test
@@ -67,15 +68,15 @@ class ChargingPaladinTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(first.getToughnessModifier()).isEqualTo(3);
-        assertThat(second.getPowerModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(3);
     }
 
     @Test
@@ -86,12 +87,12 @@ class ChargingPaladinTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(paladin.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(0);
-        assertThat(paladin.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(0);
     }
 }

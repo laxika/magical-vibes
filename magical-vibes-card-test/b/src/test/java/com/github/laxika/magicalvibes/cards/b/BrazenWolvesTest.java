@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -58,8 +59,8 @@ class BrazenWolvesTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(wolves.getPowerModifier()).isEqualTo(2);
-        assertThat(wolves.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolves)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolves)).isZero();
         assertThat(gqs.getEffectivePower(gd, wolves)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, wolves)).isEqualTo(3);
     }
@@ -71,13 +72,13 @@ class BrazenWolvesTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
-        assertThat(wolves.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolves)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wolves.getPowerModifier()).isZero();
-        assertThat(wolves.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolves)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolves)).isZero();
     }
 }

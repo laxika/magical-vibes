@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -94,10 +95,10 @@ class NantukoHuskTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent husk = findPermanent(player1, "Nantuko Husk");
-        assertThat(husk.getPowerModifier()).isEqualTo(2);
-        assertThat(husk.getToughnessModifier()).isEqualTo(2);
-        assertThat(husk.getEffectivePower()).isEqualTo(4);
-        assertThat(husk.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, husk)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, husk)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, husk)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, husk)).isEqualTo(4);
     }
 
     @Test
@@ -118,10 +119,10 @@ class NantukoHuskTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent husk = findPermanent(player1, "Nantuko Husk");
-        assertThat(husk.getPowerModifier()).isEqualTo(4);
-        assertThat(husk.getToughnessModifier()).isEqualTo(4);
-        assertThat(husk.getEffectivePower()).isEqualTo(6);
-        assertThat(husk.getEffectiveToughness()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, husk)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, husk)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, husk)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, husk)).isEqualTo(6);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Saproling Token");
@@ -147,10 +148,10 @@ class NantukoHuskTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent husk = findPermanent(player1, "Nantuko Husk");
-        assertThat(husk.getPowerModifier()).isEqualTo(4);
-        assertThat(husk.getToughnessModifier()).isEqualTo(4);
-        assertThat(husk.getEffectivePower()).isEqualTo(6);
-        assertThat(husk.getEffectiveToughness()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, husk)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, husk)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, husk)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, husk)).isEqualTo(6);
         assertThat(gd.playerGraveyards.get(player1.getId()).stream()
                 .filter(card -> card.getName().equals("Grizzly Bears")))
                 .hasSize(2);
@@ -253,18 +254,18 @@ class NantukoHuskTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent husk = findPermanent(player1, "Nantuko Husk");
-        assertThat(husk.getEffectivePower()).isEqualTo(4);
-        assertThat(husk.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, husk)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, husk)).isEqualTo(4);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(husk.getPowerModifier()).isEqualTo(0);
-        assertThat(husk.getToughnessModifier()).isEqualTo(0);
-        assertThat(husk.getEffectivePower()).isEqualTo(2);
-        assertThat(husk.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, husk)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, husk)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, husk)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, husk)).isEqualTo(2);
     }
 
     @Test
@@ -379,15 +380,15 @@ class NantukoHuskTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, sacrifice.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(2);
-        assertThat(source.getToughnessModifier()).isEqualTo(2);
-        assertThat(otherHusk.getPowerModifier()).isZero();
-        assertThat(otherHusk.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherHusk)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherHusk)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

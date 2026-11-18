@@ -49,7 +49,7 @@ class ChocoSeekerOfParadiseTest extends BaseCardTest {
         assertThat(findPermanent(player1, forest.getName()).isTapped()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(untouched);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
-        assertThat(choco.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, choco)).isEqualTo(4);
     }
 
     @Test
@@ -136,8 +136,8 @@ class ChocoSeekerOfParadiseTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest, island);
         assertThat(findPermanent(player1, forest.getName()).isTapped()).isTrue();
         assertThat(findPermanent(player1, island.getName()).isTapped()).isTrue();
-        assertThat(choco.getEffectivePower()).isEqualTo(5);
-        assertThat(choco.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, choco)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, choco)).isEqualTo(5);
     }
 
     @Test
@@ -206,8 +206,8 @@ class ChocoSeekerOfParadiseTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
         resolveAllTriggers();
 
-        assertThat(choco.getEffectivePower()).isEqualTo(4);
-        assertThat(choco.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, choco)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, choco)).isEqualTo(5);
         assertThat(choco.isAttacking()).isFalse();
     }
 

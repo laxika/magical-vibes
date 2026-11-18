@@ -64,7 +64,7 @@ class MurderousRedcapTest extends BaseCardTest {
         Permanent redcap = findPermanent(player1, "Murderous Redcap");
         assertThat(redcap).isNotNull();
         assertThat(redcap.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(redcap.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, redcap)).isEqualTo(1);
     }
 
     @Test

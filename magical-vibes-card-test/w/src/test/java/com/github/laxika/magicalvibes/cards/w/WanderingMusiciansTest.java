@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,11 +23,11 @@ class WanderingMusiciansTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(musicians.getPowerModifier()).isEqualTo(1);
-        assertThat(otherCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(opposingCreature.getPowerModifier()).isZero();
-        assertThat(musicians.getToughnessModifier()).isZero();
-        assertThat(otherCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, musicians)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, musicians)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreature)).isZero();
     }
 
     @Test
@@ -37,15 +38,15 @@ class WanderingMusiciansTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(musicians.getPowerModifier()).isEqualTo(1);
-        assertThat(otherCreature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, musicians)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(musicians.getPowerModifier()).isZero();
-        assertThat(otherCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, musicians)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isZero();
     }
 
     @Test
@@ -60,12 +61,12 @@ class WanderingMusiciansTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(nonattacker.getPowerModifier()).isEqualTo(2);
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 
     @Test
@@ -79,9 +80,9 @@ class WanderingMusiciansTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new WanderingMusicians());
 
-        assertThat(musicians.getPowerModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
-        assertThat(afterResolution.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, musicians)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
     }
 
     @Test
@@ -96,8 +97,8 @@ class WanderingMusiciansTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(musicians.getCard()));
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
 
-        assertThat(otherCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(otherCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreature)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

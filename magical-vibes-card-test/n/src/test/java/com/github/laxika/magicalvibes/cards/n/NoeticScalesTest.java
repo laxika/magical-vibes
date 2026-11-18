@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BullHippo;
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -42,8 +43,8 @@ class NoeticScalesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Forest(), new Forest()));
 
         advanceToUpkeep(player1);
-        merfolk.setPowerModifier(1);
-        bullHippo.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, merfolk, 1);
+        PermanentGrants.setPowerBoost(gd, bullHippo, -1);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bullHippo).doesNotContain(merfolk);

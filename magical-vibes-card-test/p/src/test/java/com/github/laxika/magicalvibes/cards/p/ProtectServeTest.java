@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MazeRusher;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -42,8 +43,8 @@ class ProtectServeTest extends BaseCardTest {
         harness.castInstant(player1, 0, PROTECT, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
     }
 
     @Test
@@ -58,8 +59,8 @@ class ProtectServeTest extends BaseCardTest {
         harness.castInstant(player1, 0, SERVE, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(-4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -73,7 +74,7 @@ class ProtectServeTest extends BaseCardTest {
         harness.castInstant(player1, 0, SERVE, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(-4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-4);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -91,10 +92,10 @@ class ProtectServeTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, FUSE, List.of(mine.getId(), theirs.getId()));
         harness.passBothPriorities();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(4);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(6);
-        assertThat(theirs.getEffectivePower()).isEqualTo(-4);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(-4);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 
     @Test
@@ -111,8 +112,8 @@ class ProtectServeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // +2/+4 then -6/-0
-        assertThat(bears.getEffectivePower()).isEqualTo(-2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
     }
 
     @Test
@@ -145,10 +146,10 @@ class ProtectServeTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(2);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(2);
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 
     @ParameterizedTest
@@ -170,8 +171,8 @@ class ProtectServeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent remaining = removeProtectTarget ? theirs : mine;
-        assertThat(remaining.getEffectivePower()).isEqualTo(removeProtectTarget ? 0 : 8);
-        assertThat(remaining.getEffectiveToughness()).isEqualTo(removeProtectTarget ? 3 : 7);
+        assertThat(gqs.getEffectivePower(gd, remaining)).isEqualTo(removeProtectTarget ? 0 : 8);
+        assertThat(gqs.getEffectiveToughness(gd, remaining)).isEqualTo(removeProtectTarget ? 3 : 7);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(spell.getId()));
         assertThat(gd.stack).isEmpty();
@@ -191,8 +192,8 @@ class ProtectServeTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(target.getCard()));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(spell.getId()));
         assertThat(gd.stack).isEmpty();

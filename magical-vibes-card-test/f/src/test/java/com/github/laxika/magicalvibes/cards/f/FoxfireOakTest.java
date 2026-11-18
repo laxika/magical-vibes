@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class FoxfireOakTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(oak.getPowerModifier()).isEqualTo(3);
-        assertThat(oak.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, oak)).isEqualTo(0);
     }
 
     @Test
@@ -36,7 +37,7 @@ class FoxfireOakTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(oak.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(3);
     }
 
     @Test
@@ -49,7 +50,7 @@ class FoxfireOakTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(oak.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(3);
     }
 
     @Test
@@ -62,7 +63,7 @@ class FoxfireOakTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(oak.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(3);
     }
 
     @Test
@@ -87,8 +88,8 @@ class FoxfireOakTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(oak.getPowerModifier()).isEqualTo(6);
-        assertThat(oak.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, oak)).isEqualTo(0);
     }
 
     @Test
@@ -100,13 +101,13 @@ class FoxfireOakTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(oak.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(oak.getPowerModifier()).isEqualTo(0);
-        assertThat(oak.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, oak)).isEqualTo(0);
     }
 
     @Test
@@ -119,8 +120,8 @@ class FoxfireOakTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(oak.getPowerModifier()).isEqualTo(3);
-        assertThat(oak.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, oak)).isEqualTo(0);
         assertThat(oak.isTapped()).isFalse();
     }
 
@@ -135,7 +136,7 @@ class FoxfireOakTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
 
-        assertThat(oak.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(0);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -150,16 +151,16 @@ class FoxfireOakTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(oak.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(0);
         assertThat(gd.stack).hasSize(2);
 
         harness.passBothPriorities();
-        assertThat(oak.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(3);
         harness.passBothPriorities();
 
-        assertThat(oak.getPowerModifier()).isEqualTo(6);
-        assertThat(oak.getToughnessModifier()).isEqualTo(0);
-        assertThat(otherOak.getPowerModifier()).isEqualTo(0);
-        assertThat(opposingOak.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, oak)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, oak)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherOak)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingOak)).isEqualTo(0);
     }
 }

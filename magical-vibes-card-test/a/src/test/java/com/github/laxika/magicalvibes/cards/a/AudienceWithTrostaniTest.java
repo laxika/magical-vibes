@@ -32,8 +32,8 @@ class AudienceWithTrostaniTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 3);
         assertThat(findPermanents(player1, "Plant Token")).singleElement()
                 .satisfies(plant -> {
-                    assertThat(plant.getEffectivePower()).isZero();
-                    assertThat(plant.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, plant)).isZero();
+                    assertThat(gqs.getEffectiveToughness(gd, plant)).isEqualTo(1);
                 });
     }
 

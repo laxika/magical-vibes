@@ -24,8 +24,8 @@ class KazanduMammothTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(mammoth.getEffectivePower()).isEqualTo(5);
-        assertThat(mammoth.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, mammoth)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, mammoth)).isEqualTo(5);
     }
 
     @Test
@@ -58,8 +58,8 @@ class KazanduMammothTest extends BaseCardTest {
         harness.playLand(player1, 0);
         resolveAllTriggers();
 
-        assertThat(mammoth.getEffectivePower()).isEqualTo(5);
-        assertThat(mammoth.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, mammoth)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, mammoth)).isEqualTo(5);
     }
 
     @Test
@@ -70,13 +70,13 @@ class KazanduMammothTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         resolveAllTriggers();
 
-        assertThat(mammoth.getEffectivePower()).isEqualTo(7);
-        assertThat(mammoth.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, mammoth)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, mammoth)).isEqualTo(7);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(mammoth.getEffectivePower()).isEqualTo(3);
-        assertThat(mammoth.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mammoth)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mammoth)).isEqualTo(3);
     }
 
     @Test
@@ -87,8 +87,8 @@ class KazanduMammothTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(mammoth.getEffectivePower()).isEqualTo(3);
-        assertThat(mammoth.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, mammoth)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mammoth)).isEqualTo(3);
     }
 
     @Test
@@ -103,8 +103,8 @@ class KazanduMammothTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
 
-        assertThat(mammoth.getEffectivePower()).isEqualTo(5);
-        assertThat(mammoth.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, mammoth)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, mammoth)).isEqualTo(5);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
 }

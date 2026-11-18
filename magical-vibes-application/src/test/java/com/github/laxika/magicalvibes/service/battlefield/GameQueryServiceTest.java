@@ -1495,7 +1495,7 @@ class GameQueryServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             gqs.withQueryScope(gd, () -> gqs.getEffectivePower(gd, perm));
-            perm.setPowerModifier(3);
+            PermanentGrants.setPowerBoost(gd, perm, 3);
 
             assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(5);
         }
@@ -1903,7 +1903,7 @@ class GameQueryServiceTest {
         @DisplayName("includes power modifier")
         void includesPowerModifier() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            perm.setPowerModifier(3);
+            PermanentGrants.setPowerBoost(gd, perm, 3);
 
             assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(5);
         }
@@ -1912,7 +1912,7 @@ class GameQueryServiceTest {
         @DisplayName("includes toughness modifier")
         void includesToughnessModifier() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            perm.setToughnessModifier(2);
+            PermanentGrants.setToughnessBoost(gd, perm, 2);
 
             assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(4);
         }

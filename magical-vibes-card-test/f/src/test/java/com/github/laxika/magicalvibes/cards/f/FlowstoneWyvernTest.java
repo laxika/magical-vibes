@@ -30,8 +30,8 @@ class FlowstoneWyvernTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent wyvern = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(wyvern.getEffectivePower()).isEqualTo(5);
-        assertThat(wyvern.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, wyvern)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wyvern)).isEqualTo(1);
     }
 
     @Test
@@ -58,14 +58,14 @@ class FlowstoneWyvernTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent wyvern = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(wyvern.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, wyvern)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wyvern.getEffectivePower()).isEqualTo(3);
-        assertThat(wyvern.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wyvern)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wyvern)).isEqualTo(3);
     }
 
     @Test
@@ -101,8 +101,8 @@ class FlowstoneWyvernTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wyvern.getEffectivePower()).isEqualTo(5);
-        assertThat(wyvern.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, wyvern)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wyvern)).isEqualTo(1);
         assertThat(wyvern.isTapped()).isTrue();
     }
 
@@ -117,11 +117,11 @@ class FlowstoneWyvernTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(5);
-        assertThat(source.getEffectiveToughness()).isEqualTo(1);
-        assertThat(other.getEffectivePower()).isEqualTo(3);
-        assertThat(other.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponent.getEffectivePower()).isEqualTo(3);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(3);
     }
 }

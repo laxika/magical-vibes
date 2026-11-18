@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -46,8 +47,8 @@ class AberrantManawurmTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(manawurm.getPowerModifier()).isEqualTo(1);
-        assertThat(manawurm.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, manawurm)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manawurm)).isEqualTo(0);
     }
 
     @Test
@@ -60,8 +61,8 @@ class AberrantManawurmTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(manawurm.getPowerModifier()).isEqualTo(1);
-        assertThat(manawurm.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, manawurm)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manawurm)).isEqualTo(0);
     }
 
     @Test
@@ -74,8 +75,8 @@ class AberrantManawurmTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Divination()));
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(manawurm.getPowerModifier()).isEqualTo(3);
-        assertThat(manawurm.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, manawurm)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manawurm)).isEqualTo(0);
     }
 
     @Test
@@ -88,8 +89,8 @@ class AberrantManawurmTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Hurricane()));
         harness.castAndResolveSorcery(player1, 0, 3);
 
-        assertThat(manawurm.getPowerModifier()).isEqualTo(4);
-        assertThat(manawurm.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, manawurm)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manawurm)).isEqualTo(0);
     }
 
     @Test
@@ -103,8 +104,8 @@ class AberrantManawurmTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(manawurm.getPowerModifier()).isEqualTo(0);
-        assertThat(manawurm.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, manawurm)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manawurm)).isEqualTo(0);
     }
 
     @Test
@@ -116,7 +117,7 @@ class AberrantManawurmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new Shock()));
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(manawurm.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, manawurm)).isEqualTo(1);
 
         harness.passBothPriorities();
 
@@ -124,8 +125,8 @@ class AberrantManawurmTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(manawurm.getPowerModifier()).isEqualTo(2);
-        assertThat(manawurm.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, manawurm)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manawurm)).isEqualTo(0);
     }
 
     @Test
@@ -138,8 +139,8 @@ class AberrantManawurmTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(manawurm.getPowerModifier()).isZero();
-        assertThat(manawurm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, manawurm)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manawurm)).isZero();
     }
 
     @Test
@@ -150,12 +151,12 @@ class AberrantManawurmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new Shock()));
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(manawurm.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, manawurm)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(manawurm.getPowerModifier()).isZero();
-        assertThat(manawurm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, manawurm)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manawurm)).isZero();
     }
 
     @Test
@@ -168,8 +169,8 @@ class AberrantManawurmTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(manawurm.getPowerModifier()).isEqualTo(1);
-        assertThat(manawurm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, manawurm)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manawurm)).isZero();
     }
 
     @Test
@@ -189,7 +190,7 @@ class AberrantManawurmTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Divination");
         harness.passBothPriorities();
 
-        assertThat(manawurm.getPowerModifier()).isEqualTo(3);
-        assertThat(manawurm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, manawurm)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manawurm)).isZero();
     }
 }

@@ -25,8 +25,8 @@ class HammerheadMaggiaBossTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hammerhead.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(hammerhead.getEffectivePower()).isEqualTo(3);
-        assertThat(hammerhead.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hammerhead)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hammerhead)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
@@ -40,8 +40,8 @@ class HammerheadMaggiaBossTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hammerhead.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(hammerhead.getEffectivePower()).isEqualTo(3);
-        assertThat(hammerhead.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hammerhead)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hammerhead)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Spellbook");
     }
 

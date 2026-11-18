@@ -27,8 +27,8 @@ class PrideOfConquerorsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -41,8 +41,8 @@ class PrideOfConquerorsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         assertThat(gd.playersWithCityBlessing).contains(player1.getId());
     }
 
@@ -64,8 +64,8 @@ class PrideOfConquerorsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(newCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(newCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, newCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, newCreature)).isEqualTo(4);
     }
 
     @Test
@@ -80,14 +80,14 @@ class PrideOfConquerorsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         Permanent later = harness.addToBattlefieldAndReturn(player1, new SunSentinel());
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(first.getEffectiveToughness()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
-        assertThat(later.getEffectivePower()).isEqualTo(2);
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
         assertThat(gd.playersWithCityBlessing).doesNotContain(player1.getId());
     }
 
@@ -99,12 +99,12 @@ class PrideOfConquerorsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gd.playersWithCityBlessing).contains(player1.getId());
     }
 
@@ -120,8 +120,8 @@ class PrideOfConquerorsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         assertThat(gd.playersWithCityBlessing).contains(player1.getId());
     }
 
@@ -137,8 +137,8 @@ class PrideOfConquerorsTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).removeLast();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gd.playersWithCityBlessing).doesNotContain(player1.getId());
     }
 

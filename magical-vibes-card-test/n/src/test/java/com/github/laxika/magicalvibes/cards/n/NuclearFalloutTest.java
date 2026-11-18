@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlphaDeathclaw;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,10 +29,10 @@ class NuclearFalloutTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 2);
 
-        assertThat(ownBear.getPowerModifier()).isEqualTo(-4);
-        assertThat(ownBear.getToughnessModifier()).isEqualTo(-4);
-        assertThat(opposingBear.getPowerModifier()).isEqualTo(-4);
-        assertThat(opposingBear.getToughnessModifier()).isEqualTo(-4);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownBear)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownBear)).isEqualTo(-4);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingBear)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingBear)).isEqualTo(-4);
         assertThat(gd.playerRadCounters.get(player1.getId())).isEqualTo(2);
         assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(2);
     }

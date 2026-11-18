@@ -25,8 +25,8 @@ class CalderaKavuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(kavu.getEffectivePower()).isEqualTo(3);
-        assertThat(kavu.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(3);
     }
 
     @Test
@@ -41,8 +41,8 @@ class CalderaKavuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(kavu.getEffectivePower()).isEqualTo(4);
-        assertThat(kavu.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(4);
     }
 
     @Test
@@ -88,8 +88,8 @@ class CalderaKavuTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(kavu.getEffectivePower()).isEqualTo(2);
-        assertThat(kavu.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
         assertThat(gqs.getEffectiveColors(gd, kavu)).containsExactly(CardColor.RED);
     }
 
@@ -134,11 +134,11 @@ class CalderaKavuTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLACK");
 
-        assertThat(kavu.getEffectivePower()).isEqualTo(3);
-        assertThat(kavu.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(3);
         assertThat(gqs.getEffectiveColors(gd, kavu)).containsExactly(CardColor.BLACK);
-        assertThat(otherKavu.getEffectivePower()).isEqualTo(2);
-        assertThat(otherKavu.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherKavu)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherKavu)).isEqualTo(2);
         assertThat(gqs.getEffectiveColors(gd, otherKavu)).containsExactly(CardColor.RED);
     }
 }

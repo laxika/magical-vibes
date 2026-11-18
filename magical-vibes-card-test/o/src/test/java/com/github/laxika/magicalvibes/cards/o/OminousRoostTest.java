@@ -27,8 +27,8 @@ class OminousRoostTest extends BaseCardTest {
         castRoost();
 
         Permanent bird = findPermanent(player1, "Bird");
-        assertThat(bird.getEffectivePower()).isEqualTo(1);
-        assertThat(bird.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
         assertThat(bird.getCard().getKeywords()).contains(Keyword.FLYING);
     }
 

@@ -45,8 +45,8 @@ class BogHoodlumsTest extends BaseCardTest {
         Permanent hoodlums = castBogHoodlums();
 
         assertThat(hoodlums.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(hoodlums.getEffectivePower()).isEqualTo(5);
-        assertThat(hoodlums.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hoodlums)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, hoodlums)).isEqualTo(2);
     }
 
     // ===== Lost clash — no counter =====
@@ -60,8 +60,8 @@ class BogHoodlumsTest extends BaseCardTest {
         Permanent hoodlums = castBogHoodlums();
 
         assertThat(hoodlums.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
-        assertThat(hoodlums.getEffectivePower()).isEqualTo(4);
-        assertThat(hoodlums.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, hoodlums)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hoodlums)).isEqualTo(1);
     }
 
     // ===== Tie — a clash is only won on a strictly greater mana value (CR 701.30d) =====
@@ -86,8 +86,8 @@ class BogHoodlumsTest extends BaseCardTest {
         Permanent hoodlums = castBogHoodlums();
 
         assertThat(hoodlums.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
-        assertThat(hoodlums.getEffectivePower()).isEqualTo(4);
-        assertThat(hoodlums.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, hoodlums)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hoodlums)).isEqualTo(1);
     }
 
     @Test

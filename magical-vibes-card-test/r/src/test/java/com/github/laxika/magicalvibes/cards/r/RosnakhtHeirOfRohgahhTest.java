@@ -26,8 +26,8 @@ class RosnakhtHeirOfRohgahhTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Kobolds of Kher Keep");
         assertThat(token.getCard().isToken()).isTrue();
-        assertThat(token.getEffectivePower()).isZero();
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
     }
 
     @Test
@@ -60,8 +60,8 @@ class RosnakhtHeirOfRohgahhTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     private void castGiantGrowth(Player player, Permanent target) {
@@ -84,9 +84,9 @@ class RosnakhtHeirOfRohgahhTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Kobolds of Kher Keep")).hasSize(1);
-        assertThat(rosnakht.getEffectivePower()).isZero();
+        assertThat(gqs.getEffectivePower(gd, rosnakht)).isZero();
         resolveAllTriggers();
-        assertThat(rosnakht.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rosnakht)).isEqualTo(3);
         assertThat(findPermanents(player1, "Kobolds of Kher Keep")).hasSize(1);
     }
 
@@ -112,11 +112,11 @@ class RosnakhtHeirOfRohgahhTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(rosnakht.getEffectivePower()).isZero();
-        assertThat(rosnakht.getEffectiveToughness()).isEqualTo(1);
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(nonattacker.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rosnakht)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, rosnakht)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
     }
 }

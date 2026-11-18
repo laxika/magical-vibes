@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantTortoise;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
@@ -32,10 +33,10 @@ class ToxicDelugeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 2);
 
         harness.assertLife(player1, 18);
-        assertThat(ownBear.getPowerModifier()).isEqualTo(-2);
-        assertThat(ownBear.getToughnessModifier()).isEqualTo(-2);
-        assertThat(opposingBear.getPowerModifier()).isEqualTo(-2);
-        assertThat(opposingBear.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownBear)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownBear)).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingBear)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingBear)).isEqualTo(-2);
     }
 
     @Test
@@ -49,8 +50,8 @@ class ToxicDelugeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertLife(player1, 20);
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -79,7 +80,7 @@ class ToxicDelugeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 3);
 
         harness.assertLife(player1, 17);
-        assertThat(tortoise.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tortoise)).isZero();
 
         harness.castInstant(player2, 0, deluge.getId());
         harness.passBothPriorities();
@@ -87,8 +88,8 @@ class ToxicDelugeTest extends BaseCardTest {
         harness.assertLife(player1, 17);
         harness.assertInGraveyard(player1, "Toxic Deluge");
         harness.assertOnBattlefield(player1, "Giant Tortoise");
-        assertThat(tortoise.getPowerModifier()).isZero();
-        assertThat(tortoise.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tortoise)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tortoise)).isZero();
     }
 
     @Test
@@ -119,13 +120,13 @@ class ToxicDelugeTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, tortoise)).isEqualTo(-1);
         assertThat(gqs.getEffectiveToughness(gd, tortoise)).isEqualTo(2);
         Permanent laterTortoise = harness.enterBattlefieldAndReturn(player2, new GiantTortoise());
-        assertThat(laterTortoise.getPowerModifier()).isZero();
-        assertThat(laterTortoise.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, laterTortoise)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterTortoise)).isZero();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(tortoise.getPowerModifier()).isZero();
-        assertThat(tortoise.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tortoise)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tortoise)).isZero();
         assertThat(gqs.getEffectivePower(gd, tortoise)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, tortoise)).isEqualTo(4);
     }
@@ -155,7 +156,7 @@ class ToxicDelugeTest extends BaseCardTest {
 
         harness.assertLife(player1, 0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        assertThat(tortoise.getPowerModifier()).isZero();
-        assertThat(tortoise.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tortoise)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tortoise)).isZero();
     }
 }

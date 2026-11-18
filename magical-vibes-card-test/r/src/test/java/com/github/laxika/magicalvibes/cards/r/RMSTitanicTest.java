@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.j.JudoonEnforcers;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -41,7 +42,7 @@ class RMSTitanicTest extends BaseCardTest {
     @Test
     void treasureCountUsesDamageDealtRatherThanPrintedPower() {
         Permanent titanic = addCrewedTitanic();
-        titanic.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, titanic, -3);
         titanic.setAttacking(true);
 
         resolveCombat();
@@ -70,7 +71,7 @@ class RMSTitanicTest extends BaseCardTest {
     @Test
     void zeroCombatDamageDoesNotSacrificeTitanicOrCreateTreasure() {
         Permanent titanic = addCrewedTitanic();
-        titanic.setPowerModifier(-7);
+        PermanentGrants.setPowerBoost(gd, titanic, -7);
         titanic.setAttacking(true);
 
         resolveCombat();

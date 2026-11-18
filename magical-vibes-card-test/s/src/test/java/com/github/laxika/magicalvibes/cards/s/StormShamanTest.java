@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,14 +25,14 @@ class StormShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(second.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isZero();
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(opposing.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isZero();
     }
 
     @Test
@@ -43,8 +44,8 @@ class StormShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shaman.getPowerModifier()).isEqualTo(1);
-        assertThat(shaman.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, shaman)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shaman)).isEqualTo(0);
     }
 
     @Test
@@ -68,8 +69,8 @@ class StormShamanTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(shaman.getPowerModifier()).isEqualTo(3);
-        assertThat(shaman.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, shaman)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shaman)).isEqualTo(0);
     }
 
     @Test
@@ -80,7 +81,7 @@ class StormShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shaman.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shaman)).isEqualTo(1);
     }
 
     @Test
@@ -93,7 +94,7 @@ class StormShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shaman.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shaman)).isEqualTo(1);
         assertThat(shaman.isTapped()).isTrue();
     }
 
@@ -108,14 +109,14 @@ class StormShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shaman.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, shaman)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shaman.getPowerModifier()).isEqualTo(0);
-        assertThat(shaman.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, shaman)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shaman)).isEqualTo(0);
     }
 
     @Test
@@ -130,6 +131,6 @@ class StormShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shaman.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shaman)).isEqualTo(1);
     }
 }

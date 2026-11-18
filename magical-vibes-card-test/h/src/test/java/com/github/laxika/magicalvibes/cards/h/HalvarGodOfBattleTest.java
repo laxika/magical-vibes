@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BroodKeeper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SpiritLink;
@@ -83,7 +84,7 @@ class HalvarGodOfBattleTest extends BaseCardTest {
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new SwordOfTheRealms());
         Permanent creature = addCreatureReady(player1);
         equipment.setAttachedTo(creature.getId());
-        creature.setToughnessModifier(-2);
+        PermanentGrants.setToughnessBoost(gd, creature, -2);
 
         harness.runStateBasedActions();
         harness.passBothPriorities();
@@ -174,7 +175,7 @@ class HalvarGodOfBattleTest extends BaseCardTest {
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new SwordOfTheRealms());
         Permanent creature = addCreatureReady(player2);
         equipment.setAttachedTo(creature.getId());
-        creature.setToughnessModifier(-2);
+        PermanentGrants.setToughnessBoost(gd, creature, -2);
 
         harness.runStateBasedActions();
         harness.passBothPriorities();
@@ -188,7 +189,7 @@ class HalvarGodOfBattleTest extends BaseCardTest {
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new SwordOfTheRealms());
         Permanent creature = addCreatureReady(player1);
         equipment.setAttachedTo(creature.getId());
-        creature.setToughnessModifier(-2);
+        PermanentGrants.setToughnessBoost(gd, creature, -2);
         harness.runStateBasedActions();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature.getOriginalCard());
 

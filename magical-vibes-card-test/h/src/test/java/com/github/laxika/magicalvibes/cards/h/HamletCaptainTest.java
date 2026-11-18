@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
@@ -45,8 +46,8 @@ class HamletCaptainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The other Hamlet Captain (2/2) should now be 3/3
-        assertThat(human.getPowerModifier()).isEqualTo(1);
-        assertThat(human.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, human)).isEqualTo(1);
     }
 
     @Test
@@ -68,8 +69,8 @@ class HamletCaptainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Hamlet Captain should NOT get the boost (it says "other Humans")
-        assertThat(captain.getPowerModifier()).isEqualTo(0);
-        assertThat(captain.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(0);
     }
 
     @Test
@@ -95,8 +96,8 @@ class HamletCaptainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Walking Corpse should not get the boost
-        assertThat(corpse.getPowerModifier()).isEqualTo(0);
-        assertThat(corpse.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, corpse)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, corpse)).isEqualTo(0);
     }
 
     @Test
@@ -128,12 +129,12 @@ class HamletCaptainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The other Hamlet Captain should get +1/+1
-        assertThat(human.getPowerModifier()).isEqualTo(1);
-        assertThat(human.getToughnessModifier()).isEqualTo(1);
-        assertThat(captain.getPowerModifier()).isZero();
-        assertThat(captain.getToughnessModifier()).isZero();
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, human)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -151,8 +152,8 @@ class HamletCaptainTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
-        assertThat(human.getPowerModifier()).isEqualTo(1);
-        assertThat(human.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, human)).isEqualTo(1);
     }
 
     @Test
@@ -174,12 +175,12 @@ class HamletCaptainTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent humanAfterResolution = harness.addToBattlefieldAndReturn(player1, new HamletCaptain());
 
-        assertThat(humanBeforeResolution.getPowerModifier()).isEqualTo(1);
-        assertThat(humanBeforeResolution.getToughnessModifier()).isEqualTo(1);
-        assertThat(humanAfterResolution.getPowerModifier()).isZero();
-        assertThat(humanAfterResolution.getToughnessModifier()).isZero();
-        assertThat(opponentHuman.getPowerModifier()).isZero();
-        assertThat(opponentHuman.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, humanBeforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, humanBeforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, humanAfterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, humanAfterResolution)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentHuman)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentHuman)).isZero();
     }
 
     @Test
@@ -201,11 +202,11 @@ class HamletCaptainTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(captain.getCard());
         harness.passBothPriorities();
 
-        assertThat(human.getPowerModifier()).isEqualTo(1);
-        assertThat(human.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, human)).isEqualTo(1);
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
-        assertThat(human.getPowerModifier()).isZero();
-        assertThat(human.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, human)).isZero();
     }
 }

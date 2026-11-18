@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -323,16 +324,16 @@ class TimeStopTest extends BaseCardTest {
     @DisplayName("Resolving resets end-of-turn modifiers on permanents")
     void resetsEndOfTurnModifiers() {
         Permanent perm = harness.addToBattlefieldAndReturn(player1, new ScatheZombies());
-        perm.setPowerModifier(3);
-        perm.setToughnessModifier(3);
+        PermanentGrants.setPowerBoost(gd, perm, 3);
+        PermanentGrants.setToughnessBoost(gd, perm, 3);
 
         harness.setHand(player1, List.of(new TimeStop()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(perm.getPowerModifier()).isZero();
-        assertThat(perm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, perm)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, perm)).isZero();
     }
 
     // ===== Pending may abilities =====
@@ -516,8 +517,8 @@ class TimeStopTest extends BaseCardTest {
     void cleanupDiscardsBeforeRemovingDamageAndModifiers() {
         Permanent creature = addCreatureReady(player1, new ScatheZombies());
         creature.setMarkedDamage(1);
-        creature.setPowerModifier(3);
-        creature.setToughnessModifier(3);
+        PermanentGrants.setPowerBoost(gd, creature, 3);
+        PermanentGrants.setToughnessBoost(gd, creature, 3);
         harness.setHand(player1, List.of(
                 new ScatheZombies(), new ScatheZombies(), new ScatheZombies(), new ScatheZombies(),
                 new ScatheZombies(), new ScatheZombies(), new ScatheZombies(), new ScatheZombies()));
@@ -531,14 +532,14 @@ class TimeStopTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(3);
 
         harness.handleCardChosen(player1, 0);
 
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 }
 

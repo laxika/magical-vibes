@@ -49,8 +49,8 @@ class TeyoTheShieldmageTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(wall.getEffectivePower()).isZero();
-        assertThat(wall.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wall)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
         assertThat(wall.getCard().getSubtypes()).contains(CardSubtype.WALL);
         assertThat(gqs.hasKeyword(gd, wall, Keyword.DEFENDER)).isTrue();
         assertThat(teyo.getCounterCount(CounterType.LOYALTY)).isZero();
@@ -98,8 +98,8 @@ class TeyoTheShieldmageTest extends BaseCardTest {
         Permanent wall = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(wall.getCard().isToken()).isTrue();
         assertThat(wall.getCard().getColors()).containsExactly(CardColor.WHITE);
-        assertThat(wall.getEffectivePower()).isZero();
-        assertThat(wall.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wall)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, wall, Keyword.DEFENDER)).isTrue();
 
         harness.setHand(player2, List.of(new ChandrasPyrohelix()));

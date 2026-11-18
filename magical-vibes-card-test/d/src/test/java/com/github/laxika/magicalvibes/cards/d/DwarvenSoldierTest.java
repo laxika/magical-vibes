@@ -34,8 +34,8 @@ class DwarvenSoldierTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(soldier.getPowerModifier()).isZero();
-        assertThat(soldier.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(2);
     }
 
     @Test
@@ -48,8 +48,8 @@ class DwarvenSoldierTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(soldier.getPowerModifier()).isZero();
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
     }
 
     @Test
@@ -62,8 +62,8 @@ class DwarvenSoldierTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(soldier.getPowerModifier()).isZero();
-        assertThat(soldier.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(2);
     }
 
     @Test
@@ -76,8 +76,8 @@ class DwarvenSoldierTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(soldier.getPowerModifier()).isZero();
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, soldier)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
     }
 
     @Test
@@ -93,7 +93,7 @@ class DwarvenSoldierTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(soldier.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(2);
     }
 
     @Test
@@ -110,7 +110,7 @@ class DwarvenSoldierTest extends BaseCardTest {
                 new BlockerAssignment(1, 1)));
         resolveAllTriggers();
 
-        assertThat(soldier.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(2);
     }
 
     @Test
@@ -126,7 +126,7 @@ class DwarvenSoldierTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(soldier.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(2);
     }
 
     @Test
@@ -139,13 +139,13 @@ class DwarvenSoldierTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(soldier.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
     }
 
     @Test
@@ -159,7 +159,7 @@ class DwarvenSoldierTest extends BaseCardTest {
         PermanentGrants.subtype(gd, blocker, CardSubtype.ORC);
         harness.passBothPriorities();
 
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
     }
 
     @Test
@@ -173,7 +173,7 @@ class DwarvenSoldierTest extends BaseCardTest {
         PermanentGrants.subtype(gd, attacker, CardSubtype.ORC);
         harness.passBothPriorities();
 
-        assertThat(soldier.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isZero();
     }
 
     @Test
@@ -187,7 +187,7 @@ class DwarvenSoldierTest extends BaseCardTest {
         gd.endFloatingEffect(orcGrants.get(blocker));
         harness.passBothPriorities();
 
-        assertThat(soldier.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(2);
     }
 
     @Test
@@ -201,7 +201,7 @@ class DwarvenSoldierTest extends BaseCardTest {
         gd.endFloatingEffect(orcGrants.get(attacker));
         harness.passBothPriorities();
 
-        assertThat(soldier.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, soldier)).isEqualTo(2);
     }
 
     private Permanent addReadyCreature(Player player, boolean orc) {

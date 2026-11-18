@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.t.ThrabenInspector;
 import com.github.laxika.magicalvibes.cards.e.EpitaphGolem;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -34,10 +35,10 @@ class IntrepidProvisionerTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve ETB
 
         Permanent human = findPermanent(player1, "Thraben Inspector");
-        assertThat(human.getPowerModifier()).isEqualTo(2);
-        assertThat(human.getToughnessModifier()).isEqualTo(2);
-        assertThat(human.getEffectivePower()).isEqualTo(3);
-        assertThat(human.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, human)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(4);
     }
 
     @Test
@@ -54,16 +55,16 @@ class IntrepidProvisionerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent human = findPermanent(player1, "Thraben Inspector");
-        assertThat(human.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(human.getPowerModifier()).isEqualTo(0);
-        assertThat(human.getToughnessModifier()).isEqualTo(0);
-        assertThat(human.getEffectivePower()).isEqualTo(1);
-        assertThat(human.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, human)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(2);
     }
 
     @Test
@@ -134,13 +135,13 @@ class IntrepidProvisionerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(other.getEffectivePower()).isEqualTo(5);
-        assertThat(other.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(5);
         Permanent source = findPermanents(player1, "Intrepid Provisioner").stream()
                 .filter(p -> !p.getId().equals(other.getId()))
                 .findFirst().orElseThrow();
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
     }
 
     @Test
@@ -161,8 +162,8 @@ class IntrepidProvisionerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Thraben Inspector");
         Permanent source = findPermanent(player1, "Intrepid Provisioner");
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -185,8 +186,8 @@ class IntrepidProvisionerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Intrepid Provisioner");
         Permanent human = findPermanent(player1, "Thraben Inspector");
-        assertThat(human.getEffectivePower()).isEqualTo(3);
-        assertThat(human.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
     }
 }

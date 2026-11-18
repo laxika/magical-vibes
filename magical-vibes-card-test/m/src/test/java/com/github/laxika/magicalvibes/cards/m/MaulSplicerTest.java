@@ -43,8 +43,8 @@ class MaulSplicerTest extends BaseCardTest {
             assertThat(golem.getCard().getColor()).isNull();
             assertThat(golem.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(golem.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
-            assertThat(golem.getEffectivePower()).isEqualTo(3);
-            assertThat(golem.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(3);
         }
     }
 

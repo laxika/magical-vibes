@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RatColony;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -37,18 +38,18 @@ class OgreChitterlordTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new OgreChitterlord());
         harness.passBothPriorities();
 
-        assertThat(existingRatOne.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, existingRatOne)).isEqualTo(2);
         assertThat(findPermanents(player1, "Rat"))
                 .hasSize(2)
-                .allMatch(rat -> rat.getPowerModifier() == 2);
+                .allMatch(rat -> PermanentGrants.powerBoostOf(gd, rat) == 2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(existingRatOne.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, existingRatOne)).isZero();
         assertThat(findPermanents(player1, "Rat"))
-                .allMatch(rat -> rat.getPowerModifier() == 0);
+                .allMatch(rat -> PermanentGrants.powerBoostOf(gd, rat) == 0);
     }
 
     @Test
@@ -66,7 +67,7 @@ class OgreChitterlordTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Rat"))
                 .hasSize(2)
-                .allMatch(rat -> rat.getPowerModifier() == 2);
+                .allMatch(rat -> PermanentGrants.powerBoostOf(gd, rat) == 2);
     }
 
     @Test
@@ -80,6 +81,6 @@ class OgreChitterlordTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Rat"))
                 .hasSize(2)
-                .allMatch(rat -> rat.getPowerModifier() == 0);
+                .allMatch(rat -> PermanentGrants.powerBoostOf(gd, rat) == 0);
     }
 }

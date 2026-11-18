@@ -104,7 +104,7 @@ class NoxiousGearhulkTest extends BaseCardTest {
     void gainsLifeFromModifiedToughness() {
         harness.setLife(player1, 20);
         Permanent target = addCreatureReady(player2, new EagerConstruct());
-        target.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, target, 3);
         target.setMarkedDamage(1);
 
         castAndAcceptMay(target.getId());

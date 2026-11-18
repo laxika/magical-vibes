@@ -856,7 +856,7 @@ public class LayerSystemService {
      *     position is the equal-timestamp fallback), each permanent's identity, timestamp and
      *     every mutable field the pass seeds from or applies with — tap state
      *     ({@code OWN_TAPPED_CREATURES}, tapped-scope filters), attachment, chosen values,
-     *     counters (P/T predicate leaves, AWAKENING animation), P/T modifiers and overrides,
+     *     counters (P/T predicate leaves, AWAKENING animation), the perpetual P/T modifier,
      *     animation state, until-end-of-turn granted and removed keywords, the
      *     transient land-type override, lose-all flags, text replacements and persistent
      *     granted activated abilities;</li>
@@ -1039,9 +1039,6 @@ public class LayerSystemService {
 
         long flags = 0;
         flags = flags << 1 | (p.isTapped() ? 1 : 0);
-        flags = flags << 1 | (p.isBasePowerToughnessOverriddenUntilEndOfTurn() ? 1 : 0);
-        flags = flags << 1 | (p.isBasePowerOverriddenPermanently() ? 1 : 0);
-        flags = flags << 1 | (p.isBaseToughnessOverriddenPermanently() ? 1 : 0);
         flags = flags << 1 | (p.isLosesAllAbilitiesUntilEndOfTurn() ? 1 : 0);
         flags = flags << 1 | (p.isSuspected() ? 1 : 0);
         flags = flags << 1 | (p.isCommander() ? 1 : 0);
@@ -1104,14 +1101,6 @@ public class LayerSystemService {
             }
         }
         h = mix(h, p.getPersistentPowerModifier());
-        h = mix(h, p.getPowerModifier());
-        h = mix(h, p.getToughnessModifier());
-        h = mix(h, p.getBasePowerOverride());
-        h = mix(h, p.getBaseToughnessOverride());
-        h = mix(h, p.getPermanentBasePowerOverride());
-        h = mix(h, p.getPermanentBasePowerOverrideTimestamp());
-        h = mix(h, p.getPermanentBaseToughnessOverride());
-        h = mix(h, p.getPermanentBaseToughnessOverrideTimestamp());
         h = mix(h, p.getFaceDownPower());
         h = mix(h, p.getFaceDownToughness());
         h = hashEnums(h, p.getFaceDownCardTypes());
@@ -3781,8 +3770,8 @@ public class LayerSystemService {
      * static setters (Lignify, Deep Freeze) at their attach timestamp, floating one-shots
      * (Diminish, Wings of Velis Vel, migrated animation base P/T) at their resolution
      * timestamp, March of the Machines' MV-based P/T at March's own timestamp (CR 613.4: one
-     * timestamp with its layer-4 type change), and permanent exchange overrides (Evra, Tree of
-     * Redemption) at the exchange's stamped timestamp. The last-applied value per component
+     * timestamp with its layer-4 type change); floating setters with no stated duration (an
+     * exchange of life and power, a chosen form) are floating one-shots like any other. The last-applied value per component
      * wins; the static-bonus assembly overrides the 7a/intrinsic base with the result. The
      * object's own {@code SetPowerToughnessToAmountEffect} is its 7a CDA and is NOT collected
      * here — the assembly applies (and lose-all-suppresses, CR 613.4a) it before merging 7b.
@@ -3791,9 +3780,8 @@ public class LayerSystemService {
                               Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
         List<BasePtEntry> entries = new ArrayList<>();
 
-        // Permanent exchange overrides keep their Permanent-field storage but order like any
-        // other 7b entry via the timestamp stamped at exchange time (0 = before everything,
-        // for pre-migration state and hand-built test setups).
+        // Base-P/T counters and perpetual base P/T are part of the permanent itself; they order
+        // with the 7b effects by their own timestamps.
         for (PermanentSlot slot : slots) {
             Permanent permanent = slot.permanent();
             if (permanent.getCounterCount(CounterType.BASE_POWER_FOUR) > 0) {
@@ -3810,16 +3798,6 @@ public class LayerSystemService {
                 entries.add(new BasePtEntry(permanent.getId(), null, 4,
                         permanent.getCounterTimestamp(CounterType.BASE_TOUGHNESS_FOUR), slot.position(),
                         "base toughness 4 counter"));
-            }
-            if (permanent.isBasePowerOverriddenPermanently()) {
-                entries.add(new BasePtEntry(permanent.getId(), permanent.getPermanentBasePowerOverride(),
-                        null, permanent.getPermanentBasePowerOverrideTimestamp(), slot.position(),
-                        "P/T exchange"));
-            }
-            if (permanent.isBaseToughnessOverriddenPermanently()) {
-                entries.add(new BasePtEntry(permanent.getId(), null, permanent.getPermanentBaseToughnessOverride(),
-                        permanent.getPermanentBaseToughnessOverrideTimestamp(), slot.position(),
-                        "P/T exchange"));
             }
         }
 

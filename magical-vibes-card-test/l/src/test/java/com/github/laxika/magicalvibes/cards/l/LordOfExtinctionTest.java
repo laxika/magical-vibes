@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -73,8 +74,8 @@ class LordOfExtinctionTest extends BaseCardTest {
         Permanent perm = addCreatureReady(player1, new LordOfExtinction());
         harness.setGraveyard(player1, createCards(4));
 
-        perm.setPowerModifier(2);
-        perm.setToughnessModifier(2);
+        PermanentGrants.setPowerBoost(gd, perm, 2);
+        PermanentGrants.setToughnessBoost(gd, perm, 2);
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(6);

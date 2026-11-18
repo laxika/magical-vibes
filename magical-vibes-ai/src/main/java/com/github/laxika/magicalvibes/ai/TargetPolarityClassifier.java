@@ -556,7 +556,7 @@ public class TargetPolarityClassifier {
             entry("AttachTargetToSourcePermanentEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetAuraOrEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("AttachSourceEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
-            entry("BuffTargetCreatureIndefinitelyEffect", TargetPolarity.BENEFICIAL),
+            entry("PowerToughnessBoostEffect", TargetPolarity.BENEFICIAL),
             entry("DestroyCreaturesBlockedByTargetWallThenReturnFromGraveyardEffect", TargetPolarity.BENEFICIAL),
             entry("PreventAllDamageToTargetFromColorlessSourcesEffect", TargetPolarity.BENEFICIAL),
             entry("DoubleCountersOnTargetPermanentEffect", TargetPolarity.BENEFICIAL),

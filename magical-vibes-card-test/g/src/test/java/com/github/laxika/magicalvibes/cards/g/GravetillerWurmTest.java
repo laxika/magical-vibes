@@ -57,8 +57,8 @@ class GravetillerWurmTest extends BaseCardTest {
         Permanent wurm = findPermanent(player1, "Gravetiller Wurm");
 
         assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(wurm.getEffectivePower()).isEqualTo(8);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(8);
     }
 
     @Test
@@ -84,8 +84,8 @@ class GravetillerWurmTest extends BaseCardTest {
         Permanent wurm = findPermanent(player1, "Gravetiller Wurm");
 
         assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(wurm.getEffectivePower()).isEqualTo(8);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(8);
     }
 
     @Test

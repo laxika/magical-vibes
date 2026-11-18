@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.n.NobleTemplar;
 import com.github.laxika.magicalvibes.cards.s.Stabilizer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -33,8 +34,8 @@ class NefashuTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(nefashu.getPowerModifier()).isZero();
-        assertThat(nefashu.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nefashu)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nefashu)).isZero();
     }
 
     @Test
@@ -74,11 +75,11 @@ class NefashuTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(targets.subList(0, 5)).allSatisfy(target -> {
-            assertThat(target.getPowerModifier()).isEqualTo(-1);
-            assertThat(target.getToughnessModifier()).isEqualTo(-1);
+            assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
         });
-        assertThat(targets.get(5).getPowerModifier()).isZero();
-        assertThat(targets.get(5).getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, targets.get(5))).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, targets.get(5))).isZero();
     }
 
     @Test
@@ -91,8 +92,8 @@ class NefashuTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test

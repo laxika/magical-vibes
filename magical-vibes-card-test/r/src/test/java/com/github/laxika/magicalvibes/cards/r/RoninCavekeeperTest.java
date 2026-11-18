@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GodosIrregulars;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -28,8 +29,8 @@ class RoninCavekeeperTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(ronin.getPowerModifier()).isEqualTo(2);
-        assertThat(ronin.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isEqualTo(2);
     }
 
     @Test
@@ -43,8 +44,8 @@ class RoninCavekeeperTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(ronin.getPowerModifier()).isEqualTo(2);
-        assertThat(ronin.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isEqualTo(2);
     }
 
     @Test
@@ -56,8 +57,8 @@ class RoninCavekeeperTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(ronin.getPowerModifier()).isZero();
-        assertThat(ronin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isZero();
     }
 
     @Test
@@ -114,19 +115,19 @@ class RoninCavekeeperTest extends BaseCardTest {
             gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
             assertThat(gd.stack).hasSize(1);
-            assertThat(ronin.getPowerModifier()).isZero();
-            assertThat(ronin.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isZero();
 
             resolveAllTriggers();
         });
 
-        assertThat(ronin.getPowerModifier()).isEqualTo(2);
-        assertThat(ronin.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
 
-        assertThat(ronin.getPowerModifier()).isEqualTo(2);
-        assertThat(ronin.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isEqualTo(2);
     }
 
     private Permanent addReadyRonin(Player player) {

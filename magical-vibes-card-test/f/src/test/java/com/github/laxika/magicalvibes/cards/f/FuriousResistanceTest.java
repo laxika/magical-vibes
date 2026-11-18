@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DiscipleOfTheOldWays;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,8 +29,8 @@ class FuriousResistanceTest extends BaseCardTest {
         harness.castInstant(player1, 0, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(3);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
         harness.assertInGraveyard(player1, "Furious Resistance");
     }
@@ -47,7 +48,7 @@ class FuriousResistanceTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -72,8 +73,8 @@ class FuriousResistanceTest extends BaseCardTest {
         harness.castInstant(player1, 0, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(3);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -87,8 +88,8 @@ class FuriousResistanceTest extends BaseCardTest {
         blocker.setBlocking(false);
         harness.passBothPriorities();
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(0);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isFalse();
         harness.assertInGraveyard(player1, "Furious Resistance");
     }
@@ -104,8 +105,8 @@ class FuriousResistanceTest extends BaseCardTest {
         blocker.setBlocking(false);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(3);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
     }
 

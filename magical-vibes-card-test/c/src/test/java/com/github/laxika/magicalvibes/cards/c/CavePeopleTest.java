@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -29,8 +30,8 @@ class CavePeopleTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(cavePeople.getPowerModifier()).isEqualTo(1);
-        assertThat(cavePeople.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, cavePeople)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cavePeople)).isEqualTo(-2);
     }
 
     @Test
@@ -41,14 +42,14 @@ class CavePeopleTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(cavePeople.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cavePeople)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(cavePeople.getPowerModifier()).isEqualTo(0);
-        assertThat(cavePeople.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, cavePeople)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cavePeople)).isEqualTo(0);
     }
 
     @Test

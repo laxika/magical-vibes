@@ -28,8 +28,8 @@ class OverprotectTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castResolve(creature);
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(3);
         assertThat(PermanentGrants.keywordsOf(gd, creature))
                 .contains(Keyword.TRAMPLE, Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
     }
@@ -44,8 +44,8 @@ class OverprotectTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, creature))
                 .doesNotContain(Keyword.TRAMPLE, Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
     }
@@ -131,8 +131,8 @@ class OverprotectTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(creature);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, creature))
                 .doesNotContain(Keyword.TRAMPLE, Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
         assertThat(gd.stack).isEmpty();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,8 +31,8 @@ class FacevaulterTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Facevaulter");
 
         Permanent facevaulter = findPermanent(player1, "Facevaulter");
-        assertThat(facevaulter.getPowerModifier()).isEqualTo(2);
-        assertThat(facevaulter.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, facevaulter)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, facevaulter)).isEqualTo(2);
     }
 
     @Test
@@ -71,14 +72,14 @@ class FacevaulterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent facevaulter = findPermanent(player1, "Facevaulter");
-        assertThat(facevaulter.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, facevaulter)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(facevaulter.getPowerModifier()).isEqualTo(0);
-        assertThat(facevaulter.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, facevaulter)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, facevaulter)).isEqualTo(0);
     }
 
     @Test
@@ -91,11 +92,11 @@ class FacevaulterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, enchantment.getId());
         harness.assertInGraveyard(player1, "Boggart Shenanigans");
-        assertThat(facevaulter.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, facevaulter)).isZero();
         harness.passBothPriorities();
 
-        assertThat(facevaulter.getPowerModifier()).isEqualTo(2);
-        assertThat(facevaulter.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, facevaulter)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, facevaulter)).isEqualTo(2);
     }
 
     @Test
@@ -111,15 +112,15 @@ class FacevaulterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, first.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(first);
-        assertThat(facevaulter.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, facevaulter)).isZero();
         harness.passBothPriorities();
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, second.getId());
         harness.passBothPriorities();
 
-        assertThat(facevaulter.getPowerModifier()).isEqualTo(4);
-        assertThat(facevaulter.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, facevaulter)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, facevaulter)).isEqualTo(4);
         assertThat(facevaulter.isTapped()).isTrue();
     }
 }

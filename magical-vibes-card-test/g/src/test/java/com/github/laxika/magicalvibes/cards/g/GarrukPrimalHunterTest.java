@@ -33,8 +33,8 @@ class GarrukPrimalHunterTest extends BaseCardTest {
         Permanent token = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Beast"))
                 .findFirst().orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
     }
 
     @Test
@@ -103,8 +103,8 @@ class GarrukPrimalHunterTest extends BaseCardTest {
         Permanent wurm = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Wurm"))
                 .findFirst().orElseThrow();
-        assertThat(wurm.getEffectivePower()).isEqualTo(6);
-        assertThat(wurm.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(6);
         assertThat(countPermanents(player2, "Wurm")).isZero();
     }
 

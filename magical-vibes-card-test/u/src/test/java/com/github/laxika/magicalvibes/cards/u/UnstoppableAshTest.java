@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BoskBanneret;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.v.VioletPall;
@@ -44,9 +45,9 @@ class UnstoppableAshTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(bears.getToughnessModifier()).isEqualTo(5);
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getEffectiveToughness()).isEqualTo(7);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(7);
     }
 
     @Test
@@ -60,8 +61,8 @@ class UnstoppableAshTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(ash.getToughnessModifier()).isEqualTo(5);
-        assertThat(ash.getEffectiveToughness()).isEqualTo(10);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ash)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ash)).isEqualTo(10);
     }
 
     @Test
@@ -75,7 +76,7 @@ class UnstoppableAshTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -145,8 +146,8 @@ class UnstoppableAshTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(warrior.getToughnessModifier()).isEqualTo(5);
-        assertThat(warrior.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isZero();
     }
 
     @Test
@@ -161,7 +162,7 @@ class UnstoppableAshTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     private void castAsh() {

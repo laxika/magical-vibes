@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -129,7 +130,7 @@ class CounterfluxTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Counterflux");
         assertThat(gd.stack).isEmpty();
-        assertThat(ownBear.getPowerModifier()).isEqualTo(7);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownBear)).isEqualTo(7);
     }
 
     @Test
@@ -198,7 +199,7 @@ class CounterfluxTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Might of Oaks");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.stack).hasSize(1);
-        assertThat(battlefieldBear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, battlefieldBear)).isZero();
         harness.passBothPriorities();
         assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(2);
     }

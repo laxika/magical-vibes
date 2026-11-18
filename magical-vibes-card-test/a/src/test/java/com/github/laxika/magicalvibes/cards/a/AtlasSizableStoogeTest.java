@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -78,8 +79,8 @@ class AtlasSizableStoogeTest extends BaseCardTest {
         int startingLife = gd.playerLifeTotals.get(player1.getId());
 
         declareAttackers(player1, List.of(0));
-        angel.setPowerModifier(-1);
-        bears.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, angel, -1);
+        PermanentGrants.setPowerBoost(gd, bears, 2);
         resolveAllTriggers();
 
         harness.assertLife(player1, startingLife + 2);

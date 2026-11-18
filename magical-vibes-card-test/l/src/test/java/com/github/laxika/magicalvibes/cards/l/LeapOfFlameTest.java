@@ -30,8 +30,8 @@ class LeapOfFlameTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
     }
 
@@ -50,7 +50,7 @@ class LeapOfFlameTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
     }
 
@@ -68,9 +68,9 @@ class LeapOfFlameTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, newTarget.getId());
         resolveAllTriggers();
 
-        assertThat(originalTarget.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, originalTarget)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, originalTarget)).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
-        assertThat(newTarget.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, newTarget)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, newTarget)).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
     }
 
@@ -98,8 +98,8 @@ class LeapOfFlameTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.FLYING, Keyword.FIRST_STRIKE);
     }
 
@@ -133,8 +133,8 @@ class LeapOfFlameTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, newTarget.getId());
         resolveAllTriggers();
 
-        assertThat(newTarget.getPowerModifier()).isEqualTo(1);
-        assertThat(newTarget.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, newTarget)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newTarget)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, newTarget)).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Leap of Flame");
@@ -152,8 +152,8 @@ class LeapOfFlameTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Gristleback");
         harness.assertInGraveyard(player1, "Leap of Flame");
-        assertThat(otherCreature.getPowerModifier()).isZero();
-        assertThat(otherCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreature)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, otherCreature)).doesNotContain(Keyword.FLYING, Keyword.FIRST_STRIKE);
         assertThat(gd.stack).isEmpty();
     }

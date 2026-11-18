@@ -37,8 +37,8 @@ class AliveWellTest extends BaseCardTest {
                 .toList();
         assertThat(centaurs).hasSize(1);
         assertThat(centaurs.getFirst().getCard().isToken()).isTrue();
-        assertThat(centaurs.getFirst().getEffectivePower()).isEqualTo(3);
-        assertThat(centaurs.getFirst().getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, centaurs.getFirst())).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, centaurs.getFirst())).isEqualTo(3);
     }
 
     @Test

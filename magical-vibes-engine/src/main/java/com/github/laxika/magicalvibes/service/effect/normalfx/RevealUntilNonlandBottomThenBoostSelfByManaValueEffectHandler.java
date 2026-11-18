@@ -61,7 +61,7 @@ public class RevealUntilNonlandBottomThenBoostSelfByManaValueEffectHandler imple
             Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             if (source != null) {
                 int powerBoost = nonland.getManaValue();
-                source.setPowerModifier(source.getPowerModifier() + powerBoost);
+                gameData.addPowerToughnessBoost(entry, source.getId(), powerBoost, 0);
                 gameLogService.append(gameData, GameLog.builder()
                         .card(source.getCard())
                         .text(String.format(" gets %+d/+0 until end of turn.", powerBoost))

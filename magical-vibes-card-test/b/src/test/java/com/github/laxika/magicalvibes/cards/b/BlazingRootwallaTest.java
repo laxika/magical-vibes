@@ -27,8 +27,8 @@ class BlazingRootwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(3);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(1);
     }
 
     @Test
@@ -53,15 +53,15 @@ class BlazingRootwallaTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(3);
 
         rootwalla.tap();
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(1);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(1);
     }
 
     @Test
@@ -77,7 +77,7 @@ class BlazingRootwallaTest extends BaseCardTest {
                 .hasMessageContaining("only once each turn");
         harness.passBothPriorities();
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(3);
         assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
@@ -90,14 +90,14 @@ class BlazingRootwallaTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
     }
 
     @Test
@@ -112,13 +112,13 @@ class BlazingRootwallaTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(3);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(1);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -65,8 +66,8 @@ class MageDuelTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, giant.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
         assertThat(bear.getMarkedDamage()).isZero();
         harness.assertInHand(player2, "Hill Giant");
     }
@@ -84,8 +85,8 @@ class MageDuelTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isZero();
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
         assertThat(giant.getMarkedDamage()).isZero();
         harness.assertInHand(player1, "Grizzly Bears");
     }
@@ -136,7 +137,7 @@ class MageDuelTest extends BaseCardTest {
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getMarkedDamage()).isEqualTo(3);
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
         harness.assertInGraveyard(player2, "Hill Giant");
     }
 

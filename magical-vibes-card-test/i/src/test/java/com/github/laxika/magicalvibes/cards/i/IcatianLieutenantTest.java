@@ -33,8 +33,8 @@ class IcatianLieutenantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent soldier = findPermanent(player1, "Icatian Javelineers");
-        assertThat(soldier.getEffectivePower()).isEqualTo(2);
-        assertThat(soldier.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
     }
 
     @Test
@@ -48,8 +48,8 @@ class IcatianLieutenantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent soldier = findPermanent(player2, "Icatian Javelineers");
-        assertThat(soldier.getEffectivePower()).isEqualTo(2);
-        assertThat(soldier.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
     }
 
     @Test
@@ -66,8 +66,8 @@ class IcatianLieutenantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent soldier = findPermanent(player1, "Icatian Javelineers");
-        assertThat(soldier.getEffectivePower()).isEqualTo(1);
-        assertThat(soldier.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
     }
 
     @Test
@@ -117,8 +117,8 @@ class IcatianLieutenantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, lieutenant.getId());
         harness.passBothPriorities();
 
-        assertThat(lieutenant.getEffectivePower()).isEqualTo(2);
-        assertThat(lieutenant.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, lieutenant)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lieutenant)).isEqualTo(2);
         assertThat(lieutenant.isTapped()).isTrue();
     }
 
@@ -136,8 +136,8 @@ class IcatianLieutenantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent soldier = findPermanent(player1, "Icatian Javelineers");
-        assertThat(soldier.getEffectivePower()).isEqualTo(3);
-        assertThat(soldier.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }

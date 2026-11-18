@@ -54,8 +54,8 @@ class WelkinGuideTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         Permanent bears = permanent(targetId);
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FLYING);
     }
 
@@ -72,7 +72,7 @@ class WelkinGuideTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent bears = permanent(targetId);
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FLYING);
     }
 
@@ -93,8 +93,8 @@ class WelkinGuideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = permanent(targetId);
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.FLYING);
     }
 
@@ -128,8 +128,8 @@ class WelkinGuideTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, guide.getId());
         resolveAllTriggers();
 
-        assertThat(guide.getEffectivePower()).isEqualTo(4);
-        assertThat(guide.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, guide)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, guide)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, guide)).contains(Keyword.FLYING);
     }
 
@@ -147,8 +147,8 @@ class WelkinGuideTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(guide.getCard());
         resolveAllTriggers();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING);
     }
 

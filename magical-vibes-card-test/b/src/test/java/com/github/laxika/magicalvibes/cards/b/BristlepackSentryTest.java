@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DroverGrizzly;
 import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -63,7 +64,7 @@ class BristlepackSentryTest extends BaseCardTest {
     void canQualifyItselfWithIncreasedPower() {
         harness.setLife(player2, 20);
         Permanent sentry = addCreatureReady(player1, new BristlepackSentry());
-        sentry.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, sentry, 1);
 
         declareAttackers(List.of(0));
 
@@ -74,7 +75,7 @@ class BristlepackSentryTest extends BaseCardTest {
     void cannotAttackWhenQualifyingCreaturesCurrentPowerFallsBelowFour() {
         addCreatureReady(player1, new BristlepackSentry());
         Permanent grizzly = addCreatureReady(player1, new DroverGrizzly());
-        grizzly.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, grizzly, -1);
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);

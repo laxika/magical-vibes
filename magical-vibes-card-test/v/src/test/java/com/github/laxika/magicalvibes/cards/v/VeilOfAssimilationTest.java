@@ -28,8 +28,8 @@ class VeilOfAssimilationTest extends BaseCardTest {
 
         chooseOwnEntryTarget(bears);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
     }
 
@@ -43,8 +43,8 @@ class VeilOfAssimilationTest extends BaseCardTest {
         harness.passBothPriorities();
         chooseOtherArtifactTarget(bears);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
     }
 
@@ -61,8 +61,8 @@ class VeilOfAssimilationTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentBears.getId()))
                 .isInstanceOf(IllegalStateException.class);
         chooseOtherArtifactTarget(ownBears);
-        assertThat(ownBears.getEffectivePower()).isEqualTo(3);
-        assertThat(opponentBears.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -76,8 +76,8 @@ class VeilOfAssimilationTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -95,8 +95,8 @@ class VeilOfAssimilationTest extends BaseCardTest {
         harness.passBothPriorities();
         chooseOtherArtifactTarget(creature);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
     }
 
@@ -114,8 +114,8 @@ class VeilOfAssimilationTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -134,8 +134,8 @@ class VeilOfAssimilationTest extends BaseCardTest {
         Permanent creature = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getId().equals(harness.getPermanentId(player1, "Copper Longlegs")))
                 .findFirst().orElseThrow();
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
     }
 

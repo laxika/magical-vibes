@@ -34,8 +34,8 @@ class MorselhoarderTest extends BaseCardTest {
         Permanent morselhoarder = findMorselhoarder(player1);
 
         assertThat(morselhoarder.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
-        assertThat(morselhoarder.getEffectivePower()).isEqualTo(4);
-        assertThat(morselhoarder.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, morselhoarder)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, morselhoarder)).isEqualTo(2);
     }
 
     @Test
@@ -92,8 +92,8 @@ class MorselhoarderTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(morselhoarder.isTapped()).isTrue();
-        assertThat(morselhoarder.getEffectivePower()).isEqualTo(6);
-        assertThat(morselhoarder.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, morselhoarder)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, morselhoarder)).isEqualTo(4);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }

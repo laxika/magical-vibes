@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class HoarShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(2);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(3);
     }
 
     @Test
@@ -40,8 +41,8 @@ class HoarShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(4);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(5);
     }
 
     @Test
@@ -65,8 +66,8 @@ class HoarShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(2);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(3);
     }
 
     @Test
@@ -78,16 +79,16 @@ class HoarShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shade.getPowerModifier()).isEqualTo(0);
-        assertThat(shade.getToughnessModifier()).isEqualTo(0);
-        assertThat(shade.getEffectivePower()).isEqualTo(1);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
     }
 
     @Test
@@ -102,24 +103,24 @@ class HoarShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(shade.getEffectivePower()).isEqualTo(1);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(shade.getEffectivePower()).isEqualTo(2);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(3);
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(shade.getEffectivePower()).isEqualTo(3);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(4);
-        assertThat(otherShade.getEffectivePower()).isEqualTo(1);
-        assertThat(otherShade.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opposingShade.getEffectivePower()).isEqualTo(1);
-        assertThat(opposingShade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, otherShade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, otherShade)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingShade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingShade)).isEqualTo(2);
     }
 
     @Test

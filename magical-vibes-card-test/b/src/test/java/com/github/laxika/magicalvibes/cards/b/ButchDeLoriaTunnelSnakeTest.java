@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DeathcultRogue;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SkeletalSnake;
@@ -32,8 +33,8 @@ class ButchDeLoriaTunnelSnakeTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(butch.getPowerModifier()).isEqualTo(2);
-        assertThat(butch.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, butch)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, butch)).isEqualTo(2);
 
         gs.declareBlockers(gd, player2, List.of());
         butch.setAttacking(false);
@@ -41,8 +42,8 @@ class ButchDeLoriaTunnelSnakeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(butch.getPowerModifier()).isZero();
-        assertThat(butch.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, butch)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, butch)).isZero();
     }
 
     @Test
@@ -79,8 +80,8 @@ class ButchDeLoriaTunnelSnakeTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(butch.getPowerModifier()).isZero();
-        assertThat(butch.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, butch)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, butch)).isZero();
     }
 
     @Test
@@ -99,8 +100,8 @@ class ButchDeLoriaTunnelSnakeTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(butch.getPowerModifier()).isEqualTo(1);
-        assertThat(butch.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, butch)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, butch)).isEqualTo(1);
     }
 
     @Test
@@ -117,8 +118,8 @@ class ButchDeLoriaTunnelSnakeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bear.getId());
         resolveAllTriggers();
 
-        assertThat(butch.getPowerModifier()).isEqualTo(1);
-        assertThat(butch.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, butch)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, butch)).isEqualTo(1);
 
         harness.ensurePriority(player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -127,8 +128,8 @@ class ButchDeLoriaTunnelSnakeTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.hasEffectiveSubtype(gd, secondBear, CardSubtype.ROGUE)).isTrue();
-        assertThat(butch.getPowerModifier()).isEqualTo(1);
-        assertThat(butch.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, butch)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, butch)).isEqualTo(1);
     }
 
     @Test

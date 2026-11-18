@@ -53,15 +53,15 @@ class BoughsideWanderersTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(wanderers.getEffectivePower()).isEqualTo(6);
-        assertThat(wanderers.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, wanderers)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, wanderers)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wanderers.getEffectivePower()).isEqualTo(4);
-        assertThat(wanderers.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wanderers)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wanderers)).isEqualTo(4);
     }
 
     @Test
@@ -74,8 +74,8 @@ class BoughsideWanderersTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(wanderers.getEffectivePower()).isEqualTo(4);
-        assertThat(wanderers.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wanderers)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wanderers)).isEqualTo(4);
     }
 
     @Test
@@ -157,14 +157,14 @@ class BoughsideWanderersTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Island());
         harness.passBothPriorities();
 
-        assertThat(wanderers.getEffectivePower()).isEqualTo(8);
-        assertThat(wanderers.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, wanderers)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, wanderers)).isEqualTo(8);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wanderers.getEffectivePower()).isEqualTo(4);
-        assertThat(wanderers.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wanderers)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wanderers)).isEqualTo(4);
     }
 }

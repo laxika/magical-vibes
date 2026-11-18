@@ -62,8 +62,8 @@ class ZektarShrineExpeditionTest extends BaseCardTest {
         assertThat(expedition.getCounterCount(CounterType.QUEST)).isZero();
 
         Permanent elemental = findPermanent(player1, "Elemental");
-        assertThat(elemental.getEffectivePower()).isEqualTo(7);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
         assertThat(elemental.hasKeyword(Keyword.TRAMPLE)).isTrue();
         assertThat(elemental.hasKeyword(Keyword.HASTE)).isTrue();
     }

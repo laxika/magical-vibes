@@ -24,8 +24,8 @@ class FlowstoneGiantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(giant.getEffectivePower()).isEqualTo(5);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
     }
 
     @Test
@@ -51,14 +51,14 @@ class FlowstoneGiantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(giant.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(giant.getEffectivePower()).isEqualTo(3);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     @Test
@@ -82,8 +82,8 @@ class FlowstoneGiantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(giant.getEffectivePower()).isEqualTo(5);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
         assertThat(giant.isTapped()).isTrue();
     }
 
@@ -98,12 +98,12 @@ class FlowstoneGiantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(5);
-        assertThat(source.getEffectiveToughness()).isEqualTo(1);
-        assertThat(other.getEffectivePower()).isEqualTo(3);
-        assertThat(other.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponent.getEffectivePower()).isEqualTo(3);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(3);
     }
 
     @Test
@@ -121,8 +121,8 @@ class FlowstoneGiantTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(other);
         harness.assertInGraveyard(player1, "Flowstone Giant");
-        assertThat(other.getEffectivePower()).isEqualTo(3);
-        assertThat(other.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
     }
 
 }

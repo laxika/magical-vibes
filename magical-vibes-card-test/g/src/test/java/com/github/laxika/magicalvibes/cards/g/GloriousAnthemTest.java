@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -158,11 +161,11 @@ class GloriousAnthemTest extends BaseCardTest {
         Permanent wurm = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
 
         // Simulate a temporary spell boost
-        wurm.setPowerModifier(wurm.getPowerModifier() + 3);
+        PermanentGrants.setPowerBoost(gd, wurm, PermanentGrants.powerBoostOf(gd, wurm) + 3);
         assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(10); // 6 base + 3 spell + 1 static
 
-        // Reset end-of-turn modifiers
-        wurm.resetModifiers();
+        // The cleanup step ends the until-end-of-turn effects
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         // Spell bonus gone, static bonus still computed
         assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(7); // 6 base + 1 static

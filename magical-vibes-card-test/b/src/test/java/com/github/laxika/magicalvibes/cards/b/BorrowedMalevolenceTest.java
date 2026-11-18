@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AdarkarWastes;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -29,8 +30,8 @@ class BorrowedMalevolenceTest extends BaseCardTest {
         harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -43,8 +44,8 @@ class BorrowedMalevolenceTest extends BaseCardTest {
         harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{1}, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(-1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(-1);
     }
 
     @Test
@@ -59,8 +60,8 @@ class BorrowedMalevolenceTest extends BaseCardTest {
                 List.of(creature.getId(), creature.getId()));
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
@@ -101,17 +102,17 @@ class BorrowedMalevolenceTest extends BaseCardTest {
                 List.of(boosted.getId(), weakened.getId()));
         harness.passBothPriorities();
 
-        assertThat(boosted.getPowerModifier()).isEqualTo(1);
-        assertThat(boosted.getToughnessModifier()).isEqualTo(1);
-        assertThat(weakened.getPowerModifier()).isEqualTo(-1);
-        assertThat(weakened.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, boosted)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, boosted)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weakened)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weakened)).isEqualTo(-1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(boosted.getPowerModifier()).isZero();
-        assertThat(boosted.getToughnessModifier()).isZero();
-        assertThat(weakened.getPowerModifier()).isZero();
-        assertThat(weakened.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, boosted)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, boosted)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, weakened)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weakened)).isZero();
     }
 
     @Test
@@ -131,8 +132,8 @@ class BorrowedMalevolenceTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        assertThat(weakened.getPowerModifier()).isEqualTo(-1);
-        assertThat(weakened.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weakened)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weakened)).isEqualTo(-1);
         harness.assertInGraveyard(player1, "Borrowed Malevolence");
     }
 
@@ -153,8 +154,8 @@ class BorrowedMalevolenceTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(boosted.getPowerModifier()).isEqualTo(1);
-        assertThat(boosted.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, boosted)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, boosted)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Borrowed Malevolence");
     }
 
@@ -168,15 +169,15 @@ class BorrowedMalevolenceTest extends BaseCardTest {
 
         harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{1}, List.of(creature.getId()));
         harness.passBothPriorities();
-        assertThat(creature.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(-1);
 
         harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0, 1},
                 List.of(creature.getId(), creature.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(creature.getPowerModifier()).isEqualTo(-1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(-1);
     }
 
     @Test
@@ -212,8 +213,8 @@ class BorrowedMalevolenceTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Borrowed Malevolence");
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

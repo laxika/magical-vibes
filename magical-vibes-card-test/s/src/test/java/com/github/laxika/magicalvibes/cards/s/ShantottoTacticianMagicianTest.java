@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -47,8 +48,8 @@ class ShantottoTacticianMagicianTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(shantotto.getPowerModifier()).isEqualTo(1);
-        assertThat(shantotto.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shantotto)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shantotto)).isZero();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
     }
 
@@ -65,7 +66,7 @@ class ShantottoTacticianMagicianTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 3);
         harness.passBothPriorities();
 
-        assertThat(shantotto.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, shantotto)).isEqualTo(4);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
     }
 
@@ -82,7 +83,7 @@ class ShantottoTacticianMagicianTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(shantotto.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shantotto)).isZero();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
     }
 
@@ -97,7 +98,7 @@ class ShantottoTacticianMagicianTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 3);
         harness.passBothPriorities();
 
-        assertThat(shantotto.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shantotto)).isZero();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 
@@ -112,7 +113,7 @@ class ShantottoTacticianMagicianTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2);
         harness.passBothPriorities();
 
-        assertThat(shantotto.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, shantotto)).isEqualTo(3);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 
@@ -128,12 +129,12 @@ class ShantottoTacticianMagicianTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(shantotto.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shantotto)).isEqualTo(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
 
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(shantotto.getPowerModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, shantotto)).isEqualTo(5);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
@@ -167,11 +168,11 @@ class ShantottoTacticianMagicianTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(shantotto.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shantotto)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
 
-        assertThat(shantotto.getPowerModifier()).isZero();
-        assertThat(shantotto.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shantotto)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shantotto)).isZero();
     }
 }

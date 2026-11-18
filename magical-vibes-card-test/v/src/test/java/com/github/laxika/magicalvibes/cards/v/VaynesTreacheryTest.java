@@ -32,8 +32,8 @@ class VaynesTreacheryTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -83,8 +83,8 @@ class VaynesTreacheryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -99,17 +99,17 @@ class VaynesTreacheryTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Iron Giant");
         harness.assertNotOnBattlefield(player1, "Iron Giant");
-        assertThat(target.getEffectivePower()).isEqualTo(8);
-        assertThat(target.getEffectiveToughness()).isEqualTo(20);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(20);
 
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(14);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(14);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.passBothPriorities();
-        assertThat(target.getEffectivePower()).isEqualTo(8);
-        assertThat(target.getEffectiveToughness()).isEqualTo(20);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(20);
     }
 
     @Test
@@ -127,8 +127,8 @@ class VaynesTreacheryTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Vayne's Treachery");
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player2, "Iron Giant");
-        assertThat(other.getEffectivePower()).isEqualTo(6);
-        assertThat(other.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(6);
     }
 
     @Test

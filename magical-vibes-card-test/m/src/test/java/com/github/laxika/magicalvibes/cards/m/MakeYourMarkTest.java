@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -41,8 +42,8 @@ class MakeYourMarkTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         resolveStack();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
 
         harness.castInstant(player1, 0, targetId);
         resolveStack();
@@ -52,8 +53,8 @@ class MakeYourMarkTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getName().equals("Spirit"))
                 .findFirst()
                 .orElseThrow();
-        assertThat(spirit.getEffectivePower()).isEqualTo(3);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
     }
 
     @Test
@@ -67,13 +68,13 @@ class MakeYourMarkTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         resolveStack();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -118,7 +119,7 @@ class MakeYourMarkTest extends BaseCardTest {
         resolveStack();
         harness.castInstant(player1, 0, target.getId());
         resolveStack();
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
 
         harness.castInstant(player1, 0, target.getId());
         resolveStack();
@@ -166,8 +167,8 @@ class MakeYourMarkTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(spiritId))
                 .filteredOn(permanent -> permanent.getCard().getName().equals("Spirit"))
                 .singleElement().satisfies(spirit -> {
-                    assertThat(spirit.getEffectivePower()).isEqualTo(3);
-                    assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
+                    assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(3);
+                    assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
                     assertThat(spirit.getCard().getColors())
                             .containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);
                     assertThat(spirit.getCard().getSubtypes()).containsExactly(CardSubtype.SPIRIT);

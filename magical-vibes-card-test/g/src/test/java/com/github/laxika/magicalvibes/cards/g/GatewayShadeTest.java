@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.o.OrzhovGuildgate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,8 +26,8 @@ class GatewayShadeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent shade = findPermanent(player1, "Gateway Shade");
-        assertThat(shade.getPowerModifier()).isEqualTo(1);
-        assertThat(shade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 
@@ -40,8 +41,8 @@ class GatewayShadeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent shade = findPermanent(player1, "Gateway Shade");
-        assertThat(shade.getPowerModifier()).isEqualTo(2);
-        assertThat(shade.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(2);
         assertThat(gate.isTapped()).isTrue();
     }
 
@@ -70,8 +71,8 @@ class GatewayShadeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent shade = findPermanent(player1, "Gateway Shade");
-        assertThat(shade.getPowerModifier()).isZero();
-        assertThat(shade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isZero();
     }
 
     @Test
@@ -84,14 +85,14 @@ class GatewayShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gate.isTapped()).isTrue();
-        assertThat(shade.getPowerModifier()).isZero();
-        assertThat(shade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isZero();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.passBothPriorities();
-        assertThat(shade.getPowerModifier()).isEqualTo(2);
-        assertThat(shade.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(2);
     }
 
     @Test
@@ -134,8 +135,8 @@ class GatewayShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getPowerModifier()).isEqualTo(4);
-        assertThat(shade.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isEqualTo(4);
         assertThat(shade.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
 
@@ -143,8 +144,8 @@ class GatewayShadeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shade.getPowerModifier()).isZero();
-        assertThat(shade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shade)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shade)).isZero();
     }
 
     private void addShade() {

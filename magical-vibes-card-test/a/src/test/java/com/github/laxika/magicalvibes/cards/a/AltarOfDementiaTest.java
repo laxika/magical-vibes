@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -159,7 +160,7 @@ class AltarOfDementiaTest extends BaseCardTest {
     void zeroPowerMillsNothing() {
         harness.addToBattlefield(player1, new AltarOfDementia());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, bears, -2);
         trimDeck(player2, 10);
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -176,7 +177,7 @@ class AltarOfDementiaTest extends BaseCardTest {
     void negativePowerMillsNothing() {
         harness.addToBattlefield(player1, new AltarOfDementia());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, bears, -3);
         trimDeck(player2, 10);
 
         harness.activateAbility(player1, 0, null, player2.getId());

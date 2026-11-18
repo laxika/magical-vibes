@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.cards.b.BrimstoneVolley;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -42,8 +43,8 @@ class MorkrutBansheeTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getId().equals(targetId))
                 .findFirst().orElseThrow();
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test

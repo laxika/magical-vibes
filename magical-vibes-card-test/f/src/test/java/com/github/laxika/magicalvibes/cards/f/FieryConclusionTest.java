@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BorosSignet;
 import com.github.laxika.magicalvibes.cards.g.GreaterMossdog;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -43,7 +44,7 @@ class FieryConclusionTest extends BaseCardTest {
     void largeCreatureSurvives() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GreaterMossdog());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GreaterMossdog());
-        target.setToughnessModifier(4);
+        PermanentGrants.setToughnessBoost(gd, target, 4);
 
         harness.setHand(player1, List.of(new FieryConclusion()));
         harness.addMana(player1, ManaColor.RED, 1);

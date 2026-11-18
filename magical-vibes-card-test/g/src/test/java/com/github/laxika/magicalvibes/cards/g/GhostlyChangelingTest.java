@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.ImperiousPerfect;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class GhostlyChangelingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent changeling = findPermanent(player1, "Ghostly Changeling");
-        assertThat(changeling.getPowerModifier()).isEqualTo(1);
-        assertThat(changeling.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, changeling)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, changeling)).isEqualTo(1);
     }
 
     @Test
@@ -45,8 +46,8 @@ class GhostlyChangelingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent changeling = findPermanent(player1, "Ghostly Changeling");
-        assertThat(changeling.getPowerModifier()).isEqualTo(2);
-        assertThat(changeling.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, changeling)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, changeling)).isEqualTo(2);
     }
 
     @Test
@@ -70,14 +71,14 @@ class GhostlyChangelingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent changeling = findPermanent(player1, "Ghostly Changeling");
-        assertThat(changeling.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, changeling)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(changeling.getPowerModifier()).isEqualTo(0);
-        assertThat(changeling.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, changeling)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, changeling)).isEqualTo(0);
     }
 
     @Test
@@ -100,12 +101,12 @@ class GhostlyChangelingTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(changeling.getPowerModifier()).isZero();
-        assertThat(changeling.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, changeling)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, changeling)).isZero();
         harness.passBothPriorities();
 
-        assertThat(changeling.getPowerModifier()).isEqualTo(1);
-        assertThat(changeling.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, changeling)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, changeling)).isEqualTo(1);
         assertThat(changeling.isTapped()).isTrue();
     }
 

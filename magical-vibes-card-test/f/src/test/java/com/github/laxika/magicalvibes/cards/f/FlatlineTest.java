@@ -25,10 +25,10 @@ class FlatlineTest extends BaseCardTest {
 
         castFlatline();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectivePower()).isZero();
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
     }
 
     @Test
@@ -37,14 +37,14 @@ class FlatlineTest extends BaseCardTest {
         Permanent opponentCreature = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castFlatline();
-        assertThat(opponentCreature.getEffectivePower()).isZero();
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test

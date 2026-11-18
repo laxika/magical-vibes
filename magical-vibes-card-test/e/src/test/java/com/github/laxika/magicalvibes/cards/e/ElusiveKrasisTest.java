@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Crocanura;
 import com.github.laxika.magicalvibes.cards.l.LeylinePhantom;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -65,7 +66,7 @@ class ElusiveKrasisTest extends BaseCardTest {
     @Test
     void evolvesForGreaterToughnessWithEqualPower() {
         Permanent krasis = harness.addToBattlefieldAndReturn(player1, new ElusiveKrasis());
-        krasis.setPowerModifier(5);
+        PermanentGrants.setPowerBoost(gd, krasis, 5);
 
         harness.setHand(player1, List.of(new LeylinePhantom()));
         harness.addMana(player1, ManaColor.BLUE, 5);

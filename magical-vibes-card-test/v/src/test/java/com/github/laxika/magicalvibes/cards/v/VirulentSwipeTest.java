@@ -33,8 +33,8 @@ class VirulentSwipeTest extends BaseCardTest {
         harness.castInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.DEATHTOUCH);
     }
 
@@ -50,8 +50,8 @@ class VirulentSwipeTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
@@ -83,7 +83,7 @@ class VirulentSwipeTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
-        assertThat(first.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, first)).doesNotContain(Keyword.DEATHTOUCH);
 
         advanceToUpkeep(player1);
@@ -92,10 +92,10 @@ class VirulentSwipeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, second.getId());
         harness.passBothPriorities();
 
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, second)).contains(Keyword.DEATHTOUCH);
-        assertThat(first.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
         assertThat(gd.findExiledCard(card.getId())).isNull();
         harness.assertInGraveyard(player1, "Virulent Swipe");
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
@@ -124,7 +124,7 @@ class VirulentSwipeTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
@@ -141,7 +141,7 @@ class VirulentSwipeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Virulent Swipe");
         assertThat(gd.findExiledCard(card.getId())).isNull();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.DEATHTOUCH);
     }
 

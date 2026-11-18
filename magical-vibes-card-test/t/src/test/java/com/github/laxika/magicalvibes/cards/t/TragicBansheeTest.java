@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,8 +29,8 @@ class TragicBansheeTest extends BaseCardTest {
         castTragicBanshee(targetId);
         resolveTragicBanshee();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
     }
 
     @Test
@@ -78,15 +79,15 @@ class TragicBansheeTest extends BaseCardTest {
         castTragicBanshee(target.getId());
         resolveTragicBanshee();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         harness.assertOnBattlefield(player2, "Bear Cub");
     }
 
@@ -100,8 +101,8 @@ class TragicBansheeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Tragic Banshee");
         assertThat(gd.stack).isEmpty();
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
     }
 
     @Test
@@ -120,8 +121,8 @@ class TragicBansheeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Bear Cub");
-        assertThat(target.getPowerModifier()).isEqualTo(-13);
-        assertThat(target.getToughnessModifier()).isEqualTo(-13);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-13);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-13);
         assertThat(harness.getGameQueryService().getEffectivePower(gd, target)).isEqualTo(1);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, target)).isEqualTo(1);
     }

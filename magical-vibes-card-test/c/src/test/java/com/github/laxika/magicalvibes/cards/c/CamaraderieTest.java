@@ -28,12 +28,12 @@ class CamaraderieTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(ownBear.getEffectivePower()).isEqualTo(3);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(3);
-        assertThat(ownBearTwo.getEffectivePower()).isEqualTo(3);
-        assertThat(ownBearTwo.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponentBear.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownBearTwo)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownBearTwo)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBear)).isEqualTo(2);
     }
 
     @Test
@@ -43,15 +43,15 @@ class CamaraderieTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         cast();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -66,8 +66,8 @@ class CamaraderieTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
-        assertThat(opponentBear.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBear)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Camaraderie");
     }
 
@@ -84,12 +84,12 @@ class CamaraderieTest extends BaseCardTest {
 
         harness.assertLife(player1, 21);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(presentAtResolution.getEffectivePower()).isEqualTo(3);
-        assertThat(presentAtResolution.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, presentAtResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, presentAtResolution)).isEqualTo(3);
 
         Permanent laterArrival = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        assertThat(laterArrival.getEffectivePower()).isEqualTo(2);
-        assertThat(laterArrival.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterArrival)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterArrival)).isEqualTo(2);
     }
 
     private void cast() {

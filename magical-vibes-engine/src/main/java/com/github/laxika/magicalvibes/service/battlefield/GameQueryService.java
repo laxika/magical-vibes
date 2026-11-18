@@ -108,7 +108,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeRestOfGame
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantLoseLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RequireFlagbearerTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
@@ -398,6 +398,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromEverything
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenPlayerToControllerAndTargetPermanentUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromTargetPlayerToControllerAndPlaneswalkersUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
+import java.util.Comparator;
 
 /**
  * Read-only query service for inspecting game state. Provides methods for looking up permanents
@@ -6378,6 +6379,60 @@ public class GameQueryService {
         return SaturatingMath.add(permanent.getEffectiveToughness(), bonus.toughness());
     }
 
+    /** The base power and toughness the floating layer-7b setters on one permanent id leave it; a {@code null}
+     *  component is one none of them sets. */
+    private record BasePtOnId(Integer power, Integer toughness) {
+    }
+
+    /**
+     * The base P/T the floating layer-7b setters on {@code permanentId} set, applied in timestamp order (CR 613.7),
+     * or {@code null} when none is on it. Used for a permanent the layered board does not hold (a departed
+     * snapshot), whose setters still count as its last-known characteristics.
+     */
+    private BasePtOnId floatingBasePt(GameData gameData, UUID permanentId) {
+        List<FloatingContinuousEffect> setters = new ArrayList<>(
+                gameData.floatingEffectsOnPermanent(permanentId, SetBasePowerToughnessEffect.class));
+        if (setters.isEmpty()) {
+            return null;
+        }
+        setters.sort(Comparator.comparingLong(FloatingContinuousEffect::timestamp));
+        Integer power = null;
+        Integer toughness = null;
+        for (FloatingContinuousEffect setter : setters) {
+            SetBasePowerToughnessEffect set = (SetBasePowerToughnessEffect) setter.effect();
+            if (set.power() != null) {
+                power = set.power();
+            }
+            if (set.toughness() != null) {
+                toughness = set.toughness();
+            }
+        }
+        return new BasePtOnId(power, toughness);
+    }
+
+    /**
+     * {@code permanent}'s own power as it last existed, for a last-known read of a departed copy that recorded no
+     * power (CR 608.2h): its intrinsic base or the newest floating base-P/T setter on its id, plus its counters and
+     * perpetual modifier and the floating P/T boosts on its id. Effects of other objects' static abilities are not
+     * included.
+     */
+    public int ownPower(GameData gameData, Permanent permanent) {
+        BasePtOnId base = floatingBasePt(gameData, permanent.getId());
+        int own = base != null && base.power() != null
+                ? SaturatingMath.add(base.power(), permanent.getPowerModifiers())
+                : permanent.getEffectivePower();
+        return SaturatingMath.add(own, gameData.floatingPowerBoost(permanent.getId()));
+    }
+
+    /** The toughness counterpart of {@link #ownPower(GameData, Permanent)}. */
+    public int ownToughness(GameData gameData, Permanent permanent) {
+        BasePtOnId base = floatingBasePt(gameData, permanent.getId());
+        int own = base != null && base.toughness() != null
+                ? SaturatingMath.add(base.toughness(), permanent.getToughnessModifiers())
+                : permanent.getEffectiveToughness();
+        return SaturatingMath.add(own, gameData.floatingToughnessBoost(permanent.getId()));
+    }
+
     /**
      * Power as seen by a static filter's power leaf, and the recursion-safe counterpart of
      * {@link #getEffectivePower(GameData, Permanent)}. Static filters are evaluated from inside
@@ -6470,7 +6525,8 @@ public class GameQueryService {
     /**
      * P/T from the layered board alone â€” everything the pass resolved without running a
      * per-target assembly: the sublayer-7b winner (CR 613.4b) over the permanent's own base,
-     * its modifiers and counters (its share of 7c), and the sublayer-7d switch (CR 613.4d).
+     * its counters and the floating 7c effects on it (its share of 7c), and the sublayer-7d
+     * switch (CR 613.4d).
      * Boosts contributed by OTHER permanents are absent; so is the object's own 7a CDA, which
      * the assembly computes. Falls back to the plain {@link Permanent} accessors with no pass.
      */
@@ -6480,12 +6536,13 @@ public class GameQueryService {
             return wantPower ? permanent.getEffectivePower() : permanent.getEffectiveToughness();
         }
         LayerSystemService.BasePt base = board.basePt7b().get(permanent.getId());
-        int power = base != null && base.power() != null
+        GameData gameData = pass.gameData();
+        int power = SaturatingMath.add(base != null && base.power() != null
                 ? SaturatingMath.add(base.power(), permanent.getPowerModifiers())
-                : permanent.getEffectivePower();
-        int toughness = base != null && base.toughness() != null
+                : permanent.getEffectivePower(), gameData.floatingPowerBoost(permanent.getId()));
+        int toughness = SaturatingMath.add(base != null && base.toughness() != null
                 ? SaturatingMath.add(base.toughness(), permanent.getToughnessModifiers())
-                : permanent.getEffectiveToughness();
+                : permanent.getEffectiveToughness(), gameData.floatingToughnessBoost(permanent.getId()));
         boolean switched = board.switchedPt7d().contains(permanent.getId());
         if (switched) {
             return wantPower ? toughness : power;
@@ -7398,27 +7455,35 @@ public class GameQueryService {
             }
         }
 
-        // Indefinite target buffs (Riding the Dilu Horse): a resolved spell recorded a PERMANENT
-        // floating BuffTargetCreatureIndefinitelyEffect on this permanent. It has no static-slot
-        // source, so it is read here rather than through a handler â€” the additive +P/+Y (7c) and
-        // granted keywords (layer 6) apply for as long as the permanent exists; multiple copies
-        // stack additively.
-        AccumulatorSnapshot beforeIndefinite = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
+        // Resolved P/T boosts ("gets +3/+3 until end of turn", Riding the Dilu Horse's indefinite buff): floating
+        // PowerToughnessBoostEffects on this permanent with their own durations. They have no static-slot
+        // source, so they are read here rather than through a handler: the additive +X/+Y (7c, CR 613.4c) and
+        // granted keywords (layer 6) apply while the effect lasts; several stack additively. Each is attributed to
+        // the card that made it.
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
                 if (board.isManagedL4(floating.effect())) {
                     board.replayL4Contribution(floating.effect(), target.getId(), accumulator);
                 }
-                if (floating.effect() instanceof BuffTargetCreatureIndefinitelyEffect buff
+                if (floating.effect() instanceof PowerToughnessBoostEffect buff
                         && target.getId().equals(floating.affectedPermanentId())) {
+                    AccumulatorSnapshot beforeBuff = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
                     accumulator.addPower(buff.powerBoost());
                     accumulator.addToughness(buff.toughnessBoost());
                     if (!hasLaterLosesAllAbilitiesEffect(gameData, target.getId(), floating.timestamp())) {
                         accumulator.addKeywords(buff.keywords());
                     }
+                    if (beforeBuff != null) {
+                        ModifierLine line = beforeBuff.diff(floating.sourceCardName() != null
+                                ? floating.sourceCardName() : "Indefinite buff", accumulator, false);
+                        if (!line.isEmpty()) {
+                            explain.add(line);
+                        }
+                    }
                 }
             }
         }
+        AccumulatorSnapshot beforeIndefinite = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
         CardPowerToughnessModifier perpetualModifier =
                 gameData.perpetualCardPowerToughnessModifiers.get(target.getCard().getId());
         if (perpetualModifier != null) {
@@ -7547,6 +7612,19 @@ public class GameQueryService {
                     : accumulatedBaseToughness != null ? accumulatedBaseToughness
                     : target.getBaseToughness();
             accumulator.setBasePTOverride(basePower, baseToughness);
+        } else if (state == null) {
+            // A departed snapshot has no 7b entry on the board: the base-P/T setters still on its id are part
+            // of its last-known characteristics (CR 608.2h), applied in timestamp order (CR 613.7).
+            BasePtOnId base = floatingBasePt(gameData, target.getId());
+            if (base != null) {
+                Integer accumulatedBasePower = accumulator.getBasePowerOverride();
+                Integer accumulatedBaseToughness = accumulator.getBaseToughnessOverride();
+                accumulator.setBasePTOverride(
+                        base.power() != null ? base.power()
+                                : accumulatedBasePower != null ? accumulatedBasePower : target.getBasePower(),
+                        base.toughness() != null ? base.toughness()
+                                : accumulatedBaseToughness != null ? accumulatedBaseToughness : target.getBaseToughness());
+            }
         }
 
         // A permanent off the battlefield (a departed snapshot) has no layered state: its one-shot

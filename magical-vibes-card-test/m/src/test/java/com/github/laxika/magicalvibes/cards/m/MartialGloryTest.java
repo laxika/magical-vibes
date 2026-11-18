@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArmoredTransport;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -32,11 +33,11 @@ class MartialGloryTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(firstId, secondId));
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(3);
-        assertThat(first.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(0);
 
-        assertThat(second.getPowerModifier()).isEqualTo(0);
-        assertThat(second.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(3);
     }
 
     @Test
@@ -51,8 +52,8 @@ class MartialGloryTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(bearId, bearId));
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(3);
     }
 
     @Test
@@ -73,11 +74,11 @@ class MartialGloryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(first.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
 
-        assertThat(second.getPowerModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 
     @Test
@@ -97,8 +98,8 @@ class MartialGloryTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(second.getPowerModifier()).isEqualTo(0);
-        assertThat(second.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(3);
     }
 
     @Test
@@ -114,8 +115,8 @@ class MartialGloryTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(3);
-        assertThat(first.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
         harness.assertInGraveyard(player1, "Martial Glory");
     }
 
@@ -131,8 +132,8 @@ class MartialGloryTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Martial Glory");
     }

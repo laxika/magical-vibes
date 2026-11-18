@@ -36,8 +36,8 @@ class BloodstoneGoblinTest extends BaseCardTest {
         // Resolve spell cast trigger
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(1);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, goblin)).contains(Keyword.MENACE);
     }
 
@@ -57,8 +57,8 @@ class BloodstoneGoblinTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(0);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, goblin)).doesNotContain(Keyword.MENACE);
     }
 
@@ -76,8 +76,8 @@ class BloodstoneGoblinTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(0);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, goblin)).doesNotContain(Keyword.MENACE);
     }
 
@@ -96,8 +96,8 @@ class BloodstoneGoblinTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(1);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(1);
 
         // Resolve the creature spell
         harness.passBothPriorities();
@@ -109,8 +109,8 @@ class BloodstoneGoblinTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(2);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(2);
     }
 
     @Test
@@ -128,8 +128,8 @@ class BloodstoneGoblinTest extends BaseCardTest {
         harness.castKickedCreature(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(0);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, goblin)).doesNotContain(Keyword.MENACE);
     }
 
@@ -144,12 +144,12 @@ class BloodstoneGoblinTest extends BaseCardTest {
 
         harness.castKickedInstant(player1, 0, target.getId());
 
-        assertThat(goblin.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, goblin)).doesNotContain(Keyword.MENACE);
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(1);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, goblin)).contains(Keyword.MENACE);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.stack).hasSize(1);
@@ -167,16 +167,16 @@ class BloodstoneGoblinTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(1);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, goblin)).contains(Keyword.MENACE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(goblin.getPowerModifier()).isZero();
-        assertThat(goblin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isZero();
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.MENACE)).isFalse();
     }
 
@@ -194,8 +194,8 @@ class BloodstoneGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         for (Permanent goblin : List.of(first, second)) {
-            assertThat(goblin.getPowerModifier()).isEqualTo(1);
-            assertThat(goblin.getToughnessModifier()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(1);
             assertThat(PermanentGrants.keywordsOf(gd, goblin)).contains(Keyword.MENACE);
         }
         assertThat(gd.stack).hasSize(1);
@@ -222,8 +222,8 @@ class BloodstoneGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(remaining.getPowerModifier()).isEqualTo(1);
-        assertThat(remaining.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, remaining)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, remaining)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, remaining)).contains(Keyword.MENACE);
         assertThat(gd.stack).hasSize(1);
     }

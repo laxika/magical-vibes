@@ -26,15 +26,15 @@ class HeirToDragonfireTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(heir.getEffectivePower()).isEqualTo(3);
-        assertThat(heir.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, heir)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, heir)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(heir.getEffectivePower()).isEqualTo(2);
-        assertThat(heir.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, heir)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, heir)).isEqualTo(2);
     }
 
     @Test

@@ -40,8 +40,8 @@ class UrgeToFeedTest extends BaseCardTest {
 
         assertThat(targetVampire.isTapped()).isTrue();
         assertThat(targetVampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(targetVampire.getEffectivePower()).isEqualTo(0);
-        assertThat(targetVampire.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, targetVampire)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, targetVampire)).isEqualTo(1);
         assertThat(otherVampire.isTapped()).isFalse();
         assertThat(otherVampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(nonVampire.isTapped()).isFalse();
@@ -59,8 +59,8 @@ class UrgeToFeedTest extends BaseCardTest {
 
         assertThat(vampire.isTapped()).isFalse();
         assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -148,15 +148,15 @@ class UrgeToFeedTest extends BaseCardTest {
 
         castUrgeToFeed(vampire);
         harness.handleMultiplePermanentsChosen(player1, List.of(vampire.getId()));
-        assertThat(vampire.getEffectivePower()).isZero();
-        assertThat(vampire.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, vampire)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(vampire.getEffectivePower()).isEqualTo(3);
-        assertThat(vampire.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(4);
     }
 
     private void castUrgeToFeed(Permanent target) {

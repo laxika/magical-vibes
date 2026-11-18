@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class KraulWarriorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(warrior.getEffectivePower()).isEqualTo(5);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(5);
     }
 
     @Test
@@ -38,8 +39,8 @@ class KraulWarriorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(warrior.getEffectivePower()).isEqualTo(8);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(8);
     }
 
     @Test
@@ -55,10 +56,10 @@ class KraulWarriorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(0);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(0);
-        assertThat(warrior.getEffectivePower()).isEqualTo(2);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(2);
     }
 
     @Test
@@ -82,8 +83,8 @@ class KraulWarriorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(warrior.getEffectivePower()).isEqualTo(5);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(5);
     }
 
     @Test
@@ -97,8 +98,8 @@ class KraulWarriorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(warrior.getEffectivePower()).isEqualTo(5);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(5);
         assertThat(warrior.isTapped()).isTrue();
     }
 
@@ -112,16 +113,16 @@ class KraulWarriorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(warrior.getPowerModifier()).isZero();
-        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(warrior.getEffectivePower()).isEqualTo(5);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(5);
-        assertThat(otherWarrior.getPowerModifier()).isZero();
-        assertThat(otherWarrior.getToughnessModifier()).isZero();
-        assertThat(opposingWarrior.getPowerModifier()).isZero();
-        assertThat(opposingWarrior.getToughnessModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherWarrior)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherWarrior)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingWarrior)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingWarrior)).isZero();
     }
 }

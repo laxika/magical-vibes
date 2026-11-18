@@ -64,8 +64,7 @@ public class BoostTargetAndSharingCreaturesUntilEndOfTurnEffectHandler implement
                     .noneMatch(targetColors::contains)))) {
                 return;
             }
-            permanent.setPowerModifier(permanent.getPowerModifier() + powerBoost);
-            permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
+            gameData.addPowerToughnessBoost(entry, permanent.getId(), powerBoost, toughnessBoost);
             affectedCount[0]++;
         });
 

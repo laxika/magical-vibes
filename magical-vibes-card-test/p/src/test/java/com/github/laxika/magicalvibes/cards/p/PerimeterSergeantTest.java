@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;
 import com.github.laxika.magicalvibes.cards.c.CheckpointOfficer;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,8 +26,8 @@ class PerimeterSergeantTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(human.getPowerModifier()).isEqualTo(1);
-        assertThat(human.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, human)).isZero();
     }
 
     @Test
@@ -38,10 +39,10 @@ class PerimeterSergeantTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(sergeant.getPowerModifier()).isZero();
-        assertThat(sergeant.getToughnessModifier()).isZero();
-        assertThat(nonHuman.getPowerModifier()).isZero();
-        assertThat(nonHuman.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, sergeant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sergeant)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonHuman)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonHuman)).isZero();
     }
 
     @Test
@@ -53,13 +54,13 @@ class PerimeterSergeantTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(human.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(human.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isZero();
     }
 
     @Test
@@ -72,9 +73,9 @@ class PerimeterSergeantTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(ownHuman.getPowerModifier()).isEqualTo(1);
-        assertThat(opposingHuman.getPowerModifier()).isZero();
-        assertThat(opposingHuman.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownHuman)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingHuman)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingHuman)).isZero();
     }
 
     @Test
@@ -87,12 +88,12 @@ class PerimeterSergeantTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(human.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
-        assertThat(human.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, human)).isZero();
     }
 
     @Test
@@ -106,9 +107,9 @@ class PerimeterSergeantTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent afterResolution = addCreatureReady(player1, new CheckpointOfficer());
 
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getToughnessModifier()).isZero();
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
     }
 }

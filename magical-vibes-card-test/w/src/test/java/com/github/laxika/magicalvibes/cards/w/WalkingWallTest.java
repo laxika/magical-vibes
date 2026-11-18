@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -37,8 +38,8 @@ class WalkingWallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(wall.getEffectivePower()).isEqualTo(3);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(5);
 
         declareAttackers(List.of(0));
 
@@ -57,7 +58,7 @@ class WalkingWallTest extends BaseCardTest {
         harness.clearPriorityPassed();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(wall.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(3);
     }
 
     @Test
@@ -68,14 +69,14 @@ class WalkingWallTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(wall.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wall.getPowerModifier()).isEqualTo(0);
-        assertThat(wall.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isEqualTo(0);
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -100,7 +101,7 @@ class WalkingWallTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(wall.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isZero();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once each turn");
@@ -108,8 +109,8 @@ class WalkingWallTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(wall.getEffectivePower()).isEqualTo(3);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(5);
     }
 
     @Test
@@ -124,10 +125,10 @@ class WalkingWallTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(3);
-        assertThat(second.getPowerModifier()).isEqualTo(3);
-        assertThat(first.getToughnessModifier()).isEqualTo(-1);
-        assertThat(second.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(-1);
     }
 
     @Test
@@ -140,15 +141,15 @@ class WalkingWallTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(wall.getPowerModifier()).isZero();
-        assertThat(wall.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isZero();
 
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getEffectivePower()).isEqualTo(3);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(5);
     }
 
     @Test
@@ -160,7 +161,7 @@ class WalkingWallTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(3);
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -33,7 +34,7 @@ class SteelHellkiteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hellkite.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isEqualTo(1);
     }
 
     @Test
@@ -47,7 +48,7 @@ class SteelHellkiteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hellkite.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isEqualTo(2);
     }
 
     @Test
@@ -300,14 +301,14 @@ class SteelHellkiteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(hellkite.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isEqualTo(1);
         harness.activateAbility(player1, 0, 1, 0, null);
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(hellkite.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isZero();
 
         harness.addToBattlefield(player2, new Memnite());
         harness.activateAbility(player1, 0, 1, 0, null);

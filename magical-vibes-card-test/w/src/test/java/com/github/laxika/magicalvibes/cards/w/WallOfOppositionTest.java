@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class WallOfOppositionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getPowerModifier()).isEqualTo(1);
-        assertThat(wall.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isZero();
     }
 
     @Test
@@ -38,8 +39,8 @@ class WallOfOppositionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getPowerModifier()).isEqualTo(2);
-        assertThat(wall.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isZero();
     }
 
     @Test
@@ -55,8 +56,8 @@ class WallOfOppositionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wall.getPowerModifier()).isZero();
-        assertThat(wall.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isZero();
     }
 
     @Test
@@ -80,8 +81,8 @@ class WallOfOppositionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getPowerModifier()).isEqualTo(1);
-        assertThat(wall.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isZero();
         assertThat(wall.isTapped()).isTrue();
     }
 
@@ -95,12 +96,12 @@ class WallOfOppositionTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
 
-        assertThat(secondWall.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, secondWall)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(firstWall.getPowerModifier()).isZero();
-        assertThat(secondWall.getPowerModifier()).isEqualTo(1);
-        assertThat(opposingWall.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstWall)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, secondWall)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingWall)).isZero();
     }
 }

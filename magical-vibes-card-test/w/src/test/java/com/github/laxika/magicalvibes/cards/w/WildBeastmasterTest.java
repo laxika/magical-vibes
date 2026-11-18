@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DrudgeBeetle;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.u.UltimatePrice;
@@ -39,7 +40,7 @@ class WildBeastmasterTest extends BaseCardTest {
         Permanent beastmaster = addCreatureReady(player1, new WildBeastmaster());
         Permanent bears = addCreatureReady(player1, new DrudgeBeetle());
         Permanent enemyBears = addCreatureReady(player2, new DrudgeBeetle());
-        beastmaster.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, beastmaster, 2);
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -107,7 +108,7 @@ class WildBeastmasterTest extends BaseCardTest {
     void zeroPowerGivesNoBonus() {
         Permanent beastmaster = addCreatureReady(player1, new WildBeastmaster());
         Permanent beetle = addCreatureReady(player1, new DrudgeBeetle());
-        beastmaster.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, beastmaster, -1);
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
@@ -119,7 +120,7 @@ class WildBeastmasterTest extends BaseCardTest {
     void negativePowerUsesZeroForX() {
         Permanent beastmaster = addCreatureReady(player1, new WildBeastmaster());
         Permanent beetle = addCreatureReady(player1, new DrudgeBeetle());
-        beastmaster.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, beastmaster, -3);
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 

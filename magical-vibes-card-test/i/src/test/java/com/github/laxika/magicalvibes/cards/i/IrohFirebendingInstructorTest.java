@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,13 +29,13 @@ class IrohFirebendingInstructorTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(iroh.getPowerModifier()).isEqualTo(1);
-        assertThat(iroh.getToughnessModifier()).isEqualTo(1);
-        assertThat(otherAttacker.getPowerModifier()).isEqualTo(1);
-        assertThat(otherAttacker.getToughnessModifier()).isEqualTo(1);
-        assertThat(nonAttacker.getPowerModifier()).isZero();
-        assertThat(nonAttacker.getToughnessModifier()).isZero();
-        assertThat(opponentCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, iroh)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, iroh)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAttacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherAttacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonAttacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonAttacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
     }
 
     @Test
@@ -46,13 +47,13 @@ class IrohFirebendingInstructorTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -64,8 +65,8 @@ class IrohFirebendingInstructorTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -78,8 +79,8 @@ class IrohFirebendingInstructorTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(iroh.getPowerModifier()).isEqualTo(1);
-        assertThat(iroh.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, iroh)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, iroh)).isEqualTo(1);
     }
 
     @Test
@@ -96,11 +97,11 @@ class IrohFirebendingInstructorTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(iroh);
-            assertThat(attacker.getPowerModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
             resolveAllTriggers();
         });
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CidTimelessArtificer;
 import com.github.laxika.magicalvibes.cards.e.ElshaThreefoldMaster;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -33,11 +34,11 @@ class TheArchimandriteTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
         harness.passBothPriorities();
 
-        assertThat(archimandrite.getPowerModifier()).isEqualTo(3);
-        assertThat(artificer.getPowerModifier()).isEqualTo(3);
-        assertThat(monk.getPowerModifier()).isEqualTo(3);
-        assertThat(advisor.getPowerModifier()).isEqualTo(3);
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, archimandrite)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, artificer)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, monk)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, advisor)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
         assertThat(gqs.hasKeyword(gd, archimandrite, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, artificer, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, monk, Keyword.VIGILANCE)).isTrue();
@@ -48,8 +49,8 @@ class TheArchimandriteTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(archimandrite.getPowerModifier()).isZero();
-        assertThat(artificer.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, archimandrite)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, artificer)).isZero();
         assertThat(gqs.hasKeyword(gd, archimandrite, Keyword.VIGILANCE)).isFalse();
     }
 

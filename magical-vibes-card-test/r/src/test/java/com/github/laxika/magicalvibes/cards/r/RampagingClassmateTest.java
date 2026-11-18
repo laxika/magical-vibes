@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,8 +23,8 @@ class RampagingClassmateTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(classmate.getPowerModifier()).isZero();
-        assertThat(classmate.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, classmate)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, classmate)).isZero();
     }
 
     @Test
@@ -35,8 +36,8 @@ class RampagingClassmateTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(classmate.getPowerModifier()).isEqualTo(1);
-        assertThat(classmate.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, classmate)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, classmate)).isZero();
     }
 
     @Test
@@ -49,8 +50,8 @@ class RampagingClassmateTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(classmate.getPowerModifier()).isEqualTo(1);
-        assertThat(classmate.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, classmate)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, classmate)).isZero();
     }
 
     @Test
@@ -62,8 +63,8 @@ class RampagingClassmateTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(classmate.getPowerModifier()).isZero();
-        assertThat(classmate.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, classmate)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, classmate)).isZero();
     }
 
     @Test
@@ -77,8 +78,8 @@ class RampagingClassmateTest extends BaseCardTest {
         resolveAllTriggers();
 
         for (Permanent attacker : List.of(first, second, third)) {
-            assertThat(attacker.getPowerModifier()).isEqualTo(2);
-            assertThat(attacker.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         }
     }
 
@@ -94,8 +95,8 @@ class RampagingClassmateTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(other.getCard());
         resolveAllTriggers();
 
-        assertThat(classmate.getPowerModifier()).isZero();
-        assertThat(classmate.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, classmate)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, classmate)).isZero();
     }
 
     @Test
@@ -106,13 +107,13 @@ class RampagingClassmateTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
-        assertThat(classmate.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, classmate)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(classmate.getPowerModifier()).isZero();
-        assertThat(classmate.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, classmate)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, classmate)).isZero();
     }
 }

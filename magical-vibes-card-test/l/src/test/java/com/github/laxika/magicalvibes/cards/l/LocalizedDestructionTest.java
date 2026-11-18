@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FireElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -67,7 +68,7 @@ class LocalizedDestructionTest extends BaseCardTest {
     @Test
     void newlyGainedEnergyCanBePaidImmediately() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        creature.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, creature, -1);
         cast();
 
         harness.handleXValueChosen(player1, 1);
@@ -80,7 +81,7 @@ class LocalizedDestructionTest extends BaseCardTest {
     @Test
     void protectionUsesModifiedPowerRatherThanPrintedPower() {
         Permanent modifiedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        modifiedCreature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, modifiedCreature, 1);
         Permanent unmodifiedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         gd.playerEnergyCounters.put(player1.getId(), 2);
         cast();
@@ -95,7 +96,7 @@ class LocalizedDestructionTest extends BaseCardTest {
     @Test
     void decliningPaymentDoesNotProtectZeroPowerCreatures() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        creature.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, creature, -2);
         cast();
 
         harness.handleXValueChosen(player1, 0);
@@ -122,7 +123,7 @@ class LocalizedDestructionTest extends BaseCardTest {
         cast();
         harness.handleXValueChosen(player1, 2);
 
-        protectedCreature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, protectedCreature, 1);
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(gqs.hasKeyword(gd, protectedCreature, Keyword.INDESTRUCTIBLE)).isTrue();

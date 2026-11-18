@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -35,7 +36,7 @@ class BurrogBarrageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
 
@@ -56,7 +57,7 @@ class BurrogBarrageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(4);
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
 
@@ -78,7 +79,7 @@ class BurrogBarrageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
 
@@ -94,7 +95,7 @@ class BurrogBarrageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         harness.assertInGraveyard(player1, "Burrog Barrage");
     }
 
@@ -164,8 +165,8 @@ class BurrogBarrageTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(harness.getPermanentId(player1, "Grizzly Bears")));
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getPowerModifier()).isEqualTo(1);
-        assertThat(findPermanent(player1, "Grizzly Bears").getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player1, "Grizzly Bears"))).isZero();
         harness.assertInGraveyard(player1, "Burrog Barrage");
     }
 
@@ -183,7 +184,7 @@ class BurrogBarrageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(1);
         assertThat(findPermanent(player2, "Air Elemental").getMarkedDamage()).isEqualTo(3);
         assertThat(findPermanent(player1, "Grizzly Bears").getMarkedDamage()).isZero();
     }
@@ -204,7 +205,7 @@ class BurrogBarrageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Grizzly Bears"))).isZero();
         assertThat(findPermanent(player2, "Air Elemental").getMarkedDamage()).isEqualTo(2);
     }
 
@@ -223,7 +224,7 @@ class BurrogBarrageTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(4);
         harness.assertInGraveyard(player1, "Burrog Barrage");
     }
 

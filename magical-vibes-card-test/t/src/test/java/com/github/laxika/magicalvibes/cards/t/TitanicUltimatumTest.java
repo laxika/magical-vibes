@@ -21,13 +21,13 @@ class TitanicUltimatumTest extends BaseCardTest {
         Permanent enemy = harness.addToBattlefieldAndReturn(player2, new CylianElf());
         castUltimatum();
 
-        assertThat(own.getEffectivePower()).isEqualTo(7);
-        assertThat(own.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, own, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, own, Keyword.LIFELINK)).isTrue();
 
-        assertThat(enemy.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, enemy)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, enemy, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, enemy, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, enemy, Keyword.LIFELINK)).isFalse();
@@ -39,15 +39,15 @@ class TitanicUltimatumTest extends BaseCardTest {
         Permanent own = harness.addToBattlefieldAndReturn(player1, new CylianElf());
         castUltimatum();
 
-        assertThat(own.getEffectivePower()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, own, Keyword.LIFELINK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(own.getEffectivePower()).isEqualTo(2);
-        assertThat(own.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, own, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, own, Keyword.LIFELINK)).isFalse();
@@ -59,8 +59,8 @@ class TitanicUltimatumTest extends BaseCardTest {
         castUltimatum();
         Permanent late = harness.enterBattlefieldAndReturn(player1, new CylianElf());
 
-        assertThat(late.getEffectivePower()).isEqualTo(2);
-        assertThat(late.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, late)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, late)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, late, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, late, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, late, Keyword.LIFELINK)).isFalse();
@@ -73,8 +73,8 @@ class TitanicUltimatumTest extends BaseCardTest {
         Permanent creature = harness.enterBattlefieldAndReturn(player1, new CylianElf());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(7);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();

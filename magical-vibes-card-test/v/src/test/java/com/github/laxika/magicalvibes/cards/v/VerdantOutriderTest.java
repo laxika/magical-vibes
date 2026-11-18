@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrandBallGuest;
 import com.github.laxika.magicalvibes.cards.h.HollowScavenger;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -72,7 +73,7 @@ class VerdantOutriderTest extends BaseCardTest {
         Permanent guest = addCreatureReady(player2, new GrandBallGuest());
         activateOutrider();
 
-        guest.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, guest, 1);
         prepareBlockerDeclaration(outrider);
         declareBlock(guest, outrider);
         assertThat(guest.isBlocking()).isTrue();
@@ -84,7 +85,7 @@ class VerdantOutriderTest extends BaseCardTest {
         Permanent scavenger = addCreatureReady(player2, new HollowScavenger());
         activateOutrider();
 
-        scavenger.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, scavenger, -1);
         prepareBlockerDeclaration(outrider);
         assertThatThrownBy(() -> declareBlock(scavenger, outrider))
                 .isInstanceOf(IllegalStateException.class)

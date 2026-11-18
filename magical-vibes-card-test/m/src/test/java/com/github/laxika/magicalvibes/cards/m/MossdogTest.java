@@ -36,8 +36,8 @@ class MossdogTest extends BaseCardTest {
 
         Permanent mossdog = findPermanent(player1, "Mossdog");
         assertThat(mossdog.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(mossdog.getEffectivePower()).isEqualTo(2);
-        assertThat(mossdog.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mossdog)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mossdog)).isEqualTo(2);
     }
 
     @Test

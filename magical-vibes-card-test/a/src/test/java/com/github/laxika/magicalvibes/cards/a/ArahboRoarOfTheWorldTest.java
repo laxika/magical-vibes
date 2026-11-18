@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProwlingCaracal;
 import com.github.laxika.magicalvibes.model.Card;
@@ -133,7 +134,7 @@ class ArahboRoarOfTheWorldTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         declareAttackers(List.of(1));
-        cat.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, cat, 2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -147,7 +148,7 @@ class ArahboRoarOfTheWorldTest extends BaseCardTest {
     void negativePowerGivesZeroBonus() {
         addCreatureReady(player1, new ArahboRoarOfTheWorld());
         Permanent cat = addCreatureReady(player1, new ProwlingCaracal());
-        cat.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, cat, -4);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);

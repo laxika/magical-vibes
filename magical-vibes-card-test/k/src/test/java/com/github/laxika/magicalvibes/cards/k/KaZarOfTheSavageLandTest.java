@@ -29,14 +29,14 @@ class KaZarOfTheSavageLandTest extends BaseCardTest {
 
         Permanent zabu = findPermanent(player1, "Zabu");
         assertThat(zabu.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
-        assertThat(zabu.getEffectivePower()).isEqualTo(2);
-        assertThat(zabu.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, zabu)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, zabu)).isEqualTo(2);
 
         playForest();
         harness.passBothPriorities();
 
-        assertThat(zabu.getEffectivePower()).isEqualTo(3);
-        assertThat(zabu.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, zabu)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, zabu)).isEqualTo(3);
     }
 
     @Test
@@ -146,13 +146,13 @@ class KaZarOfTheSavageLandTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Forest()));
         harness.playLand(player2, 0);
         assertThat(gd.stack).isEmpty();
-        assertThat(zabu.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, zabu)).isEqualTo(2);
 
         playForest();
-        assertThat(zabu.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, zabu)).isEqualTo(2);
         resolveAllTriggers();
-        assertThat(zabu.getEffectivePower()).isEqualTo(3);
-        assertThat(zabu.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, zabu)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, zabu)).isEqualTo(3);
     }
 
     private void playForest() {

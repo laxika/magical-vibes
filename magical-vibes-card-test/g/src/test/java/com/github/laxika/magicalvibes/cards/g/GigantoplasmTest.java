@@ -26,16 +26,16 @@ class GigantoplasmTest extends BaseCardTest {
 
         Permanent gigantoplasm = findPermanent(player1, "Grizzly Bears");
         assertThat(gigantoplasm.getCard().getName()).isEqualTo("Grizzly Bears");
-        assertThat(gigantoplasm.getEffectivePower()).isEqualTo(2);
-        assertThat(gigantoplasm.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, gigantoplasm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gigantoplasm)).isEqualTo(2);
 
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(gigantoplasm), 5, null);
         harness.passBothPriorities();
 
-        assertThat(gigantoplasm.getEffectivePower()).isEqualTo(5);
-        assertThat(gigantoplasm.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, gigantoplasm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, gigantoplasm)).isEqualTo(5);
     }
 
     @Test
@@ -68,10 +68,10 @@ class GigantoplasmTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(copy.getEffectivePower()).isEqualTo(5);
-        assertThat(copy.getEffectiveToughness()).isEqualTo(5);
-        assertThat(findPermanent(player2, "Grizzly Bears").getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanent(player2, "Grizzly Bears").getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Grizzly Bears"))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Grizzly Bears"))).isEqualTo(2);
     }
 
     @Test
@@ -82,13 +82,13 @@ class GigantoplasmTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, null);
         harness.passBothPriorities();
 
-        assertThat(copy.getEffectivePower()).isEqualTo(3);
-        assertThat(copy.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(3);
 
         harness.passBothPriorities();
 
-        assertThat(copy.getEffectivePower()).isEqualTo(5);
-        assertThat(copy.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(5);
     }
 
     @Test
@@ -115,17 +115,17 @@ class GigantoplasmTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, firstCopy.getId());
         Permanent secondCopy = gd.playerBattlefields.get(player1.getId()).get(1);
 
-        assertThat(secondCopy.getEffectivePower()).isEqualTo(2);
-        assertThat(secondCopy.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondCopy)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondCopy)).isEqualTo(2);
 
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.activateAbility(player1, 1, 1, 4, null);
         harness.passBothPriorities();
 
-        assertThat(secondCopy.getEffectivePower()).isEqualTo(4);
-        assertThat(secondCopy.getEffectiveToughness()).isEqualTo(4);
-        assertThat(firstCopy.getEffectivePower()).isEqualTo(5);
-        assertThat(firstCopy.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, secondCopy)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondCopy)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, firstCopy)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, firstCopy)).isEqualTo(5);
     }
 
     private Permanent copyBears() {

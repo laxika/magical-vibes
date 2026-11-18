@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AshmouthBlade;
 import com.github.laxika.magicalvibes.cards.i.IndomitableWill;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
@@ -60,8 +61,8 @@ class BushiTenderfootTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(bushi.getPowerModifier()).isEqualTo(2);
-        assertThat(bushi.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bushi)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bushi)).isEqualTo(2);
     }
 
     @Test
@@ -80,8 +81,8 @@ class BushiTenderfootTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(bushi.getPowerModifier()).isEqualTo(2);
-        assertThat(bushi.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bushi)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bushi)).isEqualTo(2);
     }
 
     @Test

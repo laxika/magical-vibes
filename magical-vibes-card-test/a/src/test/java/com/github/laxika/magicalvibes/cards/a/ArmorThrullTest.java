@@ -28,8 +28,8 @@ class ArmorThrullTest extends BaseCardTest {
         assertThat(armorThrull).isNotIn(harness.getGameData().playerBattlefields.get(player1.getId()));
         harness.assertInGraveyard(player1, "Armor Thrull");
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)).isEqualTo(1);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 
     @Test

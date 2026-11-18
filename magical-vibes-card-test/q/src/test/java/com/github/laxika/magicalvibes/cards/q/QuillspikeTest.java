@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -54,8 +55,8 @@ class QuillspikeTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(quillspike.getPowerModifier()).isEqualTo(0);
-        assertThat(quillspike.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, quillspike)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, quillspike)).isEqualTo(0);
     }
 
     @Test

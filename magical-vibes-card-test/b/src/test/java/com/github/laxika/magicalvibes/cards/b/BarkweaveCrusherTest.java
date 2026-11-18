@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.ColossalGrowth;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,7 +29,7 @@ class BarkweaveCrusherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(supporter.isTapped()).isFalse();
-        assertThat(crusher.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, crusher)).isZero();
     }
 
     @Test
@@ -65,16 +66,16 @@ class BarkweaveCrusherTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
             harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
-            assertThat(crusher.getPowerModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, crusher)).isZero();
             assertThat(gd.stack).hasSize(1);
             harness.castInstant(player1, 0, supporter.getId());
             harness.passBothPriorities();
-            assertThat(supporter.getPowerModifier()).isEqualTo(3);
+            assertThat(PermanentGrants.powerBoostOf(gd, supporter)).isEqualTo(3);
             harness.passBothPriorities();
         });
 
-        assertThat(crusher.getPowerModifier()).isEqualTo(5);
-        assertThat(crusher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, crusher)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crusher)).isZero();
     }
 
     @Test
@@ -94,7 +95,7 @@ class BarkweaveCrusherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(supporter.isTapped()).isTrue();
-        assertThat(crusher.getPowerModifier()).isEqualTo(2);
-        assertThat(crusher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, crusher)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crusher)).isZero();
     }
 }

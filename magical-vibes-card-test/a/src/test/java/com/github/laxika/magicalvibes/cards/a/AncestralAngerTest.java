@@ -32,8 +32,8 @@ class AncestralAngerTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.TRAMPLE);
     }
 
@@ -49,7 +49,7 @@ class AncestralAngerTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.TRAMPLE);
     }
 
@@ -81,7 +81,7 @@ class AncestralAngerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.TRAMPLE);
     }
 
@@ -113,8 +113,8 @@ class AncestralAngerTest extends BaseCardTest {
         Permanent bear = findPermanent(player2, "Grizzly Bears");
         harness.castAndResolveSorcery(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.TRAMPLE);
         harness.assertInHand(player1, "Fountain of Youth");
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -132,7 +132,7 @@ class AncestralAngerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new AncestralAnger(), new AncestralAnger()));
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
         harness.setGraveyard(player1, List.of());
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
     }

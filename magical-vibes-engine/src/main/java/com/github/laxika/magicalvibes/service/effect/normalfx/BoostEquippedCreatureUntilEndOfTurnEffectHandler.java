@@ -127,8 +127,7 @@ public class BoostEquippedCreatureUntilEndOfTurnEffectHandler implements NormalE
         int powerBoost = amountEvaluationService.evaluate(gameData, e.powerBoost(), ctx);
         int toughnessBoost = amountEvaluationService.evaluate(gameData, e.toughnessBoost(), ctx);
 
-        equippedCreature.setPowerModifier(equippedCreature.getPowerModifier() + powerBoost);
-        equippedCreature.setToughnessModifier(equippedCreature.getToughnessModifier() + toughnessBoost);
+        gameData.addPowerToughnessBoost(entry, equippedCreature.getId(), powerBoost, toughnessBoost);
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(equippedCreature.getCard())

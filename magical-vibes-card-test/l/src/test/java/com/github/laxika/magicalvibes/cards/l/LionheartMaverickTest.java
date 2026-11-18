@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -26,8 +27,8 @@ class LionheartMaverickTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(maverick.getPowerModifier()).isEqualTo(1);
-        assertThat(maverick.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, maverick)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, maverick)).isEqualTo(2);
     }
 
     @Test
@@ -42,8 +43,8 @@ class LionheartMaverickTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(maverick.getPowerModifier()).isEqualTo(2);
-        assertThat(maverick.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, maverick)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, maverick)).isEqualTo(4);
     }
 
     @Test
@@ -58,8 +59,8 @@ class LionheartMaverickTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(maverick.getPowerModifier()).isZero();
-        assertThat(maverick.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, maverick)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, maverick)).isZero();
     }
 
     @Test
@@ -106,8 +107,8 @@ class LionheartMaverickTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(maverick.getPowerModifier()).isEqualTo(1);
-        assertThat(maverick.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, maverick)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, maverick)).isEqualTo(2);
         assertThat(maverick.isTapped()).isTrue();
     }
 
@@ -121,18 +122,18 @@ class LionheartMaverickTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
 
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isEqualTo(2);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isZero();
     }
 
     private void addAbilityMana(Player player) {

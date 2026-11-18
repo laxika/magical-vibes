@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -26,10 +27,10 @@ class EscapedNullTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(escapedNull.getPowerModifier()).isEqualTo(5);
-        assertThat(escapedNull.getToughnessModifier()).isZero();
-        assertThat(escapedNull.getEffectivePower()).isEqualTo(6);
-        assertThat(escapedNull.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, escapedNull)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, escapedNull)).isZero();
+        assertThat(gqs.getEffectivePower(gd, escapedNull)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, escapedNull)).isEqualTo(2);
     }
 
     @Test
@@ -43,10 +44,10 @@ class EscapedNullTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(escapedNull.getPowerModifier()).isEqualTo(5);
-        assertThat(escapedNull.getToughnessModifier()).isZero();
-        assertThat(escapedNull.getEffectivePower()).isEqualTo(6);
-        assertThat(escapedNull.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, escapedNull)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, escapedNull)).isZero();
+        assertThat(gqs.getEffectivePower(gd, escapedNull)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, escapedNull)).isEqualTo(2);
     }
 
     @Test
@@ -64,8 +65,8 @@ class EscapedNullTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(escapedNull.getPowerModifier()).isEqualTo(5);
-        assertThat(escapedNull.getEffectivePower()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, escapedNull)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, escapedNull)).isEqualTo(6);
     }
 
     @Test
@@ -82,10 +83,10 @@ class EscapedNullTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(escapedNull.getPowerModifier()).isZero();
-        assertThat(escapedNull.getToughnessModifier()).isZero();
-        assertThat(escapedNull.getEffectivePower()).isEqualTo(1);
-        assertThat(escapedNull.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, escapedNull)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, escapedNull)).isZero();
+        assertThat(gqs.getEffectivePower(gd, escapedNull)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, escapedNull)).isEqualTo(2);
     }
 
     @Test
@@ -103,8 +104,8 @@ class EscapedNullTest extends BaseCardTest {
         ));
         resolveAllTriggers();
 
-        assertThat(escapedNull.getPowerModifier()).isEqualTo(5);
-        assertThat(escapedNull.getEffectivePower()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, escapedNull)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, escapedNull)).isEqualTo(6);
     }
 
     @Test
@@ -138,7 +139,7 @@ class EscapedNullTest extends BaseCardTest {
         resolveAllTriggers();
         resolveCombat();
 
-        assertThat(escapedNull.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, escapedNull)).isZero();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }

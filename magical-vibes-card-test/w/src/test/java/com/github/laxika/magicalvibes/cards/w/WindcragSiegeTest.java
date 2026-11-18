@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HungrySpriggan;
 import com.github.laxika.magicalvibes.cards.e.EsixFractalBloom;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -48,8 +49,8 @@ class WindcragSiegeTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(spriggan.getPowerModifier()).isEqualTo(6);
-        assertThat(spriggan.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, spriggan)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spriggan)).isEqualTo(6);
     }
 
     @Test
@@ -86,8 +87,8 @@ class WindcragSiegeTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(spriggan.getPowerModifier()).isEqualTo(3);
-        assertThat(spriggan.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, spriggan)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spriggan)).isEqualTo(3);
     }
 
     @Test
@@ -99,8 +100,8 @@ class WindcragSiegeTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
 
-        assertThat(spriggan.getPowerModifier()).isEqualTo(3);
-        assertThat(spriggan.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, spriggan)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spriggan)).isEqualTo(3);
     }
 
     @Test
@@ -113,8 +114,8 @@ class WindcragSiegeTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(spriggan.getPowerModifier()).isEqualTo(9);
-        assertThat(spriggan.getToughnessModifier()).isEqualTo(9);
+        assertThat(PermanentGrants.powerBoostOf(gd, spriggan)).isEqualTo(9);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spriggan)).isEqualTo(9);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -38,8 +39,8 @@ class BarbarianBullyTest extends BaseCardTest {
                 .isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(bully.getPowerModifier()).isEqualTo(2);
-        assertThat(bully.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bully)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bully)).isEqualTo(2);
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }
@@ -51,8 +52,8 @@ class BarbarianBullyTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(bully.getPowerModifier()).isZero();
-        assertThat(bully.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bully)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bully)).isZero();
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 16);
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -88,15 +89,15 @@ class BarbarianBullyTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player2, false);
-        assertThat(bully.getPowerModifier()).isEqualTo(2);
-        assertThat(bully.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bully)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bully)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bully.getPowerModifier()).isZero();
-        assertThat(bully.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bully)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bully)).isZero();
     }
 
     @Test
@@ -118,8 +119,8 @@ class BarbarianBullyTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(bully.getPowerModifier()).isEqualTo(2);
-        assertThat(bully.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bully)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bully)).isEqualTo(2);
     }
 
     @Test
@@ -164,8 +165,8 @@ class BarbarianBullyTest extends BaseCardTest {
 
         harness.assertLife(player1, 16);
         harness.assertLife(player2, 20);
-        assertThat(bully.getPowerModifier()).isZero();
-        assertThat(bully.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bully)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bully)).isZero();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -195,8 +196,8 @@ class BarbarianBullyTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(bully.getPowerModifier()).isZero();
-        assertThat(bully.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bully)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bully)).isZero();
         harness.assertLife(player1, 16);
         harness.assertLife(player2, 20);
         assertThat(gd.interaction.activeInteraction()).isNull();

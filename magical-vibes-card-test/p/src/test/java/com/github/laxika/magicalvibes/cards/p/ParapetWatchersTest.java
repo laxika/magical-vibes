@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class ParapetWatchersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(watchers.getPowerModifier()).isEqualTo(0);
-        assertThat(watchers.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, watchers)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, watchers)).isEqualTo(1);
     }
 
     @Test
@@ -36,7 +37,7 @@ class ParapetWatchersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(watchers.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, watchers)).isEqualTo(1);
     }
 
     @Test
@@ -50,7 +51,7 @@ class ParapetWatchersTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(watchers.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, watchers)).isEqualTo(3);
     }
 
     @Test
@@ -62,13 +63,13 @@ class ParapetWatchersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(watchers.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, watchers)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(watchers.getPowerModifier()).isEqualTo(0);
-        assertThat(watchers.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, watchers)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, watchers)).isEqualTo(0);
     }
 
     @Test
@@ -92,18 +93,18 @@ class ParapetWatchersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(watchers.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, watchers)).isZero();
         assertThat(gd.stack).hasSize(2);
 
         harness.passBothPriorities();
-        assertThat(watchers.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, watchers)).isEqualTo(1);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
-        assertThat(watchers.getPowerModifier()).isZero();
-        assertThat(watchers.getToughnessModifier()).isEqualTo(2);
-        assertThat(other.getToughnessModifier()).isZero();
-        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, watchers)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, watchers)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -118,7 +119,7 @@ class ParapetWatchersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(watchers.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, watchers)).isEqualTo(1);
         assertThat(watchers.isTapped()).isTrue();
     }
 
@@ -135,6 +136,6 @@ class ParapetWatchersTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(watchers.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, watchers)).isZero();
     }
 }

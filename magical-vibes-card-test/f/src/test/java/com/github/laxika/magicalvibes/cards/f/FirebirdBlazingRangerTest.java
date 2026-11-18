@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -20,14 +21,14 @@ class FirebirdBlazingRangerTest extends BaseCardTest {
     void boostsOtherAttackersByItsPower() {
         Permanent firebird = addCreatureReady(player1, new FirebirdBlazingRanger());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        firebird.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, firebird, 2);
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(firebird.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getPowerModifier()).isEqualTo(3);
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firebird)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -40,9 +41,9 @@ class FirebirdBlazingRangerTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(firebird.getPowerModifier()).isZero();
-        assertThat(attackingBear.getPowerModifier()).isEqualTo(1);
-        assertThat(homeBear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firebird)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attackingBear)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, homeBear)).isZero();
     }
 
     @Test
@@ -52,12 +53,12 @@ class FirebirdBlazingRangerTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0, 1));
-        firebird.setPowerModifier(4);
+        PermanentGrants.setPowerBoost(gd, firebird, 4);
         resolveAllTriggers();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(5);
-        assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(firebird.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firebird)).isEqualTo(4);
     }
 
     @Test
@@ -65,13 +66,13 @@ class FirebirdBlazingRangerTest extends BaseCardTest {
     void negativePowerGivesNoBoost() {
         Permanent firebird = addCreatureReady(player1, new FirebirdBlazingRanger());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        firebird.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, firebird, -3);
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -81,14 +82,14 @@ class FirebirdBlazingRangerTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0, 1));
-        firebird.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, firebird, 2);
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, firebird));
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firebird);
-        assertThat(bears.getPowerModifier()).isEqualTo(3);
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -100,8 +101,8 @@ class FirebirdBlazingRangerTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
 
-        assertThat(firebird.getPowerModifier()).isZero();
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firebird)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -112,12 +113,12 @@ class FirebirdBlazingRangerTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
     }
 }

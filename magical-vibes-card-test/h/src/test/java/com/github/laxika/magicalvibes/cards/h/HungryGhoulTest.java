@@ -28,8 +28,8 @@ class HungryGhoulTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Bear Cub");
         harness.assertInGraveyard(player1, "Bear Cub");
         assertThat(ghoul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(ghoul.getEffectivePower()).isEqualTo(3);
-        assertThat(ghoul.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ghoul)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ghoul)).isEqualTo(3);
     }
 
     @Test

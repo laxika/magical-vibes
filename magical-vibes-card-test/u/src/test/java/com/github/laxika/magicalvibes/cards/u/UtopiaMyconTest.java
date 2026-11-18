@@ -50,8 +50,8 @@ class UtopiaMyconTest extends BaseCardTest {
 
         assertThat(mycon.getCounterCount(CounterType.FUNGUS)).isOne();
         Permanent saproling = findPermanent(player1, "Saproling");
-        assertThat(saproling.getEffectivePower()).isOne();
-        assertThat(saproling.getEffectiveToughness()).isOne();
+        assertThat(gqs.getEffectivePower(gd, saproling)).isOne();
+        assertThat(gqs.getEffectiveToughness(gd, saproling)).isOne();
         assertThat(saproling.getEffectiveColor()).isEqualTo(CardColor.GREEN);
         assertThat(saproling.getCard().getSubtypes()).containsExactly(CardSubtype.SAPROLING);
     }

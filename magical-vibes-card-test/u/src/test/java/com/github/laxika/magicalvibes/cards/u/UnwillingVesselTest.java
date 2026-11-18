@@ -61,8 +61,8 @@ class UnwillingVesselTest extends BaseCardTest {
 
         List<Permanent> spirits = findPermanents(player1, "Spirit");
         assertThat(spirits).hasSize(1);
-        assertThat(spirits.getFirst().getEffectivePower()).isEqualTo(3);
-        assertThat(spirits.getFirst().getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, spirits.getFirst())).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, spirits.getFirst())).isEqualTo(3);
         assertThat(spirits.getFirst().getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(spirits.getFirst().getCard().hasKeyword(com.github.laxika.magicalvibes.model.Keyword.FLYING)).isTrue();
     }

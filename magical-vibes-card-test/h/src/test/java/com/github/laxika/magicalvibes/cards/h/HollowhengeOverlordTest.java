@@ -28,8 +28,8 @@ class HollowhengeOverlordTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken()))
                 .hasSize(3)
                 .allSatisfy(token -> {
-                    assertThat(token.getEffectivePower()).isEqualTo(2);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(2);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
                 });
     }
 

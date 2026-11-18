@@ -28,8 +28,8 @@ class TheVisionAndScarletWitchTest extends BaseCardTest {
         ManaPool manaPool = gd.playerManaPools.get(player1.getId());
         assertThat(manaPool.get(ManaColor.RED)).isEqualTo(1);
         assertThat(visionAndScarletWitch.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(visionAndScarletWitch.getEffectivePower()).isEqualTo(4);
-        assertThat(visionAndScarletWitch.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, visionAndScarletWitch)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, visionAndScarletWitch)).isEqualTo(4);
     }
 
     @Test

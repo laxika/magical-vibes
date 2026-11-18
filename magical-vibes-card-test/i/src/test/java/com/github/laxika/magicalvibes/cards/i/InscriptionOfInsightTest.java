@@ -62,8 +62,8 @@ class InscriptionOfInsightTest extends BaseCardTest {
                 .toList();
         assertThat(illusions).singleElement().satisfies(illusion -> {
             assertThat(illusion.getCard().getName()).isEqualTo("Illusion");
-            assertThat(illusion.getEffectivePower()).isEqualTo(4);
-            assertThat(illusion.getEffectiveToughness()).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, illusion)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, illusion)).isEqualTo(4);
         });
     }
 
@@ -87,8 +87,8 @@ class InscriptionOfInsightTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).singleElement()
                 .satisfies(illusion -> {
                     assertThat(illusion.getCard().isToken()).isTrue();
-                    assertThat(illusion.getEffectivePower()).isEqualTo(6);
-                    assertThat(illusion.getEffectiveToughness()).isEqualTo(6);
+                    assertThat(gqs.getEffectivePower(gd, illusion)).isEqualTo(6);
+                    assertThat(gqs.getEffectiveToughness(gd, illusion)).isEqualTo(6);
                 });
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
@@ -160,8 +160,8 @@ class InscriptionOfInsightTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(illusion -> {
             assertThat(illusion.getCard().isToken()).isTrue();
-            assertThat(illusion.getEffectivePower()).isEqualTo(2);
-            assertThat(illusion.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, illusion)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, illusion)).isEqualTo(2);
         });
     }
 

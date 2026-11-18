@@ -40,7 +40,7 @@ class TorrentOfSoulsTest extends BaseCardTest {
                 .noneMatch(c -> c.getId().equals(graveyardCreature.getId()));
 
         // No {R} spent — no boost or haste
-        assertThat(existing.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, existing, Keyword.HASTE)).isFalse();
     }
 
@@ -57,8 +57,8 @@ class TorrentOfSoulsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(player1.getId()));
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
 
         // No {B} spent — graveyard creature untouched
@@ -86,7 +86,7 @@ class TorrentOfSoulsTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getId().equals(graveyardCreature.getId()));
 
         // Boosted + haste
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
@@ -101,13 +101,13 @@ class TorrentOfSoulsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(player1.getId()));
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
@@ -138,8 +138,8 @@ class TorrentOfSoulsTest extends BaseCardTest {
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getId().equals(creature.getId()))
                 .findFirst().orElseThrow();
-        assertThat(returned.getEffectivePower()).isEqualTo(4);
-        assertThat(returned.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
     }
 
@@ -157,7 +157,7 @@ class TorrentOfSoulsTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(bears);
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
@@ -176,9 +176,9 @@ class TorrentOfSoulsTest extends BaseCardTest {
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getId().equals(creature.getId()))
                 .findFirst().orElseThrow();
-        assertThat(returned.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
-        assertThat(opponentBears.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.HASTE)).isTrue();
     }
 
@@ -197,9 +197,9 @@ class TorrentOfSoulsTest extends BaseCardTest {
         Permanent later = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> !p.getId().equals(existing.getId()))
                 .findFirst().orElseThrow();
-        assertThat(existing.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, existing, Keyword.HASTE)).isTrue();
-        assertThat(later.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, later, Keyword.HASTE)).isFalse();
     }
 
@@ -218,7 +218,7 @@ class TorrentOfSoulsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(bears);
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
@@ -246,7 +246,7 @@ class TorrentOfSoulsTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(bears);
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 }

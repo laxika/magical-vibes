@@ -24,8 +24,8 @@ class ThrenodySingerTest extends BaseCardTest {
 
         castSinger(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -35,7 +35,7 @@ class ThrenodySingerTest extends BaseCardTest {
 
         castSinger(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -44,13 +44,13 @@ class ThrenodySingerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FugitiveWizard());
 
         castSinger(target);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -73,11 +73,11 @@ class ThrenodySingerTest extends BaseCardTest {
         Permanent additionalSinger = harness.addToBattlefieldAndReturn(player1, new ThrenodySinger());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(-1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
 
         gd.playerBattlefields.get(player1.getId()).remove(additionalSinger);
-        assertThat(target.getEffectivePower()).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
     }
 
     @Test
@@ -91,8 +91,8 @@ class ThrenodySingerTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(singer.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -107,8 +107,8 @@ class ThrenodySingerTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.END_STEP, () -> castSinger(target));
 
         harness.assertOnBattlefield(player1, "Threnody Singer");
-        assertThat(target.getEffectivePower()).isZero();
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test

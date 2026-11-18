@@ -70,8 +70,8 @@ class GorillaTacticsTest extends BaseCardTest {
 
         assertThat(gorillas).hasSize(count);
         assertThat(gorillas).allSatisfy(gorilla -> {
-            assertThat(gorilla.getEffectivePower()).isEqualTo(2);
-            assertThat(gorilla.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, gorilla)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, gorilla)).isEqualTo(2);
             assertThat(gorilla.getCard().getColor()).isEqualTo(CardColor.GREEN);
             assertThat(gorilla.getCard().getSubtypes())
                     .extracting(CardSubtype::getDisplayName)

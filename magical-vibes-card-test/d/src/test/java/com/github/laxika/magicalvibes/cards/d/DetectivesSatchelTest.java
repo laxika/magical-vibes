@@ -53,8 +53,8 @@ class DetectivesSatchelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent thopter = findPermanent(player1, "Thopter");
-        assertThat(thopter.getEffectivePower()).isEqualTo(1);
-        assertThat(thopter.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(1);
         assertThat(thopter.getCard().getColor()).isNull();
         assertThat(thopter.getCard().getSubtypes()).containsExactly(CardSubtype.THOPTER);
         assertThat(gqs.isArtifact(gd, thopter)).isTrue();

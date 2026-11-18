@@ -30,8 +30,8 @@ class CabalTraineeTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Cabal Trainee");
         harness.assertInGraveyard(player1, "Cabal Trainee");
         Permanent brawn = findPermanent(player2, "Brawn");
-        assertThat(brawn.getEffectivePower()).isEqualTo(1);
-        assertThat(brawn.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, brawn)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, brawn)).isEqualTo(3);
     }
 
     @Test
@@ -48,8 +48,8 @@ class CabalTraineeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent brawn = findPermanent(player2, "Brawn");
-        assertThat(brawn.getEffectivePower()).isEqualTo(3);
-        assertThat(brawn.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, brawn)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, brawn)).isEqualTo(3);
     }
 
     @Test
@@ -62,8 +62,8 @@ class CabalTraineeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent brawn = findPermanent(player1, "Brawn");
-        assertThat(brawn.getEffectivePower()).isEqualTo(1);
-        assertThat(brawn.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, brawn)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, brawn)).isEqualTo(3);
     }
 
     @Test
@@ -107,11 +107,11 @@ class CabalTraineeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
 
         harness.assertInGraveyard(player1, "Cabal Trainee");
-        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -140,8 +140,8 @@ class CabalTraineeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(-1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         harness.assertOnBattlefield(player2, "Brawn");
     }
 }

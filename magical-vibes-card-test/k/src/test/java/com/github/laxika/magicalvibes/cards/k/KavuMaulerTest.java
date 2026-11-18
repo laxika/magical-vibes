@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Dodecapod;
 import com.github.laxika.magicalvibes.cards.j.Jilt;
 import com.github.laxika.magicalvibes.cards.t.TundraKavu;
@@ -51,10 +52,10 @@ class KavuMaulerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(2);
     }
 
     @Test
@@ -73,8 +74,8 @@ class KavuMaulerTest extends BaseCardTest {
         });
 
         harness.assertInHand(player1, "Kavu Glider");
-        assertThat(mauler.getPowerModifier()).isZero();
-        assertThat(mauler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mauler)).isZero();
     }
 
     @Test
@@ -88,13 +89,13 @@ class KavuMaulerTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(player1, List.of(0, 1));
             resolveAllTriggers();
-            assertThat(mauler.getPowerModifier()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isEqualTo(1);
             harness.castAndResolveInstant(player1, 0, glider.getId());
         });
 
         harness.assertInHand(player1, "Kavu Glider");
-        assertThat(mauler.getPowerModifier()).isEqualTo(1);
-        assertThat(mauler.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mauler)).isEqualTo(1);
     }
 
     @Test
@@ -107,8 +108,8 @@ class KavuMaulerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(mauler.getPowerModifier()).isEqualTo(2);
-        assertThat(mauler.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mauler)).isEqualTo(2);
     }
 
     @Test
@@ -119,8 +120,8 @@ class KavuMaulerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(mauler.getPowerModifier()).isZero();
-        assertThat(mauler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mauler)).isZero();
     }
 
     @Test
@@ -134,8 +135,8 @@ class KavuMaulerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(mauler.getPowerModifier()).isEqualTo(1);
-        assertThat(mauler.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mauler)).isEqualTo(1);
     }
 
     @Test
@@ -146,12 +147,12 @@ class KavuMaulerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
-        assertThat(mauler.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(mauler.getPowerModifier()).isZero();
-        assertThat(mauler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mauler)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mauler)).isZero();
     }
 }

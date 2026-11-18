@@ -27,8 +27,8 @@ class GobblingOozeTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Drudge Beetle");
         harness.assertInGraveyard(player1, "Drudge Beetle");
         assertThat(ooze.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(ooze.getEffectivePower()).isEqualTo(4);
-        assertThat(ooze.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(4);
     }
 
     @Test

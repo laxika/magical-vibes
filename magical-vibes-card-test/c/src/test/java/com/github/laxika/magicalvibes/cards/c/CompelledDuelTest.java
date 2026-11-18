@@ -29,8 +29,8 @@ class CompelledDuelTest extends BaseCardTest {
         castCompelledDuelOnBears();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }
@@ -45,8 +45,8 @@ class CompelledDuelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
@@ -138,8 +138,8 @@ class CompelledDuelTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 

@@ -33,8 +33,8 @@ class VeyranVoiceOfDualityTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         resolveAllTriggers();
 
-        assertThat(veyran.getEffectivePower()).isEqualTo(4);
-        assertThat(veyran.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, veyran)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, veyran)).isEqualTo(4);
     }
 
     @Test
@@ -48,8 +48,8 @@ class VeyranVoiceOfDualityTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 
-        assertThat(veyran.getEffectivePower()).isEqualTo(4);
-        assertThat(veyran.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, veyran)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, veyran)).isEqualTo(4);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -70,8 +70,8 @@ class VeyranVoiceOfDualityTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        assertThat(veyran.getEffectivePower()).isEqualTo(6);
-        assertThat(veyran.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, veyran)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, veyran)).isEqualTo(6);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -87,8 +87,8 @@ class VeyranVoiceOfDualityTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         resolveAllTriggers();
 
-        assertThat(veyran.getEffectivePower()).isEqualTo(4);
-        assertThat(veyran.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, veyran)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, veyran)).isEqualTo(4);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
     }
 
@@ -100,8 +100,8 @@ class VeyranVoiceOfDualityTest extends BaseCardTest {
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         resolveAllTriggers();
 
-        assertThat(veyran.getEffectivePower()).isEqualTo(2);
-        assertThat(veyran.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, veyran)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, veyran)).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
@@ -118,8 +118,8 @@ class VeyranVoiceOfDualityTest extends BaseCardTest {
         harness.castInstant(player2, 0, player1.getId());
         resolveAllTriggers();
 
-        assertThat(veyran.getEffectivePower()).isEqualTo(2);
-        assertThat(veyran.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, veyran)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, veyran)).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(21);
     }
@@ -133,14 +133,14 @@ class VeyranVoiceOfDualityTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
-        assertThat(veyran.getEffectivePower()).isEqualTo(4);
-        assertThat(veyran.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, veyran)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, veyran)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(veyran.getEffectivePower()).isEqualTo(2);
-        assertThat(veyran.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, veyran)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, veyran)).isEqualTo(2);
     }
 
     @Test

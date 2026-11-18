@@ -43,13 +43,13 @@ class GnottvoldHermitTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
 
         gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
         target.resetModifiers();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -130,8 +130,8 @@ class GnottvoldHermitTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(other.getEffectivePower()).isEqualTo(4);
-        assertThat(other.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -144,8 +144,8 @@ class GnottvoldHermitTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, other.getId());
         harness.passBothPriorities();
 
-        assertThat(other.getEffectivePower()).isEqualTo(5);
-        assertThat(other.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(5);
     }
 
     @Test

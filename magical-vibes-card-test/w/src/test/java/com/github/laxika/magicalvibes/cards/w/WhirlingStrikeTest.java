@@ -30,8 +30,8 @@ class WhirlingStrikeTest extends BaseCardTest {
         harness.castInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
     }
 
@@ -49,8 +49,8 @@ class WhirlingStrikeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
     }
 
@@ -78,10 +78,10 @@ class WhirlingStrikeTest extends BaseCardTest {
         harness.castInstant(player1, 0, opposingBear.getId());
         harness.passBothPriorities();
 
-        assertThat(opposingBear.getPowerModifier()).isEqualTo(2);
-        assertThat(opposingBear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingBear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingBear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, opposingBear)).contains(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
-        assertThat(ownBear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownBear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, ownBear)).doesNotContain(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
     }
 
@@ -97,15 +97,15 @@ class WhirlingStrikeTest extends BaseCardTest {
         harness.castInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(4);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
     }
 }

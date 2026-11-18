@@ -33,10 +33,10 @@ class MercadiasDownfallTest extends BaseCardTest {
         harness.castFromHand(player1, new MercadiasDownfall(), "{2}{R}");
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(nonAttacker.getEffectivePower()).isEqualTo(2);
-        assertThat(nonAttacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonAttacker)).isEqualTo(2);
     }
 
     @Test
@@ -52,13 +52,13 @@ class MercadiasDownfallTest extends BaseCardTest {
         harness.castFromHand(player1, new MercadiasDownfall(), "{2}{R}");
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -74,8 +74,8 @@ class MercadiasDownfallTest extends BaseCardTest {
         harness.castFromHand(player1, new MercadiasDownfall(), "{2}{R}");
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -93,8 +93,8 @@ class MercadiasDownfallTest extends BaseCardTest {
         harness.castFromHand(player2, new MercadiasDownfall(), "{2}{R}");
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
     @Test
     @DisplayName("Boosts every attacker and keeps the resolved boost after combat ends")
@@ -110,17 +110,17 @@ class MercadiasDownfallTest extends BaseCardTest {
         harness.castFromHand(player1, new MercadiasDownfall(), "{2}{R}");
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
-        assertThat(first.getEffectiveToughness()).isEqualTo(2);
-        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
 
         first.setAttacking(false);
         second.setAttacking(false);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
     }
 
     @Test
@@ -136,13 +136,13 @@ class MercadiasDownfallTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RishadanPort());
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
 
         gd.playerBattlefields.get(player1.getId()).clear();
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
         harness.addToBattlefield(player1, new RishadanPort());
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
     }
 
     @Test
@@ -158,7 +158,7 @@ class MercadiasDownfallTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         creature.setAttacking(true);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }

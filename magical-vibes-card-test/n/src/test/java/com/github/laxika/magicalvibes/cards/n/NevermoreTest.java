@@ -239,8 +239,8 @@ class NevermoreTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(4);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(4);
         harness.assertOnBattlefield(player1, "Darkthicket Wolf");
     }
 

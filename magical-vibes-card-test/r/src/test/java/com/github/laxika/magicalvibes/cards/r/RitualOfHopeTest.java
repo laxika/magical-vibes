@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -28,10 +29,10 @@ class RitualOfHopeTest extends BaseCardTest {
 
         castForMana();
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(1);
-        assertThat(otherOwnCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(opponentCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherOwnCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
     }
 
     @Test
@@ -43,11 +44,11 @@ class RitualOfHopeTest extends BaseCardTest {
 
         castForMana();
 
-        assertThat(elf.getPowerModifier()).isEqualTo(2);
-        assertThat(elf.getToughnessModifier()).isEqualTo(1);
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(wurm.getPowerModifier()).isEqualTo(2);
-        assertThat(wurm.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wurm)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wurm)).isEqualTo(1);
     }
 
     @Test
@@ -60,8 +61,8 @@ class RitualOfHopeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
     }
 
     @Test
@@ -75,8 +76,8 @@ class RitualOfHopeTest extends BaseCardTest {
         castForMana();
 
         for (Permanent creature : List.of(firstBears, secondBears, wurm)) {
-            assertThat(creature.getPowerModifier()).isEqualTo(1);
-            assertThat(creature.getToughnessModifier()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         }
     }
 
@@ -91,8 +92,8 @@ class RitualOfHopeTest extends BaseCardTest {
         castForMana();
 
         for (Permanent creature : List.of(elf, firstBears, secondBears, wurm)) {
-            assertThat(creature.getPowerModifier()).isEqualTo(2);
-            assertThat(creature.getToughnessModifier()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         }
     }
 
@@ -107,8 +108,8 @@ class RitualOfHopeTest extends BaseCardTest {
         castForMana();
 
         for (Permanent creature : List.of(firstBears, secondBears, wurm)) {
-            assertThat(creature.getPowerModifier()).isEqualTo(2);
-            assertThat(creature.getToughnessModifier()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         }
     }
 
@@ -126,8 +127,8 @@ class RitualOfHopeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         for (Permanent creature : List.of(elf, bears, wurm)) {
-            assertThat(creature.getPowerModifier()).isEqualTo(2);
-            assertThat(creature.getToughnessModifier()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
         }
     }
 
@@ -139,9 +140,9 @@ class RitualOfHopeTest extends BaseCardTest {
         castForMana();
         Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
 
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(elf.getPowerModifier()).isZero();
-        assertThat(elf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isZero();
     }
 
     private void castForMana() {

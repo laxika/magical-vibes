@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +21,7 @@ class WallOfTombstonesTest extends BaseCardTest {
     @DisplayName("Upkeep trigger sets base toughness to one plus own graveyard creature cards")
     void setsBaseToughnessAtUpkeep() {
         Permanent wall = addWallReady(player1);
-        wall.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, wall, 1);
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new Plains()));
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
 

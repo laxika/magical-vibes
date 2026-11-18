@@ -28,8 +28,8 @@ class GnashingOfTeethTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gd.exilesInsteadOfDying(target.getId())).isTrue();
     }
 
@@ -57,10 +57,10 @@ class GnashingOfTeethTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 1, player2.getId());
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(8);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(8);
-        assertThat(targetPlayersCreature.getEffectivePower()).isEqualTo(7);
-        assertThat(targetPlayersCreature.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, targetPlayersCreature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, targetPlayersCreature)).isEqualTo(7);
     }
 
     @Test
@@ -90,8 +90,8 @@ class GnashingOfTeethTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(8);
-        assertThat(target.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
         assertThat(gd.exilesInsteadOfDying(target.getId())).isFalse();
     }
 
@@ -122,9 +122,9 @@ class GnashingOfTeethTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 1, player1.getId());
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
 
         harness.castAndResolveSorcery(player1, 0, 1, player1.getId());
 
@@ -144,18 +144,18 @@ class GnashingOfTeethTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 1, player2.getId());
         Permanent later = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThat(existing.getEffectivePower()).isEqualTo(1);
-        assertThat(existing.getEffectiveToughness()).isEqualTo(1);
-        assertThat(later.getEffectivePower()).isEqualTo(2);
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(existing.getEffectivePower()).isEqualTo(2);
-        assertThat(existing.getEffectiveToughness()).isEqualTo(2);
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
     }
     private void addMana() {
         harness.addMana(player1, ManaColor.BLACK, 2);

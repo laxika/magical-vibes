@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -92,7 +93,7 @@ class MacCreadyLamplightMayorTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(1));
-        attacker.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, attacker, 2);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
 
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.SKULK)).isTrue();
@@ -135,7 +136,7 @@ class MacCreadyLamplightMayorTest extends BaseCardTest {
 
         declareAttackers(player2, List.of(0, 1));
         assertThat(gd.stack).hasSize(2);
-        first.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, first, -2);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(defenderLife + 4);
@@ -178,9 +179,9 @@ class MacCreadyLamplightMayorTest extends BaseCardTest {
     void drainUsesModifiedPowerAtTriggerTime() {
         addCreatureReady(player1, new MacCreadyLamplightMayor());
         Permanent giant = addCreatureReady(player2, new HillGiant());
-        giant.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, giant, 1);
         Permanent elemental = addCreatureReady(player2, new AirElemental());
-        elemental.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, elemental, -1);
         int defenderLife = gd.getLife(player1.getId());
         int attackerLife = gd.getLife(player2.getId());
 

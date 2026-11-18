@@ -49,8 +49,8 @@ class SlitheringShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(1);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
         assertThat(shade.isTapped()).isFalse();
     }
 
@@ -62,13 +62,13 @@ class SlitheringShadeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(shade.getEffectivePower()).isZero();
-        assertThat(shade.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shade)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(1);
     }
 
     @Test
@@ -82,10 +82,10 @@ class SlitheringShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(2);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
-        assertThat(otherShade.getEffectivePower()).isZero();
-        assertThat(otherShade.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, otherShade)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, otherShade)).isEqualTo(1);
     }
 
     @Test
@@ -100,8 +100,8 @@ class SlitheringShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shade.getEffectivePower()).isEqualTo(1);
-        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(2);
         assertThat(shade.isTapped()).isTrue();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CircleOfDreamsDruid;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -40,15 +41,15 @@ class EyesOfTheBeholderTest extends BaseCardTest {
 
         castEyesOfTheBeholder(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(-11);
-        assertThat(target.getToughnessModifier()).isEqualTo(-11);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-11);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-11);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         harness.assertOnBattlefield(player2, "Worldspine Wurm");
     }
 
@@ -96,8 +97,8 @@ class EyesOfTheBeholderTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Eyes of the Beholder");
         harness.assertNotInGraveyard(player2, "Circle of Dreams Druid");
         harness.assertOnBattlefield(player2, "Circle of Dreams Druid");
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
     private void castEyesOfTheBeholder(Permanent target) {

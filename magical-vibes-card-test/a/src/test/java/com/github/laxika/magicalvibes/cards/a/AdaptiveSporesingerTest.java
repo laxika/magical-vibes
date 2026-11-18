@@ -33,14 +33,14 @@ class AdaptiveSporesingerTest extends BaseCardTest {
         chooseBoost(target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
 
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -78,8 +78,8 @@ class AdaptiveSporesingerTest extends BaseCardTest {
         Permanent sporesinger = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getId().equals(sporesingerId))
                 .findFirst().orElseThrow();
-        assertThat(sporesinger.getEffectivePower()).isEqualTo(4);
-        assertThat(sporesinger.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, sporesinger)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, sporesinger)).isEqualTo(4);
     }
 
     @Test

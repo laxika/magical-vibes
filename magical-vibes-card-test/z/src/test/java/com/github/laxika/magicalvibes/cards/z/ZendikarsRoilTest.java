@@ -32,8 +32,8 @@ class ZendikarsRoilTest extends BaseCardTest {
         assertThat(elemental.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(elemental.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(elemental.getCard().getSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
-        assertThat(elemental.getEffectivePower()).isEqualTo(2);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(2);
     }
 
     @Test

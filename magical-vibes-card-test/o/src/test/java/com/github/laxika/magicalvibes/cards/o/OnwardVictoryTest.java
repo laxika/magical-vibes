@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.SupernaturalStamina;
 import com.github.laxika.magicalvibes.cards.t.ThoseWhoServe;
@@ -32,9 +33,9 @@ class OnwardVictoryTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         // Those Who Serve gets +2/+0, becoming 4/4.
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         harness.assertInGraveyard(player1, "Onward // Victory");
     }
 
@@ -52,8 +53,8 @@ class OnwardVictoryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -154,7 +155,7 @@ class OnwardVictoryTest extends BaseCardTest {
     @DisplayName("Onward gives no boost to a creature with negative power")
     void onwardDoesNotFurtherReduceNegativePower() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new ThoseWhoServe());
-        target.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, target, -3);
         harness.setHand(player1, List.of(new OnwardVictory()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -162,7 +163,7 @@ class OnwardVictoryTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-3);
         harness.assertInGraveyard(player1, "Onward // Victory");
     }
 
@@ -170,7 +171,7 @@ class OnwardVictoryTest extends BaseCardTest {
     @DisplayName("Onward gives no boost to a creature with zero power")
     void onwardHandlesZeroPower() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new ThoseWhoServe());
-        target.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, target, -2);
         harness.setHand(player1, List.of(new OnwardVictory()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -178,7 +179,7 @@ class OnwardVictoryTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gqs.getEffectivePower(gd, target)).isZero();
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
         harness.assertInGraveyard(player1, "Onward // Victory");
     }
 

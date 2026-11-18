@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EtherealHaze;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.Humility;
@@ -132,8 +133,8 @@ class DosanTheFallingLeafTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, dosan.getId());
         harness.passBothPriorities();
 
-        assertThat(dosan.getPowerModifier()).isEqualTo(1);
-        assertThat(dosan.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dosan)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dosan)).isEqualTo(2);
     }
 
     @Test

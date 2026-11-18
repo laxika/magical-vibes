@@ -32,8 +32,8 @@ class ZhalfirinCommanderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, knight.getId());
         harness.passBothPriorities();
 
-        assertThat(knight.getEffectivePower()).isEqualTo(3);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
     }
 
     @Test
@@ -49,8 +49,8 @@ class ZhalfirinCommanderTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(knight.getEffectivePower()).isEqualTo(2);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
     }
 
     @Test
@@ -72,8 +72,8 @@ class ZhalfirinCommanderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, knight.getId());
         harness.passBothPriorities();
 
-        assertThat(knight.getEffectivePower()).isEqualTo(3);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
     }
 
     @Test
@@ -88,8 +88,8 @@ class ZhalfirinCommanderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, commander.getId());
         harness.passBothPriorities();
 
-        assertThat(commander.getEffectivePower()).isEqualTo(3);
-        assertThat(commander.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, commander)).isEqualTo(3);
         assertThat(commander.isTapped()).isTrue();
     }
 
@@ -104,8 +104,8 @@ class ZhalfirinCommanderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, commander.getId());
         resolveAllTriggers();
 
-        assertThat(commander.getEffectivePower()).isEqualTo(4);
-        assertThat(commander.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, commander)).isEqualTo(4);
     }
 
     @Test
@@ -118,8 +118,8 @@ class ZhalfirinCommanderTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, commander.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(commander.getEffectivePower()).isEqualTo(2);
-        assertThat(commander.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, commander)).isEqualTo(2);
     }
 
     @Test
@@ -134,8 +134,8 @@ class ZhalfirinCommanderTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(commander.getCard());
         harness.passBothPriorities();
 
-        assertThat(knight.getEffectivePower()).isEqualTo(3);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
     }
 
     @Test
@@ -150,10 +150,10 @@ class ZhalfirinCommanderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(firstBlocker.getEffectivePower()).isZero();
-        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(1);
-        assertThat(secondBlocker.getEffectivePower()).isZero();
-        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, firstBlocker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, firstBlocker)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, secondBlocker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, secondBlocker)).isEqualTo(1);
     }
 
     @Test
@@ -167,8 +167,8 @@ class ZhalfirinCommanderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isZero();
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
     }
 
     @Test
@@ -182,15 +182,15 @@ class ZhalfirinCommanderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isZero();
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -204,7 +204,7 @@ class ZhalfirinCommanderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 }

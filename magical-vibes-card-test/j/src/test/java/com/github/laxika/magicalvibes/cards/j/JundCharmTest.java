@@ -92,8 +92,8 @@ class JundCharmTest extends BaseCardTest {
             harness.passBothPriorities();
 
             Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-            assertThat(bear.getEffectivePower()).isEqualTo(4);
-            assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
         }
 
         @Test
@@ -152,8 +152,8 @@ class JundCharmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent elf = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(elf.getEffectivePower()).isEqualTo(4);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(4);
     }
 
     @Test

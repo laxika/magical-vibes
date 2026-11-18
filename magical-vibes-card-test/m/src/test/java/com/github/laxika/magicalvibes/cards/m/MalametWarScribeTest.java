@@ -20,10 +20,10 @@ class MalametWarScribeTest extends BaseCardTest {
 
         cast(player1);
 
-        assertThat(findPermanent(player1, "Poison Dart Frog").getEffectivePower()).isEqualTo(3);
-        assertThat(findPermanent(player1, "Poison Dart Frog").getEffectiveToughness()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Malamet War Scribe").getEffectivePower()).isEqualTo(6);
-        assertThat(findPermanent(player1, "Malamet War Scribe").getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Poison Dart Frog"))).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Poison Dart Frog"))).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Malamet War Scribe"))).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Malamet War Scribe"))).isEqualTo(4);
     }
 
     @Test
@@ -33,8 +33,8 @@ class MalametWarScribeTest extends BaseCardTest {
 
         cast(player1);
 
-        assertThat(findPermanent(player2, "Poison Dart Frog").getEffectivePower()).isEqualTo(1);
-        assertThat(findPermanent(player2, "Poison Dart Frog").getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Poison Dart Frog"))).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Poison Dart Frog"))).isEqualTo(1);
     }
 
     @Test
@@ -48,10 +48,10 @@ class MalametWarScribeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Poison Dart Frog").getEffectivePower()).isEqualTo(1);
-        assertThat(findPermanent(player1, "Poison Dart Frog").getEffectiveToughness()).isEqualTo(1);
-        assertThat(findPermanent(player1, "Malamet War Scribe").getEffectivePower()).isEqualTo(4);
-        assertThat(findPermanent(player1, "Malamet War Scribe").getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Poison Dart Frog"))).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Poison Dart Frog"))).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Malamet War Scribe"))).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Malamet War Scribe"))).isEqualTo(3);
     }
 
     @Test
@@ -61,14 +61,14 @@ class MalametWarScribeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         var frog = harness.enterBattlefieldAndReturn(player1, new PoisonDartFrog());
-        assertThat(frog.getEffectivePower()).isEqualTo(1);
-        assertThat(frog.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, frog)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, frog)).isEqualTo(1);
 
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(frog.getEffectivePower()).isEqualTo(3);
-        assertThat(frog.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, frog)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, frog)).isEqualTo(2);
     }
 
     @Test
@@ -78,10 +78,10 @@ class MalametWarScribeTest extends BaseCardTest {
 
         var frog = harness.enterBattlefieldAndReturn(player1, new PoisonDartFrog());
 
-        assertThat(frog.getEffectivePower()).isEqualTo(1);
-        assertThat(frog.getEffectiveToughness()).isEqualTo(1);
-        assertThat(findPermanent(player1, "Malamet War Scribe").getEffectivePower()).isEqualTo(6);
-        assertThat(findPermanent(player1, "Malamet War Scribe").getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, frog)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, frog)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Malamet War Scribe"))).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Malamet War Scribe"))).isEqualTo(4);
     }
 
     private void cast(Player player) {

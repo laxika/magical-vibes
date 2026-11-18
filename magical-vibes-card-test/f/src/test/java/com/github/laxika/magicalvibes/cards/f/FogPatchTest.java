@@ -132,7 +132,7 @@ class FogPatchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(attacker.isBlockedWithoutBlockers()).isTrue();
-        assertThat(attacker.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
 
         resolveCombat();
 

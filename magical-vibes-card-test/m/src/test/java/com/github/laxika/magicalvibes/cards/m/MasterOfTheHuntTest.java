@@ -35,8 +35,8 @@ class MasterOfTheHuntTest extends BaseCardTest {
         assertThat(wolf.getCard().getName()).isEqualTo("Wolves of the Hunt");
         assertThat(wolf.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(wolf.getCard().getSubtypes()).containsExactly(CardSubtype.WOLF);
-        assertThat(wolf.getEffectivePower()).isEqualTo(1);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(1);
     }
 
     @Test

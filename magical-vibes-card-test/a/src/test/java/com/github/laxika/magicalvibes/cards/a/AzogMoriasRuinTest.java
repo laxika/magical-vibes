@@ -114,7 +114,7 @@ class AzogMoriasRuinTest extends BaseCardTest {
         Permanent army = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         PermanentGrants.subtype(gd, army, CardSubtype.ARMY);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        target.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, target, -2);
         harness.setLibrary(player1, List.of(new Forest()));
 
         castAzog(target.getId());

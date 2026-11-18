@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -67,10 +68,10 @@ class FlowstoneSlideTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 1);
 
         // Both bears should be 3/1 (2+1 / 2-1)
-        assertThat(bear1.getPowerModifier()).isEqualTo(1);
-        assertThat(bear1.getToughnessModifier()).isEqualTo(-1);
-        assertThat(bear2.getPowerModifier()).isEqualTo(1);
-        assertThat(bear2.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear1)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear1)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear2)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear2)).isEqualTo(-1);
     }
 
     @Test
@@ -104,8 +105,8 @@ class FlowstoneSlideTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         // 4/4 gets +3/-3 → 7/1 → survives
         harness.assertOnBattlefield(player2, "Air Elemental");
-        assertThat(bigCreature.getPowerModifier()).isEqualTo(3);
-        assertThat(bigCreature.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bigCreature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bigCreature)).isEqualTo(-3);
     }
 
     @Test
@@ -119,8 +120,8 @@ class FlowstoneSlideTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         // Bear is unchanged
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -133,8 +134,8 @@ class FlowstoneSlideTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 1);
 
-        assertThat(forest.getPowerModifier()).isZero();
-        assertThat(forest.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, forest)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, forest)).isZero();
     }
 
     @Test
@@ -146,15 +147,15 @@ class FlowstoneSlideTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5); // X=1: {1}{2}{R}{R} = 5
 
         harness.castAndResolveSorcery(player1, 0, 1);
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -194,10 +195,10 @@ class FlowstoneSlideTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 1);
         Permanent newcomer = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThat(original.getPowerModifier()).isEqualTo(1);
-        assertThat(original.getToughnessModifier()).isEqualTo(-1);
-        assertThat(newcomer.getPowerModifier()).isZero();
-        assertThat(newcomer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, original)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, original)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newcomer)).isZero();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
@@ -211,8 +212,8 @@ class FlowstoneSlideTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 1);
         harness.castAndResolveSorcery(player1, 0, 2);
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(3);
-        assertThat(elemental.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isEqualTo(-3);
         harness.assertOnBattlefield(player2, "Air Elemental");
     }
 

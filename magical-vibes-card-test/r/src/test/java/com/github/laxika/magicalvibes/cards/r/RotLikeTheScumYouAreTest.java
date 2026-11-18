@@ -28,8 +28,8 @@ class RotLikeTheScumYouAreTest extends BaseCardTest {
         Permanent ooze = findPermanents(player1, "Ooze").stream().findFirst().orElseThrow();
         assertThat(ooze.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(ooze.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(ooze.getEffectivePower()).isEqualTo(5);
-        assertThat(ooze.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(5);
     }
 
     @Test
@@ -41,8 +41,8 @@ class RotLikeTheScumYouAreTest extends BaseCardTest {
 
         Permanent ooze = findPermanents(player1, "Ooze").stream().findFirst().orElseThrow();
         assertThat(ooze.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(ooze.getEffectivePower()).isEqualTo(2);
-        assertThat(ooze.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(2);
     }
 
     private void resolveScheme() {

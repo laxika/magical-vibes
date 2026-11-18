@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -52,10 +53,10 @@ class ShivanDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(6);
-        assertThat(dragon.getEffectiveToughness()).isEqualTo(5);
-        assertThat(dragon.getPowerModifier()).isEqualTo(1);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(0);
     }
 
     @Test
@@ -68,9 +69,9 @@ class ShivanDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(6);
-        assertThat(otherCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(otherCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
     }
 
     @Test
@@ -94,7 +95,7 @@ class ShivanDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(6);
         assertThat(dragon.isTapped()).isTrue();
     }
 
@@ -109,10 +110,10 @@ class ShivanDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(7);
-        assertThat(dragon.getEffectiveToughness()).isEqualTo(5);
-        assertThat(dragon.getPowerModifier()).isEqualTo(2);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(0);
     }
 
     @Test
@@ -124,25 +125,25 @@ class ShivanDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(dragon.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(5);
 
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
         assertThat(gd.stack).hasSize(2);
-        assertThat(dragon.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(5);
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(dragon.getEffectivePower()).isEqualTo(6);
-        assertThat(dragon.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(5);
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(dragon.getEffectivePower()).isEqualTo(7);
-        assertThat(dragon.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(5);
     }
 
     @Test
@@ -156,17 +157,17 @@ class ShivanDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(7);
-        assertThat(dragon.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(0);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(0);
-        assertThat(dragon.getEffectivePower()).isEqualTo(5);
-        assertThat(dragon.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(5);
     }
 
     @Test
@@ -199,7 +200,7 @@ class ShivanDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(6);
     }
 
     @Test

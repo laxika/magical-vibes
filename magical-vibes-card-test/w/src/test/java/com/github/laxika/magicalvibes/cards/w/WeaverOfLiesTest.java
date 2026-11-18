@@ -46,8 +46,8 @@ class WeaverOfLiesTest extends BaseCardTest {
         assertThat(opposingMorphCreature.isFaceDown()).isTrue();
         assertThat(ordinaryCreature.isFaceDown()).isFalse();
         assertThat(weaver.isFaceDown()).isFalse();
-        assertThat(ownMorphCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownMorphCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownMorphCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownMorphCreature)).isEqualTo(2);
     }
 
     @Test

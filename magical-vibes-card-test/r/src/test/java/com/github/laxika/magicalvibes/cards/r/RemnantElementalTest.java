@@ -19,55 +19,55 @@ class RemnantElementalTest extends BaseCardTest {
     @DisplayName("Landfall gives Remnant Elemental +2/+0 until end of turn")
     void landfallBoostsUntilEndOfTurn() {
         Permanent remnant = harness.addToBattlefieldAndReturn(player1, new RemnantElemental());
-        int initialPower = remnant.getEffectivePower();
-        int initialToughness = remnant.getEffectiveToughness();
+        int initialPower = gqs.getEffectivePower(gd, remnant);
+        int initialToughness = gqs.getEffectiveToughness(gd, remnant);
 
         harness.setHand(player1, List.of(new Forest()));
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(remnant.getEffectivePower()).isEqualTo(initialPower + 2);
-        assertThat(remnant.getEffectiveToughness()).isEqualTo(initialToughness);
+        assertThat(gqs.getEffectivePower(gd, remnant)).isEqualTo(initialPower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, remnant)).isEqualTo(initialToughness);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(remnant.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(remnant.getEffectiveToughness()).isEqualTo(initialToughness);
+        assertThat(gqs.getEffectivePower(gd, remnant)).isEqualTo(initialPower);
+        assertThat(gqs.getEffectiveToughness(gd, remnant)).isEqualTo(initialToughness);
     }
 
     @Test
     @DisplayName("An opponent's land does not trigger landfall")
     void opponentLandDoesNotTrigger() {
         Permanent remnant = harness.addToBattlefieldAndReturn(player1, new RemnantElemental());
-        int initialPower = remnant.getEffectivePower();
+        int initialPower = gqs.getEffectivePower(gd, remnant);
         harness.setHand(player2, List.of(new Forest()));
 
         harness.forceActivePlayer(player2);
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(remnant.getEffectivePower()).isEqualTo(initialPower);
+        assertThat(gqs.getEffectivePower(gd, remnant)).isEqualTo(initialPower);
     }
 
     @Test
     @DisplayName("Land entries without being played stack boosts only after resolution")
     void multipleLandEntriesStackBoosts() {
         Permanent remnant = harness.addToBattlefieldAndReturn(player1, new RemnantElemental());
-        int initialPower = remnant.getEffectivePower();
-        int initialToughness = remnant.getEffectiveToughness();
+        int initialPower = gqs.getEffectivePower(gd, remnant);
+        int initialToughness = gqs.getEffectiveToughness(gd, remnant);
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
-        assertThat(remnant.getEffectivePower()).isEqualTo(initialPower);
+        assertThat(gqs.getEffectivePower(gd, remnant)).isEqualTo(initialPower);
         harness.passBothPriorities();
-        assertThat(remnant.getEffectivePower()).isEqualTo(initialPower + 2);
+        assertThat(gqs.getEffectivePower(gd, remnant)).isEqualTo(initialPower + 2);
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.passBothPriorities();
 
-        assertThat(remnant.getEffectivePower()).isEqualTo(initialPower + 4);
-        assertThat(remnant.getEffectiveToughness()).isEqualTo(initialToughness);
+        assertThat(gqs.getEffectivePower(gd, remnant)).isEqualTo(initialPower + 4);
+        assertThat(gqs.getEffectiveToughness(gd, remnant)).isEqualTo(initialToughness);
     }
 
     @Test
@@ -75,7 +75,7 @@ class RemnantElementalTest extends BaseCardTest {
     void multipleElementalsEachBoostThemselves() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new RemnantElemental());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new RemnantElemental());
-        int initialPower = first.getEffectivePower();
+        int initialPower = gqs.getEffectivePower(gd, first);
         harness.setHand(player1, List.of(new Forest()));
 
         harness.playLand(player1, 0);
@@ -83,7 +83,7 @@ class RemnantElementalTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(initialPower + 2);
-        assertThat(second.getEffectivePower()).isEqualTo(initialPower + 2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(initialPower + 2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(initialPower + 2);
     }
 }

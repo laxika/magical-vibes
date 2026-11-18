@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
@@ -109,7 +110,7 @@ class JunkJetTest extends BaseCardTest {
     @Test
     void doublesNegativePower() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        creature.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, creature, -3);
         Permanent jet = harness.addToBattlefieldAndReturn(player1, new JunkJet());
         jet.setAttachedTo(creature.getId());
         harness.addToBattlefield(player1, new Spellbook());

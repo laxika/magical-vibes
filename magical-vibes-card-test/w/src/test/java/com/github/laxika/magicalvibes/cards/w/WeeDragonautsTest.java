@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GhostWarden;
 import com.github.laxika.magicalvibes.cards.p.PrimevalLight;
 import com.github.laxika.magicalvibes.cards.p.Pyromatics;
@@ -38,8 +39,8 @@ class WeeDragonautsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(dragonauts.getPowerModifier()).isEqualTo(2);
-        assertThat(dragonauts.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragonauts)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragonauts)).isEqualTo(0);
     }
 
     @Test
@@ -54,8 +55,8 @@ class WeeDragonautsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(dragonauts.getPowerModifier()).isEqualTo(2);
-        assertThat(dragonauts.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragonauts)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragonauts)).isEqualTo(0);
     }
 
     @Test
@@ -67,8 +68,8 @@ class WeeDragonautsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(dragonauts.getPowerModifier()).isEqualTo(0);
-        assertThat(dragonauts.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragonauts)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragonauts)).isEqualTo(0);
     }
 
     @Test
@@ -83,8 +84,8 @@ class WeeDragonautsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(dragonauts.getPowerModifier()).isEqualTo(0);
-        assertThat(dragonauts.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragonauts)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragonauts)).isEqualTo(0);
     }
 
     @Test
@@ -98,15 +99,15 @@ class WeeDragonautsTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(dragonauts.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragonauts)).isEqualTo(2);
 
         resolveAllTriggers();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dragonauts.getPowerModifier()).isEqualTo(0);
-        assertThat(dragonauts.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragonauts)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragonauts)).isEqualTo(0);
     }
 
     @Test
@@ -126,15 +127,15 @@ class WeeDragonautsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         resolveAllTriggers();
 
-        assertThat(dragonauts.getPowerModifier()).isEqualTo(4);
-        assertThat(dragonauts.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragonauts)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragonauts)).isEqualTo(0);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dragonauts.getPowerModifier()).isEqualTo(0);
-        assertThat(dragonauts.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragonauts)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragonauts)).isEqualTo(0);
     }
 
     @Test
@@ -150,11 +151,11 @@ class WeeDragonautsTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isEqualTo(0);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isEqualTo(0);
-        assertThat(opponents.getPowerModifier()).isEqualTo(0);
-        assertThat(opponents.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponents)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponents)).isEqualTo(0);
     }
 }

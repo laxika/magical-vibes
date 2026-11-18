@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,8 +31,8 @@ class CanyonDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent drake = findPermanent(player1, "Canyon Drake");
-        assertThat(drake.getEffectivePower()).isEqualTo(3);
-        assertThat(drake.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(2);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Forest");
@@ -49,11 +50,11 @@ class CanyonDrakeTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
-        assertThat(findPermanent(player1, "Canyon Drake").getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Canyon Drake"))).isEqualTo(1);
 
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Canyon Drake").getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Canyon Drake"))).isEqualTo(3);
     }
 
     @Test
@@ -71,8 +72,8 @@ class CanyonDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent drake = findPermanent(player1, "Canyon Drake");
-        assertThat(drake.getPowerModifier()).isEqualTo(0);
-        assertThat(drake.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drake)).isEqualTo(0);
     }
 
     @Test
@@ -113,8 +114,8 @@ class CanyonDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent drake = findPermanent(player1, "Canyon Drake");
-        assertThat(drake.getEffectivePower()).isEqualTo(5);
-        assertThat(drake.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(2);
     }
 
     private int battlefieldIndex(Player player, String cardName) {
@@ -132,10 +133,10 @@ class CanyonDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(1);
-        assertThat(first.getEffectiveToughness()).isEqualTo(2);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
     }
 
     @Test
@@ -150,8 +151,8 @@ class CanyonDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drake.getEffectivePower()).isEqualTo(3);
-        assertThat(drake.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(2);
         assertThat(drake.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Mountain");
     }

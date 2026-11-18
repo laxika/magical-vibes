@@ -38,8 +38,8 @@ class InsatiableAppetiteTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(food.getId()));
 
         assertThat(countPermanents(player1, "Food")).isZero();
-        assertThat(bears.getEffectivePower()).isEqualTo(7);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(7);
     }
 
     @Test
@@ -52,8 +52,8 @@ class InsatiableAppetiteTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(countPermanents(player1, "Food")).isOne();
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
     }
 
     @Test
@@ -63,8 +63,8 @@ class InsatiableAppetiteTest extends BaseCardTest {
 
         castAppetite(bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
     }
 
     @Test
@@ -89,14 +89,14 @@ class InsatiableAppetiteTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Golden Egg")).isZero();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(food.getCard());
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -108,14 +108,14 @@ class InsatiableAppetiteTest extends BaseCardTest {
 
         assertThat(countPermanents(player2, "Golden Egg")).isOne();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -169,7 +169,7 @@ class InsatiableAppetiteTest extends BaseCardTest {
                         choice -> assertThat(choice.inDepartureBatch()).isFalse());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(gingerbrute);
         assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrific")).isEmpty();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
 
         harness.handleListChoice(player1, MAGEMARK_RETURN);
 
@@ -180,8 +180,8 @@ class InsatiableAppetiteTest extends BaseCardTest {
                 .doesNotContain("Zombie");
         assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("sacrifices Gingerbrute"))
                 .hasSize(1);
-        assertThat(bears.getEffectivePower()).isEqualTo(7);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(7);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

@@ -28,8 +28,8 @@ class PutridGoblinTest extends BaseCardTest {
 
         Permanent goblin = findPermanent(player1, "Putrid Goblin");
         assertThat(goblin.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(goblin.getEffectivePower()).isEqualTo(1);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
     }
 
     @Test

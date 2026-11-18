@@ -36,8 +36,8 @@ class DoubleJumpFlyingKickTest extends BaseCardTest {
 
         assertThat(creature.getCounterCount(CounterType.FLYING)).isEqualTo(1);
         assertThat(creature.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.FLYING)).isTrue();
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
 
     @Test
@@ -54,8 +54,8 @@ class DoubleJumpFlyingKickTest extends BaseCardTest {
 
         assertThat(creature.getCounterCount(CounterType.FLYING)).isEqualTo(1);
         assertThat(creature.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.FLYING)).isTrue();
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -85,7 +85,7 @@ class DoubleJumpFlyingKickTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(source.getCounterCount(CounterType.FLYING)).isEqualTo(1);
-        assertThat(source.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(5);
         harness.assertInGraveyard(player2, "Hill Giant");
     }
 
@@ -117,9 +117,9 @@ class DoubleJumpFlyingKickTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(boosted.getCounterCount(CounterType.FLYING)).isEqualTo(1);
-        assertThat(boosted.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, boosted)).isEqualTo(5);
         assertThat(source.getCounterCount(CounterType.FLYING)).isZero();
-        assertThat(source.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
         assertThat(victim.getMarkedDamage()).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Hill Giant");
     }
@@ -138,8 +138,8 @@ class DoubleJumpFlyingKickTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(source.getCounterCount(CounterType.FLYING)).isEqualTo(1);
-        assertThat(source.getEffectivePower()).isEqualTo(5);
-        assertThat(source.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(5);
         harness.assertInGraveyard(player1, "Double Jump // Flying Kick");
     }
 

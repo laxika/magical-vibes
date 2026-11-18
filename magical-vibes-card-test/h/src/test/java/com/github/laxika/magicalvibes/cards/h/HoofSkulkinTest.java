@@ -29,15 +29,15 @@ class HoofSkulkinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(greenCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(greenCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, greenCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, greenCreature)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(greenCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(greenCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, greenCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, greenCreature)).isEqualTo(2);
     }
 
     @Test
@@ -63,8 +63,8 @@ class HoofSkulkinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -80,8 +80,8 @@ class HoofSkulkinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(skulkin.isTapped()).isTrue();
     }
 
@@ -95,8 +95,8 @@ class HoofSkulkinTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test

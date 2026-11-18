@@ -24,8 +24,8 @@ class AgelessEntityTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(entity.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(entity.getEffectivePower()).isEqualTo(8);
-        assertThat(entity.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, entity)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, entity)).isEqualTo(8);
     }
 
     @Test

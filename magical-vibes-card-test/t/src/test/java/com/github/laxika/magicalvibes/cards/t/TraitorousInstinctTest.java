@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.w.WakeThrasher;
@@ -128,7 +129,7 @@ class TraitorousInstinctTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
         assertThat(target.isTapped()).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         harness.assertInGraveyard(player1, "Traitorous Instinct");
     }
 }

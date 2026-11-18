@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -59,16 +60,16 @@ class FodderLaunchTest extends BaseCardTest {
         harness.castSorceryWithSacrifice(player1, 0, target.getId(), goblin.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-5);
-        assertThat(target.getToughnessModifier()).isEqualTo(-5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-5);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -99,8 +100,8 @@ class FodderLaunchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Oakgnarl Warrior");
-        assertThat(target.getPowerModifier()).isEqualTo(-5);
-        assertThat(target.getToughnessModifier()).isEqualTo(-5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-5);
         harness.assertLife(player2, 15);
         harness.assertLife(player1, 20);
     }
@@ -117,8 +118,8 @@ class FodderLaunchTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Woodland Changeling");
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-5);
-        assertThat(target.getToughnessModifier()).isEqualTo(-5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-5);
         harness.assertLife(player1, 15);
         harness.assertLife(player2, 20);
     }

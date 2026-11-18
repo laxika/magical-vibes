@@ -29,8 +29,8 @@ class RelentlessAdvanceTest extends BaseCardTest {
                 .orElseThrow();
 
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(army.getEffectivePower()).isEqualTo(3);
-        assertThat(army.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, army)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, army)).isEqualTo(3);
     }
 
     @Test

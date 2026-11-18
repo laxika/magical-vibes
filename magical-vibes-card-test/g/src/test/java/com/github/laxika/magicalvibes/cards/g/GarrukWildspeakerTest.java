@@ -175,8 +175,8 @@ class GarrukWildspeakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The opponent's Runeclaw Bear is unaffected.
-        assertThat(oppPerm.getEffectivePower()).isEqualTo(2);
-        assertThat(oppPerm.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, oppPerm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, oppPerm)).isEqualTo(2);
         assertThat(oppPerm.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
 

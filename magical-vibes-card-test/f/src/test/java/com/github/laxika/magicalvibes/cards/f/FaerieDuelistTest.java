@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,10 +27,10 @@ class FaerieDuelistTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(-2);
-        assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.getEffectivePower()).isZero();
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
+        assertThat(gqs.getEffectivePower(gd, bears)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -50,14 +51,14 @@ class FaerieDuelistTest extends BaseCardTest {
         castFaerieDuelist(bears.getId());
 
         resolveAllTriggers();
-        assertThat(bears.getPowerModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -85,8 +86,8 @@ class FaerieDuelistTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Faerie Duelist");
-        assertThat(bears.getPowerModifier()).isEqualTo(-2);
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -99,9 +100,9 @@ class FaerieDuelistTest extends BaseCardTest {
         castFaerieDuelist(target.getId());
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(own.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isZero();
     }
 
     @Test
@@ -116,8 +117,8 @@ class FaerieDuelistTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Faerie Duelist");
-        assertThat(bears.getPowerModifier()).isEqualTo(-2);
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -132,8 +133,8 @@ class FaerieDuelistTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Faerie Duelist");
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

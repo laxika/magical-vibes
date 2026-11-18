@@ -29,12 +29,12 @@ class RushOfBattleTest extends BaseCardTest {
 
         castRushOfBattle();
 
-        assertThat(warrior.getEffectivePower()).isEqualTo(4);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(3);
-        assertThat(nonWarrior.getEffectivePower()).isEqualTo(4);
-        assertThat(nonWarrior.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponentWarrior.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentWarrior.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nonWarrior)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, nonWarrior)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentWarrior)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentWarrior)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, warrior, Keyword.LIFELINK)).isTrue();
         assertThat(gqs.hasKeyword(gd, nonWarrior, Keyword.LIFELINK)).isFalse();
         assertThat(gqs.hasKeyword(gd, opponentWarrior, Keyword.LIFELINK)).isFalse();
@@ -50,8 +50,8 @@ class RushOfBattleTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(warrior.getEffectivePower()).isEqualTo(2);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, warrior, Keyword.LIFELINK)).isFalse();
     }
 
@@ -79,10 +79,10 @@ class RushOfBattleTest extends BaseCardTest {
         Permanent warrior = harness.addToBattlefieldAndReturn(player1, new MarduHateblade());
         Permanent nonWarrior = harness.addToBattlefieldAndReturn(player1, new WetlandSambar());
 
-        assertThat(warrior.getEffectivePower()).isEqualTo(1);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(1);
-        assertThat(nonWarrior.getEffectivePower()).isEqualTo(2);
-        assertThat(nonWarrior.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, nonWarrior)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonWarrior)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, warrior, Keyword.LIFELINK)).isFalse();
         assertThat(gqs.hasKeyword(gd, nonWarrior, Keyword.LIFELINK)).isFalse();
     }
@@ -95,8 +95,8 @@ class RushOfBattleTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(warrior.getEffectivePower()).isEqualTo(3);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, warrior, Keyword.LIFELINK)).isTrue();
     }
 
@@ -110,8 +110,8 @@ class RushOfBattleTest extends BaseCardTest {
         castRushOfBattle();
         castRushOfBattle();
 
-        assertThat(warrior.getEffectivePower()).isEqualTo(5);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(3);
 
         declareAttackers(List.of(0));
         resolveCombat();

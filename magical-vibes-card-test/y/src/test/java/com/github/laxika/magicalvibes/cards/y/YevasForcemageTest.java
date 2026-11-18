@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.t.TimberpackWolf;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -71,7 +72,7 @@ class YevasForcemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent wolf = findPermanent(player2, "Timberpack Wolf");
-        assertThat(wolf.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(4);
@@ -79,8 +80,8 @@ class YevasForcemageTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(0);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(0);
         assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
     }

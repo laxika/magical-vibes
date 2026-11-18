@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -64,7 +65,7 @@ class JawsOfDefeatTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
 
-        creature.setPowerModifier(5);
+        PermanentGrants.setPowerBoost(gd, creature, 5);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 17);
@@ -78,7 +79,7 @@ class JawsOfDefeatTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
 
-        creature.setPowerModifier(-5);
+        PermanentGrants.setPowerBoost(gd, creature, -5);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 13);
@@ -92,7 +93,7 @@ class JawsOfDefeatTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
 
-        creature.setToughnessModifier(-5);
+        PermanentGrants.setToughnessBoost(gd, creature, -5);
         harness.runStateBasedActions();
         harness.assertInGraveyard(player1, "Giant Spider");
         harness.passBothPriorities();

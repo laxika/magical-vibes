@@ -24,10 +24,10 @@ class ChokingMiasmaTest extends BaseCardTest {
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new BogBadger());
         cast(false);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(1);
     }
 
     @Test
@@ -46,23 +46,23 @@ class ChokingMiasmaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(chosenCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(chosenCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(otherControlledCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, chosenCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherControlledCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(1);
     }
 
     @Test
     void creatureDebuffWearsOffAtEndOfTurn() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new BogBadger());
         cast(false);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     private void cast(boolean kicked) {
@@ -95,8 +95,8 @@ class ChokingMiasmaTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Yavimaya Iconoclast");
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -113,7 +113,7 @@ class ChokingMiasmaTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(chosen).doesNotContain(other);
         harness.assertInGraveyard(player1, "Yavimaya Iconoclast");
         assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(chosen.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, chosen)).isEqualTo(1);
     }
 
     @Test
@@ -123,8 +123,8 @@ class ChokingMiasmaTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new YavimayaIconoclast());
 
         harness.assertOnBattlefield(player2, "Yavimaya Iconoclast");
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     private void prepareSpell(boolean kicked) {

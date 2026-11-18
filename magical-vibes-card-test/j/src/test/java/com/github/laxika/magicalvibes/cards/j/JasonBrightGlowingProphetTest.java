@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DogmeatEverLoyal;
 import com.github.laxika.magicalvibes.cards.g.GlowingOne;
 import com.github.laxika.magicalvibes.cards.h.HancockGhoulishMayor;
@@ -46,7 +47,7 @@ class JasonBrightGlowingProphetTest extends BaseCardTest {
     void lowerModifiedZombieDraws() {
         addCreatureReady(player1, new JasonBrightGlowingProphet());
         Permanent zombie = addCreatureReady(player1, new GlowingOne());
-        zombie.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, zombie, -1);
         DogmeatEverLoyal drawn = new DogmeatEverLoyal();
         harness.setLibrary(player1, java.util.List.of(drawn));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -189,7 +190,7 @@ class JasonBrightGlowingProphetTest extends BaseCardTest {
         Permanent jason = addCreatureReady(player1, new JasonBrightGlowingProphet());
         Permanent zombie = addCreatureReady(player1, new GlowingOne());
         zombie.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        zombie.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, zombie, -1);
         DogmeatEverLoyal libraryCard = new DogmeatEverLoyal();
         harness.setLibrary(player1, java.util.List.of(libraryCard));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();

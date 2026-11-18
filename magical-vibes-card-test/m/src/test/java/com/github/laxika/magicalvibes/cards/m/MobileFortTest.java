@@ -41,8 +41,8 @@ class MobileFortTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(fort.getEffectivePower()).isEqualTo(3);
-        assertThat(fort.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, fort)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, fort)).isEqualTo(5);
 
         declareAttackers(List.of(0));
 
@@ -62,8 +62,8 @@ class MobileFortTest extends BaseCardTest {
                 .hasMessageContaining("only once each turn");
         harness.passBothPriorities();
 
-        assertThat(fort.getEffectivePower()).isEqualTo(3);
-        assertThat(fort.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, fort)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, fort)).isEqualTo(5);
     }
 
     @Test
@@ -74,14 +74,14 @@ class MobileFortTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(fort.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, fort)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(fort.getEffectivePower()).isEqualTo(0);
-        assertThat(fort.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, fort)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, fort)).isEqualTo(6);
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -96,20 +96,20 @@ class MobileFortTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(fort.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, fort)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         advanceToUpkeep(player2);
 
-        assertThat(fort.getEffectivePower()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, fort)).isEqualTo(0);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(fort.getEffectivePower()).isEqualTo(3);
-        assertThat(fort.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, fort)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, fort)).isEqualTo(5);
     }
 
     @Test
@@ -131,8 +131,8 @@ class MobileFortTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(fort.getEffectivePower()).isEqualTo(3);
-        assertThat(fort.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, fort)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, fort)).isEqualTo(5);
     }
 
     @Test
@@ -145,17 +145,17 @@ class MobileFortTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(0);
-        assertThat(second.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(6);
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(first.getEffectiveToughness()).isEqualTo(5);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
     }
 
     @Test
@@ -168,8 +168,8 @@ class MobileFortTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(fort.getEffectivePower()).isEqualTo(3);
-        assertThat(fort.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, fort)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, fort)).isEqualTo(5);
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");

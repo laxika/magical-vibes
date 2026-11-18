@@ -121,8 +121,8 @@ class GavonyTownshipTest extends BaseCardTest {
         Permanent creature = findPermanent(player1, "Walking Corpse");
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(creature.getEffectivePower()).isEqualTo(4);   // 2 base + 2 counters
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4); // 2 base + 2 counters
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);   // 2 base + 2 counters
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4); // 2 base + 2 counters
     }
     @Test
     @DisplayName("Counter ability affects creatures present at resolution and ignores lands")

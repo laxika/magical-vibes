@@ -37,9 +37,9 @@ class OpenTheOmenpathsTest extends BaseCardTest {
 
         Permanent ownBears = findPermanent(player1, "Grizzly Bears");
         Permanent opposingBears = findPermanent(player2, "Grizzly Bears");
-        assertThat(ownBears.getEffectivePower()).isEqualTo(3);
-        assertThat(ownBears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opposingBears.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownBears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(2);
     }
 
     @Test
@@ -86,15 +86,15 @@ class OpenTheOmenpathsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent later = harness.addToBattlefieldAndReturn(player1, new FearlessPup());
-        assertThat(original.getEffectivePower()).isEqualTo(2);
-        assertThat(original.getEffectiveToughness()).isEqualTo(1);
-        assertThat(later.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getCreatureOrEnchantmentSpellOnlyManaTotal())
                 .isZero();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(original.getEffectivePower()).isEqualTo(1);
-        assertThat(original.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(1);
     }
 
     @Test
@@ -110,7 +110,7 @@ class OpenTheOmenpathsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handleListChoice(player1, "COLORLESS"))
                 .isInstanceOf(IllegalArgumentException.class);
         harness.handleListChoice(player1, "BLUE");
-        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
 
         harness.setHand(player1, List.of(new FearlessPup()));
         harness.castCreature(player1, 0);

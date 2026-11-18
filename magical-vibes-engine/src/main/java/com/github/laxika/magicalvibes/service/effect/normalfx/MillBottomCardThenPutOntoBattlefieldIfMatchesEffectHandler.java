@@ -58,7 +58,7 @@ public class MillBottomCardThenPutOntoBattlefieldIfMatchesEffectHandler implemen
 
         Integer sourcePower = entry.getTriggeringPermanentPowerAtTrigger();
         if (sourcePower == null && entry.getSourcePermanentSnapshot() != null) {
-            sourcePower = entry.getSourcePermanentSnapshot().getEffectivePower();
+            sourcePower = predicateEvaluationService.ownPower(gameData, entry.getSourcePermanentSnapshot());
         }
         boolean matches = predicateEvaluationService.matchesCardPredicate(
                 bottomCard,

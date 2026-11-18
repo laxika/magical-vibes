@@ -24,8 +24,8 @@ class WindriderEelTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(eel.getEffectivePower()).isEqualTo(4);
-        assertThat(eel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, eel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, eel)).isEqualTo(4);
     }
 
     @Test
@@ -38,8 +38,8 @@ class WindriderEelTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(eel.getEffectivePower()).isEqualTo(2);
-        assertThat(eel.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, eel)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, eel)).isEqualTo(2);
     }
 
     @Test
@@ -50,13 +50,13 @@ class WindriderEelTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        assertThat(eel.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, eel)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(eel.getEffectivePower()).isEqualTo(2);
-        assertThat(eel.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, eel)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, eel)).isEqualTo(2);
     }
 
     @Test
@@ -68,21 +68,21 @@ class WindriderEelTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(eel.getEffectivePower()).isEqualTo(2);
-        assertThat(eel.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, eel)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, eel)).isEqualTo(2);
 
         harness.passBothPriorities();
-        assertThat(eel.getEffectivePower()).isEqualTo(4);
-        assertThat(eel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, eel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, eel)).isEqualTo(4);
 
         harness.passBothPriorities();
-        assertThat(eel.getEffectivePower()).isEqualTo(6);
-        assertThat(eel.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, eel)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, eel)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
-        assertThat(eel.getEffectivePower()).isEqualTo(2);
-        assertThat(eel.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, eel)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, eel)).isEqualTo(2);
     }
 
     @Test
@@ -98,11 +98,11 @@ class WindriderEelTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opposing.getEffectivePower()).isEqualTo(2);
-        assertThat(opposing.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(2);
     }
 }

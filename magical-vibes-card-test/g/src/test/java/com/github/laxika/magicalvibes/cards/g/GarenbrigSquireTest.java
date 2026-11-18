@@ -24,8 +24,8 @@ class GarenbrigSquireTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(squire.getEffectivePower()).isEqualTo(3);
-        assertThat(squire.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, squire)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, squire)).isEqualTo(3);
     }
 
     @Test
@@ -37,8 +37,8 @@ class GarenbrigSquireTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(squire.getEffectivePower()).isEqualTo(2);
-        assertThat(squire.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, squire)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, squire)).isEqualTo(2);
 
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new RimrockKnight()));
@@ -47,8 +47,8 @@ class GarenbrigSquireTest extends BaseCardTest {
         harness.castAdventure(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(squire.getEffectivePower()).isEqualTo(2);
-        assertThat(squire.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, squire)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, squire)).isEqualTo(2);
     }
 
     @Test
@@ -61,8 +61,8 @@ class GarenbrigSquireTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(squire.getEffectivePower()).isEqualTo(2);
-        assertThat(squire.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, squire)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, squire)).isEqualTo(2);
     }
 
     @Test
@@ -76,8 +76,8 @@ class GarenbrigSquireTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(squire.getEffectivePower()).isEqualTo(2);
-        assertThat(squire.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, squire)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, squire)).isEqualTo(2);
     }
 
     @Test
@@ -92,8 +92,8 @@ class GarenbrigSquireTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(squire.getEffectivePower()).isEqualTo(4);
-        assertThat(squire.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, squire)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, squire)).isEqualTo(4);
     }
 
     @Test
@@ -106,13 +106,13 @@ class GarenbrigSquireTest extends BaseCardTest {
 
         harness.castAdventure(player1, 0, target.getId());
         harness.passBothPriorities();
-        assertThat(squire.getEffectivePower()).isEqualTo(2);
-        assertThat(squire.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, squire)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, squire)).isEqualTo(2);
 
         harness.castFromExile(player1, knight.getId());
         harness.passBothPriorities();
 
-        assertThat(squire.getEffectivePower()).isEqualTo(3);
-        assertThat(squire.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, squire)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, squire)).isEqualTo(3);
     }
 }

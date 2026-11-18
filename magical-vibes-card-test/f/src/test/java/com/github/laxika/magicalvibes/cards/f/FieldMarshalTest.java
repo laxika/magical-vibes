@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranOutrider;
 import com.github.laxika.magicalvibes.cards.s.StalkingYeti;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -175,10 +178,10 @@ class FieldMarshalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FieldMarshal());
         Permanent soldier = harness.addToBattlefieldAndReturn(player1, new KjeldoranOutrider());
 
-        soldier.setPowerModifier(soldier.getPowerModifier() + 7);
+        PermanentGrants.setPowerBoost(gd, soldier, PermanentGrants.powerBoostOf(gd, soldier) + 7);
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(10);
 
-        soldier.resetModifiers();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(3);

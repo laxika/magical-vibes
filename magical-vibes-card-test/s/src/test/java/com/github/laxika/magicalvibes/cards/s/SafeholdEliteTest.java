@@ -30,8 +30,8 @@ class SafeholdEliteTest extends BaseCardTest {
         Permanent elite = findPermanent(player1, "Safehold Elite");
         assertThat(elite).isNotNull();
         assertThat(elite.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(elite.getEffectivePower()).isEqualTo(1);
-        assertThat(elite.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elite)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elite)).isEqualTo(1);
     }
 
     @Test

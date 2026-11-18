@@ -31,10 +31,10 @@ class DuergarMineCaptainTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ownAttacker.getEffectivePower()).isEqualTo(3);
-        assertThat(ownAttacker.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponentBystander.getEffectivePower()).isEqualTo(2);
-        assertThat(captain.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownAttacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownAttacker)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentBystander)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, captain)).isEqualTo(3);
         // Paying {Q} untapped the captain.
         assertThat(captain.isTapped()).isFalse();
     }
@@ -51,7 +51,7 @@ class DuergarMineCaptainTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bystander.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bystander)).isEqualTo(2);
     }
 
     @Test
@@ -67,12 +67,12 @@ class DuergarMineCaptainTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -99,11 +99,11 @@ class DuergarMineCaptainTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, null);
         assertThat(captain.isTapped()).isFalse();
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(captain.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, captain)).isEqualTo(2);
     }
 
     @Test
@@ -136,10 +136,10 @@ class DuergarMineCaptainTest extends BaseCardTest {
         removedAttacker.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(removedAttacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, removedAttacker)).isEqualTo(2);
         attacker.setAttacking(false);
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
     }
 
     private Permanent addTapped(Player player, Card card) {

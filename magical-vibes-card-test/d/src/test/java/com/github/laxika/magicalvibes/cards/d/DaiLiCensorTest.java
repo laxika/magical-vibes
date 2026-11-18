@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,8 +25,8 @@ class DaiLiCensorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(censor.getPowerModifier()).isEqualTo(2);
-        assertThat(censor.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, censor)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, censor)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Dai Li Censor");
     }
 
@@ -68,8 +69,8 @@ class DaiLiCensorTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(censor.getPowerModifier()).isZero();
-        assertThat(censor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, censor)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, censor)).isZero();
     }
 
     @Test
@@ -83,14 +84,14 @@ class DaiLiCensorTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(censor).doesNotContain(sacrifice);
         harness.assertInGraveyard(player1, "Dai Li Censor");
-        assertThat(censor.getPowerModifier()).isZero();
-        assertThat(censor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, censor)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, censor)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(censor.getPowerModifier()).isEqualTo(2);
-        assertThat(censor.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, censor)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, censor)).isEqualTo(2);
     }
 
     @Test
@@ -108,8 +109,8 @@ class DaiLiCensorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(censor.getPowerModifier()).isEqualTo(2);
-        assertThat(censor.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, censor)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, censor)).isEqualTo(2);
     }
 
     @Test
@@ -137,8 +138,8 @@ class DaiLiCensorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(censor.getPowerModifier()).isEqualTo(2);
-        assertThat(censor.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, censor)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, censor)).isEqualTo(2);
     }
 
     @Test
@@ -156,8 +157,8 @@ class DaiLiCensorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(censor.getPowerModifier()).isEqualTo(2);
-        assertThat(censor.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, censor)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, censor)).isEqualTo(2);
     }
 
     private Permanent addCensorReady() {

@@ -77,13 +77,13 @@ class StillmoonCavalierTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        assertThat(cavalier.getEffectivePower()).isEqualTo(3);
-        assertThat(cavalier.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, cavalier)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cavalier)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(cavalier.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, cavalier)).isEqualTo(2);
     }
 
     @Test
@@ -143,8 +143,8 @@ class StillmoonCavalierTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        assertThat(cavalier.getEffectivePower()).isEqualTo(3);
-        assertThat(cavalier.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, cavalier)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cavalier)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
@@ -172,8 +172,8 @@ class StillmoonCavalierTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(cavalier.getEffectivePower()).isEqualTo(4);
-        assertThat(cavalier.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, cavalier)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, cavalier)).isEqualTo(1);
     }
 
     @Test
@@ -192,7 +192,7 @@ class StillmoonCavalierTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, cavalier, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, cavalier, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(cavalier.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, cavalier)).isEqualTo(3);
         assertThat(cavalier.isTapped()).isTrue();
     }
 

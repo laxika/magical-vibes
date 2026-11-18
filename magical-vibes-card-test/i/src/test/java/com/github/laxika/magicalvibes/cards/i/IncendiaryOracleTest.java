@@ -28,15 +28,15 @@ class IncendiaryOracleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(oracle.getEffectivePower()).isEqualTo(3);
-        assertThat(oracle.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, oracle)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, oracle)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(oracle.getEffectivePower()).isEqualTo(2);
-        assertThat(oracle.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, oracle)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, oracle)).isEqualTo(2);
     }
 
     @Test

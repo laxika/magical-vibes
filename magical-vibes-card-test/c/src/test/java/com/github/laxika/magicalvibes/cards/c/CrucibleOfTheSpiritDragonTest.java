@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FlamewakePhoenix;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.cards.s.ShockmawDragon;
@@ -204,7 +205,7 @@ class CrucibleOfTheSpiritDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(1);
         assertThat(manaPool().getTotal()).isZero();
         assertThat(manaPool().getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.DRAGON), ManaColor.RED)).isZero();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -51,12 +52,12 @@ class BatteringKrasisTest extends BaseCardTest {
     @Test
     void evolvesWhenOnlyPowerIsGreater() {
         Permanent krasis = harness.addToBattlefieldAndReturn(player1, new BatteringKrasis());
-        krasis.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, krasis, 2);
         harness.setHand(player1, List.of(new BatteringKrasis()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
-        krasis.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, krasis, -1);
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
@@ -91,12 +92,12 @@ class BatteringKrasisTest extends BaseCardTest {
     @Test
     void usesEnteringCreaturesLastKnownPowerAfterItDies() {
         Permanent krasis = harness.addToBattlefieldAndReturn(player1, new BatteringKrasis());
-        krasis.setPowerModifier(-1);
-        krasis.setToughnessModifier(2);
+        PermanentGrants.setPowerBoost(gd, krasis, -1);
+        PermanentGrants.setToughnessBoost(gd, krasis, 2);
         Permanent entering = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
         assertThat(gd.stack).hasSize(1);
 
-        entering.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, entering, -1);
         entering.setMarkedDamage(2);
         harness.runStateBasedActions();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(entering);

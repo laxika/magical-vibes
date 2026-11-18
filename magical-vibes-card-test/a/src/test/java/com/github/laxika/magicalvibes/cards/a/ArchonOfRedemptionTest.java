@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Smother;
 import com.github.laxika.magicalvibes.cards.w.WelkinTern;
@@ -44,7 +45,7 @@ class ArchonOfRedemptionTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        gd.playerBattlefields.get(player1.getId()).getLast().setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, gd.playerBattlefields.get(player1.getId()).getLast(), 2);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -108,7 +109,7 @@ class ArchonOfRedemptionTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         var tern = gd.playerBattlefields.get(player1.getId()).getLast();
-        tern.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, tern, 2);
 
         harness.castAndResolveInstant(player1, 0, tern.getId());
         harness.assertInGraveyard(player1, "Welkin Tern");

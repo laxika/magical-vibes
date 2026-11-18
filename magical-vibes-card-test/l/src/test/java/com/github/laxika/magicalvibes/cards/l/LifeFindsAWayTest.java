@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -132,7 +133,7 @@ class LifeFindsAWayTest extends BaseCardTest {
 
         Permanent entering = harness.enterBattlefieldAndReturn(player1, new AirElemental());
         assertThat(gd.stack).hasSize(1);
-        entering.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, entering, -1);
         harness.passBothPriorities();
 
         assertThat(countOf(player1, "Soldier Token")).isEqualTo(2);

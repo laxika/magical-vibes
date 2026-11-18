@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DevilthornFox;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,10 +25,10 @@ class EtherealGuidanceTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(2);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(1);
-        assertThat(opponentCreature.getPowerModifier()).isZero();
-        assertThat(opponentCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isZero();
     }
 
     @Test
@@ -41,8 +42,8 @@ class EtherealGuidanceTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -56,12 +57,12 @@ class EtherealGuidanceTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent later = harness.enterBattlefieldAndReturn(player1, new DevilthornFox());
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isEqualTo(1);
-        assertThat(later.getPowerModifier()).isZero();
-        assertThat(later.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, later)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, later)).isZero();
     }
 
     @Test
@@ -73,15 +74,15 @@ class EtherealGuidanceTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(creature.getPowerModifier()).isEqualTo(4);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -93,7 +94,7 @@ class EtherealGuidanceTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Ethereal Guidance");
         Permanent later = harness.enterBattlefieldAndReturn(player1, new DevilthornFox());
-        assertThat(later.getPowerModifier()).isZero();
-        assertThat(later.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, later)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, later)).isZero();
     }
 }

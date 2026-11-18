@@ -34,7 +34,7 @@ class EsikasChariotTest extends BaseCardTest {
         List<Permanent> cats = findPermanents(player1, "Cat");
         assertThat(cats).hasSize(2);
         assertThat(cats).allMatch(cat -> cat.getCard().isToken());
-        assertThat(cats).allMatch(cat -> cat.getEffectivePower() == 2 && cat.getEffectiveToughness() == 2);
+        assertThat(cats).allMatch(cat -> gqs.getEffectivePower(gd, cat) == 2 && gqs.getEffectiveToughness(gd, cat) == 2);
     }
 
     @Test

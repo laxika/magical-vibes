@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;
 import com.github.laxika.magicalvibes.cards.s.SleeperDart;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -29,8 +30,8 @@ class HeightenedReflexesTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(bear.getCounterCount(CounterType.FIRST_STRIKE)).isEqualTo(1);
         assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
     }
@@ -48,7 +49,7 @@ class HeightenedReflexesTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(bear.getCounterCount(CounterType.FIRST_STRIKE)).isEqualTo(1);
         assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
     }
@@ -74,8 +75,8 @@ class HeightenedReflexesTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(creature.getCounterCount(CounterType.FIRST_STRIKE)).isEqualTo(1);
         assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
     }
@@ -90,8 +91,8 @@ class HeightenedReflexesTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(creature.getCounterCount(CounterType.FIRST_STRIKE)).isEqualTo(2);
         assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
     }

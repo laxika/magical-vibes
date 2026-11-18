@@ -27,8 +27,8 @@ class JoustTest extends BaseCardTest {
 
         castJoust(knight, opponent);
 
-        assertThat(knight.getEffectivePower()).isEqualTo(4);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
         harness.assertOnBattlefield(player1, "Youthful Knight");
         harness.assertInGraveyard(player2, "Gingerbrute");
     }
@@ -53,14 +53,14 @@ class JoustTest extends BaseCardTest {
 
         castJoust(knight, opponent);
 
-        assertThat(knight.getEffectivePower()).isEqualTo(4);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(knight.getEffectivePower()).isEqualTo(2);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(1);
     }
 
     @Test
@@ -103,8 +103,8 @@ class JoustTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(opponent);
         harness.passBothPriorities();
 
-        assertThat(knight.getEffectivePower()).isEqualTo(4);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
         assertThat(knight.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player1, "Youthful Knight");
         harness.assertInGraveyard(player1, "Joust");
@@ -121,8 +121,8 @@ class JoustTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(opponent.getMarkedDamage()).isZero();
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Youthful Knight");
         harness.assertInGraveyard(player1, "Joust");
     }
@@ -138,12 +138,12 @@ class JoustTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(opponent);
         harness.passBothPriorities();
 
-        assertThat(knight.getEffectivePower()).isEqualTo(4);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
         assertThat(knight.getMarkedDamage()).isZero();
         assertThat(opponent.getMarkedDamage()).isZero();
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(knight, opponent);
     }
 
@@ -158,8 +158,8 @@ class JoustTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(knight);
         harness.passBothPriorities();
 
-        assertThat(knight.getEffectivePower()).isEqualTo(2);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(1);
         assertThat(knight.getMarkedDamage()).isZero();
         assertThat(opponent.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(knight, opponent);

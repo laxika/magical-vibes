@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.u.UnexplainedDisappearance;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,8 +30,8 @@ class VedalkenMesmeristTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, shieldmate.getId());
         resolveAllTriggers();
 
-        assertThat(shieldmate.getPowerModifier()).isEqualTo(-2);
-        assertThat(shieldmate.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shieldmate)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shieldmate)).isZero();
     }
 
     @Test
@@ -50,8 +51,8 @@ class VedalkenMesmeristTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shieldmate.getPowerModifier()).isZero();
-        assertThat(shieldmate.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shieldmate)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shieldmate)).isZero();
     }
 
     @Test
@@ -96,8 +97,8 @@ class VedalkenMesmeristTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Vedalken Mesmerist");
         harness.assertInHand(player1, "Vedalken Mesmerist");
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -117,8 +118,8 @@ class VedalkenMesmeristTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         harness.assertInHand(player2, "Vernadi Shieldmate");
-        assertThat(otherCreature.getPowerModifier()).isZero();
-        assertThat(otherCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreature)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

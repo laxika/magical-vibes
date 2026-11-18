@@ -26,10 +26,10 @@ class RoarOfTheKhaTest extends BaseCardTest {
 
         cast(new int[]{0}, false);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -58,8 +58,8 @@ class RoarOfTheKhaTest extends BaseCardTest {
         cast(new int[]{0, 1}, true);
 
         assertThat(ownCreature.isTapped()).isFalse();
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
@@ -69,13 +69,13 @@ class RoarOfTheKhaTest extends BaseCardTest {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
 
         cast(new int[]{0}, false);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test
@@ -99,7 +99,7 @@ class RoarOfTheKhaTest extends BaseCardTest {
         cast(new int[]{0}, false);
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -111,8 +111,8 @@ class RoarOfTheKhaTest extends BaseCardTest {
         cast(new int[]{1}, false);
 
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -125,8 +125,8 @@ class RoarOfTheKhaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -137,9 +137,9 @@ class RoarOfTheKhaTest extends BaseCardTest {
 
         Permanent newcomer = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
 
-        assertThat(original.getEffectivePower()).isEqualTo(3);
-        assertThat(newcomer.getEffectivePower()).isEqualTo(2);
-        assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(2);
     }
 
     @Test

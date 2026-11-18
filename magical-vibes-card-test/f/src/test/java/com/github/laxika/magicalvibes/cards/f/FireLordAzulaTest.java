@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CunningManeuver;
 import com.github.laxika.magicalvibes.cards.h.HypersonicDragon;
 import com.github.laxika.magicalvibes.cards.s.SpiritWaterRevival;
@@ -120,8 +121,8 @@ class FireLordAzulaTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        assertThat(duck.getPowerModifier()).isEqualTo(6);
-        assertThat(duck.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, duck)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duck)).isEqualTo(2);
         assertThat(findPermanents(player1, "Clue")).hasSize(2);
         assertThat(gd.stack).isEmpty();
     }
@@ -141,10 +142,10 @@ class FireLordAzulaTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, copyTarget.getId());
         resolveAllTriggers();
 
-        assertThat(originalTarget.getPowerModifier()).isEqualTo(3);
-        assertThat(originalTarget.getToughnessModifier()).isEqualTo(1);
-        assertThat(copyTarget.getPowerModifier()).isEqualTo(3);
-        assertThat(copyTarget.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, originalTarget)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, originalTarget)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, copyTarget)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, copyTarget)).isEqualTo(1);
         assertThat(findPermanents(player1, "Clue")).hasSize(2);
         assertThat(gd.stack).isEmpty();
     }
@@ -160,8 +161,8 @@ class FireLordAzulaTest extends BaseCardTest {
         harness.castInstant(player2, 0, duck.getId());
         resolveAllTriggers();
 
-        assertThat(duck.getPowerModifier()).isEqualTo(3);
-        assertThat(duck.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, duck)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, duck)).isEqualTo(1);
         assertThat(findPermanents(player2, "Clue")).hasSize(1);
         assertThat(findPermanents(player1, "Clue")).isEmpty();
         assertThat(gd.stack).isEmpty();

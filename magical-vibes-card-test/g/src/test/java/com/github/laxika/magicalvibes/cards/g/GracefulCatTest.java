@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,8 +23,8 @@ class GracefulCatTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(cat.getPowerModifier()).isEqualTo(1);
-        assertThat(cat.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cat)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cat)).isEqualTo(1);
     }
 
     @Test
@@ -34,14 +35,14 @@ class GracefulCatTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(cat.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cat)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(cat.getPowerModifier()).isEqualTo(0);
-        assertThat(cat.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, cat)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cat)).isEqualTo(0);
     }
 
     @Test
@@ -52,8 +53,8 @@ class GracefulCatTest extends BaseCardTest {
         declareAttackers(player1, List.of());
         resolveAllTriggers();
 
-        assertThat(cat.getPowerModifier()).isEqualTo(0);
-        assertThat(cat.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, cat)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cat)).isEqualTo(0);
     }
 
     @Test
@@ -65,13 +66,13 @@ class GracefulCatTest extends BaseCardTest {
                 () -> declareAttackers(player1, List.of(0)));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(cat.getPowerModifier()).isZero();
-        assertThat(cat.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cat)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cat)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(cat.getPowerModifier()).isEqualTo(1);
-        assertThat(cat.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cat)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cat)).isEqualTo(1);
     }
 
     @Test
@@ -84,12 +85,12 @@ class GracefulCatTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
-        assertThat(otherCat.getPowerModifier()).isZero();
-        assertThat(otherCat.getToughnessModifier()).isZero();
-        assertThat(opposingCat.getPowerModifier()).isZero();
-        assertThat(opposingCat.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCat)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCat)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCat)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingCat)).isZero();
     }
 
     @Test
@@ -101,9 +102,9 @@ class GracefulCatTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(1);
     }
 }

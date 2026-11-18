@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EarthElemental;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Murder;
@@ -111,7 +112,7 @@ class ThunderkinAwakenerTest extends BaseCardTest {
 
         declareAttack();
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
-        awakener.setToughnessModifier(-1);
+        PermanentGrants.setToughnessBoost(gd, awakener, -1);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Scorch Spitter");
@@ -148,7 +149,7 @@ class ThunderkinAwakenerTest extends BaseCardTest {
     @Test
     void usesModifiedToughnessAndDoesNotTriggerForReturnedAttacker() {
         Permanent awakener = addReadyAwakener();
-        awakener.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, awakener, 1);
         Card target = new ThunderkinAwakener();
         harness.setGraveyard(player1, List.of(target));
 

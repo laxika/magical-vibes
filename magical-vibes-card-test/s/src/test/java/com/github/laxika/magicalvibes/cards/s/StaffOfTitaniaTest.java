@@ -44,8 +44,8 @@ class StaffOfTitaniaTest extends BaseCardTest {
         assertThat(gqs.isLand(gd, dryad)).isTrue();
         assertThat(dryad.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.FOREST, CardSubtype.DRYAD);
-        assertThat(dryad.getEffectivePower()).isEqualTo(1);
-        assertThat(dryad.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, dryad)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, dryad)).isEqualTo(1);
         assertThat(dryad.isSummoningSick()).isTrue();
         assertThat(dryad.isTapped()).isFalse();
         assertThat(dryad.isAttacking()).isFalse();

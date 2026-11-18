@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AutomaticLibrarian;
 import com.github.laxika.magicalvibes.cards.c.ColossalGrowth;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -46,8 +47,8 @@ class BenalishFaithbonderTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(faithbonder.getPowerModifier()).isEqualTo(3);
-        assertThat(faithbonder.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, faithbonder)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, faithbonder)).isZero();
     }
 
     @Test
@@ -58,7 +59,7 @@ class BenalishFaithbonderTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
-        assertThat(faithbonder.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, faithbonder)).isZero();
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -68,8 +69,8 @@ class BenalishFaithbonderTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(faithbonder.getPowerModifier()).isEqualTo(6);
-        assertThat(faithbonder.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, faithbonder)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, faithbonder)).isZero();
     }
 
     @Test
@@ -83,7 +84,7 @@ class BenalishFaithbonderTest extends BaseCardTest {
 
         assertThat(supporter.isTapped()).isFalse();
         assertThat(faithbonder.isTapped()).isFalse();
-        assertThat(faithbonder.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, faithbonder)).isZero();
     }
 
     @Test
@@ -110,7 +111,7 @@ class BenalishFaithbonderTest extends BaseCardTest {
         assertThat(eligible.isTapped()).isTrue();
         assertThat(tapped.isTapped()).isTrue();
         assertThat(summoningSick.isTapped()).isFalse();
-        assertThat(otherAttacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAttacker)).isZero();
     }
 
     @Test
@@ -121,13 +122,13 @@ class BenalishFaithbonderTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
         resolveAllTriggers();
-        assertThat(faithbonder.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, faithbonder)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(faithbonder.getPowerModifier()).isZero();
-        assertThat(faithbonder.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, faithbonder)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, faithbonder)).isZero();
     }
 }

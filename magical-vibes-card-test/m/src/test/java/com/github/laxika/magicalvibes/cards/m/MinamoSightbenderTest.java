@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AkkiRaider;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.cards.g.GodsEyeGateToTheReikai;
@@ -125,7 +126,7 @@ class MinamoSightbenderTest extends BaseCardTest {
     @DisplayName("X=0 can target a creature with zero power")
     void allowsZeroX() {
         Permanent source = addCreatureReady(player1, new MinamoSightbender());
-        source.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, source, -1);
 
         harness.activateAbility(player1, 0, 0, source.getId());
         harness.passBothPriorities();
@@ -142,7 +143,7 @@ class MinamoSightbenderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 2, target.getId());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.passBothPriorities();
 
         assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
@@ -160,7 +161,7 @@ class MinamoSightbenderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, target.getId());
         harness.passBothPriorities();
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         declareAttackersAndPrepareBlockers(List.of(1));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,

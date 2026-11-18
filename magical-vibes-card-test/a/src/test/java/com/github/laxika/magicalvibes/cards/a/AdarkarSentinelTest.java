@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,10 +28,10 @@ class AdarkarSentinelTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent sentinel = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(sentinel.getEffectivePower()).isEqualTo(3);
-        assertThat(sentinel.getEffectiveToughness()).isEqualTo(4);
-        assertThat(sentinel.getPowerModifier()).isEqualTo(0);
-        assertThat(sentinel.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentinel)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentinel)).isEqualTo(1);
     }
 
     @Test
@@ -42,7 +43,7 @@ class AdarkarSentinelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sentinel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(4);
     }
 
     @Test
@@ -57,8 +58,8 @@ class AdarkarSentinelTest extends BaseCardTest {
         }
 
         Permanent sentinel = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(sentinel.getEffectiveToughness()).isEqualTo(6);
-        assertThat(sentinel.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentinel)).isEqualTo(3);
     }
 
     @Test
@@ -71,14 +72,14 @@ class AdarkarSentinelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent sentinel = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(sentinel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(sentinel.getToughnessModifier()).isEqualTo(0);
-        assertThat(sentinel.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentinel)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(3);
     }
 
     @Test
@@ -100,14 +101,14 @@ class AdarkarSentinelTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(sentinel.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(3);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
         assertThat(sentinel.isTapped()).isTrue();
-        assertThat(sentinel.getEffectivePower()).isEqualTo(3);
-        assertThat(sentinel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(4);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
@@ -124,8 +125,8 @@ class AdarkarSentinelTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectiveToughness()).isEqualTo(4);
-        assertThat(other.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opposing.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(3);
     }
 }

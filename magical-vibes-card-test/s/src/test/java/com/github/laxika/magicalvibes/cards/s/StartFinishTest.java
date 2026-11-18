@@ -36,8 +36,8 @@ class StartFinishTest extends BaseCardTest {
                 .toList();
         assertThat(warriors).hasSize(2);
         for (Permanent warrior : warriors) {
-            assertThat(warrior.getEffectivePower()).isEqualTo(1);
-            assertThat(warrior.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(1);
             assertThat(warrior.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(warrior.getCard().getSubtypes()).contains(CardSubtype.WARRIOR);
             assertThat(gqs.hasKeyword(gd, warrior, Keyword.VIGILANCE)).isTrue();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ElementalBond;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
@@ -94,7 +95,7 @@ class AmbitiousAugmenterTest extends BaseCardTest {
         @DisplayName("Increment triggers on power OR toughness — mana greater than power alone suffices")
         void powerOrToughness() {
             Permanent augmenter = addAugmenter(player1);
-            augmenter.setToughnessModifier(2); // now a 1/3
+            PermanentGrants.setToughnessBoost(gd, augmenter, 2); // now a 1/3
             setUpMainPhase(player1);
 
             // Two-mana spell: 2 > power (1) even though 2 is not greater than toughness (3).
@@ -133,8 +134,8 @@ class AmbitiousAugmenterTest extends BaseCardTest {
 
             Permanent fractal = fractals.getFirst();
             assertThat(fractal.getPlusOnePlusOneCounters()).isEqualTo(2);
-            assertThat(fractal.getEffectivePower()).isEqualTo(2);
-            assertThat(fractal.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(2);
             assertThat(fractal.getCard().isToken()).isTrue();
         }
 
@@ -197,8 +198,8 @@ class AmbitiousAugmenterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
-        augmenter.setPowerModifier(1);
-        augmenter.setToughnessModifier(1);
+        PermanentGrants.setPowerBoost(gd, augmenter, 1);
+        PermanentGrants.setToughnessBoost(gd, augmenter, 1);
         harness.passBothPriorities();
 
         assertThat(augmenter.getPlusOnePlusOneCounters()).isZero();
@@ -207,7 +208,7 @@ class AmbitiousAugmenterTest extends BaseCardTest {
     @Test
     void incrementCanCompareAgainstToughnessAlone() {
         Permanent augmenter = addAugmenter(player1);
-        augmenter.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, augmenter, 2);
         setUpMainPhase(player1);
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);

@@ -31,8 +31,8 @@ class KjeldoranKnightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent knight = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(knight.getEffectivePower()).isEqualTo(2);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(1);
     }
 
     @Test
@@ -48,8 +48,8 @@ class KjeldoranKnightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent knight = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(knight.getEffectivePower()).isEqualTo(3);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(1);
     }
 
     @Test
@@ -62,8 +62,8 @@ class KjeldoranKnightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent knight = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(knight.getEffectivePower()).isEqualTo(1);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
     }
 
     @Test
@@ -79,15 +79,15 @@ class KjeldoranKnightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent knight = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(knight.getEffectivePower()).isEqualTo(2);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(knight.getEffectivePower()).isEqualTo(1);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(1);
     }
 
     @Test
@@ -124,8 +124,8 @@ class KjeldoranKnightTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(knight.getEffectivePower()).isEqualTo(2);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
         assertThat(knight.isTapped()).isTrue();
     }
 

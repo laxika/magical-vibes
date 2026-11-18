@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Cagemail;
 import com.github.laxika.magicalvibes.cards.d.DwarvenDriller;
 import com.github.laxika.magicalvibes.cards.e.EmberShot;
@@ -156,7 +157,7 @@ class PhantomNomadTest extends BaseCardTest {
     void unpreventableDamageStillRemovesOneCounter() {
         Permanent nomad = addCreatureReady(player2, new PhantomNomad());
         nomad.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        nomad.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, nomad, 3);
 
         harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
         harness.passBothPriorities();

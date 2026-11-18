@@ -27,8 +27,8 @@ class FearlessPupTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(pup.getEffectivePower()).isEqualTo(3);
-        assertThat(pup.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, pup)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, pup)).isEqualTo(1);
     }
 
     @Test

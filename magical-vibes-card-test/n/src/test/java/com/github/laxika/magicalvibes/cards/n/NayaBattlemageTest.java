@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CylianElf;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,8 +31,8 @@ class NayaBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Cylian Elf");
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -48,7 +49,7 @@ class NayaBattlemageTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Cylian Elf").getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Cylian Elf"))).isEqualTo(0);
     }
 
     @Test
@@ -86,11 +87,11 @@ class NayaBattlemageTest extends BaseCardTest {
 
         assertThat(source.isTapped()).isTrue();
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(ability == 0 ? 2 : 0);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(ability == 0 ? 2 : 0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(target.isTapped()).isEqualTo(ability == 1);
     }
 
@@ -104,7 +105,7 @@ class NayaBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(source.isTapped()).isTrue();
-        assertThat(source.getPowerModifier()).isEqualTo(ability == 0 ? 2 : 0);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(ability == 0 ? 2 : 0);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -154,7 +155,7 @@ class NayaBattlemageTest extends BaseCardTest {
         Permanent returned = harness.addToBattlefieldAndReturn(player2, target.getCard());
         harness.passBothPriorities();
 
-        assertThat(returned.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, returned)).isZero();
         assertThat(returned.isTapped()).isFalse();
         assertThat(source.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
@@ -172,7 +173,7 @@ class NayaBattlemageTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(ability == 0 ? 2 : 0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(ability == 0 ? 2 : 0);
         assertThat(target.isTapped()).isEqualTo(ability == 1);
     }
 

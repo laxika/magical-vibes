@@ -39,8 +39,8 @@ class NightskyMimicTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(mimic.getEffectivePower()).isEqualTo(4);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, mimic, Keyword.FLYING)).isTrue();
     }
 
@@ -54,15 +54,15 @@ class NightskyMimicTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        assertThat(mimic.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(4);
 
         resolveAllTriggers();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(mimic.getEffectivePower()).isEqualTo(2);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, mimic, Keyword.FLYING)).isFalse();
     }
 
@@ -74,8 +74,8 @@ class NightskyMimicTest extends BaseCardTest {
         harness.castFromHand(player1, new SutureSpirit(), "{1}{W}");
         harness.passBothPriorities();
 
-        assertThat(mimic.getEffectivePower()).isEqualTo(2);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, mimic, Keyword.FLYING)).isFalse();
     }
 

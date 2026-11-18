@@ -29,8 +29,8 @@ class GraverobberSpiderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(spider.getEffectivePower()).isEqualTo(4);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(6);
     }
 
     @Test
@@ -44,8 +44,8 @@ class GraverobberSpiderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(spider.getEffectivePower()).isEqualTo(2);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(4);
     }
 
     @Test
@@ -60,7 +60,7 @@ class GraverobberSpiderTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once each turn");
-        assertThat(spider.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(2);
     }
 
     @Test
@@ -72,15 +72,15 @@ class GraverobberSpiderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(spider.getEffectivePower()).isEqualTo(3);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(spider.getEffectivePower()).isEqualTo(2);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(4);
     }
 
     @Test
@@ -92,12 +92,12 @@ class GraverobberSpiderTest extends BaseCardTest {
 
         harness.setGraveyard(player1, List.of(new SatyrWayfinder(), new SatyrWayfinder()));
         harness.passBothPriorities();
-        assertThat(spider.getEffectivePower()).isEqualTo(4);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(6);
 
         harness.setGraveyard(player1, List.of());
-        assertThat(spider.getEffectivePower()).isEqualTo(4);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(6);
     }
 
     @Test
@@ -124,8 +124,8 @@ class GraverobberSpiderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(spider.getEffectivePower()).isEqualTo(3);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(5);
         assertThat(spider.isTapped()).isTrue();
     }
 
@@ -139,14 +139,14 @@ class GraverobberSpiderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(spider.getEffectivePower()).isEqualTo(2);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(4);
         harness.addMana(player1, ManaColor.BLACK, 4);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(spider.getEffectivePower()).isEqualTo(3);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(5);
     }
 
     private Permanent addReadySpider(Player player) {

@@ -24,8 +24,8 @@ class WolfsbaneHighlandHeroTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolfsbane.getEffectivePower()).isEqualTo(4);
-        assertThat(wolfsbane.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wolfsbane)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wolfsbane)).isEqualTo(4);
     }
 
     @Test
@@ -54,8 +54,8 @@ class WolfsbaneHighlandHeroTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(wolfsbane.getEffectivePower()).isEqualTo(2);
-        assertThat(wolfsbane.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wolfsbane)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wolfsbane)).isEqualTo(2);
     }
 
     @Test
@@ -71,8 +71,8 @@ class WolfsbaneHighlandHeroTest extends BaseCardTest {
                 .hasMessageContaining("only once each turn");
 
         harness.passBothPriorities();
-        assertThat(wolfsbane.getEffectivePower()).isEqualTo(4);
-        assertThat(wolfsbane.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wolfsbane)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wolfsbane)).isEqualTo(4);
     }
 
     @Test
@@ -86,8 +86,8 @@ class WolfsbaneHighlandHeroTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolfsbane.getEffectivePower()).isEqualTo(4);
-        assertThat(wolfsbane.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wolfsbane)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wolfsbane)).isEqualTo(4);
         assertThat(wolfsbane.isTapped()).isTrue();
     }
 
@@ -101,15 +101,15 @@ class WolfsbaneHighlandHeroTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(wolfsbane.getEffectivePower()).isEqualTo(2);
-        assertThat(wolfsbane.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wolfsbane)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wolfsbane)).isEqualTo(2);
 
         addManaForAbility(player1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolfsbane.getEffectivePower()).isEqualTo(4);
-        assertThat(wolfsbane.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wolfsbane)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wolfsbane)).isEqualTo(4);
     }
 
     private Permanent addReadyWolfsbane(Player player) {

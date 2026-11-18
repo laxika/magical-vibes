@@ -46,8 +46,8 @@ class BeaconOfCreationTest extends BaseCardTest {
                 .satisfies(insect -> {
                     assertThat(insect.getCard().isToken()).isTrue();
                     assertThat(insect.getCard().getType()).isEqualTo(CardType.CREATURE);
-                    assertThat(insect.getEffectivePower()).isEqualTo(1);
-                    assertThat(insect.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, insect)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, insect)).isEqualTo(1);
                     assertThat(insect.getCard().getColor()).isEqualTo(CardColor.GREEN);
                     assertThat(insect.getCard().getSubtypes()).containsExactly(CardSubtype.INSECT);
                 });

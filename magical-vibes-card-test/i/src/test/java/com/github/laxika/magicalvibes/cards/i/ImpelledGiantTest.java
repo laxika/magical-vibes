@@ -37,8 +37,8 @@ class ImpelledGiantTest extends BaseCardTest {
 
         assertThat(hillGiant.isTapped()).isTrue();
         assertThat(giant.isTapped()).isFalse();
-        assertThat(giant.getEffectivePower()).isEqualTo(6); // 3 base + 3 tapped power
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(6); // 3 base + 3 tapped power
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     @Test
@@ -55,8 +55,8 @@ class ImpelledGiantTest extends BaseCardTest {
 
         assertThat(goblin.isTapped()).isTrue();
         assertThat(hillGiant.isTapped()).isFalse();
-        assertThat(giant.getEffectivePower()).isEqualTo(4); // 3 base + 1 tapped power
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4); // 3 base + 1 tapped power
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     @Test
@@ -71,11 +71,11 @@ class ImpelledGiantTest extends BaseCardTest {
         harness.castInstant(player1, 0, hillGiant.getId());
         harness.passBothPriorities();
 
-        assertThat(hillGiant.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, hillGiant)).isEqualTo(6);
 
         harness.passBothPriorities();
 
-        assertThat(giant.getEffectivePower()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(9);
     }
 
     @Test
@@ -86,14 +86,14 @@ class ImpelledGiantTest extends BaseCardTest {
 
         harness.activateAbility(player1, index(giant), null, null);
         harness.passBothPriorities();
-        assertThat(giant.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(giant.getEffectivePower()).isEqualTo(3);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     @Test
@@ -139,8 +139,8 @@ class ImpelledGiantTest extends BaseCardTest {
 
         assertThat(hillGiant.isTapped()).isTrue();
         assertThat(giant.isTapped()).isTrue();
-        assertThat(giant.getEffectivePower()).isEqualTo(6);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     @Test
@@ -158,8 +158,8 @@ class ImpelledGiantTest extends BaseCardTest {
         assertThat(goblin.isTapped()).isTrue();
         resolveAllTriggers();
 
-        assertThat(giant.getEffectivePower()).isEqualTo(7);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     @Test
@@ -174,14 +174,14 @@ class ImpelledGiantTest extends BaseCardTest {
         harness.activateAbility(player1, index(giant), null, null);
         harness.castInstant(player1, 0, hillGiant.getId());
         harness.passBothPriorities();
-        assertThat(hillGiant.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, hillGiant)).isEqualTo(6);
 
         harness.castInstant(player1, 0, hillGiant.getId());
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(hillGiant);
         harness.passBothPriorities();
 
-        assertThat(giant.getEffectivePower()).isEqualTo(9);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 }

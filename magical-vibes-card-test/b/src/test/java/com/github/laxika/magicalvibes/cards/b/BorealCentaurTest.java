@@ -23,8 +23,8 @@ class BorealCentaurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(centaur.getEffectivePower()).isEqualTo(3);
-        assertThat(centaur.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, centaur)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, centaur)).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
     }
 
@@ -45,8 +45,8 @@ class BorealCentaurTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(centaur.getEffectivePower()).isEqualTo(2);
-        assertThat(centaur.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, centaur)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, centaur)).isEqualTo(2);
     }
 
     @Test
@@ -79,8 +79,8 @@ class BorealCentaurTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(centaur.isTapped()).isTrue();
-        assertThat(centaur.getEffectivePower()).isEqualTo(3);
-        assertThat(centaur.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, centaur)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, centaur)).isEqualTo(3);
     }
 
     @Test
@@ -102,7 +102,7 @@ class BorealCentaurTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(centaur.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, centaur)).isEqualTo(2);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once each turn");
@@ -111,8 +111,8 @@ class BorealCentaurTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(centaur.getEffectivePower()).isEqualTo(3);
-        assertThat(centaur.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, centaur)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, centaur)).isEqualTo(3);
     }
 
     @Test
@@ -125,18 +125,18 @@ class BorealCentaurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(first.getEffectiveToughness()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(2);
-        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(first.getEffectiveToughness()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
     }
 
@@ -152,8 +152,8 @@ class BorealCentaurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(centaur.getEffectivePower()).isEqualTo(3);
-        assertThat(centaur.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, centaur)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, centaur)).isEqualTo(3);
         assertThat(centaur.isTapped()).isFalse();
     }
 }

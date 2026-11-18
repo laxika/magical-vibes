@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CalciteSnapper;
 import com.github.laxika.magicalvibes.cards.g.GoliathSphinx;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,8 +30,8 @@ class MordantDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(1);
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
     }
 
     @Test
@@ -88,13 +89,13 @@ class MordantDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(2);
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(dragon.getPowerModifier()).isZero();
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
     }
 
     @Test
@@ -107,7 +108,7 @@ class MordantDragonTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(dragon.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
     }
 
     @Test
@@ -128,7 +129,7 @@ class MordantDragonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(dragon.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(2);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 

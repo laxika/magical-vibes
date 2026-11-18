@@ -139,8 +139,8 @@ class FlankingLicidTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, host, Keyword.FLANKING)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -158,8 +158,8 @@ class FlankingLicidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, host, Keyword.FLANKING)).isTrue();
-        assertThat(blocker.getEffectivePower()).isEqualTo(3);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
     }
 
     @Test
@@ -181,8 +181,8 @@ class FlankingLicidTest extends BaseCardTest {
                 () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 1))));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(blocker.getEffectivePower()).isEqualTo(3);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
     }
 
     private Permanent addReadyLicid(Player player) {

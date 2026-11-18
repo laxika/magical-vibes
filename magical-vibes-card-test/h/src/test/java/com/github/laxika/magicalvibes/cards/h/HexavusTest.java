@@ -29,8 +29,8 @@ class HexavusTest extends BaseCardTest {
 
         Permanent hexavus = findPermanent(player1, "Hexavus");
         assertThat(hexavus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
-        assertThat(hexavus.getEffectivePower()).isEqualTo(6);
-        assertThat(hexavus.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, hexavus)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, hexavus)).isEqualTo(6);
     }
 
     @Test

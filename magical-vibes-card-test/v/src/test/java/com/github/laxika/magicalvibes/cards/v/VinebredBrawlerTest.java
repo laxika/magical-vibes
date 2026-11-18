@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -45,8 +46,8 @@ class VinebredBrawlerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, elf.getId());
         harness.passBothPriorities();
 
-        assertThat(elf.getPowerModifier()).isEqualTo(2);
-        assertThat(elf.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isEqualTo(1);
     }
 
     @Test
@@ -88,11 +89,11 @@ class VinebredBrawlerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, elf.getId());
         harness.passBothPriorities();
 
-        assertThat(elf.getPowerModifier()).isEqualTo(2);
-        assertThat(elf.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isEqualTo(1);
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(elf.getPowerModifier()).isZero();
-        assertThat(elf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isZero();
     }
 
     @Test
@@ -118,7 +119,7 @@ class VinebredBrawlerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(brawler);
         harness.passBothPriorities();
 
-        assertThat(elf.getPowerModifier()).isEqualTo(2);
-        assertThat(elf.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isEqualTo(1);
     }
 }

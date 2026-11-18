@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RoyalAssassin;
@@ -68,7 +69,7 @@ class VeilstoneAmuletTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -84,7 +85,7 @@ class VeilstoneAmuletTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, opponentCreature.getId());
 
-        assertThat(opponentCreature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isEqualTo(3);
     }
 
     @Test
@@ -152,9 +153,9 @@ class VeilstoneAmuletTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.castAndResolveInstant(player2, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
         resolveAllTriggers();
-        assertThat(creature.getPowerModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(6);
     }
 
     @Test
@@ -170,7 +171,7 @@ class VeilstoneAmuletTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
         resolveAllTriggers();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player2, "Giant Growth");
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -26,8 +27,8 @@ class SummonKnightsOfRoundTest extends BaseCardTest {
 
         assertThat(findKnightTokens()).hasSize(3);
         assertThat(findKnightTokens()).allSatisfy(knight -> {
-            assertThat(knight.getEffectivePower()).isEqualTo(2);
-            assertThat(knight.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
         });
     }
 
@@ -99,8 +100,8 @@ class SummonKnightsOfRoundTest extends BaseCardTest {
             assertThat(knight.getCounterCount(CounterType.INDESTRUCTIBLE)).isEqualTo(1);
             assertThat(gqs.hasKeyword(gd, knight, Keyword.INDESTRUCTIBLE)).isTrue();
         });
-        assertThat(saga.getPowerModifier()).isZero();
-        assertThat(saga.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, saga)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, saga)).isZero();
         assertThat(saga.getCounterCount(CounterType.INDESTRUCTIBLE)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
         harness.assertInGraveyard(player1, "Summon: Knights of Round");
@@ -115,8 +116,8 @@ class SummonKnightsOfRoundTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new SummonKnightsOfRound());
-        assertThat(lateCreature.getPowerModifier()).isZero();
-        assertThat(lateCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, lateCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lateCreature)).isZero();
         assertThat(lateCreature.getCounterCount(CounterType.INDESTRUCTIBLE)).isZero();
         harness.assertInGraveyard(player1, "Summon: Knights of Round");
     }

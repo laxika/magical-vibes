@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.d.Duress;
 import com.github.laxika.magicalvibes.cards.p.Ponder;
@@ -26,8 +27,8 @@ class SpellrunePainterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(painter.getPowerModifier()).isEqualTo(1);
-        assertThat(painter.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, painter)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, painter)).isEqualTo(1);
     }
 
     @Test
@@ -39,8 +40,8 @@ class SpellrunePainterTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(painter.getPowerModifier()).isZero();
-        assertThat(painter.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, painter)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, painter)).isZero();
     }
 
     @Test
@@ -59,8 +60,8 @@ class SpellrunePainterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(painter.getPowerModifier()).isEqualTo(2);
-        assertThat(painter.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, painter)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, painter)).isEqualTo(2);
     }
 
     private Permanent addPainter() {
@@ -81,10 +82,10 @@ class SpellrunePainterTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(painter.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, painter)).isZero();
         harness.passBothPriorities();
-        assertThat(painter.getPowerModifier()).isEqualTo(1);
-        assertThat(painter.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, painter)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, painter)).isEqualTo(1);
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
     }
@@ -101,10 +102,10 @@ class SpellrunePainterTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
-        assertThat(painter.getPowerModifier()).isZero();
-        assertThat(painter.getToughnessModifier()).isZero();
-        assertThat(howler.getPowerModifier()).isZero();
-        assertThat(howler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, painter)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, painter)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, howler)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, howler)).isZero();
     }
 
     @Test
@@ -119,19 +120,19 @@ class SpellrunePainterTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 
-        assertThat(painter.getPowerModifier()).isEqualTo(2);
-        assertThat(painter.getToughnessModifier()).isEqualTo(2);
-        assertThat(howler.getPowerModifier()).isEqualTo(4);
-        assertThat(howler.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, painter)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, painter)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, howler)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, howler)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(painter.getPowerModifier()).isZero();
-        assertThat(painter.getToughnessModifier()).isZero();
-        assertThat(howler.getPowerModifier()).isZero();
-        assertThat(howler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, painter)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, painter)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, howler)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, howler)).isZero();
     }
 
     @Test
@@ -144,8 +145,8 @@ class SpellrunePainterTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(howler.getPowerModifier()).isZero();
-        assertThat(howler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, howler)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, howler)).isZero();
     }
 
     @Test
@@ -170,8 +171,8 @@ class SpellrunePainterTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         resolveAllTriggers();
 
-        assertThat(painter.getPowerModifier()).isEqualTo(2);
-        assertThat(painter.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, painter)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, painter)).isEqualTo(2);
     }
 
     @Test
@@ -192,8 +193,8 @@ class SpellrunePainterTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         resolveAllTriggers();
 
-        assertThat(painter.getPowerModifier()).isEqualTo(1);
-        assertThat(painter.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, painter)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, painter)).isEqualTo(1);
     }
 
     @Test

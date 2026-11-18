@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.IronApprentice;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,8 +21,8 @@ class TowashiSongshaperTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new IronApprentice());
         harness.passBothPriorities();
 
-        assertThat(songshaper.getPowerModifier()).isEqualTo(1);
-        assertThat(songshaper.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, songshaper)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, songshaper)).isZero();
     }
 
     @Test
@@ -31,7 +32,7 @@ class TowashiSongshaperTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player2, new IronApprentice());
         harness.passBothPriorities();
 
-        assertThat(songshaper.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, songshaper)).isZero();
     }
 
     @Test
@@ -40,13 +41,13 @@ class TowashiSongshaperTest extends BaseCardTest {
 
         harness.enterBattlefieldAndReturn(player1, new IronApprentice());
         harness.passBothPriorities();
-        assertThat(songshaper.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, songshaper)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(songshaper.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, songshaper)).isZero();
     }
 
     @Test
@@ -54,8 +55,8 @@ class TowashiSongshaperTest extends BaseCardTest {
         Permanent songshaper = harness.enterBattlefieldAndReturn(player1, new TowashiSongshaper());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(songshaper.getPowerModifier()).isZero();
-        assertThat(songshaper.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, songshaper)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, songshaper)).isZero();
     }
 
     @Test
@@ -64,13 +65,13 @@ class TowashiSongshaperTest extends BaseCardTest {
 
         Permanent second = harness.enterBattlefieldAndReturn(player1, new TowashiSongshaper());
         assertThat(gd.stack).hasSize(1);
-        assertThat(first.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getPowerModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 
     @Test
@@ -82,8 +83,8 @@ class TowashiSongshaperTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new IronApprentice());
         harness.passBothPriorities();
 
-        assertThat(songshaper.getPowerModifier()).isEqualTo(2);
-        assertThat(songshaper.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, songshaper)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, songshaper)).isZero();
     }
 
     @Test
@@ -93,7 +94,7 @@ class TowashiSongshaperTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Mountain());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(songshaper.getPowerModifier()).isZero();
-        assertThat(songshaper.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, songshaper)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, songshaper)).isZero();
     }
 }

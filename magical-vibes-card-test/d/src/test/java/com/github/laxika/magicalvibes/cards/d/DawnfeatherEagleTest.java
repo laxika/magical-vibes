@@ -29,13 +29,13 @@ class DawnfeatherEagleTest extends BaseCardTest {
         castEagle();
 
         Permanent automaton = findPermanent(player1, "Aegis Automaton");
-        assertThat(automaton.getEffectivePower()).isEqualTo(1);
-        assertThat(automaton.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, automaton)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, automaton)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, automaton, Keyword.VIGILANCE)).isTrue();
 
         Permanent eagle = findPermanent(player1, "Dawnfeather Eagle");
-        assertThat(eagle.getEffectivePower()).isEqualTo(4);
-        assertThat(eagle.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, eagle)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, eagle)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, eagle, Keyword.VIGILANCE)).isTrue();
     }
 
@@ -47,7 +47,7 @@ class DawnfeatherEagleTest extends BaseCardTest {
         castEagle();
 
         Permanent automaton = findPermanent(player2, "Aegis Automaton");
-        assertThat(automaton.getEffectivePower()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, automaton)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, automaton, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -62,7 +62,7 @@ class DawnfeatherEagleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent automaton = findPermanent(player1, "Aegis Automaton");
-        assertThat(automaton.getEffectivePower()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, automaton)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, automaton, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -73,8 +73,8 @@ class DawnfeatherEagleTest extends BaseCardTest {
 
         Permanent automaton = harness.addToBattlefieldAndReturn(player1, new AegisAutomaton());
 
-        assertThat(automaton.getEffectivePower()).isEqualTo(0);
-        assertThat(automaton.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, automaton)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, automaton)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, automaton, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -88,8 +88,8 @@ class DawnfeatherEagleTest extends BaseCardTest {
         Permanent automaton = harness.addToBattlefieldAndReturn(player1, new AegisAutomaton());
         harness.passBothPriorities();
 
-        assertThat(automaton.getEffectivePower()).isEqualTo(1);
-        assertThat(automaton.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, automaton)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, automaton)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, automaton, Keyword.VIGILANCE)).isTrue();
     }
 }

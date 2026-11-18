@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -82,8 +83,8 @@ class FogOfWarTest extends BaseCardTest {
         Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         castFogOfWar();
 
-        giant.setPowerModifier(1);
-        elemental.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, giant, 1);
+        PermanentGrants.setPowerBoost(gd, elemental, -1);
         harness.forceActivePlayer(player2);
         giant.setAttacking(true);
         elemental.setAttacking(true);

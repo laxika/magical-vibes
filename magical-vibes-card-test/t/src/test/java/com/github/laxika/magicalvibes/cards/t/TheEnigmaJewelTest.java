@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CaptivatingCave;
 import com.github.laxika.magicalvibes.cards.c.CutthroatCenturion;
 import com.github.laxika.magicalvibes.cards.i.IronhoofBoar;
@@ -91,8 +92,8 @@ class TheEnigmaJewelTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, firstSacrifice.getId());
         resolveAllTriggers();
 
-        assertThat(locus.getPowerModifier()).isEqualTo(4);
-        assertThat(locus.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, locus)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, locus)).isEqualTo(4);
 
         harness.clearPriorityPassed();
         int updatedLocusIndex = gd.playerBattlefields.get(player1.getId()).indexOf(locus);

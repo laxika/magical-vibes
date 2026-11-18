@@ -25,8 +25,8 @@ class FaultRidersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Rhystic Cave");
-        assertThat(riders.getEffectivePower()).isEqualTo(4);
-        assertThat(riders.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, riders)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, riders)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, riders, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -42,8 +42,8 @@ class FaultRidersTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(riders.getEffectivePower()).isEqualTo(2);
-        assertThat(riders.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, riders)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, riders)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, riders, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -78,8 +78,8 @@ class FaultRidersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(riders.getEffectivePower()).isEqualTo(4);
-        assertThat(riders.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, riders)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, riders)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, riders, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -102,7 +102,7 @@ class FaultRidersTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Rhystic Cave");
         harness.assertNotOnBattlefield(player1, "Rhystic Cave");
-        assertThat(riders.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, riders)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, riders, Keyword.FIRST_STRIKE)).isFalse();
 
         harness.addToBattlefield(player1, new RhysticCave());
@@ -112,7 +112,7 @@ class FaultRidersTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(riders.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, riders)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, riders, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -141,7 +141,7 @@ class FaultRidersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(riders.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, riders)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, riders, Keyword.FIRST_STRIKE)).isTrue();
         harness.assertInGraveyard(player1, "Rhystic Cave");
     }
@@ -158,7 +158,7 @@ class FaultRidersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(riders.isTapped()).isTrue();
-        assertThat(riders.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, riders)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, riders, Keyword.FIRST_STRIKE)).isTrue();
         harness.assertInGraveyard(player1, "Rhystic Cave");
     }
@@ -173,16 +173,16 @@ class FaultRidersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, second, Keyword.FIRST_STRIKE)).isFalse();
 
         harness.addToBattlefield(player1, new RhysticCave());
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, first, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, second, Keyword.FIRST_STRIKE)).isTrue();
     }

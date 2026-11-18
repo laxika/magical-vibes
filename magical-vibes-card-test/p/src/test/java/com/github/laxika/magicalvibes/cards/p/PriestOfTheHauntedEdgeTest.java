@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredSwamp;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -31,8 +32,8 @@ class PriestOfTheHauntedEdgeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Priest of the Haunted Edge");
@@ -48,8 +49,8 @@ class PriestOfTheHauntedEdgeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
@@ -64,14 +65,14 @@ class PriestOfTheHauntedEdgeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -112,8 +113,8 @@ class PriestOfTheHauntedEdgeTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(land);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         harness.addToBattlefield(player1, new SnowCoveredSwamp());
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
@@ -128,7 +129,7 @@ class PriestOfTheHauntedEdgeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
@@ -215,8 +216,8 @@ class PriestOfTheHauntedEdgeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(returned.getPowerModifier()).isZero();
-        assertThat(returned.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, returned)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, returned)).isZero();
         harness.assertInGraveyard(player1, "Priest of the Haunted Edge");
         assertThat(gd.stack).isEmpty();
     }

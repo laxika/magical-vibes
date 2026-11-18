@@ -14,6 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 
 /**
  * Exchanges a player's life total with the source creature's power or toughness (Tree of Perdition, Evra).
@@ -84,17 +87,10 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
             gameLogService.append(gameData, GameLog.builder().text(playerName + " exchanges life total with ").card(source.getCard()).text("'s " + statName + " (" + playerName + ": " + currentLife + " -> " + currentStat + ", ").card(source.getCard()).text(" " + statName + ": " + currentStat + " -> " + currentLife + ").").build());
         }
 
-        // Set creature's base stat to the player's former life total (layer 7b setting effect,
-        // CR 613.4b). The timestamp orders the override against other 7b setters in the layered pass.
-        if (usePower) {
-            source.setBasePowerOverriddenPermanently(true);
-            source.setPermanentBasePowerOverride(currentLife);
-            source.setPermanentBasePowerOverrideTimestamp(gameData.nextTimestamp());
-        } else {
-            source.setBaseToughnessOverriddenPermanently(true);
-            source.setPermanentBaseToughnessOverride(currentLife);
-            source.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
-        }
+        // The creature's base stat becomes the player's former life total: a layer-7b setting effect with no
+        // stated duration (CR 613.4b, 611.2a), ordered against other 7b setters by its timestamp (CR 613.7b).
+        gameData.addEffectOnPermanent(entry, new SetBasePowerToughnessEffect(usePower ? currentLife : null,
+                usePower ? null : currentLife, GrantScope.TARGET, Duration.PERMANENT), source.getId(), Duration.PERMANENT);
 
         log.info("Game {} - {} exchanges life ({} -> {}) with {}'s {} ({} -> {})",
                 gameData.id, playerName, currentLife, currentStat,

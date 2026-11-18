@@ -30,11 +30,11 @@ class WindborneChargeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(first.getId(), second.getId()));
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isTrue();
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
     }
 
@@ -51,11 +51,11 @@ class WindborneChargeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(2);
-        assertThat(first.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isFalse();
-        assertThat(second.getEffectivePower()).isEqualTo(2);
-        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isFalse();
     }
 
@@ -109,11 +109,11 @@ class WindborneChargeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Grazing Gladehart");
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
-        assertThat(untargeted.getEffectivePower()).isEqualTo(2);
-        assertThat(untargeted.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, untargeted)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, untargeted)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, untargeted, Keyword.FLYING)).isFalse();
     }
 
@@ -135,8 +135,8 @@ class WindborneChargeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Windborne Charge");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(untargeted.getEffectivePower()).isEqualTo(2);
-        assertThat(untargeted.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, untargeted)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, untargeted)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, untargeted, Keyword.FLYING)).isFalse();
     }
 }

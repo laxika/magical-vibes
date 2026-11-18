@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -135,7 +136,7 @@ class TheLordOfTheEaglesTest extends BaseCardTest {
     @DisplayName("A flyer with negative power subtracts from the total")
     void negativePowerSubtractsFromTotal() {
         var flyer = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
-        flyer.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, flyer, -2);
         harness.addToBattlefield(player1, new SuntailHawk());
         harness.setHand(player1, List.of(new TheLordOfTheEagles()));
         harness.addMana(player1, ManaColor.BLUE, 2);

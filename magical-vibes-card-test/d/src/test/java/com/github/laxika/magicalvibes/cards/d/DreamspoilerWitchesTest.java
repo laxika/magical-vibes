@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowHarrier;
 import com.github.laxika.magicalvibes.cards.t.Tarfire;
 import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
@@ -61,8 +62,8 @@ class DreamspoilerWitchesTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bears.getPowerModifier()).isEqualTo(-1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(-1);
     }
 
     @Test
@@ -128,8 +129,8 @@ class DreamspoilerWitchesTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -64,7 +65,7 @@ class RayFilletWaveWarriorTest extends BaseCardTest {
     void evolveDoesNotTriggerForEqualCreature() {
         Permanent rayFillet = harness.addToBattlefieldAndReturn(player1, new RayFilletWaveWarrior());
 
-        rayFillet.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, rayFillet, 2);
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);

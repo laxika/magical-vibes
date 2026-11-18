@@ -26,8 +26,8 @@ class ArmorOfShadowsTest extends BaseCardTest {
 
         cast(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
@@ -52,7 +52,7 @@ class ArmorOfShadowsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -92,7 +92,7 @@ class ArmorOfShadowsTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         cast(target);
 
-        target.setToughnessModifier(-2);
+        PermanentGrants.setToughnessBoost(gd, target, -2);
         harness.runStateBasedActions();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
@@ -111,7 +111,7 @@ class ArmorOfShadowsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 

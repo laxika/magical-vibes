@@ -38,8 +38,8 @@ class VoiceOfTheWoodsTest extends BaseCardTest {
         assertThat(fourthElf.isTapped()).isTrue();
 
         Permanent token = findPermanent(player1, "Elemental");
-        assertThat(token.getEffectivePower()).isEqualTo(7);
-        assertThat(token.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(7);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ELEMENTAL);
         assertThat(token.getCard().getKeywords()).contains(Keyword.TRAMPLE);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -27,8 +28,8 @@ class RinoaHeartillyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent angelo = findPermanents(player1, "Angelo").getFirst();
-        assertThat(angelo.getEffectivePower()).isEqualTo(1);
-        assertThat(angelo.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, angelo)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, angelo)).isEqualTo(1);
         assertThat(angelo.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
         assertThat(angelo.getCard().getColors()).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
         assertThat(angelo.getCard().getSubtypes()).contains(CardSubtype.DOG);
@@ -45,8 +46,8 @@ class RinoaHeartillyTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -72,14 +73,14 @@ class RinoaHeartillyTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -97,9 +98,9 @@ class RinoaHeartillyTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, angelo.getId());
         harness.passBothPriorities();
 
-        assertThat(angelo.getEffectivePower()).isEqualTo(3);
-        assertThat(angelo.getEffectiveToughness()).isEqualTo(3);
-        assertThat(rinoa.getPowerModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, angelo)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, angelo)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, rinoa)).isZero();
     }
 
     @Test
@@ -118,8 +119,8 @@ class RinoaHeartillyTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(rinoa.getCard()));
         harness.passBothPriorities();
 
-        assertThat(angelo.getEffectivePower()).isEqualTo(2);
-        assertThat(angelo.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, angelo)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, angelo)).isEqualTo(2);
     }
 
     @Test
@@ -138,8 +139,8 @@ class RinoaHeartillyTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(angelo);
         harness.passBothPriorities();
 
-        assertThat(angelo.getEffectivePower()).isEqualTo(1);
-        assertThat(angelo.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, angelo)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, angelo)).isEqualTo(1);
     }
 
     private void castRinoa() {

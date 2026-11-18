@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlertShuInfantry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -26,8 +27,8 @@ class PangTongYoungPhoenixTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent infantry = findPermanent(player1, "Alert Shu Infantry");
-        assertThat(infantry.getPowerModifier()).isEqualTo(0);
-        assertThat(infantry.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, infantry)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, infantry)).isEqualTo(2);
     }
 
     @Test
@@ -43,8 +44,8 @@ class PangTongYoungPhoenixTest extends BaseCardTest {
         harness.passUntil(TurnStep.CLEANUP);
 
         Permanent infantry = findPermanent(player1, "Alert Shu Infantry");
-        assertThat(infantry.getPowerModifier()).isEqualTo(0);
-        assertThat(infantry.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, infantry)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, infantry)).isEqualTo(0);
     }
 
     @Test
@@ -120,8 +121,8 @@ class PangTongYoungPhoenixTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent infantry = findPermanent(player2, "Alert Shu Infantry");
-        assertThat(infantry.getPowerModifier()).isEqualTo(0);
-        assertThat(infantry.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, infantry)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, infantry)).isEqualTo(2);
     }
 
     @Test
@@ -134,8 +135,8 @@ class PangTongYoungPhoenixTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(pangTong.isTapped()).isTrue();
-        assertThat(pangTong.getPowerModifier()).isZero();
-        assertThat(pangTong.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, pangTong)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pangTong)).isEqualTo(2);
     }
 
     @Test
@@ -167,7 +168,7 @@ class PangTongYoungPhoenixTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(findPermanent(player1, "Alert Shu Infantry").getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player1, "Alert Shu Infantry"))).isEqualTo(2);
     }
 
     private void setupOnMyTurn(TurnStep step) {

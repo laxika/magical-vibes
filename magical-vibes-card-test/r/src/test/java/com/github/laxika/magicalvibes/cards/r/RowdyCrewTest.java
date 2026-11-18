@@ -73,8 +73,8 @@ class RowdyCrewTest extends BaseCardTest {
 
         // Should have 2 +1/+1 counters → 5/5
         assertThat(rowdyCrew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(rowdyCrew.getEffectivePower()).isEqualTo(5);
-        assertThat(rowdyCrew.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, rowdyCrew)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, rowdyCrew)).isEqualTo(5);
     }
 
 
@@ -102,8 +102,8 @@ class RowdyCrewTest extends BaseCardTest {
 
         // No counters — creature and land don't share a card type
         assertThat(rowdyCrew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
-        assertThat(rowdyCrew.getEffectivePower()).isEqualTo(3);
-        assertThat(rowdyCrew.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rowdyCrew)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, rowdyCrew)).isEqualTo(3);
     }
 
 

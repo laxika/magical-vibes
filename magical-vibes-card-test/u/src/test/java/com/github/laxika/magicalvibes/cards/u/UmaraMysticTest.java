@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -31,11 +32,11 @@ class UmaraMysticTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(mystic.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isEqualTo(2);
 
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.castAndResolveSorcery(player1, 0, 0);
-        assertThat(mystic.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isEqualTo(4);
     }
 
     @Test
@@ -50,7 +51,7 @@ class UmaraMysticTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(mystic.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isEqualTo(2);
     }
 
     @Test
@@ -65,7 +66,7 @@ class UmaraMysticTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(mystic.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isEqualTo(0);
     }
 
     @Test
@@ -77,14 +78,14 @@ class UmaraMysticTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new Shock()));
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(mystic.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isEqualTo(2);
 
         resolveAllTriggers();
         harness.forceStep(TurnStep.END_STEP);
-        assertThat(mystic.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isEqualTo(2);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(mystic.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isEqualTo(0);
     }
 
     @Test
@@ -99,8 +100,8 @@ class UmaraMysticTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(mystic.getPowerModifier()).isZero();
-        assertThat(mystic.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mystic)).isZero();
     }
 
     @Test
@@ -113,8 +114,8 @@ class UmaraMysticTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(mystic.getPowerModifier()).isEqualTo(2);
-        assertThat(mystic.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mystic)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mystic)).isZero();
     }
 
     @Test
@@ -131,10 +132,10 @@ class UmaraMysticTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
 
         harness.passBothPriorities();
 
@@ -143,8 +144,8 @@ class UmaraMysticTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent != first && permanent != second)
                 .singleElement()
                 .satisfies(permanent -> {
-                    assertThat(permanent.getPowerModifier()).isZero();
-                    assertThat(permanent.getToughnessModifier()).isZero();
+                    assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isZero();
+                    assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isZero();
                 });
     }
 
@@ -162,8 +163,8 @@ class UmaraMysticTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .singleElement()
                 .satisfies(permanent -> {
-                    assertThat(permanent.getPowerModifier()).isZero();
-                    assertThat(permanent.getToughnessModifier()).isZero();
+                    assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isZero();
+                    assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isZero();
                 });
     }
 

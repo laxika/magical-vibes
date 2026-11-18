@@ -31,8 +31,8 @@ class BroodguardEliteTest extends BaseCardTest {
 
         Permanent elite = findPermanent(player1, "Broodguard Elite");
         assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(elite.getEffectivePower()).isEqualTo(3);
-        assertThat(elite.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, elite)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elite)).isEqualTo(3);
     }
 
     @Test

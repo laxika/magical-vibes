@@ -31,8 +31,8 @@ class CivilServantTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(citizen.isTapped()).isTrue();
-        assertThat(servant.getEffectivePower()).isEqualTo(3);
-        assertThat(servant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, servant, Keyword.LIFELINK)).isTrue();
     }
 
@@ -47,8 +47,8 @@ class CivilServantTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(citizen.isTapped()).isFalse();
-        assertThat(servant.getEffectivePower()).isEqualTo(2);
-        assertThat(servant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, servant, Keyword.LIFELINK)).isFalse();
     }
 
@@ -63,8 +63,8 @@ class CivilServantTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(soldier.isTapped()).isFalse();
-        assertThat(servant.getEffectivePower()).isEqualTo(2);
-        assertThat(servant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, servant, Keyword.LIFELINK)).isFalse();
     }
 
@@ -83,8 +83,8 @@ class CivilServantTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(servant.getEffectivePower()).isEqualTo(2);
-        assertThat(servant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, servant, Keyword.LIFELINK)).isFalse();
     }
 
@@ -99,7 +99,7 @@ class CivilServantTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(citizen.isTapped()).isTrue();
-        assertThat(servant.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, servant, Keyword.LIFELINK)).isTrue();
     }
 
@@ -113,7 +113,7 @@ class CivilServantTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(citizen.isTapped()).isFalse();
-        assertThat(servant.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, servant, Keyword.LIFELINK)).isFalse();
     }
 
@@ -128,7 +128,7 @@ class CivilServantTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(citizen.isTapped()).isTrue();
-        assertThat(servant.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, servant, Keyword.LIFELINK)).isFalse();
     }
 
@@ -145,7 +145,7 @@ class CivilServantTest extends BaseCardTest {
 
         assertThat(first.isTapped()).isFalse();
         assertThat(second.isTapped()).isTrue();
-        assertThat(servant.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, servant, Keyword.LIFELINK)).isTrue();
         assertThat(gqs.hasKeyword(gd, second, Keyword.LIFELINK)).isFalse();
     }
@@ -160,7 +160,7 @@ class CivilServantTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(servant.isTapped()).isFalse();
-        assertThat(servant.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, servant)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, servant, Keyword.LIFELINK)).isFalse();
     }
 

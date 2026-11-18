@@ -64,8 +64,8 @@ class PurgingStormbroodTest extends BaseCardTest {
         harness.castWithAlternateCost(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
         assertThat(gd.playerDecks.get(player1.getId())).contains(card);
@@ -86,8 +86,8 @@ class PurgingStormbroodTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
     }
@@ -140,7 +140,7 @@ class PurgingStormbroodTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(omen);
         assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(omen);
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
         harness.assertLife(player2, 20);
     }
@@ -161,8 +161,8 @@ class PurgingStormbroodTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertLife(player2, 18);
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
     }

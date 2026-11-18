@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -39,16 +40,16 @@ class CylianSunsingerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Source and every other same-name creature (both controllers) get +3/+3
-        assertThat(source.getEffectivePower()).isEqualTo(5);
-        assertThat(source.getEffectiveToughness()).isEqualTo(5);
-        assertThat(ownCopy.getEffectivePower()).isEqualTo(5);
-        assertThat(ownCopy.getEffectiveToughness()).isEqualTo(5);
-        assertThat(oppCopy.getEffectivePower()).isEqualTo(5);
-        assertThat(oppCopy.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ownCopy)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ownCopy)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, oppCopy)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, oppCopy)).isEqualTo(5);
 
         // Different-named creature is untouched
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -63,14 +64,14 @@ class CylianSunsingerTest extends BaseCardTest {
         harness.activateAbility(player1, sourceIndex, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(0);
-        assertThat(source.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
     }
 
     @Test
@@ -89,10 +90,10 @@ class CylianSunsingerTest extends BaseCardTest {
         harness.assertInHand(player1, "Cylian Sunsinger");
         harness.passBothPriorities();
 
-        assertThat(ownCopy.getEffectivePower()).isEqualTo(5);
-        assertThat(ownCopy.getEffectiveToughness()).isEqualTo(5);
-        assertThat(opponentCopy.getEffectivePower()).isEqualTo(5);
-        assertThat(opponentCopy.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ownCopy)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ownCopy)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opponentCopy)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCopy)).isEqualTo(5);
     }
 
     @Test
@@ -106,11 +107,11 @@ class CylianSunsingerTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player2, new CylianSunsinger());
 
-        assertThat(source.getEffectivePower()).isEqualTo(5);
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(5);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(5);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
     }
 
     @Test
@@ -125,8 +126,8 @@ class CylianSunsingerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(8);
-        assertThat(source.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(8);
         assertThat(source.isTapped()).isFalse();
     }
 }

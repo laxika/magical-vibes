@@ -24,14 +24,14 @@ class ElusiveSpellfistTest extends BaseCardTest {
     @DisplayName("Casting a noncreature spell boosts Elusive Spellfist and makes it unblockable")
     void noncreatureSpellBoostsAndMakesUnblockable() {
         Permanent spellfist = addSpellfist();
-        int initialPower = spellfist.getEffectivePower();
+        int initialPower = gqs.getEffectivePower(gd, spellfist);
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(spellfist.getEffectivePower()).isEqualTo(initialPower + 1);
+        assertThat(gqs.getEffectivePower(gd, spellfist)).isEqualTo(initialPower + 1);
         assertThat(gqs.hasCantBeBlocked(gd, spellfist)).isTrue();
     }
 
@@ -45,7 +45,7 @@ class ElusiveSpellfistTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        assertThat(spellfist.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, spellfist)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, spellfist)).isFalse();
     }
 
@@ -58,14 +58,14 @@ class ElusiveSpellfistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(spellfist.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spellfist)).isEqualTo(2);
         assertThat(gqs.hasCantBeBlocked(gd, spellfist)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(spellfist.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, spellfist)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, spellfist)).isFalse();
     }
 
@@ -76,13 +76,13 @@ class ElusiveSpellfistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SpidersilkNet()));
 
         harness.castArtifact(player1, 0);
-        assertThat(spellfist.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, spellfist)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, spellfist)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(spellfist.getEffectivePower()).isEqualTo(2);
-        assertThat(spellfist.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, spellfist)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spellfist)).isEqualTo(3);
         assertThat(gqs.hasCantBeBlocked(gd, spellfist)).isTrue();
         assertThat(countPermanents(player1, "Spidersilk Net")).isZero();
 
@@ -103,13 +103,13 @@ class ElusiveSpellfistTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
-        assertThat(first.getEffectiveToughness()).isEqualTo(3);
-        assertThat(second.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
         assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
         assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
-        assertThat(opposing.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, opposing)).isFalse();
     }
 
@@ -123,7 +123,7 @@ class ElusiveSpellfistTest extends BaseCardTest {
         harness.castInstant(player2, 0, player1.getId());
         resolveAllTriggers();
 
-        assertThat(spellfist.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, spellfist)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, spellfist)).isFalse();
     }
 
@@ -138,8 +138,8 @@ class ElusiveSpellfistTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 
-        assertThat(spellfist.getEffectivePower()).isEqualTo(2);
-        assertThat(spellfist.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, spellfist)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spellfist)).isEqualTo(3);
         assertThat(gqs.hasCantBeBlocked(gd, spellfist)).isTrue();
     }
 
@@ -154,7 +154,7 @@ class ElusiveSpellfistTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Elusive Spellfist")).isEqualTo(2);
-        assertThat(spellfist.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, spellfist)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, spellfist)).isFalse();
     }
 

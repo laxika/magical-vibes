@@ -23,15 +23,15 @@ class MawOfKozilekTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(maw.getEffectivePower()).isEqualTo(4);
-        assertThat(maw.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, maw)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, maw)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(maw.getEffectivePower()).isEqualTo(2);
-        assertThat(maw.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, maw)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, maw)).isEqualTo(5);
     }
 
     @Test
@@ -44,8 +44,8 @@ class MawOfKozilekTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("mana");
 
-        assertThat(maw.getEffectivePower()).isEqualTo(2);
-        assertThat(maw.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, maw)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, maw)).isEqualTo(5);
     }
 
     @Test
@@ -59,8 +59,8 @@ class MawOfKozilekTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(maw.getEffectivePower()).isEqualTo(6);
-        assertThat(maw.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, maw)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, maw)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Maw of Kozilek");
 
         harness.activateAbility(player1, 0, null, null);
@@ -81,8 +81,8 @@ class MawOfKozilekTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(maw.getEffectivePower()).isEqualTo(4);
-        assertThat(maw.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, maw)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, maw)).isEqualTo(3);
         assertThat(maw.isTapped()).isTrue();
     }
 

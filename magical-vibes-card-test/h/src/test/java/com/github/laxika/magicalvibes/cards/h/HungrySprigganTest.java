@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.k.KithkinShielddare;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,8 +26,8 @@ class HungrySprigganTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(spriggan.getPowerModifier()).isEqualTo(3);
-        assertThat(spriggan.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, spriggan)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spriggan)).isEqualTo(3);
     }
 
     @Test
@@ -49,7 +50,7 @@ class HungrySprigganTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
         harness.assertLife(player2, 17);
-        assertThat(spriggan.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, spriggan)).isEqualTo(3);
     }
 
     @Test
@@ -60,12 +61,12 @@ class HungrySprigganTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(spriggan.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, spriggan)).isEqualTo(3);
 
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(spriggan.getPowerModifier()).isEqualTo(0);
-        assertThat(spriggan.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, spriggan)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spriggan)).isEqualTo(0);
     }
 
     @Test
@@ -76,16 +77,16 @@ class HungrySprigganTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(3);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(3);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -98,8 +99,8 @@ class HungrySprigganTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(spriggan.getPowerModifier()).isZero();
-        assertThat(spriggan.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spriggan)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spriggan)).isZero();
         resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(spriggan);

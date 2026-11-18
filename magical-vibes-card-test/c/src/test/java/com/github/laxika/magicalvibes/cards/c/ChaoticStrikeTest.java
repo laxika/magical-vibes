@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.r.RagingKavu;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -30,11 +31,11 @@ class ChaoticStrikeTest extends BaseCardTest {
                 .anyMatch(log -> log.contains("wins the coin flip"));
 
         if (won) {
-            assertThat(target.getEffectivePower()).isEqualTo(4);
-            assertThat(target.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         } else {
-            assertThat(target.getEffectivePower()).isEqualTo(3);
-            assertThat(target.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         }
     }
 
@@ -64,8 +65,8 @@ class ChaoticStrikeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test

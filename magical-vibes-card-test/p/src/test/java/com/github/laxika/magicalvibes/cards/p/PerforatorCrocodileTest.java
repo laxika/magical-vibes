@@ -35,7 +35,7 @@ class PerforatorCrocodileTest extends BaseCardTest {
         assertThat(wounds).allMatch(Permanent::isAttached);
         assertThat(wounds).extracting(Permanent::getAttachedTo)
                 .containsExactlyInAnyOrder(firstOpponentCreature.getId(), secondOpponentCreature.getId());
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, firstOpponentCreature)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, secondOpponentCreature)).isEqualTo(1);
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiveNoGround;
 import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,8 +30,8 @@ class CursedRoninTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(ronin.getPowerModifier()).isEqualTo(1);
-        assertThat(ronin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isEqualTo(1);
     }
 
     @Test
@@ -44,8 +45,8 @@ class CursedRoninTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(ronin.getPowerModifier()).isEqualTo(1);
-        assertThat(ronin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ronin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ronin)).isEqualTo(1);
     }
 
     @Test

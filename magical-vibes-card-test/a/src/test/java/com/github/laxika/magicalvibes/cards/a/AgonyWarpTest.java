@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -27,10 +28,10 @@ class AgonyWarpTest extends BaseCardTest {
         Permanent second = addCreature(player2);
         castAgonyWarp(List.of(first.getId(), second.getId()));
 
-        assertThat(first.getPowerModifier()).isEqualTo(-3);
-        assertThat(first.getToughnessModifier()).isEqualTo(0);
-        assertThat(second.getPowerModifier()).isEqualTo(0);
-        assertThat(second.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(-3);
     }
 
     @Test
@@ -67,8 +68,8 @@ class AgonyWarpTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(0);
-        assertThat(first.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(0);
     }
 
     @Test
@@ -91,14 +92,14 @@ class AgonyWarpTest extends BaseCardTest {
         castAgonyWarp(List.of(creature.getId(), creature.getId()));
 
         harness.assertOnBattlefield(player1, "Craw Wurm");
-        assertThat(creature.getPowerModifier()).isEqualTo(-3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(-3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -113,8 +114,8 @@ class AgonyWarpTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(second.getPowerModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(-3);
         harness.assertOnBattlefield(player1, "Craw Wurm");
         harness.assertInGraveyard(player1, "Agony Warp");
     }
@@ -131,8 +132,8 @@ class AgonyWarpTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(-3);
-        assertThat(first.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Agony Warp");
     }
@@ -149,8 +150,8 @@ class AgonyWarpTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Agony Warp");
     }

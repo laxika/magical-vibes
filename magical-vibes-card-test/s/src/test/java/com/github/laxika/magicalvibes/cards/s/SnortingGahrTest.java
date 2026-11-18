@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -28,8 +29,8 @@ class SnortingGahrTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(gahr.getPowerModifier()).isEqualTo(2);
-        assertThat(gahr.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gahr)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gahr)).isEqualTo(2);
     }
 
     @Test
@@ -46,8 +47,8 @@ class SnortingGahrTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(gahr.getPowerModifier()).isEqualTo(2);
-        assertThat(gahr.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gahr)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gahr)).isEqualTo(2);
     }
 
     @Test
@@ -59,8 +60,8 @@ class SnortingGahrTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(gahr.getPowerModifier()).isZero();
-        assertThat(gahr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gahr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gahr)).isZero();
     }
 
     @Test
@@ -78,8 +79,8 @@ class SnortingGahrTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gahr.getPowerModifier()).isZero();
-        assertThat(gahr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gahr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gahr)).isZero();
     }
 
     @Test
@@ -93,8 +94,8 @@ class SnortingGahrTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(gahr.getPowerModifier()).isZero();
-        assertThat(gahr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gahr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gahr)).isZero();
     }
 
     @Test
@@ -110,10 +111,10 @@ class SnortingGahrTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blockedGahr.getPowerModifier()).isEqualTo(2);
-        assertThat(blockedGahr.getToughnessModifier()).isEqualTo(2);
-        assertThat(unblockedGahr.getPowerModifier()).isZero();
-        assertThat(unblockedGahr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blockedGahr)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blockedGahr)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, unblockedGahr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, unblockedGahr)).isZero();
     }
 
     private Permanent addReadyGahr(Player player) {

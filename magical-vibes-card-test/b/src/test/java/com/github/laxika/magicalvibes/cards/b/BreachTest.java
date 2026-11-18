@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Cathodion;
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
@@ -34,8 +35,8 @@ class BreachTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, gorilla.getId());
 
-        assertThat(gorilla.getPowerModifier()).isEqualTo(2);
-        assertThat(gorilla.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gorilla)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gorilla)).isZero();
         assertThat(gqs.hasKeyword(gd, gorilla, Keyword.FEAR)).isTrue();
     }
 
@@ -48,7 +49,7 @@ class BreachTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, gorilla.getId());
 
-        assertThat(gorilla.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gorilla)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, gorilla, Keyword.FEAR)).isTrue();
     }
 
@@ -65,8 +66,8 @@ class BreachTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gorilla.getPowerModifier()).isZero();
-        assertThat(gorilla.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gorilla)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gorilla)).isZero();
         assertThat(gqs.hasKeyword(gd, gorilla, Keyword.FEAR)).isFalse();
     }
 
@@ -130,7 +131,7 @@ class BreachTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Blood Vassal");
         harness.assertInGraveyard(player1, "Breach");
         assertThat(gd.stack).isEmpty();
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.FEAR)).isFalse();
     }
 

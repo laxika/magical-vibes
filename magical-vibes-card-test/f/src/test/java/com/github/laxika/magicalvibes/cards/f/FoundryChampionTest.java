@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DiscipleOfTheOldWays;
 import com.github.laxika.magicalvibes.cards.r.RapidHybridization;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -130,8 +131,8 @@ class FoundryChampionTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Foundry Champion");
         Permanent token = findPermanent(player1, "Frog Lizard");
-        assertThat(token.getPowerModifier()).isZero();
-        assertThat(token.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, token)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, token)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -150,8 +151,8 @@ class FoundryChampionTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(champion.getPowerModifier()).isEqualTo(2);
-        assertThat(champion.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, champion)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, champion)).isEqualTo(2);
         assertThat(champion.isTapped()).isTrue();
     }
 
@@ -164,8 +165,8 @@ class FoundryChampionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(champion.getPowerModifier()).isEqualTo(1);
-        assertThat(champion.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, champion)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, champion)).isEqualTo(0);
     }
 
     @Test
@@ -177,8 +178,8 @@ class FoundryChampionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(champion.getPowerModifier()).isEqualTo(0);
-        assertThat(champion.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, champion)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, champion)).isEqualTo(1);
     }
 
     @Test
@@ -193,14 +194,14 @@ class FoundryChampionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(champion.getPowerModifier()).isEqualTo(1);
-        assertThat(champion.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, champion)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, champion)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(champion.getPowerModifier()).isEqualTo(0);
-        assertThat(champion.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, champion)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, champion)).isEqualTo(0);
     }
 }

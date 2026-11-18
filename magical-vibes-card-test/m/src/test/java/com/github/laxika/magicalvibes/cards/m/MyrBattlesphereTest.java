@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.k.KothOfTheHammer;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
@@ -103,8 +104,8 @@ class MyrBattlesphereTest extends BaseCardTest {
 
         // Battlesphere should be boosted by +3/+0
         Permanent battlesphere = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(battlesphere.getPowerModifier()).isEqualTo(3);
-        assertThat(battlesphere.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, battlesphere)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, battlesphere)).isEqualTo(0);
 
         // Defending player takes 3 trigger damage + 7 combat damage (4 base + 3 boost) = 10
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10);
@@ -130,7 +131,7 @@ class MyrBattlesphereTest extends BaseCardTest {
 
         // Battlesphere should not be boosted
         Permanent battlesphere = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(battlesphere.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, battlesphere)).isEqualTo(0);
 
         // No trigger damage, but Battlesphere still deals 4 combat damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
@@ -152,7 +153,7 @@ class MyrBattlesphereTest extends BaseCardTest {
 
         // Battlesphere should be boosted by +2/+0
         Permanent battlesphere = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(battlesphere.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, battlesphere)).isEqualTo(2);
 
         // Defending player takes 2 trigger damage + 6 combat damage (4 base + 2 boost) = 8
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
@@ -172,7 +173,7 @@ class MyrBattlesphereTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
 
         // No trigger damage or boost, but Battlesphere still deals 4 combat damage
-        assertThat(battlesphere.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, battlesphere)).isEqualTo(0);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
@@ -198,7 +199,7 @@ class MyrBattlesphereTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(untappedMyrId));
 
         Permanent battlesphere = battlefield.getFirst();
-        assertThat(battlesphere.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, battlesphere)).isEqualTo(1);
         // 1 trigger damage + 5 combat damage (4 base + 1 boost) = 6
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
@@ -244,7 +245,7 @@ class MyrBattlesphereTest extends BaseCardTest {
 
         assertThat(koth.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gd.playerBattlefields.get(player1.getId()).getFirst())).isEqualTo(2);
     }
 
     @Test
@@ -299,7 +300,7 @@ class MyrBattlesphereTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
                 () -> harness.handleMultiplePermanentsChosen(player1, List.of(otherMyr.getId())));
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
         assertThat(otherMyr.isTapped()).isTrue();
         assertThat(opposingMyr.isTapped()).isFalse();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
@@ -319,7 +320,7 @@ class MyrBattlesphereTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
                 () -> harness.handleMultiplePermanentsChosen(player1, myrIds));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gd.playerBattlefields.get(player1.getId()).getFirst())).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         for (UUID myrId : myrIds) {
             assertThat(gqs.findPermanentById(gd, myrId).isTapped()).isTrue();
@@ -339,7 +340,7 @@ class MyrBattlesphereTest extends BaseCardTest {
                 () -> harness.handleMultiplePermanentsChosen(player1, List.of(battlesphere.getId())));
 
         assertThat(battlesphere.isTapped()).isTrue();
-        assertThat(battlesphere.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, battlesphere)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 

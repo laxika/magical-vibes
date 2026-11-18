@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SauroformHybrid;
 import com.github.laxika.magicalvibes.cards.s.SimicGuildgate;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -25,8 +26,8 @@ class AppliedBiomancyTest extends BaseCardTest {
 
         cast(new int[]{0}, List.of(creature.getId()));
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -73,8 +74,8 @@ class AppliedBiomancyTest extends BaseCardTest {
         cast(new int[]{0, 1}, List.of(boosted.getId(), bounced.getId()));
 
         harness.assertOnBattlefield(player1, "Sauroform Hybrid");
-        assertThat(boosted.getPowerModifier()).isEqualTo(1);
-        assertThat(boosted.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, boosted)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, boosted)).isEqualTo(1);
         harness.assertNotOnBattlefield(player2, "Sauroform Hybrid");
         harness.assertInHand(player2, "Sauroform Hybrid");
     }
@@ -87,8 +88,8 @@ class AppliedBiomancyTest extends BaseCardTest {
         cast(new int[]{0}, List.of(creature.getId()));
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -135,8 +136,8 @@ class AppliedBiomancyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Sauroform Hybrid");
-        assertThat(boosted.getPowerModifier()).isEqualTo(1);
-        assertThat(boosted.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, boosted)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, boosted)).isEqualTo(1);
         harness.assertNotOnBattlefield(player2, "Sauroform Hybrid");
         harness.assertInHand(player2, "Sauroform Hybrid");
         assertThat(gd.stack).isEmpty();

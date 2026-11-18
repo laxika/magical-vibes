@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlpineWatchdog;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -44,8 +45,8 @@ class SiegeStrikerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
 
-        assertThat(striker.getPowerModifier()).isEqualTo(2);
-        assertThat(striker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, striker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, striker)).isEqualTo(2);
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
     }
@@ -60,8 +61,8 @@ class SiegeStrikerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        assertThat(striker.getPowerModifier()).isZero();
-        assertThat(striker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, striker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, striker)).isZero();
         assertThat(creature.isTapped()).isFalse();
     }
 
@@ -75,15 +76,15 @@ class SiegeStrikerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
 
-        assertThat(striker.getPowerModifier()).isEqualTo(1);
-        assertThat(striker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, striker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, striker)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(striker.getPowerModifier()).isZero();
-        assertThat(striker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, striker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, striker)).isZero();
     }
 
     @Test
@@ -104,7 +105,7 @@ class SiegeStrikerTest extends BaseCardTest {
         assertThat(choice.validIds()).containsExactly(eligible.getId());
         harness.handleMultiplePermanentsChosen(player1, List.of(eligible.getId()));
 
-        assertThat(striker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, striker)).isEqualTo(1);
         assertThat(opponent.isTapped()).isFalse();
         assertThat(land.isTapped()).isFalse();
     }
@@ -121,8 +122,8 @@ class SiegeStrikerTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(striker.getPowerModifier()).isEqualTo(1);
-        assertThat(striker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, striker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, striker)).isEqualTo(1);
     }
 
     @Test
@@ -152,7 +153,7 @@ class SiegeStrikerTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(striker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, striker)).isZero();
         harness.assertLife(player2, 18);
     }
 
@@ -169,7 +170,7 @@ class SiegeStrikerTest extends BaseCardTest {
         first.untap();
         gd.playerBattlefields.get(player1.getId()).remove(second);
 
-        assertThat(striker.getPowerModifier()).isEqualTo(2);
-        assertThat(striker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, striker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, striker)).isEqualTo(2);
     }
 }

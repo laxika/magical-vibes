@@ -49,8 +49,8 @@ class IAmNeverAloneTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(commanderPermanent.getEffectivePower());
-        assertThat(token.getEffectiveToughness()).isEqualTo(commanderPermanent.getEffectiveToughness());
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(gqs.getEffectivePower(gd, commanderPermanent));
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(gqs.getEffectiveToughness(gd, commanderPermanent));
     }
 
     @Test
@@ -66,8 +66,8 @@ class IAmNeverAloneTest extends BaseCardTest {
         Permanent token = findToken(commander.getName());
         assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(token.isTapped()).isFalse();
-        assertThat(token.getEffectivePower()).isEqualTo(commanderPermanent.getEffectivePower() - 2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(commanderPermanent.getEffectiveToughness() - 2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(gqs.getEffectivePower(gd, commanderPermanent) - 2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(gqs.getEffectiveToughness(gd, commanderPermanent) - 2);
     }
 
     @Test
@@ -130,8 +130,8 @@ class IAmNeverAloneTest extends BaseCardTest {
         resolveScheme();
 
         Permanent token = findToken(copiedCard.getName());
-        assertThat(token.getEffectivePower()).isEqualTo(commanderPermanent.getEffectivePower());
-        assertThat(token.getEffectiveToughness()).isEqualTo(commanderPermanent.getEffectiveToughness());
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(gqs.getEffectivePower(gd, commanderPermanent));
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(gqs.getEffectiveToughness(gd, commanderPermanent));
         assertThat(token.getCard().getSupertypes()).doesNotContain(CardSupertype.LEGENDARY);
         assertThat(gd.isCommander(token.getCard().getId())).isFalse();
     }
@@ -178,8 +178,8 @@ class IAmNeverAloneTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst().orElseThrow();
         assertThat(token.isFaceDown()).isFalse();
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
     }
 
     @Test
@@ -194,8 +194,8 @@ class IAmNeverAloneTest extends BaseCardTest {
 
         Permanent token = findToken(commander.getName());
         assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
     }
 
     @Test

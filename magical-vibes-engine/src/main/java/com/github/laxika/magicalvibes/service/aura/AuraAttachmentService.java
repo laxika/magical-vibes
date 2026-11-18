@@ -45,6 +45,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
+import org.springframework.beans.factory.ObjectProvider;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 
 /**
  * Handles aura and attachment lifecycle: removing orphaned or unattached auras and detaching
@@ -57,6 +59,9 @@ import java.util.function.Predicate;
 @RequiredArgsConstructor
 public class AuraAttachmentService {
 
+    /** Why an Aura that is also a creature is put into its owner's graveyard (CR 303.4d). */
+    private static final String AURA_IS_A_CREATURE = "it is a creature";
+
     private final GameQueryService gameQueryService;
     private final DurationClock durationClock;
     private final GameLogService gameLogService;
@@ -65,6 +70,7 @@ public class AuraAttachmentService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetLegalityService targetLegalityService;
     private final UnattachTriggerSupport unattachTriggerSupport;
+    private final ObjectProvider<PermanentRemovalService> permanentRemovalServiceProvider;
 
     /**
      * A card that was put into the graveyard as an orphaned aura, along with the controller
@@ -281,6 +287,13 @@ public class AuraAttachmentService {
             lastKnown.setAttachedTo(null);
         }
         lastKnown.setLosesAllAbilitiesUntilEndOfTurn(gameQueryService.hasLostPrintedAbilities(gameData, aura));
+        // It leaves as it last existed (CR 603.10a): with the card types it had, and as a creature (an animated Aura)
+        // with the power and toughness it had.
+        lastKnown.setCard(permanentRemovalServiceProvider.getObject().snapshotEffectivePermanentCard(gameData, aura));
+        if (gameQueryService.isCreature(gameData, aura)) {
+            lastKnown.setLastKnownPower(gameQueryService.getEffectivePower(gameData, aura));
+            lastKnown.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, aura));
+        }
         Set<UUID> cardIds = new LinkedHashSet<>();
         cardIds.add(aura.getOriginalCard().getId());
         cardIds.add(aura.getCard().getId());
@@ -395,10 +408,12 @@ public class AuraAttachmentService {
                         gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes an enchantment creature (bestow attachment became illegal)."));
                         log.info("Game {} - {} becomes a creature after illegal bestow attachment", gameData.id, p.getCard().getName());
                     } else {
-                        // CR 704.5m — an illegally attached aura is put into its owner's graveyard
+                        // CR 704.5m — an illegally attached aura is put into its owner's graveyard. One that is
+                        // also a creature becomes unattached first, so it enchanted nothing as it left (CR 303.4d).
                         boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
-                        snapshotDepartingSource(gameData, p, false);
-                        emitSweptDeparture(gameData, p, playerId, playerId, false);
+                        boolean unattachedFirst = AURA_IS_A_CREATURE.equals(reason);
+                        snapshotDepartingSource(gameData, p, unattachedFirst);
+                        emitSweptDeparture(gameData, p, playerId, playerId, unattachedFirst);
                         it.remove();
                         durationClock.sourceLeft(gameData, p.getId());
                         boolean wentToGraveyard = graveyardService.addCardToGraveyard(
@@ -525,6 +540,10 @@ public class AuraAttachmentService {
      */
     private String illegalAttachmentReason(GameData gameData, Permanent attachment, UUID controllerId,
                                            boolean isAura, boolean isFortification) {
+        // CR 303.4d: an Aura that's also a creature can't enchant anything, whatever it is attached to.
+        if (isAura && gameQueryService.isCreature(gameData, attachment)) {
+            return AURA_IS_A_CREATURE;
+        }
         UUID attachedTo = attachment.getAttachedTo();
         if (gameData.playerIds.contains(attachedTo)) {
             TargetFilter filter = attachment.getCard().getDeclaredTargetFilter();

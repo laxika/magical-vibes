@@ -58,11 +58,11 @@ class BladecoilSerpentTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         Permanent serpent = findPermanent(player1, "Bladecoil Serpent");
-        assertThat(serpent.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(5);
 
         harness.passBothPriorities();
 
-        assertThat(serpent.getEffectivePower()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, serpent, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, serpent, Keyword.HASTE)).isTrue();
     }
@@ -78,7 +78,7 @@ class BladecoilSerpentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent serpent = findPermanent(player1, "Bladecoil Serpent");
-        assertThat(serpent.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, serpent, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, serpent, Keyword.HASTE)).isFalse();
     }
@@ -112,7 +112,7 @@ class BladecoilSerpentTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(3);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
-        assertThat(findPermanent(player1, "Bladecoil Serpent").getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Bladecoil Serpent"))).isEqualTo(5);
     }
 
     @Test
@@ -138,7 +138,7 @@ class BladecoilSerpentTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        assertThat(serpent.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, serpent, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -167,7 +167,7 @@ class BladecoilSerpentTest extends BaseCardTest {
         harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
 
         Permanent serpent = findPermanent(player1, "Bladecoil Serpent");
-        assertThat(serpent.getEffectivePower()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, serpent, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, serpent, Keyword.HASTE)).isTrue();
 
@@ -175,7 +175,7 @@ class BladecoilSerpentTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(serpent.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, serpent, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, serpent, Keyword.HASTE)).isFalse();
     }

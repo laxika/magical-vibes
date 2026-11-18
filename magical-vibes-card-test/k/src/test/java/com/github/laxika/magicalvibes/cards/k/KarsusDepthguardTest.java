@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AerialBoost;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -34,7 +35,7 @@ class KarsusDepthguardTest extends BaseCardTest {
     @DisplayName("Can attack when its power is 5 or greater")
     void canAttackAtPowerFive() {
         Permanent depthguard = addCreatureReady(player1, new KarsusDepthguard());
-        depthguard.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, depthguard, 1);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
@@ -60,10 +61,10 @@ class KarsusDepthguardTest extends BaseCardTest {
     @DisplayName("Losing power before attackers are declared removes the permission")
     void cannotAttackAfterPowerDropsBelowFive() {
         Permanent depthguard = addCreatureReady(player1, new KarsusDepthguard());
-        depthguard.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, depthguard, 1);
         assertThat(als.canAttack(gd, depthguard, player1.getId())).isTrue();
 
-        depthguard.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, depthguard, 0);
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -75,7 +76,7 @@ class KarsusDepthguardTest extends BaseCardTest {
     @DisplayName("High power does not bypass summoning sickness")
     void cannotAttackWithSummoningSicknessAtPowerFive() {
         Permanent depthguard = harness.addToBattlefieldAndReturn(player1, new KarsusDepthguard());
-        depthguard.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, depthguard, 1);
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)

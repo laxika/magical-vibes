@@ -109,8 +109,8 @@ class KykarZephyrAwakenerTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent spirit = findPermanent(player1, "Spirit");
         assertThat(spirit.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(spirit.getEffectivePower()).isEqualTo(1);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
         harness.passBothPriorities();
 
         castNoncreatureSpell();

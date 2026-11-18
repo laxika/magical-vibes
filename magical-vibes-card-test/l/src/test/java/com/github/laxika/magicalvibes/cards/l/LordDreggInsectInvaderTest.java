@@ -35,8 +35,8 @@ class LordDreggInsectInvaderTest extends BaseCardTest {
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.INSECT, CardSubtype.WARRIOR);
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
     }
 

@@ -63,8 +63,8 @@ class IraxxaEmpressOfMarsTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -132,17 +132,17 @@ class IraxxaEmpressOfMarsTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(iraxxa.getEffectivePower()).isEqualTo(5);
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(nonattacker.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, iraxxa)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
 
         gs.declareBlockers(gd, player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -105,8 +106,8 @@ class SolarTideTest extends BaseCardTest {
         harness.castModalSorceryWithModesAndSacrifices(
                 player1, 0, 1, 2, new int[]{0}, List.of());
 
-        growing.setPowerModifier(1);
-        shrinking.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, growing, 1);
+        PermanentGrants.setPowerBoost(gd, shrinking, -1);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(growing);

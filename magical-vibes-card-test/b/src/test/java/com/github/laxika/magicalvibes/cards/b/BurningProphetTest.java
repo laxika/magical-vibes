@@ -26,8 +26,8 @@ class BurningProphetTest extends BaseCardTest {
     @DisplayName("Casting a noncreature spell pumps Burning Prophet and triggers scry 1")
     void noncreatureSpellPumpsAndScries() {
         Permanent prophet = addProphet();
-        int initialPower = prophet.getEffectivePower();
-        int initialToughness = prophet.getEffectiveToughness();
+        int initialPower = gqs.getEffectivePower(gd, prophet);
+        int initialToughness = gqs.getEffectiveToughness(gd, prophet);
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard));
         harness.setHand(player1, List.of(new Shock()));
@@ -50,8 +50,8 @@ class BurningProphetTest extends BaseCardTest {
     @DisplayName("Casting a creature spell does not trigger Burning Prophet")
     void creatureSpellDoesNotTrigger() {
         Permanent prophet = addProphet();
-        int initialPower = prophet.getEffectivePower();
-        int initialToughness = prophet.getEffectiveToughness();
+        int initialPower = gqs.getEffectivePower(gd, prophet);
+        int initialToughness = gqs.getEffectiveToughness(gd, prophet);
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
@@ -67,7 +67,7 @@ class BurningProphetTest extends BaseCardTest {
     @DisplayName("The power boost wears off at end of turn")
     void powerBoostWearsOffAtEndOfTurn() {
         Permanent prophet = addProphet();
-        int initialPower = prophet.getEffectivePower();
+        int initialPower = gqs.getEffectivePower(gd, prophet);
         harness.setHand(player1, List.of(new Divination()));
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.castAndResolveSorcery(player1, 0, 0);

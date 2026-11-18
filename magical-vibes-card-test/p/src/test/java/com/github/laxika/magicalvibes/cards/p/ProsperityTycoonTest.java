@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -39,8 +40,8 @@ class ProsperityTycoonTest extends BaseCardTest {
         harness.activateAbility(player1, mercenaryIndex, 0, null, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(mercenary.isTapped()).isTrue();
     }
 
@@ -171,7 +172,7 @@ class ProsperityTycoonTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(mercenary), 0, null, tycoon.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(mercenary.isTapped()).isFalse();
-        assertThat(tycoon.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tycoon)).isZero();
     }
 
     @Test
@@ -183,13 +184,13 @@ class ProsperityTycoonTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mercenary),
                 0, null, tycoon.getId());
         harness.passBothPriorities();
-        assertThat(tycoon.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, tycoon)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(tycoon.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tycoon)).isZero();
     }
 
     private Permanent castTycoon() {

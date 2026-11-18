@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -33,8 +34,8 @@ class ClearShotTest extends BaseCardTest {
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
         harness.castAndResolveInstant(player1, 0, List.of(bearId, elvesId));
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
@@ -53,8 +54,8 @@ class ClearShotTest extends BaseCardTest {
         UUID elementalId = harness.getPermanentId(player2, "Air Elemental");
         harness.castAndResolveInstant(player1, 0, List.of(bearId, elementalId));
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
 
         harness.assertOnBattlefield(player2, "Air Elemental");
     }
@@ -107,8 +108,8 @@ class ClearShotTest extends BaseCardTest {
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
     }
 
     @Test
@@ -157,8 +158,8 @@ class ClearShotTest extends BaseCardTest {
         harness.getGameData().playerBattlefields.get(player2.getId()).add(bear);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(elemental.getMarkedDamage()).isZero();
         harness.assertInGraveyard(player1, "Clear Shot");
     }
@@ -176,8 +177,8 @@ class ClearShotTest extends BaseCardTest {
         harness.getGameData().playerBattlefields.get(player1.getId()).add(elemental);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
         assertThat(elemental.getMarkedDamage()).isZero();
     }
 
@@ -189,13 +190,13 @@ class ClearShotTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ClearShot()));
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castAndResolveInstant(player1, 0, List.of(bear.getId(), elemental.getId()));
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(elemental.getMarkedDamage()).isZero();
     }
 }

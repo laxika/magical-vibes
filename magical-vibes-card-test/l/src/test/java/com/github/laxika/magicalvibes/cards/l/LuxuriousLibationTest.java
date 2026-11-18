@@ -31,12 +31,12 @@ class LuxuriousLibationTest extends BaseCardTest {
         harness.castInstant(player1, 0, 3, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(5);
 
         Permanent citizen = findPermanent(player1, "Citizen");
-        assertThat(citizen.getEffectivePower()).isEqualTo(1);
-        assertThat(citizen.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, citizen)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, citizen)).isEqualTo(1);
         assertThat(citizen.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(citizen.getCard().getColors())
                 .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
@@ -53,15 +53,15 @@ class LuxuriousLibationTest extends BaseCardTest {
         harness.castInstant(player1, 0, 2, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -87,11 +87,11 @@ class LuxuriousLibationTest extends BaseCardTest {
         harness.castInstant(player1, 0, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(countPermanents(player1, "Citizen")).isEqualTo(1);
-        assertThat(findPermanent(player1, "Citizen").getEffectivePower()).isEqualTo(1);
-        assertThat(findPermanent(player1, "Citizen").getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Citizen"))).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Citizen"))).isEqualTo(1);
     }
 
     @Test

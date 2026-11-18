@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -28,8 +29,8 @@ class DromosaurTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(dromosaur.getPowerModifier()).isEqualTo(2);
-        assertThat(dromosaur.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dromosaur)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dromosaur)).isEqualTo(-2);
     }
 
     @Test
@@ -43,8 +44,8 @@ class DromosaurTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(dromosaur.getPowerModifier()).isEqualTo(2);
-        assertThat(dromosaur.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dromosaur)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dromosaur)).isEqualTo(-2);
     }
 
     @Test
@@ -57,8 +58,8 @@ class DromosaurTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(dromosaur.getPowerModifier()).isZero();
-        assertThat(dromosaur.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dromosaur)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dromosaur)).isZero();
     }
 
     @Test
@@ -76,8 +77,8 @@ class DromosaurTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dromosaur.getPowerModifier()).isZero();
-        assertThat(dromosaur.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dromosaur)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dromosaur)).isZero();
     }
 
     @Test
@@ -101,8 +102,8 @@ class DromosaurTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(dromosaur);
-        assertThat(dromosaur.getPowerModifier()).isEqualTo(2);
-        assertThat(dromosaur.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dromosaur)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dromosaur)).isEqualTo(-2);
     }
 
     @Test
@@ -120,14 +121,14 @@ class DromosaurTest extends BaseCardTest {
         ));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(dromosaur.getPowerModifier()).isZero();
-        assertThat(dromosaur.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dromosaur)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dromosaur)).isZero();
 
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(dromosaur);
-        assertThat(dromosaur.getPowerModifier()).isEqualTo(2);
-        assertThat(dromosaur.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dromosaur)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dromosaur)).isEqualTo(-2);
     }
 
     @Test
@@ -143,9 +144,9 @@ class DromosaurTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(-2);
-        assertThat(blocker.getPowerModifier()).isEqualTo(2);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(-2);
     }
 }

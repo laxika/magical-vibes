@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PrizefighterConstruct;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,15 +25,15 @@ class AlleyEvasionTest extends BaseCardTest {
         harness.castInstant(player1, 0, 0, construct.getId());
         harness.passBothPriorities();
 
-        assertThat(construct.getPowerModifier()).isEqualTo(1);
-        assertThat(construct.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, construct)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, construct)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(construct.getPowerModifier()).isZero();
-        assertThat(construct.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, construct)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, construct)).isZero();
     }
 
     @Test
@@ -96,8 +97,8 @@ class AlleyEvasionTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(construct);
         harness.passBothPriorities();
 
-        assertThat(construct.getPowerModifier()).isZero();
-        assertThat(construct.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, construct)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, construct)).isZero();
         harness.assertOnBattlefield(player2, "Prizefighter Construct");
         harness.assertInGraveyard(player1, "Alley Evasion");
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BlackPoplarShaman;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -50,8 +51,8 @@ class ThorntoothWitchTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(spider.getPowerModifier()).isEqualTo(3);
-        assertThat(spider.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spider)).isEqualTo(-3);
     }
 
     @Test
@@ -80,8 +81,8 @@ class ThorntoothWitchTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(spider.getPowerModifier()).isEqualTo(0);
-        assertThat(spider.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spider)).isEqualTo(0);
     }
 
     @Test
@@ -131,12 +132,12 @@ class ThorntoothWitchTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(witch.getPowerModifier()).isEqualTo(3);
-        assertThat(witch.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, witch)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, witch)).isEqualTo(-3);
         harness.passBothPriorities();
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(witch.getPowerModifier()).isZero();
-        assertThat(witch.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, witch)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, witch)).isZero();
     }
 
     @Test
@@ -153,7 +154,7 @@ class ThorntoothWitchTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, witch.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(witch.getPowerModifier()).isEqualTo(3);
-        assertThat(witch.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, witch)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, witch)).isEqualTo(-3);
     }
 }

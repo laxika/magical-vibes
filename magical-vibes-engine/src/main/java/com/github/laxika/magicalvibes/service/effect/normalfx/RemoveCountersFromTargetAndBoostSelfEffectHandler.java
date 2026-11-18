@@ -99,7 +99,7 @@ public class RemoveCountersFromTargetAndBoostSelfEffectHandler implements Normal
         Permanent source = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source != null) {
-            source.setPowerModifier(source.getPowerModifier() + removed);
+            gameData.addPowerToughnessBoost(entry, source.getId(), removed, 0);
             gameLogService.append(gameData, GameLog.builder().card(source.getCard())
                     .text(" gets +" + removed + "/+0 until end of turn.").build());
             log.info("Game {} - {} gets +{}/+0", gameData.id, source.getCard().getName(), removed);

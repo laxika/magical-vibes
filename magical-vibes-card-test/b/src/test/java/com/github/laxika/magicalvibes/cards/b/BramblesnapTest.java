@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.n.NestInvader;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,8 +29,8 @@ class BramblesnapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bramblesnap.getPowerModifier()).isEqualTo(1);
-        assertThat(bramblesnap.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bramblesnap)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bramblesnap)).isEqualTo(1);
     }
 
     @Test
@@ -42,8 +43,8 @@ class BramblesnapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bramblesnap.isTapped()).isTrue();
-        assertThat(bramblesnap.getPowerModifier()).isEqualTo(1);
-        assertThat(bramblesnap.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bramblesnap)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bramblesnap)).isEqualTo(1);
     }
 
     @Test
@@ -57,13 +58,13 @@ class BramblesnapTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bramblesnap.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bramblesnap)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bramblesnap.getPowerModifier()).isEqualTo(0);
-        assertThat(bramblesnap.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bramblesnap)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bramblesnap)).isEqualTo(0);
     }
 
     @Test
@@ -86,13 +87,13 @@ class BramblesnapTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(bramblesnap.isTapped()).isTrue();
-        assertThat(bramblesnap.getPowerModifier()).isZero();
-        assertThat(bramblesnap.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bramblesnap)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bramblesnap)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(bramblesnap.getPowerModifier()).isEqualTo(1);
-        assertThat(bramblesnap.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bramblesnap)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bramblesnap)).isEqualTo(1);
     }
 
     @Test
@@ -106,12 +107,12 @@ class BramblesnapTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(bramblesnap.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bramblesnap)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(bramblesnap.getPowerModifier()).isEqualTo(1);
-        assertThat(bramblesnap.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bramblesnap)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bramblesnap)).isEqualTo(1);
     }
 
     @Test
@@ -126,17 +127,17 @@ class BramblesnapTest extends BaseCardTest {
 
         assertThat(bramblesnap.isTapped()).isTrue();
         assertThat(creature.isTapped()).isTrue();
-        assertThat(bramblesnap.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bramblesnap)).isZero();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.passBothPriorities();
-        assertThat(bramblesnap.getPowerModifier()).isEqualTo(1);
-        assertThat(bramblesnap.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bramblesnap)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bramblesnap)).isEqualTo(1);
         harness.passBothPriorities();
 
-        assertThat(bramblesnap.getPowerModifier()).isEqualTo(2);
-        assertThat(bramblesnap.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bramblesnap)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bramblesnap)).isEqualTo(2);
     }
 
     @Test
@@ -150,7 +151,7 @@ class BramblesnapTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(opponentCreature.isTapped()).isFalse();
-        assertThat(bramblesnap.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bramblesnap)).isZero();
     }
 
     @Test
@@ -164,7 +165,7 @@ class BramblesnapTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(forest.isTapped()).isFalse();
-        assertThat(bramblesnap.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bramblesnap)).isZero();
     }
 
     private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {

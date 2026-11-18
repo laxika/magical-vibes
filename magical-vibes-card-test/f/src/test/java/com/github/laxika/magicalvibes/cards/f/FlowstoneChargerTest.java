@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -21,8 +22,8 @@ class FlowstoneChargerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(charger.getPowerModifier()).isEqualTo(3);
-        assertThat(charger.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, charger)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, charger)).isEqualTo(-3);
     }
 
     @Test
@@ -48,8 +49,8 @@ class FlowstoneChargerTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(charger.getPowerModifier()).isZero();
-        assertThat(charger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, charger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, charger)).isZero();
     }
 
     @Test
@@ -60,8 +61,8 @@ class FlowstoneChargerTest extends BaseCardTest {
             declareAttackers(List.of(0));
 
             assertThat(gd.stack).hasSize(1);
-            assertThat(charger.getPowerModifier()).isZero();
-            assertThat(charger.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, charger)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, charger)).isZero();
 
             harness.passBothPriorities();
 
@@ -83,8 +84,8 @@ class FlowstoneChargerTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
 
         resolveCombat();
 

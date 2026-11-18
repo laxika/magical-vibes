@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -52,10 +53,10 @@ class FistsOfTheAnvilTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getEffectivePower()).isEqualTo(6);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.getPowerModifier()).isEqualTo(4);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -71,10 +72,10 @@ class FistsOfTheAnvilTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -148,8 +149,8 @@ class FistsOfTheAnvilTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getEffectivePower()).isEqualTo(10);    // 2 + 4 + 4
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2); // unchanged
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(10);    // 2 + 4 + 4
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2); // unchanged
     }
 
     @Test
@@ -164,8 +165,8 @@ class FistsOfTheAnvilTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent(player2, "Grizzly Bears");
-        assertThat(bear.getEffectivePower()).isEqualTo(6);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -205,15 +206,15 @@ class FistsOfTheAnvilTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.END_STEP, () -> harness.castAndResolveInstant(player1, 0, bearId));
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getEffectivePower()).isEqualTo(6);
-        assertThat(otherBear.getEffectivePower()).isEqualTo(2);
-        assertThat(otherBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, otherBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherBear)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Fists of the Anvil");
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Grizzly Bears").getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(2);
     }
 
     @Test

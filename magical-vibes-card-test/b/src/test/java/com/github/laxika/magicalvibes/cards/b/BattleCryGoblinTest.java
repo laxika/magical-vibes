@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LolthSpiderQueen;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -34,9 +35,9 @@ class BattleCryGoblinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(otherGoblin.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherGoblin)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, source, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasKeyword(gd, otherGoblin, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isFalse();
@@ -82,7 +83,7 @@ class BattleCryGoblinTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0, 1, 2));
-        bear.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, bear, -2);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Goblin")).hasSize(1);
@@ -95,7 +96,7 @@ class BattleCryGoblinTest extends BaseCardTest {
         addCreatureReady(player1, new BattleCryGoblin());
 
         declareAttackers(List.of(0, 1));
-        source.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, source, 2);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Goblin")).isEmpty();
@@ -117,10 +118,10 @@ class BattleCryGoblinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(source.getPowerModifier()).isEqualTo(2);
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
         assertThat(gqs.hasKeyword(gd, source, Keyword.HASTE)).isTrue();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
         assertThat(gqs.hasKeyword(gd, opponent, Keyword.HASTE)).isFalse();
     }
 
@@ -144,8 +145,8 @@ class BattleCryGoblinTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Goblin")).hasSize(2);
         for (Permanent token : findPermanents(player1, "Goblin")) {
-            assertThat(token.getPowerModifier()).isZero();
-            assertThat(token.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, token)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, token)).isZero();
             assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
             assertThat(token.isTapped()).isTrue();
             assertThat(token.isAttacking()).isTrue();

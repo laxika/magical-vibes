@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.j.JoustingDummy;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -61,12 +62,12 @@ class AgathaOfTheVileCauldronTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(agatha.getPowerModifier()).isZero();
-        assertThat(ownDummy.getPowerModifier()).isEqualTo(1);
-        assertThat(ownDummy.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, agatha)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownDummy)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownDummy)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ownDummy, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, ownDummy, Keyword.HASTE)).isTrue();
-        assertThat(opponentDummy.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentDummy)).isZero();
         assertThat(gqs.hasKeyword(gd, opponentDummy, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, opponentDummy, Keyword.HASTE)).isFalse();
 
@@ -74,8 +75,8 @@ class AgathaOfTheVileCauldronTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownDummy.getPowerModifier()).isZero();
-        assertThat(ownDummy.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownDummy)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownDummy)).isZero();
         assertThat(gqs.hasKeyword(gd, ownDummy, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, ownDummy, Keyword.HASTE)).isFalse();
     }
@@ -109,7 +110,7 @@ class AgathaOfTheVileCauldronTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).get(1).getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, gd.playerBattlefields.get(player1.getId()).get(1))).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -127,10 +128,10 @@ class AgathaOfTheVileCauldronTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(agatha.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, agatha)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, agatha, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, agatha, Keyword.HASTE)).isFalse();
-        assertThat(dummy.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, dummy)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, dummy, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, dummy, Keyword.HASTE)).isTrue();
     }
@@ -147,12 +148,12 @@ class AgathaOfTheVileCauldronTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new JoustingDummy());
 
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.HASTE)).isTrue();
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
         assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.HASTE)).isFalse();
     }

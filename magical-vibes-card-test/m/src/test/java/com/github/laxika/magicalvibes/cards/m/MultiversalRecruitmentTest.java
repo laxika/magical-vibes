@@ -82,8 +82,8 @@ class MultiversalRecruitmentTest extends BaseCardTest {
         Permanent copy = token();
         assertThat(copy.getCard().getName()).isEqualTo("Quicksilver, Speedster");
         assertThat(copy.getCard().getSupertypes()).doesNotContain(CardSupertype.LEGENDARY);
-        assertThat(copy.getEffectivePower()).isEqualTo(3);
-        assertThat(copy.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(4);
         assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(copy.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target, copy);

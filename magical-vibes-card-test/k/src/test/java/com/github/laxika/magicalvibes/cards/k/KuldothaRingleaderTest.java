@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -84,9 +85,9 @@ class KuldothaRingleaderTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities(); // resolve battle cry trigger
 
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.getEffectivePower()).isEqualTo(3); // 2 base + 1 battle cry
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3); // 2 base + 1 battle cry
     }
 
     @Test
@@ -101,8 +102,8 @@ class KuldothaRingleaderTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
 
-        assertThat(ringleader.getPowerModifier()).isEqualTo(0);
-        assertThat(ringleader.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ringleader)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ringleader)).isEqualTo(0);
     }
 
     @Test
@@ -117,7 +118,7 @@ class KuldothaRingleaderTest extends BaseCardTest {
         declareAttackers(List.of(1));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(ringleader.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ringleader)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -131,10 +132,10 @@ class KuldothaRingleaderTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(nonattacker.getPowerModifier()).isZero();
-        assertThat(nonattacker.getToughnessModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonattacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -152,11 +153,11 @@ class KuldothaRingleaderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(third.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
-        assertThat(third.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, third)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, third)).isZero();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -39,10 +40,10 @@ class NamelessInversionTest extends BaseCardTest {
         Permanent elemental = harness.addToBattlefieldAndReturn(player1, new AirElemental()); // 4/4
         castOn(elemental);
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(3);
-        assertThat(elemental.getToughnessModifier()).isEqualTo(-3);
-        assertThat(elemental.getEffectivePower()).isEqualTo(7);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isEqualTo(-3);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
     }
 
     @Test
@@ -74,15 +75,15 @@ class NamelessInversionTest extends BaseCardTest {
     void wearsOffAtEndOfTurn() {
         Permanent elemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         castOn(elemental);
-        assertThat(elemental.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(3);
         assertThat(gqs.hasEffectiveSubtype(gd, elemental, CardSubtype.ELEMENTAL)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(0);
-        assertThat(elemental.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isEqualTo(0);
         assertThat(gqs.hasEffectiveSubtype(gd, elemental, CardSubtype.ELEMENTAL)).isTrue();
     }
 

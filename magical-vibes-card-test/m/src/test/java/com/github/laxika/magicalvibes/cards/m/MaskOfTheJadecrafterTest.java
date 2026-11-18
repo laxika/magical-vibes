@@ -36,8 +36,8 @@ class MaskOfTheJadecrafterTest extends BaseCardTest {
 
         Permanent golem = findPermanent(player1, "Golem");
         assertThat(golem.getCard().isToken()).isTrue();
-        assertThat(golem.getEffectivePower()).isEqualTo(3);
-        assertThat(golem.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(3);
         assertThat(golem.getCard().hasType(CardType.ARTIFACT)).isTrue();
         assertThat(golem.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(golem.getCard().getColors()).isEmpty();
@@ -98,8 +98,8 @@ class MaskOfTheJadecrafterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent golem = findPermanent(player1, "Golem");
-        assertThat(golem.getEffectivePower()).isEqualTo(4);
-        assertThat(golem.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(4);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();

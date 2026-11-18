@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -29,8 +30,8 @@ class NalathniDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(1);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(0);
     }
 
     @Test
@@ -44,7 +45,7 @@ class NalathniDragonTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(3);
     }
 
     @Test
@@ -126,14 +127,14 @@ class NalathniDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(0);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(0);
     }
 
     @Test
@@ -147,7 +148,7 @@ class NalathniDragonTest extends BaseCardTest {
         }
         resolveAllTriggers();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(4);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
 

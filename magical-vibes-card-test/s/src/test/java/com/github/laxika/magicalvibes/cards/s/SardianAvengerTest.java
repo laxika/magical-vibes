@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -26,8 +27,8 @@ class SardianAvengerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(avenger.getPowerModifier()).isEqualTo(2);
-        assertThat(avenger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, avenger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, avenger)).isZero();
     }
 
     @Test

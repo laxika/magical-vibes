@@ -26,8 +26,8 @@ class SheriffOfSafePassageTest extends BaseCardTest {
 
         Permanent sheriff = findPermanent(player1, "Sheriff of Safe Passage");
         assertThat(sheriff.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(sheriff.getEffectivePower()).isEqualTo(1);
-        assertThat(sheriff.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sheriff)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, sheriff)).isEqualTo(1);
     }
 
     @Test
@@ -40,8 +40,8 @@ class SheriffOfSafePassageTest extends BaseCardTest {
 
         Permanent sheriff = findPermanent(player1, "Sheriff of Safe Passage");
         assertThat(sheriff.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(sheriff.getEffectivePower()).isEqualTo(3);
-        assertThat(sheriff.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sheriff)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sheriff)).isEqualTo(3);
     }
 
     @Test

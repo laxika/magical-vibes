@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -22,8 +23,8 @@ class MoonwingMothTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(moth.getPowerModifier()).isZero();
-        assertThat(moth.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, moth)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moth)).isEqualTo(1);
     }
 
     @Test
@@ -49,8 +50,8 @@ class MoonwingMothTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(moth.getPowerModifier()).isZero();
-        assertThat(moth.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, moth)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moth)).isZero();
     }
 
     @Test
@@ -64,8 +65,8 @@ class MoonwingMothTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(moth.getPowerModifier()).isZero();
-        assertThat(moth.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, moth)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moth)).isEqualTo(2);
     }
     @Test
     @DisplayName("Can activate while tapped and summoning sick")
@@ -77,11 +78,11 @@ class MoonwingMothTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(moth.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moth)).isZero();
         harness.passBothPriorities();
 
-        assertThat(moth.getPowerModifier()).isZero();
-        assertThat(moth.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, moth)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, moth)).isEqualTo(1);
         assertThat(moth.isTapped()).isTrue();
     }
 
@@ -96,9 +97,9 @@ class MoonwingMothTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isEqualTo(1);
-        assertThat(otherMoth.getToughnessModifier()).isZero();
-        assertThat(opposingMoth.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherMoth)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingMoth)).isZero();
     }
 }

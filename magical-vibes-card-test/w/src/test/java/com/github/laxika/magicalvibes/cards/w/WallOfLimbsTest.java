@@ -35,7 +35,7 @@ class WallOfLimbsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Wall of Limbs' triggered ability
 
         assertThat(wall.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(wall.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(1);
     }
 
     @Test

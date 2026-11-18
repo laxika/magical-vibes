@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -26,14 +27,14 @@ class MsMarvelElasticAllyTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castMsMarvel(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -55,7 +56,7 @@ class MsMarvelElasticAllyTest extends BaseCardTest {
     void modifiedCreatureDraws() {
         addMsMarvel();
         Permanent attacker = addReadyAttacker();
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         Card topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard));
 
@@ -69,9 +70,9 @@ class MsMarvelElasticAllyTest extends BaseCardTest {
     void combatDamageDrawsOnlyOnceEachTurn() {
         addMsMarvel();
         Permanent firstAttacker = addReadyAttacker();
-        firstAttacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, firstAttacker, 1);
         Permanent secondAttacker = addReadyAttacker();
-        secondAttacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, secondAttacker, 1);
         Card firstCard = new Forest();
         Card secondCard = new Forest();
         harness.setLibrary(player1, List.of(firstCard, secondCard));
@@ -112,7 +113,7 @@ class MsMarvelElasticAllyTest extends BaseCardTest {
     void msMarvelCanTriggerHerOwnDraw() {
         Permanent attacker = addCreatureReady(player1, new MsMarvelElasticAlly());
         attacker.setAttacking(true);
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         Card topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard));
 
@@ -126,7 +127,7 @@ class MsMarvelElasticAllyTest extends BaseCardTest {
     void reducedPowerDoesNotDraw() {
         addMsMarvel();
         Permanent attacker = addReadyAttacker();
-        attacker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, attacker, -1);
         Card topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard));
 
@@ -142,7 +143,7 @@ class MsMarvelElasticAllyTest extends BaseCardTest {
         addMsMarvel();
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         Card topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard));
 
@@ -158,7 +159,7 @@ class MsMarvelElasticAllyTest extends BaseCardTest {
     void laterCombatDamageDoesNotDrawAgain() {
         addMsMarvel();
         Permanent attacker = addReadyAttacker();
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         Card firstCard = new Forest();
         Card secondCard = new Forest();
         harness.setLibrary(player1, List.of(firstCard, secondCard));
@@ -196,7 +197,7 @@ class MsMarvelElasticAllyTest extends BaseCardTest {
 
         resolveCombatWith();
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topCard);
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         attacker.setAttacking(true);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         resolveCombatWith();

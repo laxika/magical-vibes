@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FireElemental;
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -40,8 +41,8 @@ class LavakinBrawlerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(brawler.getPowerModifier()).isEqualTo(2);
-        assertThat(brawler.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, brawler)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, brawler)).isEqualTo(0);
     }
 
     @Test
@@ -52,13 +53,13 @@ class LavakinBrawlerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(brawler.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, brawler)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(brawler.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, brawler)).isEqualTo(0);
     }
 
     @Test
@@ -70,8 +71,8 @@ class LavakinBrawlerTest extends BaseCardTest {
         addCreatureReady(player1, new FireElemental());
         resolveAllTriggers();
 
-        assertThat(brawler.getPowerModifier()).isEqualTo(2);
-        assertThat(brawler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, brawler)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, brawler)).isZero();
     }
 
     @Test
@@ -87,7 +88,7 @@ class LavakinBrawlerTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInHand(player1, "Fire Elemental");
-        assertThat(brawler.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, brawler)).isEqualTo(1);
     }
 
     @Test
@@ -100,6 +101,6 @@ class LavakinBrawlerTest extends BaseCardTest {
         addCreatureReady(player1, new FireElemental());
 
         assertThat(gqs.getEffectivePower(gd, brawler)).isEqualTo(3);
-        assertThat(brawler.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, brawler)).isEqualTo(1);
     }
 }

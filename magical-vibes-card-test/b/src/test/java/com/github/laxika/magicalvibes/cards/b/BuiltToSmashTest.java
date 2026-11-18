@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DukharaPeafowl;
 import com.github.laxika.magicalvibes.cards.t.ThrivingGrubs;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -26,8 +27,8 @@ class BuiltToSmashTest extends BaseCardTest {
 
         castResolve(peafowl);
 
-        assertThat(peafowl.getPowerModifier()).isEqualTo(3);
-        assertThat(peafowl.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, peafowl)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, peafowl)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, peafowl, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -38,8 +39,8 @@ class BuiltToSmashTest extends BaseCardTest {
 
         castResolve(grubs);
 
-        assertThat(grubs.getPowerModifier()).isEqualTo(3);
-        assertThat(grubs.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, grubs)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, grubs)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, grubs, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -53,8 +54,8 @@ class BuiltToSmashTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(peafowl.getPowerModifier()).isZero();
-        assertThat(peafowl.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, peafowl)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, peafowl)).isZero();
         assertThat(gqs.hasKeyword(gd, peafowl, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -82,8 +83,8 @@ class BuiltToSmashTest extends BaseCardTest {
 
         castResolve(attacker);
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(3);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -98,8 +99,8 @@ class BuiltToSmashTest extends BaseCardTest {
         attacker.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Built to Smash");
     }

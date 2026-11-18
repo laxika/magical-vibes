@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AtomicMicrosizer;
 import com.github.laxika.magicalvibes.cards.g.GravpackMonoist;
 import com.github.laxika.magicalvibes.cards.t.TapestryWarden;
@@ -182,7 +183,7 @@ class WarmakerGunshipTest extends BaseCardTest {
         Permanent gunship = harness.addToBattlefieldAndReturn(player1, new WarmakerGunship());
         gunship.setCounterCount(CounterType.CHARGE, 2);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GravpackMonoist());
-        creature.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, creature, -3);
 
         harness.activateAbility(player1, battlefieldIndex(gunship), null, null);
         resolveAllTriggers();

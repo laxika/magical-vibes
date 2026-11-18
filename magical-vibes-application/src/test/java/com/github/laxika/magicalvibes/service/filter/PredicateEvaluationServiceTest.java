@@ -393,13 +393,13 @@ class PredicateEvaluationServiceTest {
 
         assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isFalse();
 
-        permanent.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, permanent, 1);
         assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isTrue();
 
-        permanent.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, permanent, -1);
         assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isTrue();
 
-        permanent.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, permanent, 0);
         assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isFalse();
     }
 
@@ -1921,7 +1921,7 @@ class PredicateEvaluationServiceTest {
         @DisplayName("PermanentPowerToughnessTotalAtMostPredicate uses effective power and toughness")
         void powerToughnessTotalAtMostPredicateUsesEffectiveStats() {
             Permanent perm = addPermanent(player1Id, createCreature("Test Creature", 3, 2, CardColor.GREEN));
-            perm.setPowerModifier(1);
+            PermanentGrants.setPowerBoost(gd, perm, 1);
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm,
                     new PermanentPowerToughnessTotalAtMostPredicate(5))).isFalse();

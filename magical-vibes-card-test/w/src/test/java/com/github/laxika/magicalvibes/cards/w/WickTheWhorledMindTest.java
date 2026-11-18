@@ -25,8 +25,8 @@ class WickTheWhorledMindTest extends BaseCardTest {
         castWick();
 
         Permanent snail = findSnail();
-        assertThat(snail.getEffectivePower()).isEqualTo(1);
-        assertThat(snail.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, snail)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, snail)).isEqualTo(1);
         assertThat(snail.getCard().getColor()).isEqualTo(CardColor.BLACK);
     }
 

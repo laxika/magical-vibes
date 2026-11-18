@@ -26,8 +26,8 @@ class FeralAnimistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Base 2/1, X = 2 → +2/+0 → 4/1.
-        assertThat(animist.getEffectivePower()).isEqualTo(4);
-        assertThat(animist.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, animist)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, animist)).isEqualTo(1);
     }
 
     @Test
@@ -42,8 +42,8 @@ class FeralAnimistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // After first: 4/1; second X = 4 → +4/+0 → 8/1.
-        assertThat(animist.getEffectivePower()).isEqualTo(8);
-        assertThat(animist.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, animist)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, animist)).isEqualTo(1);
     }
 
     @Test
@@ -57,8 +57,8 @@ class FeralAnimistTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(animist.getEffectivePower()).isEqualTo(8);
-        assertThat(animist.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, animist)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, animist)).isEqualTo(1);
     }
 
     @Test
@@ -70,14 +70,14 @@ class FeralAnimistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(animist.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, animist)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(animist.getEffectivePower()).isEqualTo(2);
-        assertThat(animist.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, animist)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, animist)).isEqualTo(1);
     }
 
     @Test
@@ -92,8 +92,8 @@ class FeralAnimistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(animist.getEffectivePower()).isEqualTo(14);
-        assertThat(animist.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, animist)).isEqualTo(14);
+        assertThat(gqs.getEffectiveToughness(gd, animist)).isEqualTo(6);
     }
 
     @Test
@@ -108,8 +108,8 @@ class FeralAnimistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castAndResolveSorcery(player1, 0, animist.getId());
 
-        assertThat(animist.getEffectivePower()).isEqualTo(9);
-        assertThat(animist.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, animist)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, animist)).isEqualTo(6);
     }
 
     @Test
@@ -124,8 +124,8 @@ class FeralAnimistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(animist.getEffectivePower()).isEqualTo(4);
-        assertThat(animist.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, animist)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, animist)).isEqualTo(1);
         assertThat(animist.isTapped()).isTrue();
     }
 }

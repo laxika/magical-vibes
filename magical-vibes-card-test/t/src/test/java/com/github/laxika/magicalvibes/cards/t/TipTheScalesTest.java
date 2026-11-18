@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -98,7 +99,7 @@ class TipTheScalesTest extends BaseCardTest {
     @DisplayName("Uses modified toughness before sacrifice rather than printed toughness or power")
     void usesLastKnownEffectiveToughness() {
         Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        sacrificed.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, sacrificed, 1);
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
         castTipTheScales();

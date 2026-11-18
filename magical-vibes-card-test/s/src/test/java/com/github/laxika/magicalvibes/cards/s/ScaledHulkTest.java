@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Frostling;
 import com.github.laxika.magicalvibes.cards.m.MatsuTribeSniper;
 import com.github.laxika.magicalvibes.cards.r.RoarOfJukai;
@@ -22,8 +23,8 @@ class ScaledHulkTest extends BaseCardTest {
         harness.castFromHand(player1, new Frostling(), "{R}");
         harness.passBothPriorities();
 
-        assertThat(hulk.getPowerModifier()).isEqualTo(2);
-        assertThat(hulk.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, hulk)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hulk)).isEqualTo(2);
     }
 
     @Test
@@ -33,8 +34,8 @@ class ScaledHulkTest extends BaseCardTest {
         harness.castFromHand(player1, new RoarOfJukai(), "{2}{G}");
         harness.passBothPriorities();
 
-        assertThat(hulk.getPowerModifier()).isEqualTo(2);
-        assertThat(hulk.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, hulk)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hulk)).isEqualTo(2);
     }
 
     @Test
@@ -44,8 +45,8 @@ class ScaledHulkTest extends BaseCardTest {
         harness.castFromHand(player1, new MatsuTribeSniper(), "{1}{G}");
         harness.passBothPriorities();
 
-        assertThat(hulk.getPowerModifier()).isZero();
-        assertThat(hulk.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hulk)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hulk)).isZero();
     }
 
     @Test
@@ -57,15 +58,15 @@ class ScaledHulkTest extends BaseCardTest {
         harness.castFromHand(player1, new RoarOfJukai(), "{2}{G}");
         harness.passBothPriorities();
 
-        assertThat(hulk.getPowerModifier()).isEqualTo(4);
-        assertThat(hulk.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, hulk)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hulk)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.CLEANUP);
 
-        assertThat(hulk.getPowerModifier()).isZero();
-        assertThat(hulk.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hulk)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hulk)).isZero();
     }
 
     @Test
@@ -79,8 +80,8 @@ class ScaledHulkTest extends BaseCardTest {
         harness.castFromHand(player2, new Frostling(), "{R}");
         harness.passBothPriorities();
 
-        assertThat(hulk.getPowerModifier()).isZero();
-        assertThat(hulk.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hulk)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hulk)).isZero();
     }
 
     @Test
@@ -93,12 +94,12 @@ class ScaledHulkTest extends BaseCardTest {
         harness.castFromHand(player1, new Frostling(), "{R}");
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isEqualTo(2);
-        assertThat(opposing.getPowerModifier()).isZero();
-        assertThat(opposing.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposing)).isZero();
     }
 
     @Test
@@ -109,14 +110,14 @@ class ScaledHulkTest extends BaseCardTest {
         harness.castFromHand(player1, new ScaledHulk(), "{5}{G}");
         resolveAllTriggers();
 
-        assertThat(existing.getPowerModifier()).isEqualTo(2);
-        assertThat(existing.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, existing)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, existing)).isEqualTo(2);
         assertThat(findPermanents(player1, "Scaled Hulk")).hasSize(2);
         Permanent entering = findPermanents(player1, "Scaled Hulk").stream()
                 .filter(permanent -> permanent != existing)
                 .findFirst().orElseThrow();
-        assertThat(entering.getPowerModifier()).isZero();
-        assertThat(entering.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, entering)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, entering)).isZero();
     }
 
     @Test
@@ -130,7 +131,7 @@ class ScaledHulkTest extends BaseCardTest {
         harness.castFromHand(player1, new RoarOfJukai(), "{2}{G}");
         resolveAllTriggers();
 
-        assertThat(hulk.getPowerModifier()).isEqualTo(2);
-        assertThat(hulk.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, hulk)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hulk)).isEqualTo(2);
     }
 }

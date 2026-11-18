@@ -42,8 +42,8 @@ class SludgeCrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(crawler.getEffectivePower()).isEqualTo(3);
-        assertThat(crawler.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, crawler)).isEqualTo(3);
     }
 
     @Test
@@ -59,8 +59,8 @@ class SludgeCrawlerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(crawler.getEffectivePower()).isEqualTo(1);
-        assertThat(crawler.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, crawler)).isEqualTo(1);
     }
 
     @Test
@@ -121,8 +121,8 @@ class SludgeCrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(crawler.getEffectivePower()).isEqualTo(2);
-        assertThat(crawler.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, crawler)).isEqualTo(2);
         assertThat(crawler.isTapped()).isTrue();
     }
 }

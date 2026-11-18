@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BeamingDefiance;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IntoTheVoid;
@@ -110,8 +111,8 @@ class KillianInkDuelistTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, killian.getId());
 
-        assertThat(killian.getPowerModifier()).isEqualTo(2);
-        assertThat(killian.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, killian)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, killian)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.assertInGraveyard(player1, "Beaming Defiance");
     }

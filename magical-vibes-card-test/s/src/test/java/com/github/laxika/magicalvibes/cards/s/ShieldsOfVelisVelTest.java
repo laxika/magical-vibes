@@ -24,13 +24,13 @@ class ShieldsOfVelisVelTest extends BaseCardTest {
     @DisplayName("Creatures target player controls get +0/+1")
     void boostsTargetPlayersCreatures() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GoldmeadowStalwart());
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
 
         castShields(player2.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 
     @Test
@@ -56,8 +56,8 @@ class ShieldsOfVelisVelTest extends BaseCardTest {
 
         castShields(player2.getId());
 
-        assertThat(firstCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(secondCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(3);
         assertThat(gqs.hasEffectiveSubtype(gd, firstCreature, CardSubtype.GOBLIN)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, secondCreature, CardSubtype.GOBLIN)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, artifact, CardSubtype.GOBLIN)).isFalse();
@@ -70,7 +70,7 @@ class ShieldsOfVelisVelTest extends BaseCardTest {
 
         castShields(player2.getId());
 
-        assertThat(ownBears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownBears)).isEqualTo(2);
         assertThat(gqs.hasEffectiveSubtype(gd, ownBears, CardSubtype.GOBLIN)).isFalse();
     }
 
@@ -81,7 +81,7 @@ class ShieldsOfVelisVelTest extends BaseCardTest {
 
         castShields(player1.getId());
 
-        assertThat(ownBears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownBears)).isEqualTo(3);
         assertThat(gqs.hasEffectiveSubtype(gd, ownBears, CardSubtype.GOBLIN)).isTrue();
     }
 
@@ -91,12 +91,12 @@ class ShieldsOfVelisVelTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GoldmeadowStalwart());
 
         castShields(player2.getId());
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.GOBLIN)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.GOBLIN)).isFalse();
     }
 

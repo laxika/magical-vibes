@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -40,8 +41,8 @@ class ImmolatingSouleaterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(perm.getPowerModifier()).isEqualTo(1);
-        assertThat(perm.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, perm)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, perm)).isEqualTo(0);
     }
 
     @Test
@@ -57,8 +58,8 @@ class ImmolatingSouleaterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(perm.getPowerModifier()).isEqualTo(3);
-        assertThat(perm.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, perm)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, perm)).isEqualTo(0);
     }
 
     @Test
@@ -72,14 +73,14 @@ class ImmolatingSouleaterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(perm.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, perm)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(perm.getPowerModifier()).isEqualTo(0);
-        assertThat(perm.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, perm)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, perm)).isEqualTo(0);
     }
 
     @Test
@@ -93,7 +94,7 @@ class ImmolatingSouleaterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(perm.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, perm)).isEqualTo(1);
     }
 
     @Test
@@ -107,7 +108,7 @@ class ImmolatingSouleaterTest extends BaseCardTest {
 
         harness.assertLife(player1, 1);
         assertThat(gd.stack).isEmpty();
-        assertThat(perm.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, perm)).isZero();
     }
 
     @Test
@@ -121,7 +122,7 @@ class ImmolatingSouleaterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 1);
-        assertThat(perm.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, perm)).isEqualTo(1);
     }
 
     @Test
@@ -135,7 +136,7 @@ class ImmolatingSouleaterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(perm.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, perm)).isEqualTo(1);
         assertThat(perm.isTapped()).isTrue();
     }
 
@@ -150,14 +151,14 @@ class ImmolatingSouleaterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.assertLife(player1, 18);
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isZero();
-        assertThat(ally.getPowerModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
     }
 
     private Permanent addSouleaterReady(Player player) {

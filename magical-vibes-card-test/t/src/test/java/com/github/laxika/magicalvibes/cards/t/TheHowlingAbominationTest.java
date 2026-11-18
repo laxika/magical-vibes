@@ -46,8 +46,8 @@ class TheHowlingAbominationTest extends BaseCardTest {
         harness.castInstant(player2, 0, abomination.getId());
         harness.passBothPriorities();
 
-        assertThat(abomination.getEffectivePower()).isEqualTo(7);
-        assertThat(abomination.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, abomination)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, abomination)).isEqualTo(7);
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
 
@@ -60,8 +60,8 @@ class TheHowlingAbominationTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, abomination.getId());
         harness.passBothPriorities();
 
-        assertThat(abomination.getEffectivePower()).isEqualTo(5);
-        assertThat(abomination.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, abomination)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, abomination)).isEqualTo(5);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
@@ -107,22 +107,22 @@ class TheHowlingAbominationTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, abomination.getId());
         harness.passBothPriorities();
-        assertThat(abomination.getEffectivePower()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, abomination)).isEqualTo(7);
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);
         harness.passBothPriorities();
 
         harness.castInstant(player1, 0, abomination.getId());
         harness.passBothPriorities();
-        assertThat(abomination.getEffectivePower()).isEqualTo(9);
-        assertThat(abomination.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, abomination)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, abomination)).isEqualTo(9);
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 16);
         harness.passBothPriorities();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(abomination.getEffectivePower()).isEqualTo(5);
-        assertThat(abomination.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, abomination)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, abomination)).isEqualTo(5);
     }
 
     @Test
@@ -138,14 +138,14 @@ class TheHowlingAbominationTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player2, 18);
         harness.passBothPriorities();
-        assertThat(abomination.getEffectivePower()).isEqualTo(2);
-        assertThat(abomination.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, abomination)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, abomination)).isEqualTo(3);
 
         harness.castInstant(player2, 0, abomination.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player2, 18);
-        assertThat(abomination.getEffectivePower()).isEqualTo(2);
-        assertThat(abomination.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, abomination)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, abomination)).isEqualTo(3);
     }
 }

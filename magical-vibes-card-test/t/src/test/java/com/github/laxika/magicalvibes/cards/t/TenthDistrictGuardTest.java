@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.v.VernadiShieldmate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,10 +29,10 @@ class TenthDistrictGuardTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent shieldmate = findPermanent(player2, "Vernadi Shieldmate");
-        assertThat(shieldmate.getPowerModifier()).isEqualTo(0);
-        assertThat(shieldmate.getToughnessModifier()).isEqualTo(1);
-        assertThat(shieldmate.getEffectivePower()).isEqualTo(2);
-        assertThat(shieldmate.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, shieldmate)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shieldmate)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shieldmate)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shieldmate)).isEqualTo(3);
     }
 
     @Test
@@ -49,10 +50,10 @@ class TenthDistrictGuardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent shieldmate = findPermanent(player2, "Vernadi Shieldmate");
-        assertThat(shieldmate.getPowerModifier()).isEqualTo(0);
-        assertThat(shieldmate.getToughnessModifier()).isEqualTo(0);
-        assertThat(shieldmate.getEffectivePower()).isEqualTo(2);
-        assertThat(shieldmate.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, shieldmate)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shieldmate)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, shieldmate)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shieldmate)).isEqualTo(2);
     }
 
     @Test
@@ -67,8 +68,8 @@ class TenthDistrictGuardTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent shieldmate = findPermanent(player1, "Vernadi Shieldmate");
-        assertThat(shieldmate.getEffectivePower()).isEqualTo(2);
-        assertThat(shieldmate.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shieldmate)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shieldmate)).isEqualTo(3);
     }
 
     @Test
@@ -101,8 +102,8 @@ class TenthDistrictGuardTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, guard.getId());
         resolveAllTriggers();
 
-        assertThat(guard.getEffectivePower()).isEqualTo(2);
-        assertThat(guard.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, guard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, guard)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -122,8 +123,8 @@ class TenthDistrictGuardTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent target = findPermanent(player2, "Vernadi Shieldmate");
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
     }
 

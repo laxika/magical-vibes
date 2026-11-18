@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PrayerOfBinding;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -37,8 +38,8 @@ class KnightOfDusksShadowTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(knight.getEffectivePower()).isEqualTo(3);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
     }
 
     @Test
@@ -55,8 +56,8 @@ class KnightOfDusksShadowTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(knight.getPowerModifier()).isEqualTo(0);
-        assertThat(knight.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(0);
     }
 
     private Permanent addKnight() {
@@ -115,8 +116,8 @@ class KnightOfDusksShadowTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(knight.getEffectivePower()).isEqualTo(4);
-        assertThat(knight.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(4);
         assertThat(knight.isTapped()).isFalse();
     }
 

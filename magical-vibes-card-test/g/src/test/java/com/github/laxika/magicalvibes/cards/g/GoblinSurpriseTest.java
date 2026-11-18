@@ -26,15 +26,15 @@ class GoblinSurpriseTest extends BaseCardTest {
 
         cast(0);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test
@@ -66,10 +66,10 @@ class GoblinSurpriseTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new BearCub());
 
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(4);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(2);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
         assertThat(findPermanents(player1, "Goblin")).isEmpty();
         harness.assertInGraveyard(player1, "Goblin Surprise");
     }
@@ -91,17 +91,17 @@ class GoblinSurpriseTest extends BaseCardTest {
 
         cast(1);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
         List<Permanent> goblins = findPermanents(player1, "Goblin");
         assertThat(goblins).hasSize(2);
 
         cast(0);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
         assertThat(findPermanents(player1, "Goblin")).hasSize(2);
         assertThat(goblins).allSatisfy(goblin -> {
-            assertThat(goblin.getEffectivePower()).isEqualTo(3);
-            assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
         });
     }
 

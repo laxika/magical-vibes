@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -82,7 +83,7 @@ class PyrrhicBlastTest extends BaseCardTest {
     @DisplayName("Uses the creature's modified power before it leaves the battlefield")
     void usesModifiedPowerAtSacrifice() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        sacrifice.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, sacrifice, 3);
         harness.setHand(player1, List.of(new PyrrhicBlast()));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 4);
@@ -104,7 +105,7 @@ class PyrrhicBlastTest extends BaseCardTest {
     @DisplayName("Sacrificing a zero-power creature still draws a card")
     void zeroPowerStillDrawsCard() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        sacrifice.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, sacrifice, -2);
         harness.setHand(player1, List.of(new PyrrhicBlast()));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 4);
@@ -121,7 +122,7 @@ class PyrrhicBlastTest extends BaseCardTest {
     @DisplayName("Negative sacrificed power deals no damage and still draws a card")
     void negativePowerStillDrawsCard() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        sacrifice.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, sacrifice, -3);
         harness.setHand(player1, List.of(new PyrrhicBlast()));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 4);

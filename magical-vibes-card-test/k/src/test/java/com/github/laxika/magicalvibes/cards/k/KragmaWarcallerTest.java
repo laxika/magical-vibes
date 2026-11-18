@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FelhideMinotaur;
 import com.github.laxika.magicalvibes.cards.b.BronzeSable;
 import com.github.laxika.magicalvibes.cards.w.WingsOfVelisVel;
@@ -48,8 +49,8 @@ class KragmaWarcallerTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         harness.passBothPriorities();
 
-        assertThat(minotaur.getPowerModifier()).isEqualTo(2);
-        assertThat(minotaur.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, minotaur)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, minotaur)).isZero();
     }
 
     @Test
@@ -61,7 +62,7 @@ class KragmaWarcallerTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(nonMinotaur.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonMinotaur)).isZero();
     }
 
     @Test
@@ -75,8 +76,8 @@ class KragmaWarcallerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(warcaller.getPowerModifier()).isEqualTo(2);
-        assertThat(warcaller.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warcaller)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warcaller)).isZero();
     }
 
     @Test
@@ -90,10 +91,10 @@ class KragmaWarcallerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(warcaller.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(nonattacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warcaller)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
     }
 
     @Test
@@ -106,8 +107,8 @@ class KragmaWarcallerTest extends BaseCardTest {
         declareAttackers(player1, List.of(2));
         resolveAllTriggers();
 
-        assertThat(minotaur.getPowerModifier()).isEqualTo(4);
-        assertThat(minotaur.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, minotaur)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, minotaur)).isZero();
     }
 
     @Test
@@ -119,7 +120,7 @@ class KragmaWarcallerTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(minotaur.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, minotaur)).isZero();
     }
 
     @Test
@@ -130,12 +131,12 @@ class KragmaWarcallerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
-        assertThat(minotaur.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, minotaur)).isEqualTo(2);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(minotaur.getPowerModifier()).isZero();
-        assertThat(minotaur.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, minotaur)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, minotaur)).isZero();
     }
 
     @Test

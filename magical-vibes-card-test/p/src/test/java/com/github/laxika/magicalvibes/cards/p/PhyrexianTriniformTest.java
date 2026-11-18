@@ -30,8 +30,8 @@ class PhyrexianTriniformTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Phyrexian Golem")).hasSize(3).allSatisfy(token -> {
-            assertThat(token.getEffectivePower()).isEqualTo(3);
-            assertThat(token.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
             assertThat(token.getCard().getColor()).isNull();
             assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(token.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);

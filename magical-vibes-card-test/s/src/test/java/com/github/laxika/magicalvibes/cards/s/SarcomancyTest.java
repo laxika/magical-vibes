@@ -24,8 +24,8 @@ class SarcomancyTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Zombie");
         assertThat(token).isNotNull();
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
     }

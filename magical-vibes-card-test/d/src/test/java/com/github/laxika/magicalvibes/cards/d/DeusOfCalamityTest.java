@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -98,7 +99,7 @@ class DeusOfCalamityTest extends BaseCardTest {
     @DisplayName("More than six combat damage also triggers land destruction")
     void triggersAboveThreshold() {
         Permanent deus = addCreatureReady(player1, new DeusOfCalamity());
-        deus.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, deus, 1);
         deus.setAttacking(true);
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
 
@@ -209,7 +210,7 @@ class DeusOfCalamityTest extends BaseCardTest {
     @DisplayName("Two separate three-damage events do not meet the six-damage threshold")
     void separateDamageEventsDoNotAccumulate() {
         Permanent deus = harness.addToBattlefieldAndReturn(player1, new DeusOfCalamity());
-        deus.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, deus, -3);
         harness.addToBattlefield(player2, new Mountain());
         harness.setHand(player1, List.of(new SoulsFire(), new SoulsFire()));
         harness.addMana(player1, ManaColor.RED, 6);

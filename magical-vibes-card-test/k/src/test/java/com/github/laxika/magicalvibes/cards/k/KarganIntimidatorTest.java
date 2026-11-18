@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.ObsidianBattleAxe;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -31,8 +32,8 @@ class KarganIntimidatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(kargan.getPowerModifier()).isEqualTo(1);
-        assertThat(kargan.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, kargan)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kargan)).isEqualTo(1);
     }
 
     @Test
@@ -79,7 +80,7 @@ class KarganIntimidatorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once each turn");
-        assertThat(kargan.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, kargan)).isEqualTo(1);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).contains(CardSubtype.COWARD);
     }
 
@@ -133,8 +134,8 @@ class KarganIntimidatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.COWARD);
     }
@@ -157,8 +158,8 @@ class KarganIntimidatorTest extends BaseCardTest {
         harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.effectiveCreatureSubtypes(gd, target))
                 .containsExactlyInAnyOrder(CardSubtype.HUMAN, CardSubtype.WARRIOR);
@@ -171,7 +172,7 @@ class KarganIntimidatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.COWARD);
     }
@@ -187,8 +188,8 @@ class KarganIntimidatorTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -28,8 +29,8 @@ class WildRideTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isTrue();
     }
 
@@ -45,7 +46,7 @@ class WildRideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isFalse();
     }
 
@@ -71,7 +72,7 @@ class WildRideTest extends BaseCardTest {
 
         harness.castAndResolveFlashback(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
@@ -90,7 +91,7 @@ class WildRideTest extends BaseCardTest {
         assertThat(creature.isTapped()).isTrue();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
     }
@@ -107,11 +108,11 @@ class WildRideTest extends BaseCardTest {
         harness.castFlashback(player1, 0, List.of(creature.getId()), List.of(creature.getId()));
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
     }

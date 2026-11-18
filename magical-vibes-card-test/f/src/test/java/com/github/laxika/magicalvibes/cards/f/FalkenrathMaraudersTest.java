@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -106,7 +107,7 @@ class FalkenrathMaraudersTest extends BaseCardTest {
     @DisplayName("Zero combat damage does not trigger counters")
     void zeroCombatDamageDoesNotTrigger() {
         Permanent marauders = addReadyMarauders();
-        marauders.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, marauders, -2);
         marauders.setAttacking(true);
         harness.setLife(player2, 20);
         resolveCombat(player1);

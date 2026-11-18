@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -25,8 +26,8 @@ class TopanAsceticTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(helper.isTapped()).isTrue();
-        assertThat(ascetic.getPowerModifier()).isEqualTo(1);
-        assertThat(ascetic.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ascetic)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ascetic)).isEqualTo(1);
     }
 
     @Test
@@ -40,8 +41,8 @@ class TopanAsceticTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ascetic.isTapped()).isTrue();
-        assertThat(ascetic.getPowerModifier()).isEqualTo(1);
-        assertThat(ascetic.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ascetic)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ascetic)).isEqualTo(1);
     }
 
     @Test
@@ -55,14 +56,14 @@ class TopanAsceticTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, helper.getId());
         harness.passBothPriorities();
 
-        assertThat(ascetic.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ascetic)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ascetic.getPowerModifier()).isEqualTo(0);
-        assertThat(ascetic.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ascetic)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ascetic)).isEqualTo(0);
     }
 
     @Test
@@ -84,11 +85,11 @@ class TopanAsceticTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(ascetic.isTapped()).isTrue();
-        assertThat(ascetic.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ascetic)).isZero();
         harness.passBothPriorities();
 
-        assertThat(ascetic.getPowerModifier()).isEqualTo(1);
-        assertThat(ascetic.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ascetic)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ascetic)).isEqualTo(1);
     }
 
     @Test
@@ -102,13 +103,13 @@ class TopanAsceticTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(helper.isTapped()).isTrue();
-        assertThat(ascetic.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ascetic)).isEqualTo(1);
         harness.passBothPriorities();
 
-        assertThat(ascetic.getPowerModifier()).isEqualTo(2);
-        assertThat(ascetic.getToughnessModifier()).isEqualTo(2);
-        assertThat(helper.getPowerModifier()).isZero();
-        assertThat(helper.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ascetic)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ascetic)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, helper)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, helper)).isZero();
     }
 
     @Test
@@ -122,6 +123,6 @@ class TopanAsceticTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(opponent.isTapped()).isFalse();
-        assertThat(ascetic.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ascetic)).isZero();
     }
 }

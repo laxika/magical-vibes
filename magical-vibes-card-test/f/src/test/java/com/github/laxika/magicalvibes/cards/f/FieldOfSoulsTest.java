@@ -32,8 +32,8 @@ class FieldOfSoulsTest extends BaseCardTest {
         List<Permanent> spirits = findPermanents(player1, "Spirit");
         assertThat(spirits).hasSize(1);
         assertThat(spirits.getFirst().getCard().isToken()).isTrue();
-        assertThat(spirits.getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(spirits.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, spirits.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, spirits.getFirst())).isEqualTo(1);
         assertThat(spirits.getFirst().getCard().getKeywords()).contains(Keyword.FLYING);
     }
 

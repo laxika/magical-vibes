@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -56,8 +57,8 @@ class BreyasApprenticeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(apprentice);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(apprentice.getCard());
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BeastWalkers;
 import com.github.laxika.magicalvibes.cards.t.TimmerianFiends;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,8 +30,8 @@ class SerraInquisitorsTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(inquisitors.getPowerModifier()).isEqualTo(2);
-        assertThat(inquisitors.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, inquisitors)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, inquisitors)).isZero();
     }
 
     @Test
@@ -44,8 +45,8 @@ class SerraInquisitorsTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(inquisitors.getPowerModifier()).isZero();
-        assertThat(inquisitors.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, inquisitors)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, inquisitors)).isZero();
     }
 
     @Test
@@ -59,7 +60,7 @@ class SerraInquisitorsTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(inquisitors.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, inquisitors)).isEqualTo(2);
     }
 
     @Test
@@ -73,7 +74,7 @@ class SerraInquisitorsTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(inquisitors.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, inquisitors)).isZero();
     }
 
     @Test
@@ -90,7 +91,7 @@ class SerraInquisitorsTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(inquisitors.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, inquisitors)).isEqualTo(2);
     }
 
     @Test
@@ -110,7 +111,7 @@ class SerraInquisitorsTest extends BaseCardTest {
                 new BlockerAssignment(0, 1)));
         harness.passUntil(TurnStep.COMBAT_DAMAGE);
 
-        assertThat(inquisitors.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, inquisitors)).isEqualTo(2);
     }
 
     @Test
@@ -124,13 +125,13 @@ class SerraInquisitorsTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(inquisitors.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, inquisitors)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(inquisitors.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, inquisitors)).isZero();
     }
 
     @Test
@@ -147,8 +148,8 @@ class SerraInquisitorsTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(inquisitors.getPowerModifier()).isEqualTo(2);
-        assertThat(inquisitors.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, inquisitors)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, inquisitors)).isZero();
     }
 
     @Test
@@ -168,7 +169,7 @@ class SerraInquisitorsTest extends BaseCardTest {
                 new BlockerAssignment(0, 1)));
         resolveAllTriggers();
 
-        assertThat(inquisitors.getPowerModifier()).isEqualTo(2);
-        assertThat(inquisitors.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, inquisitors)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, inquisitors)).isZero();
     }
 }

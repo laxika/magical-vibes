@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoForTheThroat;
@@ -117,7 +118,7 @@ class TomBertAndWilliamTest extends BaseCardTest {
     void zeroPowerStillDiscards() {
         addCreatureReady(player1, new TomBertAndWilliam());
         Permanent sacrificed = addCreatureReady(player1, new GrizzlyBears());
-        sacrificed.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, sacrificed, -2);
         harness.setHand(player1, List.of(new Forest()));
         harness.setLibrary(player1, List.of(new Swamp()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

@@ -32,7 +32,7 @@ class VorelOfTheHullCladeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
-        assertThat(bears.getEffectivePower()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
         assertThat(vorel.isTapped()).isTrue();
     }
 

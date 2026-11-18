@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -35,8 +36,8 @@ class WarriorsStandTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
-        assertThat(land.getPowerModifier()).isZero();
-        assertThat(land.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, land)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, land)).isZero();
     }
 
     @Test

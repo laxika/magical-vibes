@@ -40,15 +40,15 @@ class OkinaTempleToTheGrandfathersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, konda.getId());
         harness.passBothPriorities();
 
-        assertThat(konda.getEffectivePower()).isEqualTo(4);
-        assertThat(konda.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, konda)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, konda)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(konda.getEffectivePower()).isEqualTo(3);
-        assertThat(konda.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, konda)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, konda)).isEqualTo(3);
     }
 
     @Test
@@ -64,8 +64,8 @@ class OkinaTempleToTheGrandfathersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, konda.getId());
         harness.passBothPriorities();
 
-        assertThat(konda.getEffectivePower()).isEqualTo(4);
-        assertThat(konda.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, konda)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, konda)).isEqualTo(4);
     }
 
     @Test
@@ -135,13 +135,13 @@ class OkinaTempleToTheGrandfathersTest extends BaseCardTest {
         assertThat(okina.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         assertThat(gd.stack).hasSize(1);
-        assertThat(konda.getEffectivePower()).isEqualTo(3);
-        assertThat(konda.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, konda)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, konda)).isEqualTo(3);
 
         harness.passBothPriorities();
 
-        assertThat(konda.getEffectivePower()).isEqualTo(4);
-        assertThat(konda.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, konda)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, konda)).isEqualTo(4);
     }
 
     @Test
@@ -159,8 +159,8 @@ class OkinaTempleToTheGrandfathersTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(okina.getCard());
         harness.passBothPriorities();
 
-        assertThat(konda.getEffectivePower()).isEqualTo(4);
-        assertThat(konda.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, konda)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, konda)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -39,10 +40,10 @@ class GloriousChargeTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(1);
-                assertThat(p.getToughnessModifier()).isEqualTo(1);
-                assertThat(p.getEffectivePower()).isEqualTo(3);
-                assertThat(p.getEffectiveToughness()).isEqualTo(3);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(1);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(1);
+                assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(3);
+                assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(3);
             }
         }
     }
@@ -59,8 +60,8 @@ class GloriousChargeTest extends BaseCardTest {
         List<Permanent> p1Battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : p1Battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(1);
-                assertThat(p.getToughnessModifier()).isEqualTo(1);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(1);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(1);
             }
         }
 
@@ -68,8 +69,8 @@ class GloriousChargeTest extends BaseCardTest {
         List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
         for (Permanent p : p2Battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
-                assertThat(p.getToughnessModifier()).isEqualTo(0);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
             }
         }
     }
@@ -86,10 +87,10 @@ class GloriousChargeTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
-                assertThat(p.getToughnessModifier()).isEqualTo(0);
-                assertThat(p.getEffectivePower()).isEqualTo(2);
-                assertThat(p.getEffectiveToughness()).isEqualTo(2);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
+                assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(2);
+                assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(2);
             }
         }
     }
@@ -123,12 +124,12 @@ class GloriousChargeTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
 
-        assertThat(existing.getEffectivePower()).isEqualTo(3);
-        assertThat(existing.getEffectiveToughness()).isEqualTo(3);
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(3);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(3);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
     }
 
     @Test
@@ -140,12 +141,12 @@ class GloriousChargeTest extends BaseCardTest {
         harness.castFromHand(player1, new GloriousCharge(), "{1}{W}");
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
 
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,8 +24,8 @@ class ParagonOfModernityTest extends BaseCardTest {
 
         activateAndResolve();
 
-        assertThat(paragon.getPowerModifier()).isEqualTo(1);
-        assertThat(paragon.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, paragon)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paragon)).isEqualTo(1);
         assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -39,8 +40,8 @@ class ParagonOfModernityTest extends BaseCardTest {
         activateAndResolve();
 
         assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(paragon.getPowerModifier()).isZero();
-        assertThat(paragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, paragon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paragon)).isZero();
     }
 
     @Test
@@ -59,8 +60,8 @@ class ParagonOfModernityTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(paragon.getPowerModifier()).isEqualTo(1);
-        assertThat(paragon.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, paragon)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paragon)).isEqualTo(1);
     }
 
     @Test
@@ -73,8 +74,8 @@ class ParagonOfModernityTest extends BaseCardTest {
 
         activateAndResolve();
 
-        assertThat(paragon.getPowerModifier()).isEqualTo(1);
-        assertThat(paragon.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, paragon)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paragon)).isEqualTo(1);
         assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -90,14 +91,14 @@ class ParagonOfModernityTest extends BaseCardTest {
         activateAndResolve();
 
         assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(paragon.getPowerModifier()).isEqualTo(1);
-        assertThat(paragon.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, paragon)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paragon)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(paragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(paragon.getPowerModifier()).isZero();
-        assertThat(paragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, paragon)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paragon)).isZero();
     }
 
     private void activateAndResolve() {

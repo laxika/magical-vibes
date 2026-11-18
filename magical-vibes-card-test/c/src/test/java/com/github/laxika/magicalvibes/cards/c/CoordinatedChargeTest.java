@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -32,15 +33,15 @@ class CoordinatedChargeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .allSatisfy(permanent -> {
                     if (permanent.getCard().hasType(CardType.CREATURE)) {
-                        assertThat(permanent.getPowerModifier()).isEqualTo(2);
-                        assertThat(permanent.getToughnessModifier()).isEqualTo(1);
+                        assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isEqualTo(2);
+                        assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isEqualTo(1);
                     }
                 });
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .allSatisfy(permanent -> {
                     if (permanent.getCard().hasType(CardType.CREATURE)) {
-                        assertThat(permanent.getPowerModifier()).isZero();
-                        assertThat(permanent.getToughnessModifier()).isZero();
+                        assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isZero();
+                        assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isZero();
                     }
                 });
     }
@@ -55,15 +56,15 @@ class CoordinatedChargeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -90,10 +91,10 @@ class CoordinatedChargeTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new AlmightyBrushwagg());
 
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(2);
-        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
     }
 
     @Test
@@ -125,8 +126,8 @@ class CoordinatedChargeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test

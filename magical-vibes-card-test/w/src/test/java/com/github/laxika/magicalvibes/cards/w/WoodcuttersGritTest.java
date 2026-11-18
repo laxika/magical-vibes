@@ -27,8 +27,8 @@ class WoodcuttersGritTest extends BaseCardTest {
 
         castResolve(creature);
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(3);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HEXPROOF);
     }
 
@@ -57,8 +57,8 @@ class WoodcuttersGritTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.HEXPROOF);
     }
 
@@ -83,8 +83,8 @@ class WoodcuttersGritTest extends BaseCardTest {
 
         castResolve(creature);
 
-        assertThat(creature.getPowerModifier()).isEqualTo(6);
-        assertThat(creature.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
@@ -104,12 +104,12 @@ class WoodcuttersGritTest extends BaseCardTest {
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isTrue();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(card -> card instanceof GiantGrowth);

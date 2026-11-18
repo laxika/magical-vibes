@@ -50,8 +50,8 @@ class TheMimeoplasmTest extends BaseCardTest {
         assertThat(mimeoplasm).isNotNull();
         assertThat(mimeoplasm.getCard().getName()).isEqualTo("Grizzly Bears");
         assertThat(mimeoplasm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(mimeoplasm.getEffectivePower()).isEqualTo(6);
-        assertThat(mimeoplasm.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, mimeoplasm)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, mimeoplasm)).isEqualTo(6);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bears);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(elemental);
     }
@@ -91,7 +91,7 @@ class TheMimeoplasmTest extends BaseCardTest {
 
         Permanent copy = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(copy.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(4);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(remainingOwnCard);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(remainingOpponentCard);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(ooze, lord);
@@ -106,7 +106,7 @@ class TheMimeoplasmTest extends BaseCardTest {
 
         Permanent copy = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
-        assertThat(copy.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(6);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(triskelion, ooze);
     }
@@ -190,7 +190,7 @@ class TheMimeoplasmTest extends BaseCardTest {
         Permanent copy = findPermanent(player1, "Air Elemental");
         assertThat(copy).isNotNull();
         assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(copy.getEffectivePower()).isEqualTo(6);
-        assertThat(copy.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(6);
     }
 }

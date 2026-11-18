@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,8 +21,8 @@ class KjeldoranWarCryTest extends BaseCardTest {
         harness.castFromHand(player1, new KjeldoranWarCry(), "{1}{W}");
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
     }
 
     @Test
@@ -35,8 +36,8 @@ class KjeldoranWarCryTest extends BaseCardTest {
         harness.castFromHand(player1, new KjeldoranWarCry(), "{1}{W}");
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(3);
     }
 
     @Test
@@ -48,8 +49,8 @@ class KjeldoranWarCryTest extends BaseCardTest {
         harness.castFromHand(player1, new KjeldoranWarCry(), "{1}{W}");
         harness.passBothPriorities();
 
-        assertThat(ownBear.getPowerModifier()).isEqualTo(1);
-        assertThat(opposingBear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownBear)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingBear)).isZero();
     }
 
     @Test
@@ -63,8 +64,8 @@ class KjeldoranWarCryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -77,16 +78,16 @@ class KjeldoranWarCryTest extends BaseCardTest {
         harness.castFromHand(player2, new KjeldoranWarCry(), "{1}{W}");
         harness.passBothPriorities();
 
-        assertThat(opposingCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(opposingCreature.getToughnessModifier()).isEqualTo(1);
-        assertThat(ownCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(2);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(2);
-        assertThat(opposingCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(opposingCreature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingCreature)).isEqualTo(1);
     }
 
     @Test
@@ -98,14 +99,14 @@ class KjeldoranWarCryTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Kjeldoran War Cry");
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
 
         harness.castFromHand(player1, new KjeldoranWarCry(), "{1}{W}");
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -122,9 +123,9 @@ class KjeldoranWarCryTest extends BaseCardTest {
         Permanent enteredCreature = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(laterCreature.getId()))
                 .findFirst().orElseThrow();
-        assertThat(existingCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(existingCreature.getToughnessModifier()).isEqualTo(1);
-        assertThat(enteredCreature.getPowerModifier()).isZero();
-        assertThat(enteredCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, existingCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, existingCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, enteredCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enteredCreature)).isZero();
     }
 }

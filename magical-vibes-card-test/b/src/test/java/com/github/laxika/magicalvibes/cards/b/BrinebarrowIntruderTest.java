@@ -31,8 +31,8 @@ class BrinebarrowIntruderTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent giant = findPermanent(player2, "Hill Giant");
-        assertThat(giant.getEffectivePower()).isEqualTo(1);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     @Test
@@ -51,8 +51,8 @@ class BrinebarrowIntruderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent giant = findPermanent(player2, "Hill Giant");
-        assertThat(giant.getEffectivePower()).isEqualTo(3);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     @Test
@@ -78,8 +78,8 @@ class BrinebarrowIntruderTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Brinebarrow Intruder");
-        assertThat(target.getEffectivePower()).isEqualTo(-1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Brinebarrow Intruder");
     }
 
@@ -107,9 +107,9 @@ class BrinebarrowIntruderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponent.getId());
         resolveAllTriggers();
 
-        assertThat(own.getEffectivePower()).isEqualTo(1);
-        assertThat(opponent.getEffectivePower()).isEqualTo(-1);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
     }
 
     @Test
@@ -124,8 +124,8 @@ class BrinebarrowIntruderTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, target));
         resolveAllTriggers();
 
-        assertThat(other.getEffectivePower()).isEqualTo(1);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
         harness.assertOnBattlefield(player1, "Brinebarrow Intruder");
         harness.assertInGraveyard(player2, "Brinebarrow Intruder");
     }

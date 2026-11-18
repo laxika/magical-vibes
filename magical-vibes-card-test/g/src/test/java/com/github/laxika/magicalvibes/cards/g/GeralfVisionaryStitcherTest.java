@@ -79,7 +79,7 @@ class GeralfVisionaryStitcherTest extends BaseCardTest {
         Permanent geralf = addCreatureReady(player1, new GeralfVisionaryStitcher());
         Permanent skaab = addCreatureReady(player1, new RepositorySkaab());
         skaab.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        skaab.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, skaab, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

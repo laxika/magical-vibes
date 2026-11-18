@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.cards.t.TendoIceBridge;
 import com.github.laxika.magicalvibes.cards.v.VeilOfSecrecy;
@@ -57,7 +58,7 @@ class MistbladeShinobiTest extends BaseCardTest {
     void returnsOnlyOneCreatureRegardlessOfDamage() {
         Permanent shinobi = addCreatureReady(player1, new MistbladeShinobi());
         shinobi.setAttacking(true);
-        shinobi.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, shinobi, 3);
         addCreatureReady(player2, new GnarledMass());
         addCreatureReady(player2, new GnarledMass());
 

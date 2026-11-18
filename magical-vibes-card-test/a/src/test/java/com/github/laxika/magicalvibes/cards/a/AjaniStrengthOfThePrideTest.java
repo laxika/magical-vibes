@@ -49,8 +49,8 @@ class AjaniStrengthOfThePrideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent pridemate = findPermanent(player1, "Ajani's Pridemate");
-        assertThat(pridemate.getEffectivePower()).isEqualTo(2);
-        assertThat(pridemate.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, pridemate)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pridemate)).isEqualTo(2);
 
         harness.setLibrary(player1, List.of(new GreenwoodSentinel()));
         harness.setHand(player1, List.of(new Revitalize()));
@@ -62,8 +62,8 @@ class AjaniStrengthOfThePrideTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(pridemate.getEffectivePower()).isEqualTo(3);
-        assertThat(pridemate.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, pridemate)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, pridemate)).isEqualTo(3);
     }
 
     @Test

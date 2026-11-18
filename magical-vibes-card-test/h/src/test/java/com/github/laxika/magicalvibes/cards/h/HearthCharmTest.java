@@ -86,12 +86,12 @@ class HearthCharmTest extends BaseCardTest {
             harness.castModalInstant(player1, 0, 1, List.of());
             harness.passBothPriorities();
 
-            assertThat(attacker.getEffectivePower()).isEqualTo(3);
-            assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-            assertThat(opponentAttacker.getEffectivePower()).isEqualTo(3);
-            assertThat(opponentAttacker.getEffectiveToughness()).isEqualTo(2);
-            assertThat(nonAttacker.getEffectivePower()).isEqualTo(2);
-            assertThat(nonAttacker.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, opponentAttacker)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, opponentAttacker)).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, nonAttacker)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, nonAttacker)).isEqualTo(2);
         }
 
         @Test
@@ -105,8 +105,8 @@ class HearthCharmTest extends BaseCardTest {
             harness.passBothPriorities();
             declareAttackersAndPrepareBlockers(List.of(0));
 
-            assertThat(creature.getEffectivePower()).isEqualTo(2);
-            assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         }
 
         @Test
@@ -122,13 +122,13 @@ class HearthCharmTest extends BaseCardTest {
 
             harness.castModalInstant(player1, 0, 1, List.of());
             harness.passBothPriorities();
-            assertThat(attacker.getEffectivePower()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
 
             harness.forceStep(TurnStep.END_STEP);
             harness.passUntil(TurnStep.CLEANUP);
 
-            assertThat(attacker.getEffectivePower()).isEqualTo(2);
-            assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         }
     }
 
@@ -180,7 +180,7 @@ class HearthCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 2, target.getId());
             harness.castModalInstant(player1, 0, 1, List.of());
             harness.passBothPriorities();
-            assertThat(target.getEffectivePower()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
             harness.passBothPriorities();
 
             assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
@@ -200,7 +200,7 @@ class HearthCharmTest extends BaseCardTest {
             harness.castModalInstant(player1, 0, 1, List.of());
             harness.passBothPriorities();
 
-            assertThat(target.getEffectivePower()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
             assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         }
 

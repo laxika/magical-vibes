@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -72,8 +73,8 @@ class ClaimFameTest extends BaseCardTest {
         harness.castFlashback(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Claim // Fame");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -94,7 +95,7 @@ class ClaimFameTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
         assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
     }
 
@@ -161,8 +162,8 @@ class ClaimFameTest extends BaseCardTest {
         harness.castFlashback(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
     }
 
@@ -201,7 +202,7 @@ class ClaimFameTest extends BaseCardTest {
         harness.castFlashback(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Claim // Fame");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -222,7 +223,7 @@ class ClaimFameTest extends BaseCardTest {
         harness.castInstant(player2, 0, spell.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
         harness.assertNotInGraveyard(player1, "Claim // Fame");
         assertThat(gd.getPlayerExiledCards(player1.getId()))

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -34,10 +35,10 @@ class ValorInAkrosTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         Permanent entered = battlefield.get(battlefield.size() - 1);
 
-        assertThat(existing.getPowerModifier()).isEqualTo(1);
-        assertThat(existing.getToughnessModifier()).isEqualTo(1);
-        assertThat(entered.getPowerModifier()).isEqualTo(1);
-        assertThat(entered.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, existing)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, existing)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, entered)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, entered)).isEqualTo(1);
     }
 
     @Test
@@ -53,8 +54,8 @@ class ValorInAkrosTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(existing.getPowerModifier()).isEqualTo(0);
-        assertThat(existing.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, existing)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, existing)).isEqualTo(0);
     }
 
     @Test
@@ -67,8 +68,8 @@ class ValorInAkrosTest extends BaseCardTest {
         castBears(player2);
         harness.passBothPriorities();
 
-        assertThat(existing.getPowerModifier()).isEqualTo(0);
-        assertThat(existing.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, existing)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, existing)).isEqualTo(0);
     }
 
     @Test
@@ -82,18 +83,18 @@ class ValorInAkrosTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent second = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(second.getPowerModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
         harness.passBothPriorities();
 
-        assertThat(existing.getPowerModifier()).isEqualTo(2);
-        assertThat(existing.getToughnessModifier()).isEqualTo(2);
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isEqualTo(1);
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, existing)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, existing)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -103,14 +104,14 @@ class ValorInAkrosTest extends BaseCardTest {
         Permanent first = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(second.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(2);
     }
 }

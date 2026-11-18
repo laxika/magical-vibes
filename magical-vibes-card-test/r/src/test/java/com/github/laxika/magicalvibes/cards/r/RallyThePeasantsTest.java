@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Dissipate;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
@@ -49,10 +50,10 @@ class RallyThePeasantsTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(2);
-                assertThat(p.getToughnessModifier()).isEqualTo(0);
-                assertThat(p.getEffectivePower()).isEqualTo(4);
-                assertThat(p.getEffectiveToughness()).isEqualTo(2);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(2);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
+                assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(4);
+                assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(2);
             }
         }
     }
@@ -70,14 +71,14 @@ class RallyThePeasantsTest extends BaseCardTest {
         List<Permanent> p1Battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : p1Battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(2);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(2);
             }
         }
 
         List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
         for (Permanent p : p2Battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
             }
         }
     }
@@ -98,10 +99,10 @@ class RallyThePeasantsTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
-                assertThat(p.getToughnessModifier()).isEqualTo(0);
-                assertThat(p.getEffectivePower()).isEqualTo(2);
-                assertThat(p.getEffectiveToughness()).isEqualTo(2);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
+                assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(2);
+                assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(2);
             }
         }
     }
@@ -142,8 +143,8 @@ class RallyThePeasantsTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(2);
-                assertThat(p.getEffectivePower()).isEqualTo(4);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(2);
+                assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(4);
             }
         }
     }
@@ -217,10 +218,10 @@ class RallyThePeasantsTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
 
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(4);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(2);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
     }
 
     @Test
@@ -232,8 +233,8 @@ class RallyThePeasantsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castAndResolveFlashback(player1, 0, null);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(6);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         harness.assertNotInGraveyard(player1, "Rally the Peasants");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card instanceof RallyThePeasants);
@@ -276,7 +277,7 @@ class RallyThePeasantsTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, spellId);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         harness.assertNotInGraveyard(player1, "Rally the Peasants");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card instanceof RallyThePeasants);
@@ -291,9 +292,9 @@ class RallyThePeasantsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(land.getPowerModifier()).isZero();
-        assertThat(land.getToughnessModifier()).isZero();
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, land)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, land)).isZero();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -307,14 +308,14 @@ class RallyThePeasantsTest extends BaseCardTest {
         harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }

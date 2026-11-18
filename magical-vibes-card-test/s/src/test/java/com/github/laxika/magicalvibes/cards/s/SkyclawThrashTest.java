@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -36,11 +37,11 @@ class SkyclawThrashTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        boolean won = thrash.getPowerModifier() == 1
-                && thrash.getToughnessModifier() == 1
+        boolean won = PermanentGrants.powerBoostOf(gd, thrash) == 1
+                && PermanentGrants.toughnessBoostOf(gd, thrash) == 1
                 && gqs.hasKeyword(gd, thrash, Keyword.FLYING);
-        boolean lost = thrash.getPowerModifier() == 0
-                && thrash.getToughnessModifier() == 0
+        boolean lost = PermanentGrants.powerBoostOf(gd, thrash) == 0
+                && PermanentGrants.toughnessBoostOf(gd, thrash) == 0
                 && !gqs.hasKeyword(gd, thrash, Keyword.FLYING);
 
         assertThat(won != lost)
@@ -68,8 +69,8 @@ class SkyclawThrashTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(thrash.getPowerModifier()).isZero();
-        assertThat(thrash.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, thrash)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thrash)).isZero();
         assertThat(gqs.hasKeyword(gd, thrash, Keyword.FLYING)).isFalse();
     }
 
@@ -85,18 +86,18 @@ class SkyclawThrashTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gameLogContains("wins the coin flip")).isFalse();
         assertThat(gameLogContains("loses the coin flip")).isFalse();
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isFalse();
 
         resolveAllTriggers();
 
         boolean won = gameLogContains("wins the coin flip");
-        assertThat(attacker.getPowerModifier()).isEqualTo(won ? 1 : 0);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(won ? 1 : 0);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(won ? 1 : 0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(won ? 1 : 0);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isEqualTo(won);
         for (Permanent other : List.of(nonattacker, opponent)) {
-            assertThat(other.getPowerModifier()).isZero();
-            assertThat(other.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
             assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
         }
     }
@@ -114,8 +115,8 @@ class SkyclawThrashTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gameLogContains("wins the coin flip")
                 ^ gameLogContains("loses the coin flip")).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
     }
 }

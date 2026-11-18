@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BronzeSable;
 import com.github.laxika.magicalvibes.cards.d.DauntlessOnslaught;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -31,13 +32,13 @@ class AnaxAndCymedeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, anax.getId());
 
-        assertThat(anax.getPowerModifier()).isEqualTo(1);
-        assertThat(anax.getToughnessModifier()).isEqualTo(1);
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, anax)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, anax)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, anax, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
-        assertThat(opponentBears.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -52,8 +53,8 @@ class AnaxAndCymedeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, anax.getId());
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -66,8 +67,8 @@ class AnaxAndCymedeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(anax.getPowerModifier()).isEqualTo(0);
-        assertThat(anax.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, anax)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, anax)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, anax, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -81,8 +82,8 @@ class AnaxAndCymedeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, anax.getId());
 
-        assertThat(anax.getPowerModifier()).isEqualTo(0);
-        assertThat(anax.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, anax)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, anax)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, anax, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -96,17 +97,17 @@ class AnaxAndCymedeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(sable.getId(), anax.getId()));
 
-        assertThat(anax.getPowerModifier()).isEqualTo(1);
-        assertThat(anax.getToughnessModifier()).isEqualTo(1);
-        assertThat(sable.getPowerModifier()).isEqualTo(1);
-        assertThat(sable.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, anax)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, anax)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, sable)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sable)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, anax, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, sable, Keyword.TRAMPLE)).isTrue();
 
         harness.passBothPriorities();
 
-        assertThat(anax.getPowerModifier()).isEqualTo(3);
-        assertThat(sable.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, anax)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, sable)).isEqualTo(3);
     }
 
     @Test
@@ -121,11 +122,11 @@ class AnaxAndCymedeTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new BronzeSable());
 
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.TRAMPLE)).isTrue();
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
         assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -141,8 +142,8 @@ class AnaxAndCymedeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.castAndResolveInstant(player1, 0, List.of(anax.getId()));
 
-        assertThat(sable.getPowerModifier()).isEqualTo(2);
-        assertThat(sable.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sable)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sable)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, sable, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -156,10 +157,10 @@ class AnaxAndCymedeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(sable.getId()));
 
-        assertThat(anax.getPowerModifier()).isZero();
-        assertThat(anax.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, anax)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, anax)).isZero();
         assertThat(gqs.hasKeyword(gd, anax, Keyword.TRAMPLE)).isFalse();
-        assertThat(sable.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sable)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, sable, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -178,8 +179,8 @@ class AnaxAndCymedeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Anax and Cymede");
         harness.passBothPriorities();
 
-        assertThat(sable.getPowerModifier()).isEqualTo(1);
-        assertThat(sable.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, sable)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sable)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, sable, Keyword.TRAMPLE)).isTrue();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Disperse;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -43,8 +44,8 @@ class LassoedByTheLawTest extends BaseCardTest {
         harness.activateAbility(player1, mercenaryIndex, 0, null, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
         assertThat(mercenary.isTapped()).isTrue();
     }
 
@@ -176,15 +177,15 @@ class LassoedByTheLawTest extends BaseCardTest {
 
         harness.activateAbility(player1, index, 0, null, mercenary.getId());
         resolveAllTriggers();
-        assertThat(mercenary.getPowerModifier()).isEqualTo(1);
-        assertThat(mercenary.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mercenary)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mercenary)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(mercenary.getPowerModifier()).isZero();
-        assertThat(mercenary.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mercenary)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mercenary)).isZero();
     }
 
     private void castAndResolve(Permanent target) {

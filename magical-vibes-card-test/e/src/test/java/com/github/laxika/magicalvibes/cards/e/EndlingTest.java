@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -59,8 +60,8 @@ class EndlingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, 0, null);
         harness.passBothPriorities();
 
-        assertThat(endling.getPowerModifier()).isEqualTo(1);
-        assertThat(endling.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, endling)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, endling)).isEqualTo(-1);
     }
 
     @Test
@@ -71,8 +72,8 @@ class EndlingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, 1, null);
         harness.passBothPriorities();
 
-        assertThat(endling.getPowerModifier()).isEqualTo(-1);
-        assertThat(endling.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, endling)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, endling)).isEqualTo(1);
     }
 
     @Test
@@ -157,13 +158,13 @@ class EndlingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, 3, 1, null);
         harness.passBothPriorities();
-        assertThat(endling.getPowerModifier()).isEqualTo(-1);
-        assertThat(endling.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, endling)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, endling)).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(endling.getPowerModifier()).isZero();
-        assertThat(endling.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, endling)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, endling)).isZero();
     }
 
     @Test

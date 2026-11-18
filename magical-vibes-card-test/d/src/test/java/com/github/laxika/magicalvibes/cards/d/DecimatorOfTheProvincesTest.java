@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HamletCaptain;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -32,10 +33,10 @@ class DecimatorOfTheProvincesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve cast trigger
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(ally.getEffectivePower()).isEqualTo(4);
-        assertThat(ally.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ally, Keyword.TRAMPLE)).isTrue();
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opponent, Keyword.TRAMPLE)).isFalse();
         harness.assertOnBattlefield(player1, "Decimator of the Provinces");
     }
@@ -56,7 +57,7 @@ class DecimatorOfTheProvincesTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(other.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Decimator of the Provinces"))
@@ -95,7 +96,7 @@ class DecimatorOfTheProvincesTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve trigger only
 
-        assertThat(ally.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ally, Keyword.TRAMPLE)).isTrue();
         harness.assertNotOnBattlefield(player1, "Decimator of the Provinces");
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Decimator of the Provinces");
@@ -112,15 +113,15 @@ class DecimatorOfTheProvincesTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(ally.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ally, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ally.getEffectivePower()).isEqualTo(2);
-        assertThat(ally.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ally, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -137,17 +138,17 @@ class DecimatorOfTheProvincesTest extends BaseCardTest {
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new HamletCaptain());
         harness.passBothPriorities();
 
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(4);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.TRAMPLE)).isTrue();
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.TRAMPLE)).isFalse();
         Permanent decimator = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard() instanceof DecimatorOfTheProvinces)
                 .findFirst().orElseThrow();
-        assertThat(decimator.getPowerModifier()).isZero();
-        assertThat(decimator.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, decimator)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, decimator)).isZero();
     }
 
     @Test
@@ -158,8 +159,8 @@ class DecimatorOfTheProvincesTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new DecimatorOfTheProvinces());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(ally.getEffectivePower()).isEqualTo(2);
-        assertThat(ally.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ally, Keyword.TRAMPLE)).isFalse();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -64,7 +65,7 @@ class DefeatTest extends BaseCardTest {
     @DisplayName("Checks effective power rather than printed power")
     void destroysCreatureWithReducedPower() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         castDefeat(target);
 
         harness.assertNotOnBattlefield(player2, "Hill Giant");
@@ -75,7 +76,7 @@ class DefeatTest extends BaseCardTest {
     @DisplayName("Can destroy a creature with negative power")
     void destroysCreatureWithNegativePower() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, target, -3);
         castDefeat(target);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");

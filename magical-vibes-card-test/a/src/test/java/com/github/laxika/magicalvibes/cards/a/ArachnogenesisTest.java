@@ -30,8 +30,8 @@ class ArachnogenesisTest extends BaseCardTest {
         List<Permanent> spiders = findPermanents(player1, "Spider");
         assertThat(spiders).hasSize(2);
         assertThat(spiders).allSatisfy(spider -> {
-            assertThat(spider.getEffectivePower()).isEqualTo(1);
-            assertThat(spider.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(2);
         });
     }
 

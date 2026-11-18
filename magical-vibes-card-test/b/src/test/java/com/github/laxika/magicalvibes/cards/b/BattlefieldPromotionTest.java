@@ -31,8 +31,8 @@ class BattlefieldPromotionTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(creature.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.FIRST_STRIKE);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }

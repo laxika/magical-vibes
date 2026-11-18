@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -22,8 +23,8 @@ class TalonrendTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(talonrend.getPowerModifier()).isEqualTo(1);
-        assertThat(talonrend.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, talonrend)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, talonrend)).isEqualTo(-1);
     }
 
     @Test
@@ -35,8 +36,8 @@ class TalonrendTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(talonrend.getPowerModifier()).isEqualTo(1);
-        assertThat(talonrend.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, talonrend)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, talonrend)).isEqualTo(-1);
     }
 
     @Test
@@ -50,8 +51,8 @@ class TalonrendTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(talonrend.getPowerModifier()).isEqualTo(3);
-        assertThat(talonrend.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, talonrend)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, talonrend)).isEqualTo(-3);
     }
 
     @Test
@@ -62,14 +63,14 @@ class TalonrendTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(talonrend.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, talonrend)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(talonrend.getPowerModifier()).isEqualTo(0);
-        assertThat(talonrend.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, talonrend)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, talonrend)).isEqualTo(0);
     }
 
     @Test
@@ -102,12 +103,12 @@ class TalonrendTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isEqualTo(-1);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
-        assertThat(opposing.getPowerModifier()).isZero();
-        assertThat(opposing.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposing)).isZero();
     }
 
     @Test
@@ -121,8 +122,8 @@ class TalonrendTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(talonrend.getPowerModifier()).isEqualTo(1);
-        assertThat(talonrend.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, talonrend)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, talonrend)).isEqualTo(-1);
         assertThat(talonrend.isTapped()).isTrue();
     }
 }

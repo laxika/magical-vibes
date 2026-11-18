@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -112,7 +113,7 @@ class SitaVarmaMaskedRacerTest extends BaseCardTest {
     @DisplayName("Negative Sita power sets a negative base value rather than zero")
     void negativePowerIsPreserved() {
         Permanent sita = addCreatureReady(player1, new SitaVarmaMaskedRacer());
-        sita.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, sita, -3);
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         addManaForX(0);

@@ -39,11 +39,11 @@ class FleshformerTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(fleshformer), null, hillGiant.getId());
         harness.passBothPriorities();
 
-        assertThat(fleshformer.getEffectivePower()).isEqualTo(4);
-        assertThat(fleshformer.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, fleshformer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, fleshformer)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, fleshformer, Keyword.FEAR)).isTrue();
-        assertThat(hillGiant.getEffectivePower()).isEqualTo(1);
-        assertThat(hillGiant.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, hillGiant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hillGiant)).isEqualTo(1);
     }
 
     @Test
@@ -74,11 +74,11 @@ class FleshformerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(fleshformer.getEffectivePower()).isEqualTo(2);
-        assertThat(fleshformer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, fleshformer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, fleshformer)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, fleshformer, Keyword.FEAR)).isFalse();
-        assertThat(hillGiant.getEffectivePower()).isEqualTo(3);
-        assertThat(hillGiant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, hillGiant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hillGiant)).isEqualTo(3);
     }
 
     @Test
@@ -105,8 +105,8 @@ class FleshformerTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(fleshformer), null, fleshformer.getId());
         harness.passBothPriorities();
 
-        assertThat(fleshformer.getEffectivePower()).isEqualTo(2);
-        assertThat(fleshformer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, fleshformer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, fleshformer)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, fleshformer, Keyword.FEAR)).isTrue();
         harness.assertOnBattlefield(player1, "Fleshformer");
     }
@@ -123,8 +123,8 @@ class FleshformerTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(fleshformer), null, target.getId());
         harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
-        assertThat(fleshformer.getEffectivePower()).isEqualTo(4);
-        assertThat(fleshformer.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, fleshformer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, fleshformer)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, fleshformer, Keyword.FEAR)).isTrue();
         assertThat(fleshformer.isTapped()).isTrue();
         harness.assertInGraveyard(player2, "Fleshformer");
@@ -144,8 +144,8 @@ class FleshformerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(fleshformer.getEffectivePower()).isEqualTo(6);
-        assertThat(fleshformer.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, fleshformer)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, fleshformer)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, fleshformer, Keyword.FEAR)).isTrue();
         harness.assertNotOnBattlefield(player2, "Fleshformer");
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
@@ -165,11 +165,11 @@ class FleshformerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(firstSource.getEffectivePower()).isEqualTo(2);
-        assertThat(firstSource.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, firstSource)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstSource)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, firstSource, Keyword.FEAR)).isFalse();
-        assertThat(secondSource.getEffectivePower()).isEqualTo(4);
-        assertThat(secondSource.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, secondSource)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondSource)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, secondSource, Keyword.FEAR)).isTrue();
         harness.assertInGraveyard(player2, "Fleshformer");
         assertThat(gd.stack).isEmpty();

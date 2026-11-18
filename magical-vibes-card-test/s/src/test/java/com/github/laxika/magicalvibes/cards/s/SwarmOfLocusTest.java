@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Cloudpost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,8 +26,8 @@ class SwarmOfLocusTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(swarm.getPowerModifier()).isEqualTo(3);
-        assertThat(swarm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, swarm)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, swarm)).isZero();
     }
 
     @Test
@@ -39,7 +40,7 @@ class SwarmOfLocusTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(swarm.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, swarm)).isEqualTo(1);
     }
 
     @Test
@@ -50,13 +51,13 @@ class SwarmOfLocusTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> declareAttackers(List.of(0)));
         assertThat(gd.stack).hasSize(1);
-        assertThat(swarm.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, swarm)).isZero();
         harness.addToBattlefield(player1, new Cloudpost());
 
         resolveAllTriggers();
 
-        assertThat(swarm.getPowerModifier()).isEqualTo(2);
-        assertThat(swarm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, swarm)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, swarm)).isZero();
     }
 
     @Test
@@ -66,11 +67,11 @@ class SwarmOfLocusTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        assertThat(swarm.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, swarm)).isEqualTo(1);
 
         harness.addToBattlefield(player1, new Cloudpost());
 
-        assertThat(swarm.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, swarm)).isEqualTo(1);
     }
 
     @Test
@@ -83,11 +84,11 @@ class SwarmOfLocusTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(3);
-        assertThat(second.getPowerModifier()).isEqualTo(3);
-        assertThat(nonattacker.getPowerModifier()).isZero();
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 
     @Test
@@ -97,12 +98,12 @@ class SwarmOfLocusTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        assertThat(swarm.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, swarm)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(swarm.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, swarm)).isZero();
     }
 }

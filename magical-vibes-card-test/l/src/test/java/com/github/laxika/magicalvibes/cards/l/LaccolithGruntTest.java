@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.s.SilkenfistFighter;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
@@ -97,7 +98,7 @@ class LaccolithGruntTest extends BaseCardTest {
         declareBlock(attacker, blocker);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, blocker.getId());
-        attacker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, attacker, -1);
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);

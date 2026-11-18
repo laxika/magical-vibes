@@ -47,8 +47,8 @@ class GimbalGremlinProdigyTest extends BaseCardTest {
 
         Permanent gremlin = gremlins(player1).getFirst();
         assertThat(gremlin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(gremlin.getEffectivePower()).isEqualTo(3);
-        assertThat(gremlin.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, gremlin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, gremlin)).isEqualTo(3);
         assertThat(gqs.isArtifact(gd, gremlin)).isTrue();
         assertThat(gqs.hasKeyword(gd, gremlin, Keyword.TRAMPLE)).isTrue();
     }

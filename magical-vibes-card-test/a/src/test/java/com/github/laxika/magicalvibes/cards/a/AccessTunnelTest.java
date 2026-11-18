@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -132,7 +133,7 @@ class AccessTunnelTest extends BaseCardTest {
         addAbilityMana();
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.passBothPriorities();
 
         assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
@@ -148,7 +149,7 @@ class AccessTunnelTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         target.setAttacking(true);
         prepareDeclareBlockers();
 
@@ -161,7 +162,7 @@ class AccessTunnelTest extends BaseCardTest {
     void cannotTargetCreatureWhoseEffectivePowerAlreadyExceedsThree() {
         addCreatureReady(player1, new AccessTunnel());
         Permanent target = addCreatureReady(player1, new HillGiant());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         addAbilityMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.SazhsChocobo;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -45,8 +46,8 @@ class TheWanderingMinstrelTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(token.getCard().getName()).isEqualTo("Elemental");
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         assertThat(token.getCard().getColors())
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK,
                         CardColor.RED, CardColor.GREEN);
@@ -77,10 +78,10 @@ class TheWanderingMinstrelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(minstrel.getPowerModifier()).isZero();
-        assertThat(minstrel.getToughnessModifier()).isZero();
-        assertThat(bears.getPowerModifier()).isEqualTo(3);
-        assertThat(bears.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, minstrel)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, minstrel)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(3);
     }
 
     @Test
@@ -170,18 +171,18 @@ class TheWanderingMinstrelTest extends BaseCardTest {
         addTowns(player1, 1);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(3);
-        assertThat(opponentCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
         addTowns(player1, 1);
         Permanent newcomer = harness.addToBattlefieldAndReturn(player1, new SazhsChocobo());
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(newcomer.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isZero();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -194,8 +195,8 @@ class TheWanderingMinstrelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     private void addTowns(com.github.laxika.magicalvibes.model.Player player, int count) {

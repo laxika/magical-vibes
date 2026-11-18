@@ -53,8 +53,8 @@ class ZanarkandAncientMetropolisTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(hero.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(hero.getEffectivePower()).isEqualTo(4);
-        assertThat(hero.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(4);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(zanarkand);
     }
 
@@ -74,8 +74,8 @@ class ZanarkandAncientMetropolisTest extends BaseCardTest {
         assertThat(hero.getCard().getSubtypes()).containsExactly(CardSubtype.HERO);
         assertThat(hero.getCard().getColors()).isEmpty();
         assertThat(hero.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(hero.getEffectivePower()).isEqualTo(1);
-        assertThat(hero.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(1);
     }
 
     @Test

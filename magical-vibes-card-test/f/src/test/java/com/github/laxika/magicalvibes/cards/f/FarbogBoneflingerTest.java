@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DawntreaderElk;
 import com.github.laxika.magicalvibes.cards.h.HeadlessSkaab;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -36,8 +37,8 @@ class FarbogBoneflingerTest extends BaseCardTest {
         Permanent giant = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getId().equals(targetId))
                 .findFirst().orElseThrow();
-        assertThat(giant.getPowerModifier()).isEqualTo(-2);
-        assertThat(giant.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(-2);
     }
 
     @Test

@@ -810,6 +810,13 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Concerted Effort shares every protection quality: colorless, players (CR 702.16k), matching permanents (read from the layered state), and chosen parity or other-than-chosen mana values with the choice fixed in the shared ability (CR 702.16i, Haktos ruling) (`ConcertedEffortTest`, fails before).
 - Ledger (1,725 card test classes, route tests): only the new tests' lines and random draws.
 
+**D (part 17: P/T boosts and base P/T overrides).**
+- "Gets +X/+Y" with any stated duration is a floating `PowerToughnessBoostEffect` (was `BuffTargetCreatureIndefinitelyEffect`) on the permanent (`GameData.addPowerToughnessBoost`; amounts fixed as it begins, CR 608.2h; one per creature for a group, CR 611.2c), applied in 7c. Base-P/T setters are floating `SetBasePowerToughnessEffect`s; with no stated duration (exchanges, Primal Clay, as-enters P/T, self setters) they are `PERMANENT`, stamped as made (CR 611.2a, 613.7b). Gone: 11 `Permanent` fields, 5 `EndOfTurnStateField`s, `Kind.VALUE`, the exchange 7b loop, fingerprint lines.
+- `Permanent.getEffectivePower/Toughness` are intrinsic only. Every departure records the layered P/T as it leaves, the Aura sweep too, with its last-known card types (CR 603.10a); departed snapshots read the floating 7b/7c effects still on their id.
+- Rules fixes (tests fail before): an Aura that's also a creature is unattached and put into its owner's graveyard (CR 303.4d, 704.5m; `MarchOfTheMachinesTest`) and dies with its last-known toughness (`ProperBurialTest`); an until-your-next-turn boost counts towards Snowblind's toughness cap (`SnowblindTest`). No-duration effects cite CR 611.2a.
+- Moments: cleanup (CR 514.2), end of combat or the controller's next turn, as before. Ledger (5,959 card test classes, route tests): only `floating began|ended` lines added and a recorded source on next-turn boosts; trigger lines differ only by random draws, dice, coins, modes and the new tests. Esika's Chariot's crew animation step depends on test run order (HEAD too).
+- Left: abilities and text changes; part 3's phasing item; `onPermanent` effects ending as their permanent leaves; then step 6.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

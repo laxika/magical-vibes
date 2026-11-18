@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HerosDownfall;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -33,8 +34,8 @@ class GeneralMarhaultElsdragonTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(6);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(6);
     }
 
     @Test
@@ -48,8 +49,8 @@ class GeneralMarhaultElsdragonTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -64,15 +65,15 @@ class GeneralMarhaultElsdragonTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(3);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -86,8 +87,8 @@ class GeneralMarhaultElsdragonTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(general.getPowerModifier()).isEqualTo(3);
-        assertThat(general.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, general)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, general)).isEqualTo(3);
     }
 
     @Test
@@ -110,12 +111,12 @@ class GeneralMarhaultElsdragonTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(6);
-        assertThat(first.getToughnessModifier()).isEqualTo(6);
-        assertThat(second.getPowerModifier()).isEqualTo(3);
-        assertThat(second.getToughnessModifier()).isEqualTo(3);
-        assertThat(general.getPowerModifier()).isZero();
-        assertThat(general.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, general)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, general)).isZero();
     }
 
     @Test
@@ -129,8 +130,8 @@ class GeneralMarhaultElsdragonTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -151,8 +152,8 @@ class GeneralMarhaultElsdragonTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, removedBlocker.getId());
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(3);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(3);
     }
 
     @Test
@@ -171,7 +172,7 @@ class GeneralMarhaultElsdragonTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, general.getId());
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(3);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(3);
     }
 }

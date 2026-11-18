@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,8 +25,8 @@ class HellkitePunisherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hellkite.getPowerModifier()).isEqualTo(1);
-        assertThat(hellkite.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hellkite)).isEqualTo(0);
     }
 
     @Test
@@ -39,8 +40,8 @@ class HellkitePunisherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hellkite.getPowerModifier()).isEqualTo(2);
-        assertThat(hellkite.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hellkite)).isEqualTo(0);
     }
 
     @Test
@@ -66,8 +67,8 @@ class HellkitePunisherTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(hellkite.getPowerModifier()).isEqualTo(0);
-        assertThat(hellkite.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hellkite)).isEqualTo(0);
     }
 
     @Test
@@ -81,8 +82,8 @@ class HellkitePunisherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hellkite.getPowerModifier()).isEqualTo(1);
-        assertThat(hellkite.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hellkite)).isEqualTo(0);
         assertThat(hellkite.isTapped()).isTrue();
     }
 
@@ -96,12 +97,12 @@ class HellkitePunisherTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(hellkite.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isEqualTo(0);
         harness.passBothPriorities();
 
-        assertThat(hellkite.getPowerModifier()).isEqualTo(1);
-        assertThat(other.getPowerModifier()).isEqualTo(0);
-        assertThat(opposing.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isEqualTo(0);
     }
 
     private Permanent addReadyHellkite(Player player) {

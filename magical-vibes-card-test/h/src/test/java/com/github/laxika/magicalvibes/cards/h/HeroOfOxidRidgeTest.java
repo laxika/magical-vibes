@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GlissasCourier;
 import com.github.laxika.magicalvibes.cards.g.GoForTheThroat;
 import com.github.laxika.magicalvibes.cards.m.MyrSire;
@@ -133,16 +134,16 @@ class HeroOfOxidRidgeTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(3);
-        assertThat(hero.getPowerModifier()).isZero();
-        assertThat(nonattacker.getPowerModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, hero)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -153,8 +154,8 @@ class HeroOfOxidRidgeTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        small.setPowerModifier(1);
-        large.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, small, 1);
+        PermanentGrants.setPowerBoost(gd, large, -1);
         prepareDeclareBlockers();
 
         assertThat(bls.canBlockAttacker(gd, small, hero, gd.playerBattlefields.get(player2.getId()))).isTrue();
@@ -202,7 +203,7 @@ class HeroOfOxidRidgeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Hero of Oxid Ridge");
         resolveAllTriggers();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
         assertThat(bls.canBlockAttacker(gd, small, attacker, gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 

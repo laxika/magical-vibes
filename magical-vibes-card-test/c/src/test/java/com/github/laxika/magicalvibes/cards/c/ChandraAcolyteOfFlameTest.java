@@ -66,8 +66,8 @@ class ChandraAcolyteOfFlameTest extends BaseCardTest {
         assertThat(elementals).hasSize(2);
         assertThat(elementals).allSatisfy(elemental -> {
             assertThat(elemental.getCard().getColor()).isEqualTo(CardColor.RED);
-            assertThat(elemental.getEffectivePower()).isEqualTo(1);
-            assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
             assertThat(gqs.hasKeyword(gd, elemental, Keyword.HASTE)).isTrue();
         });
 

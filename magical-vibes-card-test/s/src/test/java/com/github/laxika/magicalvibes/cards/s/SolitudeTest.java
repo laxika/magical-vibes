@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -118,7 +119,7 @@ class SolitudeTest extends BaseCardTest {
         giveSolitude();
         harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
-        target.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, target, 3);
 
         resolveAllTriggers();
 
@@ -130,7 +131,7 @@ class SolitudeTest extends BaseCardTest {
     @DisplayName("Exiling a creature with negative power does not decrease its controller's life")
     void negativePowerGainsNoLife() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, target, -3);
         giveSolitude();
 
         harness.castCreature(player1, 0, target.getId());

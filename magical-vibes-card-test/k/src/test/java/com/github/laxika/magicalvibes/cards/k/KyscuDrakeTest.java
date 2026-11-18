@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SpittingDrake;
 import com.github.laxika.magicalvibes.cards.s.SoulSculptor;
 import com.github.laxika.magicalvibes.cards.v.ViashivanDragon;
@@ -31,8 +32,8 @@ class KyscuDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drake.getPowerModifier()).isEqualTo(0);
-        assertThat(drake.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drake)).isEqualTo(1);
     }
 
     @Test
@@ -58,13 +59,13 @@ class KyscuDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drake.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drake)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(drake.getPowerModifier()).isEqualTo(0);
-        assertThat(drake.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drake)).isEqualTo(0);
     }
 
     @Test
@@ -209,12 +210,12 @@ class KyscuDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(drake.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drake)).isEqualTo(0);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drake.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drake)).isEqualTo(1);
     }
 
     @Test

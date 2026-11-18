@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.d.Disperse;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -46,8 +47,8 @@ class MolderBeastTest extends BaseCardTest {
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getCard().getName()).isEqualTo("Molder Beast");
         harness.passBothPriorities();
-        assertThat(findPermanent(player1, "Molder Beast").getPowerModifier()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Molder Beast").getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Molder Beast"))).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player1, "Molder Beast"))).isZero();
     }
 
     @Test
@@ -105,8 +106,8 @@ class MolderBeastTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         Permanent molderBeast = findPermanent(player1, "Molder Beast");
-        assertThat(molderBeast.getPowerModifier()).isEqualTo(2);
-        assertThat(molderBeast.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, molderBeast)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, molderBeast)).isEqualTo(0);
     }
 
     @Test
@@ -167,8 +168,8 @@ class MolderBeastTest extends BaseCardTest {
         Permanent molderBeast = findPermanent(player1, "Molder Beast");
 
         // Should have gotten +2/+0 twice = +4/+0
-        assertThat(molderBeast.getPowerModifier()).isEqualTo(4);
-        assertThat(molderBeast.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, molderBeast)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, molderBeast)).isEqualTo(0);
     }
 
     @Test
@@ -181,15 +182,15 @@ class MolderBeastTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, artifact.getId());
         harness.passBothPriorities();
-        assertThat(beast.getPowerModifier()).isEqualTo(2);
-        assertThat(beast.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, beast)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beast)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(beast.getPowerModifier()).isZero();
-        assertThat(beast.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, beast)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beast)).isZero();
     }
 
     @Test
@@ -204,7 +205,7 @@ class MolderBeastTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Ratchet Bomb");
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
-        assertThat(beast.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, beast)).isEqualTo(2);
         harness.passBothPriorities();
         assertThat(countPermanents(player2, "Memnite")).isZero();
         assertThat(gd.stack).hasSize(2);
@@ -212,8 +213,8 @@ class MolderBeastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(beast.getPowerModifier()).isEqualTo(6);
-        assertThat(beast.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, beast)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beast)).isZero();
     }
 
     @Test
@@ -229,7 +230,7 @@ class MolderBeastTest extends BaseCardTest {
         harness.assertInHand(player2, "Memnite");
         harness.assertNotInGraveyard(player2, "Memnite");
         assertThat(gd.stack).isEmpty();
-        assertThat(beast.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, beast)).isZero();
     }
 
     @Test
@@ -249,7 +250,7 @@ class MolderBeastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(replacement.getPowerModifier()).isZero();
-        assertThat(replacement.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, replacement)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, replacement)).isZero();
     }
 }

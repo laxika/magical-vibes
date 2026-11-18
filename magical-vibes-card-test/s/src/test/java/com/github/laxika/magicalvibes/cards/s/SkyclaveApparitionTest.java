@@ -61,8 +61,8 @@ class SkyclaveApparitionTest extends BaseCardTest {
 
         Permanent illusion = findPermanent(player2, "Illusion");
         assertThat(illusion.getCard().isToken()).isTrue();
-        assertThat(illusion.getEffectivePower()).isEqualTo(2);
-        assertThat(illusion.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, illusion)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, illusion)).isEqualTo(2);
         assertThat(illusion.getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(illusion.getCard().getSubtypes()).containsExactly(CardSubtype.ILLUSION);
     }

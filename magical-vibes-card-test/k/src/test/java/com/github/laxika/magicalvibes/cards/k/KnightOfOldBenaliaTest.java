@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -28,12 +29,12 @@ class KnightOfOldBenaliaTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent knight = findPermanent(player1, "Knight of Old Benalia");
-        assertThat(ownBears.getPowerModifier()).isEqualTo(1);
-        assertThat(ownBears.getToughnessModifier()).isEqualTo(1);
-        assertThat(knight.getPowerModifier()).isEqualTo(0);
-        assertThat(knight.getToughnessModifier()).isEqualTo(0);
-        assertThat(opposingBears.getPowerModifier()).isEqualTo(0);
-        assertThat(opposingBears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownBears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownBears)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingBears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingBears)).isEqualTo(0);
     }
 
     @Test
@@ -47,8 +48,8 @@ class KnightOfOldBenaliaTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownBears.getPowerModifier()).isEqualTo(0);
-        assertThat(ownBears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownBears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownBears)).isEqualTo(0);
     }
 
     @Test
@@ -133,10 +134,10 @@ class KnightOfOldBenaliaTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new KnightOfOldBenalia());
 
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
     }
 
     private void castKnight() {

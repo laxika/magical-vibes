@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -35,8 +36,8 @@ class BrambleCreeperTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(creeper.getPowerModifier()).isEqualTo(5);
-        assertThat(creeper.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creeper)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creeper)).isEqualTo(0);
     }
 
     @Test
@@ -47,14 +48,14 @@ class BrambleCreeperTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(creeper.getPowerModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, creeper)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creeper.getPowerModifier()).isEqualTo(0);
-        assertThat(creeper.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creeper)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creeper)).isEqualTo(0);
     }
 
     @Test
@@ -65,12 +66,12 @@ class BrambleCreeperTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(creeper.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creeper)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(creeper.getPowerModifier()).isEqualTo(5);
-        assertThat(creeper.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creeper)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creeper)).isZero();
     }
 
     @Test
@@ -84,11 +85,11 @@ class BrambleCreeperTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(5);
-        assertThat(second.getPowerModifier()).isEqualTo(5);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
-        assertThat(nonattacker.getPowerModifier()).isZero();
-        assertThat(opposingCopy.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCopy)).isZero();
     }
 }

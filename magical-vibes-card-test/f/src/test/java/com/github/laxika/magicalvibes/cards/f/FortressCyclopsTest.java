@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BraveTheSands;
 import com.github.laxika.magicalvibes.cards.s.ScabClanCharger;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,8 +26,8 @@ class FortressCyclopsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(cyclops.getPowerModifier()).isEqualTo(3);
-        assertThat(cyclops.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cyclops)).isZero();
         assertThat(gqs.getEffectivePower(gd, cyclops)).isEqualTo(6);
     }
 
@@ -40,7 +41,7 @@ class FortressCyclopsTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities(); // END_STEP -> CLEANUP
 
-        assertThat(cyclops.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isZero();
     }
 
     @Test
@@ -54,8 +55,8 @@ class FortressCyclopsTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(cyclops.getPowerModifier()).isZero();
-        assertThat(cyclops.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cyclops)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, cyclops)).isEqualTo(6);
     }
 
@@ -70,8 +71,8 @@ class FortressCyclopsTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
-        assertThat(cyclops.getPowerModifier()).isZero();
-        assertThat(cyclops.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cyclops)).isZero();
     }
 
     @Test
@@ -83,9 +84,9 @@ class FortressCyclopsTest extends BaseCardTest {
                 () -> declareAttackers(player1, List.of(0)));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(cyclops.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isZero();
         resolveAllTriggers();
-        assertThat(cyclops.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isEqualTo(3);
     }
 
     @Test
@@ -100,10 +101,10 @@ class FortressCyclopsTest extends BaseCardTest {
         resolveAllTriggers();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(cyclops.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cyclops)).isEqualTo(3);
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
-        assertThat(cyclops.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cyclops)).isZero();
     }
 
     @Test
@@ -119,8 +120,8 @@ class FortressCyclopsTest extends BaseCardTest {
                 new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
         resolveAllTriggers();
 
-        assertThat(cyclops.getPowerModifier()).isZero();
-        assertThat(cyclops.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cyclops)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, cyclops)).isEqualTo(6);
     }
 }

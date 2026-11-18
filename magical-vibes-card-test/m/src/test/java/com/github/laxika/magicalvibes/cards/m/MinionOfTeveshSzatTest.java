@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.o.OrderOfTheWhiteShield;
@@ -83,8 +84,8 @@ class MinionOfTeveshSzatTest extends BaseCardTest {
 
         assertThat(minion.isTapped()).isTrue();
         Permanent after = findPermanent(player1, "Minion of Tevesh Szat");
-        assertThat(after.getPowerModifier()).isEqualTo(3);
-        assertThat(after.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, after)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, after)).isEqualTo(-2);
     }
 
     @Test
@@ -102,8 +103,8 @@ class MinionOfTeveshSzatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent after = findPermanent(player1, "Minion of Tevesh Szat");
-        assertThat(after.getPowerModifier()).isEqualTo(0);
-        assertThat(after.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, after)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, after)).isEqualTo(0);
     }
 
     @Test
@@ -178,8 +179,8 @@ class MinionOfTeveshSzatTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.passBothPriorities();
-        assertThat(minion.getPowerModifier()).isEqualTo(3);
-        assertThat(minion.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, minion)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, minion)).isEqualTo(-2);
     }
 
     @Test

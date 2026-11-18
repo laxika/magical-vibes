@@ -34,8 +34,8 @@ class RedemptorDreadnoughtTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(dreadnought.getEffectivePower()).isEqualTo(6);
-        assertThat(dreadnought.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, dreadnought)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, dreadnought)).isEqualTo(6);
     }
 
     @Test
@@ -52,8 +52,8 @@ class RedemptorDreadnoughtTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(dreadnought.getEffectivePower()).isEqualTo(4);
-        assertThat(dreadnought.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, dreadnought)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, dreadnought)).isEqualTo(4);
     }
 
     @Test
@@ -85,8 +85,8 @@ class RedemptorDreadnoughtTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCard);
-        assertThat(dreadnought.getEffectivePower()).isEqualTo(4);
-        assertThat(dreadnought.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, dreadnought)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, dreadnought)).isEqualTo(4);
     }
 
     @Test
@@ -119,16 +119,16 @@ class RedemptorDreadnoughtTest extends BaseCardTest {
         Permanent withoutExile = gd.playerBattlefields.get(player1.getId()).get(1);
         withExile.setSummoningSick(false);
         withoutExile.setSummoningSick(false);
-        assertThat(withExile.getEffectivePower()).isEqualTo(4);
-        assertThat(withExile.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, withExile)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, withExile)).isEqualTo(4);
 
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
 
-        assertThat(withExile.getEffectivePower()).isEqualTo(8);
-        assertThat(withExile.getEffectiveToughness()).isEqualTo(8);
-        assertThat(withoutExile.getEffectivePower()).isEqualTo(4);
-        assertThat(withoutExile.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, withExile)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, withExile)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, withoutExile)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, withoutExile)).isEqualTo(4);
     }
 
     @Test
@@ -146,16 +146,16 @@ class RedemptorDreadnoughtTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(dreadnought.getEffectivePower()).isEqualTo(8);
-        assertThat(dreadnought.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, dreadnought)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, dreadnought)).isEqualTo(8);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dreadnought.getEffectivePower()).isEqualTo(4);
-        assertThat(dreadnought.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, dreadnought)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, dreadnought)).isEqualTo(4);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiledCreature);
     }
 }

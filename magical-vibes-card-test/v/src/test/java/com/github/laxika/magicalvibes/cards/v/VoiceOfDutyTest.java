@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ElvishLookout;
 import com.github.laxika.magicalvibes.cards.f.FendOff;
 import com.github.laxika.magicalvibes.cards.g.GoblinMasons;
@@ -159,7 +160,7 @@ class VoiceOfDutyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, voice.getId());
         harness.passBothPriorities();
 
-        assertThat(voice.getPowerModifier()).isEqualTo(2);
-        assertThat(voice.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, voice)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, voice)).isEqualTo(2);
     }
 }

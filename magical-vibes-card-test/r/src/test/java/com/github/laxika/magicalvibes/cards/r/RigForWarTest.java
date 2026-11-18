@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,8 +32,8 @@ class RigForWarTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.REACH)).isTrue();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
     }
@@ -52,8 +53,8 @@ class RigForWarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.REACH)).isFalse();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
     }
@@ -82,11 +83,11 @@ class RigForWarTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, opposingBear.getId());
 
-        assertThat(opposingBear.getPowerModifier()).isEqualTo(3);
-        assertThat(opposingBear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingBear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingBear)).isZero();
         assertThat(gqs.hasKeyword(gd, opposingBear, Keyword.REACH)).isTrue();
         assertThat(gqs.hasKeyword(gd, opposingBear, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(ownBear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownBear)).isZero();
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.REACH)).isFalse();
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.FIRST_STRIKE)).isFalse();
     }
@@ -101,8 +102,8 @@ class RigForWarTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(6);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.REACH)).isTrue();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
 
@@ -110,7 +111,7 @@ class RigForWarTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.REACH)).isFalse();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
     }

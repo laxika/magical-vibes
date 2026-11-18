@@ -27,8 +27,8 @@ class SuqAtaLancerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
     }
 
     @Test
@@ -42,8 +42,8 @@ class SuqAtaLancerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -57,15 +57,15 @@ class SuqAtaLancerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
     }
 
     @Test
@@ -81,10 +81,10 @@ class SuqAtaLancerTest extends BaseCardTest {
                 new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(firstBlocker.getEffectivePower()).isEqualTo(1);
-        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(3);
-        assertThat(secondBlocker.getEffectivePower()).isEqualTo(1);
-        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firstBlocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, firstBlocker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondBlocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, secondBlocker)).isEqualTo(3);
     }
 
     @Test
@@ -100,10 +100,10 @@ class SuqAtaLancerTest extends BaseCardTest {
                 new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(flankingBlocker.getEffectivePower()).isEqualTo(2);
-        assertThat(flankingBlocker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(otherBlocker.getEffectivePower()).isEqualTo(1);
-        assertThat(otherBlocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, flankingBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, flankingBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherBlocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, otherBlocker)).isEqualTo(3);
     }
 
     @Test

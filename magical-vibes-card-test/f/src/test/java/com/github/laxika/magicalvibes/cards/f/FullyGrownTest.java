@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -30,8 +31,8 @@ class FullyGrownTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(3);
         assertThat(bear.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
         assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
     }
@@ -49,8 +50,8 @@ class FullyGrownTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(bear.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
         assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
     }
@@ -64,8 +65,8 @@ class FullyGrownTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(3);
         assertThat(bear.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
         assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
     }
@@ -80,8 +81,8 @@ class FullyGrownTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(6);
-        assertThat(bear.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(6);
         assertThat(bear.getCounterCount(CounterType.TRAMPLE)).isEqualTo(2);
         assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
     }
@@ -99,8 +100,8 @@ class FullyGrownTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(bear.getCounterCount(CounterType.TRAMPLE)).isZero();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))

@@ -29,8 +29,8 @@ class TwinbladeSlasherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent slasher = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(slasher.getEffectivePower()).isEqualTo(3);
-        assertThat(slasher.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, slasher)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, slasher)).isEqualTo(3);
     }
 
     @Test
@@ -56,14 +56,14 @@ class TwinbladeSlasherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent slasher = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(slasher.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, slasher)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(slasher.getEffectivePower()).isEqualTo(1);
-        assertThat(slasher.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, slasher)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, slasher)).isEqualTo(1);
     }
 
     @Test
@@ -102,8 +102,8 @@ class TwinbladeSlasherTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
     }
 
     @Test
@@ -117,8 +117,8 @@ class TwinbladeSlasherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(slasher.getEffectivePower()).isEqualTo(3);
-        assertThat(slasher.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, slasher)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, slasher)).isEqualTo(3);
         assertThat(slasher.isTapped()).isTrue();
     }
 
@@ -139,8 +139,8 @@ class TwinbladeSlasherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(slasher.getEffectivePower()).isEqualTo(3);
-        assertThat(slasher.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, slasher)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, slasher)).isEqualTo(3);
     }
 
     @Test
@@ -158,7 +158,7 @@ class TwinbladeSlasherTest extends BaseCardTest {
 
         assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(blocker.getMarkedDamage()).isZero();
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Twinblade Slasher");
         harness.assertLife(player2, 20);
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudBehemoth;
@@ -88,7 +89,7 @@ class LaccolithTitanTest extends BaseCardTest {
 
         declareBlock(attacker, blocker);
         harness.handlePermanentChosen(player1, blocker.getId());
-        attacker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, attacker, -1);
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -171,7 +172,7 @@ class LaccolithTitanTest extends BaseCardTest {
     void acceptingAtZeroPowerStillStopsCombatDamage() {
         Permanent attacker = addAttacker();
         Permanent blocker = addBlocker();
-        attacker.setPowerModifier(-6);
+        PermanentGrants.setPowerBoost(gd, attacker, -6);
 
         declareBlock(attacker, blocker);
         harness.handlePermanentChosen(player1, blocker.getId());
@@ -179,7 +180,7 @@ class LaccolithTitanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.getMarkedDamage()).isZero();
-        attacker.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, attacker, 0);
         resolveCombat();
         assertThat(blocker.getMarkedDamage()).isZero();
     }

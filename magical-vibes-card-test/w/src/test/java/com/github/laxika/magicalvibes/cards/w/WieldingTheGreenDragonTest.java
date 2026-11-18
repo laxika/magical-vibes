@@ -31,12 +31,12 @@ class WieldingTheGreenDragonTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
-        assertThat(other.getEffectivePower()).isEqualTo(1);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponent.getEffectivePower()).isEqualTo(1);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
     }
 
     @Test
@@ -50,14 +50,14 @@ class WieldingTheGreenDragonTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, target.getId());
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(9);
-        assertThat(target.getEffectiveToughness()).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(10);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player1, TurnStep.CLEANUP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -70,8 +70,8 @@ class WieldingTheGreenDragonTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, militia.getId());
 
-        assertThat(militia.getEffectivePower()).isEqualTo(5);
-        assertThat(militia.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, militia)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, militia)).isEqualTo(6);
     }
 
     @Test
@@ -84,8 +84,8 @@ class WieldingTheGreenDragonTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, militia.getId());
 
-        assertThat(militia.getEffectivePower()).isEqualTo(5);
-        assertThat(militia.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, militia)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, militia)).isEqualTo(6);
     }
 
     @Test
@@ -101,8 +101,8 @@ class WieldingTheGreenDragonTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player1, TurnStep.CLEANUP);
 
-        assertThat(militia.getEffectivePower()).isEqualTo(1);
-        assertThat(militia.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, militia)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, militia)).isEqualTo(2);
     }
 
     @Test

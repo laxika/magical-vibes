@@ -24,8 +24,8 @@ class WaveWingElementalTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(elemental.getEffectivePower()).isEqualTo(5);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(6);
     }
 
     @Test
@@ -38,8 +38,8 @@ class WaveWingElementalTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(elemental.getEffectivePower()).isEqualTo(3);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(4);
     }
 
     @Test
@@ -50,14 +50,14 @@ class WaveWingElementalTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        assertThat(elemental.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elemental.getEffectivePower()).isEqualTo(3);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(4);
     }
 
     @Test
@@ -66,18 +66,18 @@ class WaveWingElementalTest extends BaseCardTest {
         Permanent elemental = harness.addToBattlefieldAndReturn(player1, new WaveWingElemental());
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
-        assertThat(elemental.getEffectivePower()).isEqualTo(3);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(4);
         harness.passBothPriorities();
 
-        assertThat(elemental.getEffectivePower()).isEqualTo(5);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(6);
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.passBothPriorities();
 
-        assertThat(elemental.getEffectivePower()).isEqualTo(7);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(8);
     }
 
     @Test
@@ -87,17 +87,17 @@ class WaveWingElementalTest extends BaseCardTest {
         Permanent second = harness.enterBattlefieldAndReturn(player1, new WaveWingElemental());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(first.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(5);
-        assertThat(first.getEffectiveToughness()).isEqualTo(6);
-        assertThat(second.getEffectivePower()).isEqualTo(5);
-        assertThat(second.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(6);
     }
 }

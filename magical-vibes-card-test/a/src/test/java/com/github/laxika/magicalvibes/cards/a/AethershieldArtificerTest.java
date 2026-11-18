@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FieldCreeper;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.cards.m.Manalith;
@@ -41,10 +42,10 @@ class AethershieldArtificerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, thopter.getId());
         harness.passBothPriorities();
 
-        assertThat(thopter.getPowerModifier()).isEqualTo(2);
-        assertThat(thopter.getToughnessModifier()).isEqualTo(2);
-        assertThat(other.getPowerModifier()).isEqualTo(0);
-        assertThat(other.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, thopter)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thopter)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isEqualTo(0);
         assertThat(harness.getGameQueryService().hasKeyword(gd, other, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -112,15 +113,15 @@ class AethershieldArtificerTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, thopter.getId());
         harness.passBothPriorities();
-        assertThat(thopter.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, thopter)).isEqualTo(2);
         assertThat(harness.getGameQueryService().hasKeyword(gd, thopter, Keyword.INDESTRUCTIBLE)).isTrue();
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(thopter.getPowerModifier()).isEqualTo(0);
-        assertThat(thopter.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, thopter)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thopter)).isEqualTo(0);
         assertThat(harness.getGameQueryService().hasKeyword(gd, thopter, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -177,8 +178,8 @@ class AethershieldArtificerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Aethershield Artificer");
         harness.passBothPriorities();
 
-        assertThat(creeper.getPowerModifier()).isEqualTo(2);
-        assertThat(creeper.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creeper)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creeper)).isEqualTo(2);
         assertThat(harness.getGameQueryService().hasKeyword(gd, creeper, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
@@ -198,8 +199,8 @@ class AethershieldArtificerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(other.getPowerModifier()).isEqualTo(0);
-        assertThat(other.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isEqualTo(0);
         assertThat(harness.getGameQueryService().hasKeyword(gd, other, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 }

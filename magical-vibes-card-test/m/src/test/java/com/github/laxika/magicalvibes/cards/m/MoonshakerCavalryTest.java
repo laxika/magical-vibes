@@ -24,17 +24,17 @@ class MoonshakerCavalryTest extends BaseCardTest {
         castMoonshakerCavalry();
 
         Permanent moonshaker = findPermanent(player1, "Moonshaker Cavalry");
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(5);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(5);
-        assertThat(secondOwnCreature.getEffectivePower()).isEqualTo(5);
-        assertThat(secondOwnCreature.getEffectiveToughness()).isEqualTo(5);
-        assertThat(moonshaker.getEffectivePower()).isEqualTo(9);
-        assertThat(moonshaker.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, secondOwnCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, secondOwnCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, moonshaker)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, moonshaker)).isEqualTo(9);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, secondOwnCreature, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FLYING)).isFalse();
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -44,16 +44,16 @@ class MoonshakerCavalryTest extends BaseCardTest {
 
         castMoonshakerCavalry();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isFalse();
     }
 
@@ -66,12 +66,12 @@ class MoonshakerCavalryTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(5);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(5);
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(5);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(5);
-        assertThat(moonshaker.getEffectivePower()).isEqualTo(9);
-        assertThat(moonshaker.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, moonshaker)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, moonshaker)).isEqualTo(9);
         assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.FLYING)).isTrue();
     }
 
@@ -83,11 +83,11 @@ class MoonshakerCavalryTest extends BaseCardTest {
 
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new UnassumingSage());
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isTrue();
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.FLYING)).isFalse();
     }
 
@@ -102,8 +102,8 @@ class MoonshakerCavalryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Moonshaker Cavalry");
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isTrue();
     }
 

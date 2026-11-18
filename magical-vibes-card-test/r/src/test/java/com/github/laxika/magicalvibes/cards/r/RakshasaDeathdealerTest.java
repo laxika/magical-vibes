@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.MurderousCut;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,8 +27,8 @@ class RakshasaDeathdealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(deathdealer.getPowerModifier()).isEqualTo(2);
-        assertThat(deathdealer.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, deathdealer)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, deathdealer)).isEqualTo(2);
     }
 
     @Test
@@ -56,8 +57,8 @@ class RakshasaDeathdealerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(deathdealer.getPowerModifier()).isEqualTo(0);
-        assertThat(deathdealer.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, deathdealer)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, deathdealer)).isEqualTo(0);
     }
 
     @Test
@@ -73,8 +74,8 @@ class RakshasaDeathdealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(deathdealer.getPowerModifier()).isEqualTo(4);
-        assertThat(deathdealer.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, deathdealer)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, deathdealer)).isEqualTo(4);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 

@@ -32,14 +32,14 @@ class RisenRiptideTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(riptide.getEffectivePower()).isEqualTo(5);
-        assertThat(riptide.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, riptide)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, riptide)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(riptide.getEffectivePower()).isZero();
-        assertThat(riptide.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, riptide)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, riptide)).isEqualTo(5);
     }
 
     @Test
@@ -55,8 +55,8 @@ class RisenRiptideTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(riptide.getEffectivePower()).isZero();
-        assertThat(riptide.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, riptide)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, riptide)).isEqualTo(5);
     }
 
     @Test
@@ -72,8 +72,8 @@ class RisenRiptideTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(riptide.getEffectivePower()).isZero();
-        assertThat(riptide.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, riptide)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, riptide)).isEqualTo(8);
     }
 
     @Test
@@ -90,10 +90,10 @@ class RisenRiptideTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
-        assertThat(riptide.getEffectivePower()).isZero();
-        assertThat(riptide.getEffectiveToughness()).isEqualTo(5);
-        assertThat(opponentRiptide.getEffectivePower()).isEqualTo(5);
-        assertThat(opponentRiptide.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, riptide)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, riptide)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opponentRiptide)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opponentRiptide)).isEqualTo(5);
     }
 
     @Test
@@ -108,19 +108,19 @@ class RisenRiptideTest extends BaseCardTest {
         harness.castKickedInstant(player1, 0, riptide.getId());
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(riptide.getEffectivePower()).isZero();
+        assertThat(gqs.getEffectivePower(gd, riptide)).isZero();
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
-        assertThat(riptide.getEffectivePower()).isEqualTo(5);
-        assertThat(riptide.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, riptide)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, riptide)).isEqualTo(5);
         harness.passBothPriorities();
-        assertThat(riptide.getEffectivePower()).isEqualTo(5);
-        assertThat(riptide.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, riptide)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, riptide)).isEqualTo(8);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(riptide.getEffectivePower()).isZero();
-        assertThat(riptide.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, riptide)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, riptide)).isEqualTo(5);
     }
 
     @Test
@@ -138,11 +138,11 @@ class RisenRiptideTest extends BaseCardTest {
         harness.castKickedInstant(player1, 0, riptide.getId());
         harness.passBothPriorities();
 
-        assertThat(riptide.getEffectivePower()).isEqualTo(5);
-        assertThat(riptide.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, riptide)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, riptide)).isEqualTo(8);
         harness.passBothPriorities();
-        assertThat(riptide.getEffectivePower()).isEqualTo(5);
-        assertThat(riptide.getEffectiveToughness()).isEqualTo(11);
+        assertThat(gqs.getEffectivePower(gd, riptide)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, riptide)).isEqualTo(11);
     }
 
     private Permanent addReadyRiptide() {

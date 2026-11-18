@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.AllIsDust;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -75,7 +76,7 @@ class LiberatorUrzasBattlethopterTest extends BaseCardTest {
     @Test
     void comparesManaSpentWithPowerOnly() {
         Permanent liberator = addLiberator(player1);
-        liberator.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, liberator, 3);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -134,7 +135,7 @@ class LiberatorUrzasBattlethopterTest extends BaseCardTest {
     @Test
     void comparesActualPrototypeManaSpentRatherThanNormalManaCost() {
         Permanent liberator = addLiberator(player1);
-        liberator.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, liberator, 2);
         harness.setHand(player1, List.of(new SteelSeraph()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 

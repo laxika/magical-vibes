@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.InkDissolver;
 import com.github.laxika.magicalvibes.cards.b.BramblewoodParagon;
 import com.github.laxika.magicalvibes.cards.e.EgoErasure;
@@ -45,8 +46,8 @@ class MudbuttonClangerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(clanger.getPowerModifier()).isEqualTo(1);
-        assertThat(clanger.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, clanger)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, clanger)).isEqualTo(1);
     }
 
     @Test
@@ -77,8 +78,8 @@ class MudbuttonClangerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(clanger.getPowerModifier()).isZero();
-        assertThat(clanger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, clanger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, clanger)).isZero();
     }
 
     @Test
@@ -91,8 +92,8 @@ class MudbuttonClangerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(clanger.getPowerModifier()).isZero();
-        assertThat(clanger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, clanger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, clanger)).isZero();
     }
 
     @Test
@@ -129,8 +130,8 @@ class MudbuttonClangerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(clanger.getPowerModifier()).isEqualTo(1);
-        assertThat(clanger.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, clanger)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, clanger)).isEqualTo(1);
     }
 
     @Test
@@ -144,8 +145,8 @@ class MudbuttonClangerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(clanger.getPowerModifier()).isEqualTo(1);
-        assertThat(clanger.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, clanger)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, clanger)).isEqualTo(1);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
 
@@ -159,8 +160,8 @@ class MudbuttonClangerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(clanger.getPowerModifier()).isZero();
-        assertThat(clanger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, clanger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, clanger)).isZero();
     }
 
     @Test
@@ -177,7 +178,7 @@ class MudbuttonClangerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(clanger.getPowerModifier()).isEqualTo(-2);
-        assertThat(clanger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, clanger)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, clanger)).isZero();
     }
 }

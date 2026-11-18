@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CanopyBaloth;
 import com.github.laxika.magicalvibes.cards.i.IntoTheRoil;
 import com.github.laxika.magicalvibes.cards.m.MightOfMurasa;
@@ -28,8 +29,8 @@ class ShellShieldTest extends BaseCardTest {
 
         castResolve(target, false);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
     }
 
@@ -40,8 +41,8 @@ class ShellShieldTest extends BaseCardTest {
 
         castResolve(target, true);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
 
         harness.setHand(player2, List.of(new MightOfMurasa()));
@@ -61,8 +62,8 @@ class ShellShieldTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
     }
 
@@ -88,8 +89,8 @@ class ShellShieldTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
     }
 
@@ -108,7 +109,7 @@ class ShellShieldTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Canopy Baloth");
         harness.assertNotInHand(player1, "Canopy Baloth");
         harness.assertInGraveyard(player2, "Into the Roil");
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
     }
 
@@ -129,7 +130,7 @@ class ShellShieldTest extends BaseCardTest {
         harness.assertInHand(player1, "Canopy Baloth");
         harness.assertInGraveyard(player1, "Shell Shield");
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
     }
 

@@ -33,15 +33,15 @@ class OvercomeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(p1a.getEffectivePower()).isEqualTo(4);
-        assertThat(p1a.getEffectiveToughness()).isEqualTo(4);
-        assertThat(p1b.getEffectivePower()).isEqualTo(4);
-        assertThat(p1b.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, p1a)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, p1a)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, p1b)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, p1b)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, p1a, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, p1b, Keyword.TRAMPLE)).isTrue();
 
-        assertThat(p2.getEffectivePower()).isEqualTo(2);
-        assertThat(p2.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, p2)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, p2)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, p2, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -85,16 +85,16 @@ class OvercomeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -122,11 +122,11 @@ class OvercomeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
         Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(existing.getEffectivePower()).isEqualTo(4);
-        assertThat(existing.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, existing, Keyword.TRAMPLE)).isTrue();
-        assertThat(newcomer.getEffectivePower()).isEqualTo(2);
-        assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, newcomer, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -140,8 +140,8 @@ class OvercomeTest extends BaseCardTest {
         Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.passBothPriorities();
 
-        assertThat(newcomer.getEffectivePower()).isEqualTo(4);
-        assertThat(newcomer.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, newcomer, Keyword.TRAMPLE)).isTrue();
     }
 

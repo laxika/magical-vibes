@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -26,8 +27,8 @@ class SokenzanSpellbladeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(spellblade.getPowerModifier()).isEqualTo(1);
-        assertThat(spellblade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, spellblade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spellblade)).isEqualTo(1);
     }
 
     @Test
@@ -40,8 +41,8 @@ class SokenzanSpellbladeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(spellblade.getPowerModifier()).isEqualTo(1);
-        assertThat(spellblade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, spellblade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spellblade)).isEqualTo(1);
     }
 
     @Test
@@ -56,8 +57,8 @@ class SokenzanSpellbladeTest extends BaseCardTest {
         gd.playerHands.get(player1.getId()).add(new SakuraTribeScout());
         harness.passBothPriorities();
 
-        assertThat(spellblade.getPowerModifier()).isEqualTo(3);
-        assertThat(spellblade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spellblade)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spellblade)).isZero();
     }
 
     @Test
@@ -67,8 +68,8 @@ class SokenzanSpellbladeTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(spellblade.getPowerModifier()).isZero();
-        assertThat(spellblade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spellblade)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spellblade)).isZero();
     }
 
     @Test
@@ -81,15 +82,15 @@ class SokenzanSpellbladeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(spellblade.getPowerModifier()).isEqualTo(1);
-        assertThat(spellblade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, spellblade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spellblade)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(spellblade.getPowerModifier()).isZero();
-        assertThat(spellblade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spellblade)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spellblade)).isZero();
     }
 
     @Test
@@ -107,8 +108,8 @@ class SokenzanSpellbladeTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(spellblade.getPowerModifier()).isEqualTo(1);
-        assertThat(spellblade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, spellblade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spellblade)).isEqualTo(1);
     }
 
     @Test
@@ -122,8 +123,8 @@ class SokenzanSpellbladeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(spellblade.getPowerModifier()).isZero();
-        assertThat(spellblade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spellblade)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spellblade)).isZero();
     }
 
     @Test
@@ -138,27 +139,27 @@ class SokenzanSpellbladeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(spellblade.getPowerModifier()).isEqualTo(2);
-        assertThat(spellblade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spellblade)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spellblade)).isZero();
 
         harness.setHand(player1, List.of(new SakuraTribeScout()));
-        assertThat(spellblade.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, spellblade)).isEqualTo(2);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(spellblade.getPowerModifier()).isEqualTo(3);
-        assertThat(spellblade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spellblade)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spellblade)).isZero();
 
         harness.setHand(player1, List.of());
-        assertThat(spellblade.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, spellblade)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(spellblade.getPowerModifier()).isZero();
-        assertThat(spellblade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spellblade)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spellblade)).isZero();
     }
 
     @Test
@@ -174,8 +175,8 @@ class SokenzanSpellbladeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(spellblade.getPowerModifier()).isEqualTo(1);
-        assertThat(spellblade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spellblade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spellblade)).isZero();
         assertThat(spellblade.isTapped()).isTrue();
     }
 }

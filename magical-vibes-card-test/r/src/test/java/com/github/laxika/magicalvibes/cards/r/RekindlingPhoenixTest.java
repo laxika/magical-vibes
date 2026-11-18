@@ -29,8 +29,8 @@ class RekindlingPhoenixTest extends BaseCardTest {
         List<Permanent> elementals = findPermanents(player1, "Elemental");
         assertThat(elementals).hasSize(1);
         assertThat(elementals.getFirst().getCard().isToken()).isTrue();
-        assertThat(elementals.getFirst().getEffectivePower()).isEqualTo(0);
-        assertThat(elementals.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elementals.getFirst())).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, elementals.getFirst())).isEqualTo(1);
     }
 
     @Test

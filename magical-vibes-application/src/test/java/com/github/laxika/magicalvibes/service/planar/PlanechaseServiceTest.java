@@ -310,11 +310,11 @@ class PlanechaseServiceTest extends BaseCardTest {
         Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
         gd.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                 java.util.UUID.randomUUID(), "Test plane", null, player1.getId(),
-                new BuffTargetCreatureIndefinitelyEffect(1, 1), creature.getId(), null, null,
+                new PowerToughnessBoostEffect(1, 1), creature.getId(), null, null,
                 Duration.UNTIL_PLANESWALK, gd.nextTimestamp()));
         gd.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                 java.util.UUID.randomUUID(), "Other effect", null, player1.getId(),
-                new BuffTargetCreatureIndefinitelyEffect(2, 2), creature.getId(), null, null,
+                new PowerToughnessBoostEffect(2, 2), creature.getId(), null, null,
                 Duration.UNTIL_END_OF_TURN, gd.nextTimestamp()));
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
         harness.inMutationScope(() -> planar.planeswalk(gd));

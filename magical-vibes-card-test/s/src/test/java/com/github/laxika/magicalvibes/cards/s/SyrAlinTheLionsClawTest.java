@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.Gingerbrute;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,10 +26,10 @@ class SyrAlinTheLionsClawTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(syrAlin.getPowerModifier()).isZero();
-        assertThat(syrAlin.getToughnessModifier()).isZero();
-        assertThat(other.getPowerModifier()).isEqualTo(1);
-        assertThat(other.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, syrAlin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, syrAlin)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isEqualTo(1);
     }
 
     @Test
@@ -40,8 +41,8 @@ class SyrAlinTheLionsClawTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -52,15 +53,15 @@ class SyrAlinTheLionsClawTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
-        assertThat(other.getPowerModifier()).isEqualTo(1);
-        assertThat(other.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -71,13 +72,13 @@ class SyrAlinTheLionsClawTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         assertThat(gd.stack).hasSize(1);
         Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new Gingerbrute());
-        assertThat(newcomer.getPowerModifier()).isZero();
-        assertThat(newcomer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newcomer)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(newcomer.getPowerModifier()).isEqualTo(1);
-        assertThat(newcomer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newcomer)).isEqualTo(1);
     }
 
     @Test
@@ -90,10 +91,10 @@ class SyrAlinTheLionsClawTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new Gingerbrute());
 
-        assertThat(existing.getPowerModifier()).isEqualTo(1);
-        assertThat(existing.getToughnessModifier()).isEqualTo(1);
-        assertThat(newcomer.getPowerModifier()).isZero();
-        assertThat(newcomer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, existing)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, existing)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newcomer)).isZero();
     }
 
     @Test
@@ -105,9 +106,9 @@ class SyrAlinTheLionsClawTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(syrAlin.getPowerModifier()).isZero();
-        assertThat(syrAlin.getToughnessModifier()).isZero();
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, syrAlin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, syrAlin)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.a.AbbeyGriffin;
@@ -48,10 +49,10 @@ class MomentOfHeroismTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(griffin.getPowerModifier()).isEqualTo(2);
-        assertThat(griffin.getToughnessModifier()).isEqualTo(2);
-        assertThat(griffin.getEffectivePower()).isEqualTo(4);
-        assertThat(griffin.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, griffin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, griffin)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, griffin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, griffin)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, griffin, Keyword.LIFELINK)).isTrue();
     }
 
@@ -70,8 +71,8 @@ class MomentOfHeroismTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(griffin.getPowerModifier()).isEqualTo(0);
-        assertThat(griffin.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, griffin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, griffin)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, griffin, Keyword.LIFELINK)).isFalse();
     }
 

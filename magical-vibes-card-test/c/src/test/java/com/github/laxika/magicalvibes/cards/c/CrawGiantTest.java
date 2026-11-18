@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -28,8 +29,8 @@ class CrawGiantTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isZero();
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
     }
 
     @Test
@@ -46,8 +47,8 @@ class CrawGiantTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(2);
-        assertThat(giant.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(2);
     }
 
     @Test
@@ -66,8 +67,8 @@ class CrawGiantTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(4);
-        assertThat(giant.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(4);
     }
 
     @Test
@@ -88,8 +89,8 @@ class CrawGiantTest extends BaseCardTest {
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, removedBlocker));
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(2);
-        assertThat(giant.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(2);
     }
 
     @Test
@@ -101,8 +102,8 @@ class CrawGiantTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(giant.getPowerModifier()).isZero();
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
     }
 
     @Test
@@ -119,15 +120,15 @@ class CrawGiantTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(2);
 
         giant.setAttacking(false);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(giant.getPowerModifier()).isZero();
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
     }
 
     @Test
@@ -179,8 +180,8 @@ class CrawGiantTest extends BaseCardTest {
             harness.getPermanentRemovalService().removePermanentToGraveyard(gd, secondBlocker);
         });
 
-        assertThat(giant.getPowerModifier()).isEqualTo(2);
-        assertThat(giant.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(2);
         resolveCombat();
 
         harness.assertLife(player2, 12);

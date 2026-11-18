@@ -34,10 +34,10 @@ class GloomRipperTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(elemental.getEffectivePower()).isEqualTo(4);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
     }
 
     @Test
@@ -54,8 +54,8 @@ class GloomRipperTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -83,10 +83,10 @@ class GloomRipperTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(elemental.getEffectivePower()).isEqualTo(4);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(4);
     }
 
     @Test
@@ -104,18 +104,18 @@ class GloomRipperTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new LlanowarElves(), new GrizzlyBears()));
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(elemental.getEffectivePower()).isEqualTo(4);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(2);
 
         harness.setGraveyard(player1, List.of());
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(2);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(4);
     }
 
     @Test
@@ -131,7 +131,7 @@ class GloomRipperTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }

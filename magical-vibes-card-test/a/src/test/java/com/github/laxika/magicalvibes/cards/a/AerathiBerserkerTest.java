@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -24,8 +25,8 @@ class AerathiBerserkerTest extends BaseCardTest {
     void oneBlockerGivesNoBonus() {
         Permanent berserker = addBerserkerAndDeclareBlockers(1);
 
-        assertThat(berserker.getEffectivePower()).isEqualTo(2);
-        assertThat(berserker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, berserker)).isEqualTo(4);
     }
 
     @Test
@@ -33,10 +34,10 @@ class AerathiBerserkerTest extends BaseCardTest {
     void twoBlockersGivePlusThreePlusThree() {
         Permanent berserker = addBerserkerAndDeclareBlockers(2);
 
-        assertThat(berserker.getPowerModifier()).isEqualTo(3);
-        assertThat(berserker.getToughnessModifier()).isEqualTo(3);
-        assertThat(berserker.getEffectivePower()).isEqualTo(5);
-        assertThat(berserker.getEffectiveToughness()).isEqualTo(7);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, berserker)).isEqualTo(7);
     }
 
     @Test
@@ -44,10 +45,10 @@ class AerathiBerserkerTest extends BaseCardTest {
     void threeBlockersGivePlusSixPlusSix() {
         Permanent berserker = addBerserkerAndDeclareBlockers(3);
 
-        assertThat(berserker.getPowerModifier()).isEqualTo(6);
-        assertThat(berserker.getToughnessModifier()).isEqualTo(6);
-        assertThat(berserker.getEffectivePower()).isEqualTo(8);
-        assertThat(berserker.getEffectiveToughness()).isEqualTo(10);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, berserker)).isEqualTo(10);
     }
 
     @Test
@@ -55,17 +56,17 @@ class AerathiBerserkerTest extends BaseCardTest {
     void rampageBonusExpiresAtEndOfTurn() {
         Permanent berserker = addBerserkerAndDeclareBlockers(2);
 
-        assertThat(berserker.getEffectivePower()).isEqualTo(5);
-        assertThat(berserker.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, berserker)).isEqualTo(7);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(berserker.getPowerModifier()).isZero();
-        assertThat(berserker.getToughnessModifier()).isZero();
-        assertThat(berserker.getEffectivePower()).isEqualTo(2);
-        assertThat(berserker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isZero();
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, berserker)).isEqualTo(4);
     }
 
     @Test
@@ -77,8 +78,8 @@ class AerathiBerserkerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(berserker.getPowerModifier()).isZero();
-        assertThat(berserker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isZero();
     }
 
     @Test
@@ -89,14 +90,14 @@ class AerathiBerserkerTest extends BaseCardTest {
         Permanent berserker = addBerserkerAndDeclareBlockers(2, false);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(berserker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(2);
         Permanent blocker = gd.playerBattlefields.get(player2.getId()).getFirst();
         harness.castAndResolveInstant(player1, 0, blocker.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
-        assertThat(berserker.getEffectivePower()).isEqualTo(2);
-        assertThat(berserker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, berserker)).isEqualTo(4);
     }
 
     @Test
@@ -106,13 +107,13 @@ class AerathiBerserkerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         Permanent berserker = addBerserkerAndDeclareBlockers(2);
 
-        assertThat(berserker.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(5);
         Permanent blocker = gd.playerBattlefields.get(player2.getId()).getFirst();
         harness.castAndResolveInstant(player1, 0, blocker.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
-        assertThat(berserker.getEffectivePower()).isEqualTo(5);
-        assertThat(berserker.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, berserker)).isEqualTo(7);
     }
 
     private Permanent addBerserkerAndDeclareBlockers(int blockerCount) {

@@ -61,7 +61,7 @@ class NineLivesFamiliarTest extends BaseCardTest {
     }
 
     private void kill(Permanent familiar) {
-        familiar.setMarkedDamage(familiar.getEffectiveToughness());
+        familiar.setMarkedDamage(gqs.getEffectiveToughness(gd, familiar));
         harness.runStateBasedActions();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.Abrade;
 import com.github.laxika.magicalvibes.cards.g.GoblinTombRaider;
 import com.github.laxika.magicalvibes.cards.r.RampagingCeratops;
@@ -28,7 +29,7 @@ class BelligerentYearlingTest extends BaseCardTest {
 
         harness.passBothPriorities();
         Permanent enteringDinosaur = findPermanent(player1, "Rampaging Ceratops");
-        enteringDinosaur.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, enteringDinosaur, 1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -89,7 +90,7 @@ class BelligerentYearlingTest extends BaseCardTest {
         harness.castFromHand(player1, new RampagingCeratops(), "{4}{R}");
         harness.passBothPriorities();
         Permanent dinosaur = findPermanent(player1, "Rampaging Ceratops");
-        dinosaur.setPowerModifier(-7);
+        PermanentGrants.setPowerBoost(gd, dinosaur, -7);
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -105,8 +106,8 @@ class BelligerentYearlingTest extends BaseCardTest {
         harness.castFromHand(player1, new RampagingCeratops(), "{4}{R}");
         harness.passBothPriorities();
         Permanent dinosaur = findPermanent(player1, "Rampaging Ceratops");
-        dinosaur.setPowerModifier(1);
-        dinosaur.setToughnessModifier(-2);
+        PermanentGrants.setPowerBoost(gd, dinosaur, 1);
+        PermanentGrants.setToughnessBoost(gd, dinosaur, -2);
         harness.setHand(player1, List.of(new Abrade()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castInstant(player1, 0, 0, dinosaur.getId());
@@ -147,7 +148,7 @@ class BelligerentYearlingTest extends BaseCardTest {
     @DisplayName("Setting base power preserves the Yearling's counters and modifiers")
     void preservesOwnPowerBonuses() {
         Permanent yearling = addCreatureReady(player1, new BelligerentYearling());
-        yearling.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, yearling, 2);
         yearling.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.castFromHand(player1, new RampagingCeratops(), "{4}{R}");
         harness.passBothPriorities();
@@ -157,7 +158,7 @@ class BelligerentYearlingTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, yearling)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, yearling)).isEqualTo(3);
 
-        findPermanent(player1, "Rampaging Ceratops").setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, findPermanent(player1, "Rampaging Ceratops"), 2);
         assertThat(gqs.getEffectivePower(gd, yearling)).isEqualTo(8);
     }
 }

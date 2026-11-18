@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -35,8 +36,8 @@ class WeiAmbushForceTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(force.getPowerModifier()).isEqualTo(2);
-        assertThat(force.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, force)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, force)).isEqualTo(0);
     }
 
     @Test
@@ -48,8 +49,8 @@ class WeiAmbushForceTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(nonAttacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonAttacker)).isZero();
     }
 
     @Test
@@ -59,13 +60,13 @@ class WeiAmbushForceTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
 
-        assertThat(force.getPowerModifier()).isZero();
-        assertThat(force.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, force)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, force)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(force.getPowerModifier()).isEqualTo(2);
-        assertThat(force.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, force)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, force)).isZero();
     }
 
     @Test
@@ -77,10 +78,10 @@ class WeiAmbushForceTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 
     @Test
@@ -91,13 +92,13 @@ class WeiAmbushForceTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(force.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, force)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(force.getPowerModifier()).isEqualTo(0);
-        assertThat(force.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, force)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, force)).isEqualTo(0);
     }
 }

@@ -37,8 +37,8 @@ class InquisitorialRosetteTest extends BaseCardTest {
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.ASTARTES, CardSubtype.WARRIOR);
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         assertThat(token.isTapped()).isFalse();
         assertThat(token.isAttacking()).isTrue();
         assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();

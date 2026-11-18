@@ -51,7 +51,7 @@ class InfernalVesselTest extends BaseCardTest {
         InfernalVessel card = new InfernalVessel();
         Permanent vessel = harness.addToBattlefieldAndReturn(player1, card);
 
-        vessel.setMarkedDamage(vessel.getEffectiveToughness());
+        vessel.setMarkedDamage(gqs.getEffectiveToughness(gd, vessel));
         harness.runStateBasedActions();
 
         harness.assertNotOnBattlefield(player1, "Infernal Vessel");
@@ -87,7 +87,7 @@ class InfernalVesselTest extends BaseCardTest {
         Permanent vessel = harness.addToBattlefieldAndReturn(player1, new InfernalVessel());
         PermanentGrants.subtype(gd, vessel, CardSubtype.DEMON);
 
-        vessel.setMarkedDamage(vessel.getEffectiveToughness());
+        vessel.setMarkedDamage(gqs.getEffectiveToughness(gd, vessel));
         harness.runStateBasedActions();
 
         assertThat(gd.stack).isEmpty();
@@ -117,7 +117,7 @@ class InfernalVesselTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ScavengingOoze());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        vessel.setMarkedDamage(vessel.getEffectiveToughness());
+        vessel.setMarkedDamage(gqs.getEffectiveToughness(gd, vessel));
         harness.runStateBasedActions();
         harness.activateAbility(player1, 0, null, card.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
@@ -129,7 +129,7 @@ class InfernalVesselTest extends BaseCardTest {
     }
 
     private void kill(Permanent vessel) {
-        vessel.setMarkedDamage(vessel.getEffectiveToughness());
+        vessel.setMarkedDamage(gqs.getEffectiveToughness(gd, vessel));
         harness.runStateBasedActions();
         harness.passBothPriorities();
     }

@@ -31,8 +31,8 @@ class GrotesqueMutationTest extends BaseCardTest {
         harness.castInstant(player1, 0, wolf.getId());
         harness.passBothPriorities();
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(5);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, wolf, Keyword.LIFELINK)).isTrue();
     }
 
@@ -51,8 +51,8 @@ class GrotesqueMutationTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(2);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, wolf, Keyword.LIFELINK)).isFalse();
     }
 
@@ -82,8 +82,8 @@ class GrotesqueMutationTest extends BaseCardTest {
         harness.castInstant(player1, 0, wolf.getId());
         harness.passBothPriorities();
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(5);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(3);
         declareAttackers(player2, List.of(0));
         resolveCombat(player2);
 
@@ -105,8 +105,8 @@ class GrotesqueMutationTest extends BaseCardTest {
         harness.castInstant(player1, 0, wolf.getId());
         harness.passBothPriorities();
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(8);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(4);
         declareAttackers(List.of(0));
         resolveCombat();
 

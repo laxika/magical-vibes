@@ -68,15 +68,15 @@ class AlpineHoundmasterTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         harness.passBothPriorities();
 
-        assertThat(houndmaster.getEffectivePower()).isEqualTo(4);
-        assertThat(houndmaster.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, houndmaster)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, houndmaster)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(houndmaster.getEffectivePower()).isEqualTo(2);
-        assertThat(houndmaster.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, houndmaster)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, houndmaster)).isEqualTo(2);
     }
 
     @Test
@@ -165,8 +165,8 @@ class AlpineHoundmasterTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(houndmaster.getEffectivePower()).isEqualTo(2);
-        assertThat(houndmaster.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, houndmaster)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, houndmaster)).isEqualTo(2);
     }
 
     @Test
@@ -180,12 +180,12 @@ class AlpineHoundmasterTest extends BaseCardTest {
         watchdog.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(houndmaster.getEffectivePower()).isEqualTo(3);
-        assertThat(houndmaster.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, houndmaster)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, houndmaster)).isEqualTo(2);
 
         cur.setAttacking(false);
 
-        assertThat(houndmaster.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, houndmaster)).isEqualTo(3);
     }
 
     private void castHoundmaster() {

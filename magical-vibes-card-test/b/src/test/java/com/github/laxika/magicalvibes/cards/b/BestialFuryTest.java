@@ -75,8 +75,8 @@ class BestialFuryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(4);
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, attacker)).contains(Keyword.TRAMPLE);
     }
 
@@ -97,8 +97,8 @@ class BestialFuryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, attacker)).doesNotContain(Keyword.TRAMPLE);
     }
 
@@ -118,7 +118,7 @@ class BestialFuryTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, attacker)).contains(Keyword.TRAMPLE);
     }
 
@@ -136,7 +136,7 @@ class BestialFuryTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, attacker)).contains(Keyword.TRAMPLE);
     }
 
@@ -188,7 +188,7 @@ class BestialFuryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, attacker)).contains(Keyword.TRAMPLE);
     }
 
@@ -204,7 +204,7 @@ class BestialFuryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, attacker)).doesNotContain(Keyword.TRAMPLE);
     }
 

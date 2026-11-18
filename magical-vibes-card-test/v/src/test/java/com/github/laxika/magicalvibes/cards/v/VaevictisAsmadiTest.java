@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,8 +29,8 @@ class VaevictisAsmadiTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(3);
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
     }
 
     @Test
@@ -40,13 +41,13 @@ class VaevictisAsmadiTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(dragon.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(1);
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isZero();
     }
 
     @Test
@@ -115,8 +116,8 @@ class VaevictisAsmadiTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(2);
-        assertThat(dragon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isZero();
         assertThat(dragon.isTapped()).isTrue();
     }
 

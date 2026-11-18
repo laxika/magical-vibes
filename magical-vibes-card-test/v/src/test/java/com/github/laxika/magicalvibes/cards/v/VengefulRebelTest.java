@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,8 +30,8 @@ class VengefulRebelTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentBears.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentBears.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentBears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(2);
     }
 
     @Test
@@ -44,8 +45,8 @@ class VengefulRebelTest extends BaseCardTest {
         castRebel();
         harness.passBothPriorities();
 
-        assertThat(opponentBears.getEffectivePower()).isEqualTo(5);
-        assertThat(opponentBears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(5);
     }
 
     @Test
@@ -88,8 +89,8 @@ class VengefulRebelTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(opponentBears.getEffectivePower()).isEqualTo(5);
-        assertThat(opponentBears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(5);
     }
 
     @Test
@@ -105,8 +106,8 @@ class VengefulRebelTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test

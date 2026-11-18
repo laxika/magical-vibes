@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.l.Lhurgoyf;
+import com.github.laxika.magicalvibes.cards.l.LilianaTheLastHope;
 import com.github.laxika.magicalvibes.cards.m.Melting;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Snowblind.class, BalduvianBears.class, Plains.class, SnowCoveredPlains.class, Melting.class,
-        Lhurgoyf.class})
+        Lhurgoyf.class, LilianaTheLastHope.class})
 class SnowblindTest extends BaseCardTest {
 
     /** A 2/2 owned by {@code creatureController}, enchanted by a Snowblind player1 controls. */
@@ -209,5 +210,26 @@ class SnowblindTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, lhurgoyf)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, lhurgoyf)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Y counts an until-your-next-turn toughness reduction, so the creature survives at 1 toughness")
+    void untilNextTurnShrinkCountsTowardsTheCap() {
+        Permanent liliana = harness.addToBattlefieldAndReturn(player1, new LilianaTheLastHope());
+        liliana.setCounterCount(CounterType.LOYALTY, 3);
+        liliana.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent bears = enchantedBears(player2);
+        addSnowLands(player2, 1);
+
+        // Liliana's +1: -2/-1 until her controller's next turn. The 2/2 is a 0/1 before Snowblind's -X/-Y, so
+        // Y = min(1, 1 - 1) = 0 and it stays a creature with toughness 1.
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(bears.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
     }
 }

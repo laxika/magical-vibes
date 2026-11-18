@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MirrorGallery;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -210,11 +213,11 @@ class EleshNornGrandCenobiteTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         // Add a temporary spell boost
-        bears.setPowerModifier(bears.getPowerModifier() + 3);
+        PermanentGrants.setPowerBoost(gd, bears, PermanentGrants.powerBoostOf(gd, bears) + 3);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(7); // 2 base + 3 spell + 2 static
 
-        // Reset end-of-turn modifiers
-        bears.resetModifiers();
+        // The cleanup step ends the until-end-of-turn effects
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         // Spell bonus gone, static bonus still computed
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4); // 2 base + 2 static

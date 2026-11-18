@@ -33,8 +33,8 @@ class TalrandsInvocationTest extends BaseCardTest {
 
         assertThat(drakes).hasSize(2);
         assertThat(drakes).allSatisfy(drake -> {
-            assertThat(drake.getEffectivePower()).isEqualTo(2);
-            assertThat(drake.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(2);
             assertThat(drake.hasKeyword(Keyword.FLYING)).isTrue();
         });
     }

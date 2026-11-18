@@ -24,8 +24,8 @@ class ValakutPredatorTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(predator.getEffectivePower()).isEqualTo(4);
-        assertThat(predator.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, predator)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, predator)).isEqualTo(4);
     }
 
     @Test
@@ -39,8 +39,8 @@ class ValakutPredatorTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(predator.getEffectivePower()).isEqualTo(2);
-        assertThat(predator.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, predator)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, predator)).isEqualTo(2);
     }
 
     @Test
@@ -53,8 +53,8 @@ class ValakutPredatorTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(predator.getEffectivePower()).isEqualTo(2);
-        assertThat(predator.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, predator)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, predator)).isEqualTo(2);
     }
 
     @Test
@@ -66,13 +66,13 @@ class ValakutPredatorTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(predator.getEffectivePower()).isEqualTo(2);
-        assertThat(predator.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, predator)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, predator)).isEqualTo(2);
 
         resolveAllTriggers();
 
-        assertThat(predator.getEffectivePower()).isEqualTo(6);
-        assertThat(predator.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, predator)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, predator)).isEqualTo(6);
     }
 
     @Test
@@ -87,11 +87,11 @@ class ValakutPredatorTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
     }
 }

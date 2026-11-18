@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SilentDart;
 import com.github.laxika.magicalvibes.cards.a.AlpineWatchdog;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -26,10 +27,10 @@ class RookieMistakeTest extends BaseCardTest {
         Permanent second = addCreature(player2);
         castRookieMistake(List.of(first.getId(), second.getId()));
 
-        assertThat(first.getPowerModifier()).isEqualTo(0);
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(-2);
-        assertThat(second.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(0);
     }
 
     @Test
@@ -68,10 +69,10 @@ class RookieMistakeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getPowerModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 
     private void castRookieMistake(List<java.util.UUID> targetIds) {
@@ -88,10 +89,10 @@ class RookieMistakeTest extends BaseCardTest {
 
         castRookieMistake(List.of(first.getId(), second.getId()));
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(-2);
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 
     @Test
@@ -116,8 +117,8 @@ class RookieMistakeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(second.getPowerModifier()).isEqualTo(-2);
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 
     @Test
@@ -132,8 +133,8 @@ class RookieMistakeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
     }
 
     private void addManaCost() {

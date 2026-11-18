@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvenRiftwatcher;
 import com.github.laxika.magicalvibes.cards.g.Groundbreaker;
 import com.github.laxika.magicalvibes.cards.r.RiptidePilferer;
@@ -89,7 +90,7 @@ class BigGameHunterTest extends BaseCardTest {
     @DisplayName("ETB can destroy a creature its controller owns with exactly four power")
     void destroysOwnCreatureWithExactlyFourPower() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Groundbreaker());
-        target.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, target, -2);
         harness.setHand(player1, List.of(new BigGameHunter()));
         addBigGameHunterMana(player1);
 
@@ -110,7 +111,7 @@ class BigGameHunterTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
-        target.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, target, -3);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Groundbreaker");

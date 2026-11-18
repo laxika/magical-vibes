@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DayOfBlackSun;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -26,7 +27,7 @@ class BitterWorkTest extends BaseCardTest {
     void drawsForHighPowerAttack() {
         harness.addToBattlefield(player1, new BitterWork());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, attacker, 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
@@ -42,9 +43,9 @@ class BitterWorkTest extends BaseCardTest {
     void drawsOnlyOnceForOneAttackedPlayer() {
         harness.addToBattlefield(player1, new BitterWork());
         Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
-        firstAttacker.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, firstAttacker, 2);
         Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
-        secondAttacker.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, secondAttacker, 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
@@ -108,13 +109,13 @@ class BitterWorkTest extends BaseCardTest {
     void drawStillResolvesWhenAttackerPowerDrops() {
         harness.addToBattlefield(player1, new BitterWork());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, attacker, 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> declareAttackers(List.of(1)));
-        attacker.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, attacker, 0);
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -125,7 +126,7 @@ class BitterWorkTest extends BaseCardTest {
     void doesNotDrawForOpponentsAttack() {
         harness.addToBattlefield(player1, new BitterWork());
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
-        attacker.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, attacker, 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
 

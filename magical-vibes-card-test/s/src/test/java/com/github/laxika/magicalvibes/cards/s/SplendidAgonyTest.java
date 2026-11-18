@@ -29,8 +29,8 @@ class SplendidAgonyTest extends BaseCardTest {
 
         // Hill Giant (3/3) with two -1/-1 counters → 1/1.
         assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
-        assertThat(giant.getEffectivePower()).isEqualTo(1);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
     }
 
     @Test
@@ -45,9 +45,9 @@ class SplendidAgonyTest extends BaseCardTest {
 
         // Each Hill Giant (3/3) with one -1/-1 counter → 2/2.
         assertThat(giant1.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(giant1.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, giant1)).isEqualTo(2);
         assertThat(giant2.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(giant2.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, giant2)).isEqualTo(2);
     }
 
     @Test
@@ -79,8 +79,8 @@ class SplendidAgonyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(surviving.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(surviving.getEffectivePower()).isEqualTo(2);
-        assertThat(surviving.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, surviving)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, surviving)).isEqualTo(2);
         assertThat(missing.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         harness.assertInGraveyard(player1, "Splendid Agony");
         assertThat(gd.stack).isEmpty();
@@ -98,7 +98,7 @@ class SplendidAgonyTest extends BaseCardTest {
 
         assertThat(own.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(opposing.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(own.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opposing.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(2);
     }
 }

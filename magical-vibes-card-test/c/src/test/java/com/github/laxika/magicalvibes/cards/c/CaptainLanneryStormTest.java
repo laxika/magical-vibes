@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SailorOfMeans;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -79,8 +80,8 @@ class CaptainLanneryStormTest extends BaseCardTest {
         // The Treasure sacrifice trigger should have fired, putting +1/+0 on stack
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(1);
-        assertThat(captain.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(0);
     }
 
     @Test
@@ -99,14 +100,14 @@ class CaptainLanneryStormTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(1);
 
         int remainingTreasure = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Treasure"));
         harness.activateAbility(player1, remainingTreasure, null, null);
         harness.handleListChoice(player1, "RED");
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(2);
     }
 
     @Test
@@ -121,7 +122,7 @@ class CaptainLanneryStormTest extends BaseCardTest {
         resolveAllTriggers();
 
         // Sacrificing a creature does not satisfy the Treasure condition.
-        assertThat(captain.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(0);
     }
 
     @Test
@@ -137,13 +138,13 @@ class CaptainLanneryStormTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(0);
     }
 
     @Test
@@ -157,8 +158,8 @@ class CaptainLanneryStormTest extends BaseCardTest {
         harness.handleListChoice(player2, "RED");
         resolveAllTriggers();
 
-        assertThat(captain.getPowerModifier()).isZero();
-        assertThat(captain.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isZero();
     }
 
     @Test
@@ -174,12 +175,12 @@ class CaptainLanneryStormTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castInstantWithSacrifice(player1, 0, null, treasure.getId());
-        assertThat(captain.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isZero();
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Treasure");
-        assertThat(captain.getPowerModifier()).isEqualTo(1);
-        assertThat(captain.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isZero();
     }
 
     private void addTreasureToken(Player player) {

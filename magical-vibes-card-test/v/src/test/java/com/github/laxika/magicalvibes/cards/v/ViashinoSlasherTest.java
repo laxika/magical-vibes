@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class ViashinoSlasherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(slasher.getPowerModifier()).isEqualTo(1);
-        assertThat(slasher.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, slasher)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, slasher)).isEqualTo(-1);
     }
 
     @Test
@@ -39,8 +40,8 @@ class ViashinoSlasherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(slasher.getPowerModifier()).isEqualTo(2);
-        assertThat(slasher.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, slasher)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, slasher)).isEqualTo(-2);
         harness.assertNotOnBattlefield(player1, "Viashino Slasher");
         harness.assertInGraveyard(player1, "Viashino Slasher");
     }
@@ -55,8 +56,8 @@ class ViashinoSlasherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(slasher.getPowerModifier()).isEqualTo(1);
-        assertThat(slasher.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, slasher)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, slasher)).isEqualTo(-1);
     }
 
     @Test
@@ -71,8 +72,8 @@ class ViashinoSlasherTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(slasher.getPowerModifier()).isZero();
-        assertThat(slasher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, slasher)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, slasher)).isZero();
     }
 
     @Test
@@ -84,16 +85,16 @@ class ViashinoSlasherTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(slasher.getPowerModifier()).isZero();
-        assertThat(slasher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, slasher)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, slasher)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(slasher.getPowerModifier()).isEqualTo(1);
-        assertThat(slasher.getToughnessModifier()).isEqualTo(-1);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, slasher)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, slasher)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(slasher.isTapped()).isFalse();
     }
 
@@ -110,8 +111,8 @@ class ViashinoSlasherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(slasher.getPowerModifier()).isEqualTo(1);
-        assertThat(slasher.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, slasher)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, slasher)).isEqualTo(-1);
         assertThat(slasher.isTapped()).isTrue();
     }
 

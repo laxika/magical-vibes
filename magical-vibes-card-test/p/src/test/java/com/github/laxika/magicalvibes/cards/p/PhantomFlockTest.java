@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EmberShot;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.l.LavaDart;
@@ -102,7 +103,7 @@ class PhantomFlockTest extends BaseCardTest {
     @DisplayName("Still prevents damage when no +1/+1 counters remain")
     void preventsDamageWithoutCountersJudReview() {
         Permanent flock = addCreatureReady(player2, new PhantomFlock());
-        flock.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, flock, 3);
 
         dealEmberShotForJudReview(flock);
 
@@ -116,7 +117,7 @@ class PhantomFlockTest extends BaseCardTest {
     void unpreventableDamageStillRemovesOneCounter() {
         Permanent flock = addCreatureReady(player2, new PhantomFlock());
         flock.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        flock.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, flock, 3);
 
         harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
         harness.passBothPriorities();

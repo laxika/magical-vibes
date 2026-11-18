@@ -29,8 +29,8 @@ class ElementalSummoningTest extends BaseCardTest {
                 .toList();
         assertThat(tokens).singleElement().satisfies(token -> {
             assertThat(token.getCard().getName()).isEqualTo("Elemental");
-            assertThat(token.getEffectivePower()).isEqualTo(4);
-            assertThat(token.getEffectiveToughness()).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
             assertThat(token.getCard().getColors())
                     .containsExactlyInAnyOrder(CardColor.BLUE, CardColor.RED);
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ELEMENTAL);
@@ -70,8 +70,8 @@ class ElementalSummoningTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(token -> {
             assertThat(token.getCard().isToken()).isTrue();
-            assertThat(token.getEffectivePower()).isEqualTo(4);
-            assertThat(token.getEffectiveToughness()).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         });
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }

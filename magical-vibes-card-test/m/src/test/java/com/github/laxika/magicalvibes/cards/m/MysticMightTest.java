@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -32,8 +33,8 @@ class MysticMightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(forest.isTapped()).isTrue();
-        assertThat(warrior.getPowerModifier()).isEqualTo(2);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(2);
     }
 
     @Test
@@ -48,8 +49,8 @@ class MysticMightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(forest.isTapped()).isTrue();
-        assertThat(warrior.getPowerModifier()).isEqualTo(2);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(2);
     }
 
     @Test
@@ -67,8 +68,8 @@ class MysticMightTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(0);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(0);
     }
 
     @Test
@@ -204,8 +205,8 @@ class MysticMightTest extends BaseCardTest {
         assertThatThrownBy(() ->
                 harness.activateAbility(player1, 0, 0, null, warrior.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(warrior.getPowerModifier()).isZero();
-        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isZero();
     }
 
     @Test
@@ -221,8 +222,8 @@ class MysticMightTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Mystic Might");
         assertThat(enchanted.forest().isTapped()).isTrue();
-        assertThat(warrior.getPowerModifier()).isEqualTo(2);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(2);
     }
 
     @Test
@@ -240,8 +241,8 @@ class MysticMightTest extends BaseCardTest {
                 harness.activateAbility(player1, 0, 1, null, warrior.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(enchanted.forest().isTapped()).isFalse();
-        assertThat(warrior.getPowerModifier()).isZero();
-        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isZero();
     }
     private EnchantedForest addAttachedMysticMight() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());

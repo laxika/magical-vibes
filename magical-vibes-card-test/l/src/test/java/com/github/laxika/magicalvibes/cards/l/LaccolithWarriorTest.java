@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.f.FlowstoneCrusher;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -101,7 +102,7 @@ class LaccolithWarriorTest extends BaseCardTest {
         declareBlock(attacker, blocker);
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
-        attacker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, attacker, -1);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.getMarkedDamage()).isEqualTo(2);
@@ -199,7 +200,7 @@ class LaccolithWarriorTest extends BaseCardTest {
     void zeroPowerStillPreventsCombatDamage() {
         Permanent attacker = addAttacker();
         Permanent blocker = addBlocker();
-        attacker.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, attacker, -3);
 
         declareBlock(attacker, blocker);
         harness.handlePermanentChosen(player1, blocker.getId());

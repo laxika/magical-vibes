@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.Roterothopter;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,8 +26,8 @@ class JovensFerretsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(ferrets.getPowerModifier()).isZero();
-        assertThat(ferrets.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ferrets)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ferrets)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ferrets)).isEqualTo(3);
     }
 

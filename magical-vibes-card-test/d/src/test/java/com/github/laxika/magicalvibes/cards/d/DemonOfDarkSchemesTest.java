@@ -32,11 +32,11 @@ class DemonOfDarkSchemesTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Demon of Dark Schemes").getEffectivePower()).isEqualTo(5);
-        assertThat(findPermanent(player1, "Demon of Dark Schemes").getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Demon of Dark Schemes"))).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Demon of Dark Schemes"))).isEqualTo(5);
         harness.assertNotOnBattlefield(player1, "Dhund Operative");
-        assertThat(findPermanent(player2, "Brazen Scourge").getEffectivePower()).isEqualTo(1);
-        assertThat(findPermanent(player2, "Brazen Scourge").getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Brazen Scourge"))).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Brazen Scourge"))).isEqualTo(1);
     }
 
     @Test
@@ -149,14 +149,14 @@ class DemonOfDarkSchemesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent laterCreature = findPermanent(player1, "Dhund Operative");
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(findPermanent(player2, "Brazen Scourge").getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Brazen Scourge"))).isEqualTo(1);
 
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(findPermanent(player2, "Brazen Scourge").getEffectivePower()).isEqualTo(3);
-        assertThat(findPermanent(player2, "Brazen Scourge").getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Brazen Scourge"))).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Brazen Scourge"))).isEqualTo(3);
     }
 
     @Test

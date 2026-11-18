@@ -27,8 +27,8 @@ class HagraCrocodileTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(crocodile.getEffectivePower()).isEqualTo(5);
-        assertThat(crocodile.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, crocodile)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, crocodile)).isEqualTo(3);
     }
 
     @Test
@@ -43,8 +43,8 @@ class HagraCrocodileTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(crocodile.getEffectivePower()).isEqualTo(3);
-        assertThat(crocodile.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, crocodile)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, crocodile)).isEqualTo(1);
     }
 
     @Test
@@ -78,10 +78,10 @@ class HagraCrocodileTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.passBothPriorities();
 
-        assertThat(crocodile.getEffectivePower()).isEqualTo(7);
-        assertThat(crocodile.getEffectiveToughness()).isEqualTo(5);
-        assertThat(opposingCrocodile.getEffectivePower()).isEqualTo(3);
-        assertThat(opposingCrocodile.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, crocodile)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, crocodile)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opposingCrocodile)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCrocodile)).isEqualTo(1);
     }
 
     @Test
@@ -93,12 +93,12 @@ class HagraCrocodileTest extends BaseCardTest {
         harness.playLand(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(crocodile.getEffectivePower()).isEqualTo(3);
-        assertThat(crocodile.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, crocodile)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, crocodile)).isEqualTo(1);
 
         harness.passBothPriorities();
 
-        assertThat(crocodile.getEffectivePower()).isEqualTo(5);
-        assertThat(crocodile.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, crocodile)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, crocodile)).isEqualTo(3);
     }
 }

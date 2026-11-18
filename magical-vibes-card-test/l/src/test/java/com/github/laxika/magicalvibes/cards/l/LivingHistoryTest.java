@@ -30,8 +30,8 @@ class LivingHistoryTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Spirit")).hasSize(1);
         Permanent spirit = findPermanent(player1, "Spirit");
-        assertThat(spirit.getEffectivePower()).isEqualTo(2);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
         assertThat(spirit.getEffectiveColors()).containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);
     }
 
@@ -56,14 +56,14 @@ class LivingHistoryTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -74,7 +74,7 @@ class LivingHistoryTest extends BaseCardTest {
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -98,10 +98,10 @@ class LivingHistoryTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(2);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(2);
-        assertThat(nonattacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(2);
     }
 
 }

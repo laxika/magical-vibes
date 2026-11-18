@@ -28,10 +28,10 @@ class WhenWeWereYoungTest extends BaseCardTest {
 
         castWhenWeWereYoung(List.of(first.getId(), second.getId()));
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.getEffectiveToughness()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
     }
 
     @Test
@@ -64,14 +64,14 @@ class WhenWeWereYoungTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, new JukaiTrainee());
 
         castWhenWeWereYoung(List.of(target.getId()));
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
 
@@ -93,8 +93,8 @@ class WhenWeWereYoungTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "When We Were Young");
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -107,11 +107,11 @@ class WhenWeWereYoungTest extends BaseCardTest {
 
         castWhenWeWereYoung(List.of(first.getId(), second.getId()));
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, first, Keyword.LIFELINK)).isTrue();
         assertThat(gqs.hasKeyword(gd, second, Keyword.LIFELINK)).isTrue();
-        assertThat(untargeted.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, untargeted)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, untargeted, Keyword.LIFELINK)).isFalse();
     }
 
@@ -122,7 +122,7 @@ class WhenWeWereYoungTest extends BaseCardTest {
 
         castWhenWeWereYoung(List.of(target.getId()));
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
 
@@ -133,7 +133,7 @@ class WhenWeWereYoungTest extends BaseCardTest {
 
         castWhenWeWereYoung(List.of(target.getId()));
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
 
@@ -145,7 +145,7 @@ class WhenWeWereYoungTest extends BaseCardTest {
 
         castWhenWeWereYoung(List.of(target.getId()));
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
 
@@ -159,7 +159,7 @@ class WhenWeWereYoungTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TouchTheSpiritRealm());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
     }
 
@@ -175,7 +175,7 @@ class WhenWeWereYoungTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, artifact));
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
 
@@ -189,7 +189,7 @@ class WhenWeWereYoungTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, artifact));
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
     }
 
@@ -206,8 +206,8 @@ class WhenWeWereYoungTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, first));
         harness.passBothPriorities();
 
-        assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, second, Keyword.LIFELINK)).isTrue();
         harness.assertInGraveyard(player1, "When We Were Young");
     }

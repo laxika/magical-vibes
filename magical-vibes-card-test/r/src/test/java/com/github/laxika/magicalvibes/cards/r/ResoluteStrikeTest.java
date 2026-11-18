@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CliffhavenSellSword;
 import com.github.laxika.magicalvibes.cards.e.ExpeditionHealer;
 import com.github.laxika.magicalvibes.cards.u.UtilityKnife;
@@ -29,8 +30,8 @@ class ResoluteStrikeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(equipment.getAttachedTo()).isEqualTo(target.getId());
     }
 
@@ -42,8 +43,8 @@ class ResoluteStrikeTest extends BaseCardTest {
         cast(target);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(equipment.getAttachedTo()).isNull();
     }
 
@@ -55,8 +56,8 @@ class ResoluteStrikeTest extends BaseCardTest {
         cast(target);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(equipment.getAttachedTo()).isNull();
     }
 
@@ -76,8 +77,8 @@ class ResoluteStrikeTest extends BaseCardTest {
 
         assertThat(firstEquipment.getAttachedTo()).isNull();
         assertThat(secondEquipment.getAttachedTo()).isEqualTo(target.getId());
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -130,8 +131,8 @@ class ResoluteStrikeTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
         }
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }

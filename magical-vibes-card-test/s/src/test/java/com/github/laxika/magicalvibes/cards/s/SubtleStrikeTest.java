@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.d.DukharaPeafowl;
@@ -29,8 +30,8 @@ class SubtleStrikeTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         castModes(new int[]{0}, List.of(target.getId()));
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -41,8 +42,8 @@ class SubtleStrikeTest extends BaseCardTest {
         castModes(new int[]{1}, List.of(target.getId()));
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -51,8 +52,8 @@ class SubtleStrikeTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         castModes(new int[]{0, 1}, List.of(target.getId(), target.getId()));
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -77,11 +78,11 @@ class SubtleStrikeTest extends BaseCardTest {
         Permanent strengthened = addCreatureReady(player1, new DukharaPeafowl());
         castModes(new int[]{0, 1}, List.of(weakened.getId(), strengthened.getId()));
 
-        assertThat(weakened.getPowerModifier()).isEqualTo(-1);
-        assertThat(weakened.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weakened)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weakened)).isEqualTo(-1);
         assertThat(weakened.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(strengthened.getPowerModifier()).isZero();
-        assertThat(strengthened.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, strengthened)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, strengthened)).isZero();
         assertThat(strengthened.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -115,8 +116,8 @@ class SubtleStrikeTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -129,8 +130,8 @@ class SubtleStrikeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Ninth Bridge Patrol");
         assertThat(remaining.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(remaining.getPowerModifier()).isZero();
-        assertThat(remaining.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, remaining)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, remaining)).isZero();
     }
 
     @Test
@@ -142,8 +143,8 @@ class SubtleStrikeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Ninth Bridge Patrol");
         assertThat(remaining.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(remaining.getPowerModifier()).isEqualTo(-1);
-        assertThat(remaining.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, remaining)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, remaining)).isEqualTo(-1);
     }
 
     @Test
@@ -154,7 +155,7 @@ class SubtleStrikeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Ninth Bridge Patrol");
         assertThat(removed.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(removed.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, removed)).isEqualTo(-1);
         harness.assertInGraveyard(player1, "Subtle Strike");
         assertThat(gd.stack).isEmpty();
     }

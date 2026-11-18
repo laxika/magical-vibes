@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArmoredWolfRider;
 import com.github.laxika.magicalvibes.cards.b.BeetleformMage;
 import com.github.laxika.magicalvibes.cards.f.FatalFumes;
@@ -29,8 +30,8 @@ class TajicBladeOfTheLegionTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(tajic.getPowerModifier()).isEqualTo(5);
-        assertThat(tajic.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, tajic)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tajic)).isEqualTo(5);
     }
 
     @Test
@@ -42,8 +43,8 @@ class TajicBladeOfTheLegionTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(tajic.getPowerModifier()).isEqualTo(0);
-        assertThat(tajic.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, tajic)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tajic)).isEqualTo(0);
     }
 
     @Test
@@ -55,14 +56,14 @@ class TajicBladeOfTheLegionTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
-        assertThat(tajic.getPowerModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, tajic)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(tajic.getPowerModifier()).isEqualTo(0);
-        assertThat(tajic.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, tajic)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tajic)).isEqualTo(0);
     }
 
     @Test
@@ -76,8 +77,8 @@ class TajicBladeOfTheLegionTest extends BaseCardTest {
         declareAttackers(player1, List.of(1, 2, 3));
         resolveAllTriggers();
 
-        assertThat(tajic.getPowerModifier()).isZero();
-        assertThat(tajic.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tajic)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tajic)).isZero();
     }
 
     @Test
@@ -97,8 +98,8 @@ class TajicBladeOfTheLegionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(otherAttacker);
         resolveAllTriggers();
 
-        assertThat(tajic.getPowerModifier()).isEqualTo(5);
-        assertThat(tajic.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, tajic)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tajic)).isEqualTo(5);
     }
 
     @Test

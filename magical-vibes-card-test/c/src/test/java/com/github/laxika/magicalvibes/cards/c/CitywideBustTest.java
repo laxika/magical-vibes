@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -43,8 +44,8 @@ class CitywideBustTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castSorcery(player1, 0, 0);
-        bears.setToughnessModifier(3);
-        angel.setToughnessModifier(-1);
+        PermanentGrants.setToughnessBoost(gd, bears, 3);
+        PermanentGrants.setToughnessBoost(gd, angel, -1);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");

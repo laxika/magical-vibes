@@ -25,8 +25,8 @@ class FrilledSandwallaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent sandwalla = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(sandwalla.getEffectivePower()).isEqualTo(3);
-        assertThat(sandwalla.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sandwalla)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sandwalla)).isEqualTo(3);
     }
 
     @Test
@@ -52,14 +52,14 @@ class FrilledSandwallaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent sandwalla = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(sandwalla.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sandwalla)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(sandwalla.getEffectivePower()).isEqualTo(1);
-        assertThat(sandwalla.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sandwalla)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, sandwalla)).isEqualTo(1);
     }
 
     @Test
@@ -80,13 +80,13 @@ class FrilledSandwallaTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(sandwalla.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sandwalla)).isEqualTo(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once each turn");
         harness.passBothPriorities();
-        assertThat(sandwalla.getEffectivePower()).isEqualTo(3);
-        assertThat(sandwalla.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sandwalla)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sandwalla)).isEqualTo(3);
     }
 
     @Test
@@ -101,10 +101,10 @@ class FrilledSandwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(first.getEffectiveToughness()).isEqualTo(3);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
     }
 
     @Test
@@ -120,8 +120,8 @@ class FrilledSandwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sandwalla.getEffectivePower()).isEqualTo(3);
-        assertThat(sandwalla.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sandwalla)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sandwalla)).isEqualTo(3);
         assertThat(sandwalla.isTapped()).isTrue();
     }
 
@@ -142,8 +142,8 @@ class FrilledSandwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sandwalla.getEffectivePower()).isEqualTo(3);
-        assertThat(sandwalla.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sandwalla)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sandwalla)).isEqualTo(3);
     }
 
     private Permanent addSandwallaReady(Player player) {

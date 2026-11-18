@@ -36,8 +36,8 @@ class WarbreakTrumpeterTest extends BaseCardTest {
         assertThat(goblins).hasSize(2).allSatisfy(goblin -> {
             assertThat(goblin.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(goblin.getCard().getSubtypes()).containsExactly(CardSubtype.GOBLIN);
-            assertThat(goblin.getEffectivePower()).isEqualTo(1);
-            assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
         });
     }
 

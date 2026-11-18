@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.d.DawntreaderElk;
@@ -51,10 +52,10 @@ class WildHungerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent elk = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(elk.getPowerModifier()).isEqualTo(3);
-        assertThat(elk.getToughnessModifier()).isEqualTo(1);
-        assertThat(elk.getEffectivePower()).isEqualTo(5);
-        assertThat(elk.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, elk)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elk)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elk)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elk)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, elk, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -70,8 +71,8 @@ class WildHungerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent elk = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(elk.getPowerModifier()).isEqualTo(3);
-        assertThat(elk.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elk)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elk)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, elk, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -102,8 +103,8 @@ class WildHungerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent elk = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(elk.getPowerModifier()).isEqualTo(0);
-        assertThat(elk.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, elk)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elk)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, elk, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -153,8 +154,8 @@ class WildHungerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent elk = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(elk.getPowerModifier()).isEqualTo(3);
-        assertThat(elk.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elk)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elk)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, elk, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -254,8 +255,8 @@ class WildHungerTest extends BaseCardTest {
         harness.castFlashback(player1, 0, elk.getId());
         harness.passBothPriorities();
 
-        assertThat(elk.getEffectivePower()).isEqualTo(8);
-        assertThat(elk.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elk)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, elk)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, elk, Keyword.TRAMPLE)).isTrue();
         harness.assertNotInGraveyard(player1, "Wild Hunger");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -264,8 +265,8 @@ class WildHungerTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(elk.getPowerModifier()).isZero();
-        assertThat(elk.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elk)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elk)).isZero();
         assertThat(gqs.hasKeyword(gd, elk, Keyword.TRAMPLE)).isFalse();
     }
 }

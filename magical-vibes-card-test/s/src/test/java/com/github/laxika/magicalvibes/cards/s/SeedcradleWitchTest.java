@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class SeedcradleWitchTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(3);
         assertThat(bear.isTapped()).isFalse();
     }
 
@@ -46,8 +47,8 @@ class SeedcradleWitchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -60,8 +61,8 @@ class SeedcradleWitchTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, witch.getId());
         harness.passBothPriorities();
 
-        assertThat(witch.getPowerModifier()).isEqualTo(3);
-        assertThat(witch.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, witch)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, witch)).isEqualTo(3);
         assertThat(witch.isTapped()).isFalse();
     }
 
@@ -76,11 +77,11 @@ class SeedcradleWitchTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(target.isTapped()).isFalse();
         assertThat(source.isTapped()).isTrue();
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
     }
 
     @Test
@@ -96,8 +97,8 @@ class SeedcradleWitchTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(witch.getPowerModifier()).isEqualTo(6);
-        assertThat(witch.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, witch)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, witch)).isEqualTo(6);
         assertThat(witch.isTapped()).isFalse();
     }
 
@@ -113,8 +114,8 @@ class SeedcradleWitchTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(target.isTapped()).isFalse();
     }
 
@@ -131,8 +132,8 @@ class SeedcradleWitchTest extends BaseCardTest {
         returned.tap();
         harness.passBothPriorities();
 
-        assertThat(returned.getPowerModifier()).isZero();
-        assertThat(returned.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, returned)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, returned)).isZero();
         assertThat(returned.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
     }

@@ -29,8 +29,8 @@ class EarthbrawnTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, warrior.getId());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(warrior.getEffectivePower()).isEqualTo(5);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(6);
     }
 
     @Test
@@ -47,8 +47,8 @@ class EarthbrawnTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(warrior.getEffectivePower()).isEqualTo(2);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(3);
     }
 
     @Test
@@ -64,8 +64,8 @@ class EarthbrawnTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(warrior.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(warrior.getEffectivePower()).isEqualTo(3);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(4);
         harness.assertInGraveyard(player1, "Earthbrawn");
     }
 
@@ -147,8 +147,8 @@ class EarthbrawnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(warrior.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(warrior.getEffectivePower()).isEqualTo(3);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(4);
     }
 
     @Test

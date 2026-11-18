@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.i.IzzetStaticaster;
 import com.github.laxika.magicalvibes.cards.s.SupremeVerdict;
@@ -39,8 +40,8 @@ class RubblebackRhinoTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, rhino.getId());
 
-        assertThat(rhino.getPowerModifier()).isEqualTo(3);
-        assertThat(rhino.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, rhino)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rhino)).isEqualTo(3);
         harness.assertInGraveyard(player1, "Giant Growth");
     }
 

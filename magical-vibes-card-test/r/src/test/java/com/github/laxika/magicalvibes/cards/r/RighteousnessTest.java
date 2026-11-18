@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -123,10 +124,10 @@ class RighteousnessTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.castAndResolveInstant(player2, 0, blockerPerm.getId());
 
-        assertThat(blockerPerm.getEffectivePower()).isEqualTo(9);
-        assertThat(blockerPerm.getEffectiveToughness()).isEqualTo(9);
-        assertThat(blockerPerm.getPowerModifier()).isEqualTo(7);
-        assertThat(blockerPerm.getToughnessModifier()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, blockerPerm)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, blockerPerm)).isEqualTo(9);
+        assertThat(PermanentGrants.powerBoostOf(gd, blockerPerm)).isEqualTo(7);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blockerPerm)).isEqualTo(7);
     }
 
     @Test
@@ -144,10 +145,10 @@ class RighteousnessTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, targetedBlocker.getId());
 
-        assertThat(targetedBlocker.getEffectivePower()).isEqualTo(9);
-        assertThat(targetedBlocker.getEffectiveToughness()).isEqualTo(9);
-        assertThat(otherBlocker.getEffectivePower()).isEqualTo(2);
-        assertThat(otherBlocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, targetedBlocker)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, targetedBlocker)).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, otherBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherBlocker)).isEqualTo(2);
     }
 
     @Test
@@ -168,10 +169,10 @@ class RighteousnessTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blockerPerm.getPowerModifier()).isEqualTo(0);
-        assertThat(blockerPerm.getToughnessModifier()).isEqualTo(0);
-        assertThat(blockerPerm.getEffectivePower()).isEqualTo(2);
-        assertThat(blockerPerm.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blockerPerm)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blockerPerm)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, blockerPerm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blockerPerm)).isEqualTo(2);
     }
 
     @Test
@@ -228,8 +229,8 @@ class RighteousnessTest extends BaseCardTest {
         blockerPerm.setBlocking(false);
         harness.passBothPriorities();
 
-        assertThat(blockerPerm.getEffectivePower()).isEqualTo(2);
-        assertThat(blockerPerm.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blockerPerm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blockerPerm)).isEqualTo(2);
         assertThat(gameLogContains("fizzles")).isTrue();
     }
 
@@ -259,8 +260,8 @@ class RighteousnessTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, blockerPerm.getId());
 
         // Blocker is now 9/9 — verify boost applied
-        assertThat(blockerPerm.getEffectivePower()).isEqualTo(9);
-        assertThat(blockerPerm.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, blockerPerm)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, blockerPerm)).isEqualTo(9);
 
         // Advance to combat damage
         resolveCombat(player1);
@@ -288,8 +289,8 @@ class RighteousnessTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, blockerPerm.getId());
 
-        assertThat(blockerPerm.getEffectivePower()).isEqualTo(9);
-        assertThat(blockerPerm.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, blockerPerm)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, blockerPerm)).isEqualTo(9);
     }
 
     @Test
@@ -306,8 +307,8 @@ class RighteousnessTest extends BaseCardTest {
         blocker.setBlocking(false);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(9);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(9);
     }
 }
 

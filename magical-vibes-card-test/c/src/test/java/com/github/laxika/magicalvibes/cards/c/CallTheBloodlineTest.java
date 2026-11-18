@@ -38,8 +38,8 @@ class CallTheBloodlineTest extends BaseCardTest {
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst().orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.VAMPIRE, CardSubtype.KNIGHT);
         assertThat(token.getCard().getKeywords()).contains(Keyword.LIFELINK);

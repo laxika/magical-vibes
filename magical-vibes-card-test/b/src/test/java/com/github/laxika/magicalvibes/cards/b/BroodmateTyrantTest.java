@@ -33,8 +33,8 @@ class BroodmateTyrantTest extends BaseCardTest {
         Permanent token = tokens.getFirst();
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
-        assertThat(token.getEffectivePower()).isEqualTo(5);
-        assertThat(token.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
     }
 

@@ -28,8 +28,8 @@ class ThrowFromTheSaddleTest extends BaseCardTest {
         harness.addToBattlefield(player2, new HillGiant());
         castThrow(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.assertInGraveyard(player2, "Hill Giant");
 
@@ -37,8 +37,8 @@ class ThrowFromTheSaddleTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -48,8 +48,8 @@ class ThrowFromTheSaddleTest extends BaseCardTest {
         harness.addToBattlefield(player2, new HillGiant());
         castThrow(mount);
 
-        assertThat(mount.getPowerModifier()).isZero();
-        assertThat(mount.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mount)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mount)).isZero();
         assertThat(mount.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertInGraveyard(player2, "Hill Giant");
 
@@ -64,7 +64,7 @@ class ThrowFromTheSaddleTest extends BaseCardTest {
     void mountDealsPowerAfterCounterWithoutTakingReturnDamage() {
         Permanent mount = harness.addToBattlefieldAndReturn(player1, new TrainedArynx());
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        victim.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, victim, 2);
 
         castThrow(mount);
 
@@ -84,8 +84,8 @@ class ThrowFromTheSaddleTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(1);
         assertThat(victim.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Hill Giant");
     }
@@ -100,7 +100,7 @@ class ThrowFromTheSaddleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(mount.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(mount.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mount)).isZero();
         assertThat(victim.getMarkedDamage()).isZero();
     }
 
@@ -113,8 +113,8 @@ class ThrowFromTheSaddleTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
         assertThat(victim.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Hill Giant");
     }

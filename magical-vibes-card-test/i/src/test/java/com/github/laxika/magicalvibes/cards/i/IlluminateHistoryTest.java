@@ -42,8 +42,8 @@ class IlluminateHistoryTest extends BaseCardTest {
                         && permanent.getCard().getName().equals("Spirit"))
                 .toList();
         assertThat(spirits).singleElement().satisfies(spirit -> {
-            assertThat(spirit.getEffectivePower()).isEqualTo(3);
-            assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
             assertThat(spirit.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(spirit.getCard().getColors())
                     .containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);

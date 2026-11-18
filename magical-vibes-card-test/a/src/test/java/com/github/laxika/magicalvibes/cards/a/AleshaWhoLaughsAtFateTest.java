@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CentaurCourser;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Murder;
@@ -69,7 +70,7 @@ class AleshaWhoLaughsAtFateTest extends BaseCardTest {
         advanceToEndStep(player1);
         harness.handleMultipleCardsChosen(player1, List.of(valid.getId()));
 
-        alesha.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, alesha, -3);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Centaur Courser");
@@ -81,7 +82,7 @@ class AleshaWhoLaughsAtFateTest extends BaseCardTest {
         Permanent alesha = addReadyAlesha();
         addCreatureReady(player1, new CentaurCourser());
         Card valid = new CentaurCourser();
-        alesha.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, alesha, 1);
         harness.setGraveyard(player1, List.of(valid));
 
         declareAttackers(List.of(1));

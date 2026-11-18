@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -27,8 +28,8 @@ class NavSquadCommandosTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(commandos.getPowerModifier()).isEqualTo(1);
-        assertThat(commandos.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, commandos)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, commandos)).isEqualTo(1);
         assertThat(commandos.isTapped()).isFalse();
     }
 
@@ -41,8 +42,8 @@ class NavSquadCommandosTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(commandos.getPowerModifier()).isZero();
-        assertThat(commandos.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, commandos)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, commandos)).isZero();
         assertThat(commandos.isTapped()).isTrue();
     }
 
@@ -56,8 +57,8 @@ class NavSquadCommandosTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(commandos.getPowerModifier()).isZero();
-        assertThat(commandos.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, commandos)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, commandos)).isZero();
     }
 
     @Test
@@ -72,8 +73,8 @@ class NavSquadCommandosTest extends BaseCardTest {
         otherAttacker.setAttacking(false);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
 
-        assertThat(commandos.getPowerModifier()).isEqualTo(1);
-        assertThat(commandos.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, commandos)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, commandos)).isEqualTo(1);
         assertThat(commandos.isTapped()).isFalse();
         assertThat(commandos.isAttacking()).isTrue();
     }
@@ -90,8 +91,8 @@ class NavSquadCommandosTest extends BaseCardTest {
         declareAttackers(List.of(1, 2, 3));
         resolveAllTriggers();
 
-        assertThat(commandos.getPowerModifier()).isZero();
-        assertThat(commandos.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, commandos)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, commandos)).isZero();
         assertThat(commandos.isTapped()).isTrue();
     }
 
@@ -104,14 +105,14 @@ class NavSquadCommandosTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
-        assertThat(commandos.getPowerModifier()).isEqualTo(1);
-        assertThat(commandos.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, commandos)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, commandos)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(commandos.getPowerModifier()).isZero();
-        assertThat(commandos.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, commandos)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, commandos)).isZero();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DemandAnswers;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -222,7 +223,7 @@ class KyloxVisionaryInventorTest extends BaseCardTest {
         addCreatureReady(player1, new KyloxVisionaryInventor());
         Permanent first = addCreatureReady(player1, new GrizzlyBears());
         Permanent second = addCreatureReady(player1, new GrizzlyBears());
-        first.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, first, -3);
         Forest exiledLand = new Forest();
         Forest remainingLand = new Forest();
         harness.setLibrary(player1, List.of(exiledLand, remainingLand));

@@ -30,8 +30,8 @@ class WiitigoTest extends BaseCardTest {
 
         Permanent wiitigo = findPermanent(player1, "Wiitigo");
         assertThat(wiitigo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
-        assertThat(wiitigo.getEffectivePower()).isEqualTo(6);
-        assertThat(wiitigo.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, wiitigo)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, wiitigo)).isEqualTo(6);
     }
 
     @Test

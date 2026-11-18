@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.Pyromatics;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -63,10 +64,10 @@ class RabbleRouserTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, rouser), 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rouser.getPowerModifier()).isEqualTo(2);
-        assertThat(ownAttacker.getPowerModifier()).isEqualTo(2);
-        assertThat(opposingAttacker.getPowerModifier()).isEqualTo(2);
-        assertThat(nonAttacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rouser)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownAttacker)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingAttacker)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonAttacker)).isZero();
         assertThat(rouser.isTapped()).isTrue();
     }
 
@@ -81,13 +82,13 @@ class RabbleRouserTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, rouser), 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 
     private void castRabbleRouser() {
@@ -107,8 +108,8 @@ class RabbleRouserTest extends BaseCardTest {
         rouser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(3);
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -128,7 +129,7 @@ class RabbleRouserTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Rabble-Rouser");
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
     }
 
     @Test
@@ -148,9 +149,9 @@ class RabbleRouserTest extends BaseCardTest {
         laterAttacker.setAttacking(true);
         attacker.setAttacking(false);
 
-        assertThat(formerAttacker.getPowerModifier()).isZero();
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(laterAttacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, formerAttacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, laterAttacker)).isZero();
     }
 
     private int indexOf(Player player, Permanent permanent) {
@@ -178,7 +179,7 @@ class RabbleRouserTest extends BaseCardTest {
     @DisplayName("A source with negative power gives no boost")
     void negativeSourcePowerGivesNoBoost() {
         Permanent rouser = addCreatureReady(player1, new RabbleRouser());
-        rouser.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, rouser, -2);
         Permanent attacker = addCreatureReady(player1, new RabbleRouser());
         attacker.setAttacking(true);
 
@@ -186,6 +187,6 @@ class RabbleRouserTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, rouser), 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 }

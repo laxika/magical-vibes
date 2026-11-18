@@ -25,8 +25,8 @@ class EnergizerTest extends BaseCardTest {
 
         assertThat(energizer.isTapped()).isTrue();
         assertThat(energizer.getCounters().getOrDefault(CounterType.PLUS_ONE_PLUS_ONE, 0)).isEqualTo(1);
-        assertThat(energizer.getEffectivePower()).isEqualTo(3);
-        assertThat(energizer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, energizer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, energizer)).isEqualTo(3);
     }
 
     @Test
@@ -89,8 +89,8 @@ class EnergizerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(energizer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(energizer.getEffectivePower()).isEqualTo(4);
-        assertThat(energizer.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, energizer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, energizer)).isEqualTo(4);
         assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(other.isTapped()).isFalse();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PuresteelPaladin;
 import com.github.laxika.magicalvibes.cards.b.BastionProtector;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -142,7 +143,7 @@ class ConformerShurikenTest extends BaseCardTest {
     @Test
     void usesNegativeAttackerPowerInDifference() {
         Permanent attacker = addCreatureReady(player1, new PuresteelPaladin());
-        attacker.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, attacker, -4);
         Permanent shuriken = addShuriken(player1);
         shuriken.setAttachedTo(attacker.getId());
         Permanent target = addCreatureReady(player2, new BastionProtector());
@@ -158,11 +159,11 @@ class ConformerShurikenTest extends BaseCardTest {
     @Test
     void comparesTwoNegativePowersWithoutClampingThem() {
         Permanent attacker = addCreatureReady(player1, new PuresteelPaladin());
-        attacker.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, attacker, -4);
         Permanent shuriken = addShuriken(player1);
         shuriken.setAttachedTo(attacker.getId());
         Permanent target = addCreatureReady(player2, new BastionProtector());
-        target.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, target, -4);
 
         declareAttackers(player1, List.of(indexOf(player1, attacker)));
         harness.handlePermanentChosen(player1, target.getId());
@@ -181,8 +182,8 @@ class ConformerShurikenTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(indexOf(player1, attacker)));
         harness.handlePermanentChosen(player1, target.getId());
-        target.setPowerModifier(3);
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 3);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();

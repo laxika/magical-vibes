@@ -25,8 +25,8 @@ class SidisisPetTest extends BaseCardTest {
 
         Permanent pet = findPermanent(player1, "Sidisi's Pet");
         assertThat(pet.isFaceDown()).isTrue();
-        assertThat(pet.getEffectivePower()).isEqualTo(2);
-        assertThat(pet.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, pet)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pet)).isEqualTo(2);
 
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -36,8 +36,8 @@ class SidisisPetTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(pet.isFaceDown()).isFalse();
-        assertThat(pet.getEffectivePower()).isEqualTo(1);
-        assertThat(pet.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, pet)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, pet)).isEqualTo(4);
     }
 
     @Test

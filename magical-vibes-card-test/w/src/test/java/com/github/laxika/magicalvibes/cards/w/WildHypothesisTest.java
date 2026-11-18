@@ -35,8 +35,8 @@ class WildHypothesisTest extends BaseCardTest {
 
         Permanent fractal = findPermanent(player1, "Fractal");
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(fractal.getEffectivePower()).isEqualTo(2);
-        assertThat(fractal.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(2);
 
         GameData localGd = harness.getGameData();
         harness.getGameService().handleInteractionAnswer(localGd, player1,

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EbonyRhino;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -132,7 +133,7 @@ class MarjhanTest extends BaseCardTest {
         harness.activateAbility(player1, marjhanIndex, 1, null, rhino.getId());
         harness.passBothPriorities();
 
-        assertThat(marjhan.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, marjhan)).isEqualTo(-1);
         assertThat(rhino.getMarkedDamage()).isEqualTo(1);
     }
 
@@ -285,7 +286,7 @@ class MarjhanTest extends BaseCardTest {
         rhino.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(marjhan.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, marjhan)).isZero();
         assertThat(rhino.getMarkedDamage()).isZero();
     }
 

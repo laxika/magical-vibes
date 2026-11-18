@@ -41,8 +41,8 @@ class NestedShamblerTest extends BaseCardTest {
             assertThat(squirrel.isTapped()).isTrue();
             assertThat(squirrel.getCard().getColor()).isEqualTo(CardColor.GREEN);
             assertThat(squirrel.getCard().getSubtypes()).contains(CardSubtype.SQUIRREL);
-            assertThat(squirrel.getEffectivePower()).isEqualTo(1);
-            assertThat(squirrel.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, squirrel)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, squirrel)).isEqualTo(1);
         });
     }
 

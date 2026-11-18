@@ -27,8 +27,8 @@ class TarSnareTest extends BaseCardTest {
 
         castOn(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -53,8 +53,8 @@ class TarSnareTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -76,8 +76,8 @@ class TarSnareTest extends BaseCardTest {
 
         castOn(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(-2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         harness.assertOnBattlefield(player2, "Ancient Crab");
         harness.assertInGraveyard(player1, "Tar Snare");
     }

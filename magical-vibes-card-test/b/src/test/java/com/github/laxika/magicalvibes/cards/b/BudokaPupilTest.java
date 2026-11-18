@@ -191,15 +191,15 @@ class BudokaPupilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ichiga.getCounterCount(CounterType.KI)).isZero();
-        assertThat(goblin.getEffectivePower()).isEqualTo(4);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.CLEANUP);
 
-        assertThat(goblin.getEffectivePower()).isEqualTo(2);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
     }
 
     @Test
@@ -246,11 +246,11 @@ class BudokaPupilTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, goblin.getId());
 
         assertThat(pupil.getCounterCount(CounterType.KI)).isEqualTo(2);
-        assertThat(goblin.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
         harness.passBothPriorities();
 
-        assertThat(goblin.getEffectivePower()).isEqualTo(4);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(4);
     }
 
     @Test

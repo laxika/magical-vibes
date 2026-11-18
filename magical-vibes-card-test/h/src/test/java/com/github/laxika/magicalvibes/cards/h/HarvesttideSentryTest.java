@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -84,7 +85,7 @@ class HarvesttideSentryTest extends BaseCardTest {
 
         advanceToCombat(player1);
         assertThat(gd.stack).hasSize(1);
-        bears.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, bears, 1);
         resolveAllTriggers();
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -120,7 +121,7 @@ class HarvesttideSentryTest extends BaseCardTest {
 
         advanceToCombat(player1);
         resolveAllTriggers();
-        bears.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, bears, 1);
         declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
@@ -138,7 +139,7 @@ class HarvesttideSentryTest extends BaseCardTest {
 
         advanceToCombat(player1);
         resolveAllTriggers();
-        blocker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, blocker, 1);
         declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -211,7 +212,7 @@ class HarvesttideSentryTest extends BaseCardTest {
 
         advanceToCombat(player1);
         resolveAllTriggers();
-        blocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
         declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,

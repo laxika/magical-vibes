@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,8 +31,8 @@ class ToolcraftExemplarTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.passBothPriorities();
 
-        assertThat(exemplar.getPowerModifier()).isEqualTo(2);
-        assertThat(exemplar.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, exemplar)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, exemplar)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, exemplar, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -46,8 +47,8 @@ class ToolcraftExemplarTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.passBothPriorities();
 
-        assertThat(exemplar.getPowerModifier()).isEqualTo(2);
-        assertThat(exemplar.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, exemplar)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, exemplar)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, exemplar, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -60,8 +61,8 @@ class ToolcraftExemplarTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.passBothPriorities();
 
-        assertThat(exemplar.getPowerModifier()).isEqualTo(0);
-        assertThat(exemplar.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, exemplar)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, exemplar)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, exemplar, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -76,8 +77,8 @@ class ToolcraftExemplarTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.passBothPriorities();
 
-        assertThat(exemplar.getPowerModifier()).isEqualTo(0);
-        assertThat(exemplar.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, exemplar)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, exemplar)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, exemplar, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -91,8 +92,8 @@ class ToolcraftExemplarTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, artifact);
         harness.passBothPriorities();
 
-        assertThat(exemplar.getPowerModifier()).isZero();
-        assertThat(exemplar.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, exemplar)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, exemplar)).isZero();
         assertThat(gqs.hasKeyword(gd, exemplar, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -107,8 +108,8 @@ class ToolcraftExemplarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new PropheticPrism());
         harness.passBothPriorities();
 
-        assertThat(exemplar.getPowerModifier()).isEqualTo(2);
-        assertThat(exemplar.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, exemplar)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, exemplar)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, exemplar, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -123,8 +124,8 @@ class ToolcraftExemplarTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, artifact);
         harness.passBothPriorities();
 
-        assertThat(exemplar.getPowerModifier()).isEqualTo(2);
-        assertThat(exemplar.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, exemplar)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, exemplar)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, exemplar, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -137,8 +138,8 @@ class ToolcraftExemplarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new PropheticPrism());
         harness.passBothPriorities();
 
-        assertThat(exemplar.getPowerModifier()).isZero();
-        assertThat(exemplar.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, exemplar)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, exemplar)).isZero();
         assertThat(gqs.hasKeyword(gd, exemplar, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -152,8 +153,8 @@ class ToolcraftExemplarTest extends BaseCardTest {
         advanceToCombat(player2);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(exemplar.getPowerModifier()).isZero();
-        assertThat(exemplar.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, exemplar)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, exemplar)).isZero();
         assertThat(gqs.hasKeyword(gd, exemplar, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -171,14 +172,14 @@ class ToolcraftExemplarTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, third);
         harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(exemplar.getPowerModifier()).isEqualTo(2);
-        assertThat(exemplar.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, exemplar)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, exemplar)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, exemplar, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(exemplar.getPowerModifier()).isZero();
-        assertThat(exemplar.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, exemplar)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, exemplar)).isZero();
         assertThat(gqs.hasKeyword(gd, exemplar, Keyword.FIRST_STRIKE)).isFalse();
     }
 }

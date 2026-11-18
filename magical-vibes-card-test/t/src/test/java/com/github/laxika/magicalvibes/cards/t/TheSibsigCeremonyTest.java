@@ -40,8 +40,8 @@ class TheSibsigCeremonyTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.DRUID))
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
     }
 
     @Test

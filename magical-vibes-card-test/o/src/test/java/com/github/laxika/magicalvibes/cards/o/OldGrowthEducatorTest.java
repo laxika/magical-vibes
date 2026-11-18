@@ -47,8 +47,8 @@ class OldGrowthEducatorTest extends BaseCardTest {
 
         Permanent educator = findPermanent(player1, "Old-Growth Educator");
         assertThat(educator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(educator.getEffectivePower()).isEqualTo(6);
-        assertThat(educator.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, educator)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, educator)).isEqualTo(6);
     }
 
     @Test

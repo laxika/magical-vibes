@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BesottedKnight;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -27,7 +28,7 @@ class KellansLightbladesTest extends BaseCardTest {
     void withoutBargainDealsThreeDamageToAnAttackingCreature() {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player2, new HillGiant());
-        target.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, target, 2);
         declareAttackers(List.of(0));
 
         castLightblades(target.getId());
@@ -40,7 +41,7 @@ class KellansLightbladesTest extends BaseCardTest {
     void withoutBargainDealsThreeDamageToABlockingCreature() {
         addCreatureReady(player1, new HillGiant());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, target, 2);
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -55,7 +56,7 @@ class KellansLightbladesTest extends BaseCardTest {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player2, new HillGiant());
-        target.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, target, 2);
         declareAttackers(List.of(1));
         harness.setHand(player1, List.of(new KellansLightblades()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -98,7 +99,7 @@ class KellansLightbladesTest extends BaseCardTest {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new PropheticPrism());
         addCreatureReady(player1, new BesottedKnight());
         Permanent target = addCreatureReady(player2, new BesottedKnight());
-        target.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, target, 2);
         declareAttackersAndPrepareBlockers(List.of(1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         prepareLightblades();

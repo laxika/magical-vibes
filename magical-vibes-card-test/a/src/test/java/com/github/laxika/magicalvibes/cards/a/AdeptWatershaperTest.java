@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -416,7 +417,7 @@ class AdeptWatershaperTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AdeptWatershaper());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.tap();
-        bears.setToughnessModifier(-2);
+        PermanentGrants.setToughnessBoost(gd, bears, -2);
 
         harness.runStateBasedActions();
 

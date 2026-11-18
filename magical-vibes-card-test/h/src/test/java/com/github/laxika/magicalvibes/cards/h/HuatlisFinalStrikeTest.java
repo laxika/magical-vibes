@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Colossadactyl;
 import com.github.laxika.magicalvibes.cards.a.ArmoredKincaller;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -26,7 +27,7 @@ class HuatlisFinalStrikeTest extends BaseCardTest {
 
         cast(source, target);
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
         assertThat(target.getMarkedDamage()).isEqualTo(4);
     }
 
@@ -42,7 +43,7 @@ class HuatlisFinalStrikeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
     }
 
     @Test
@@ -69,8 +70,8 @@ class HuatlisFinalStrikeTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(target);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
         assertThat(source.getMarkedDamage()).isZero();
     }
 
@@ -85,7 +86,7 @@ class HuatlisFinalStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -98,7 +99,7 @@ class HuatlisFinalStrikeTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Armored Kincaller");
         harness.assertNotOnBattlefield(player2, "Armored Kincaller");
         assertThat(source.getMarkedDamage()).isZero();
-        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
         harness.assertLife(player2, 20);
     }
 

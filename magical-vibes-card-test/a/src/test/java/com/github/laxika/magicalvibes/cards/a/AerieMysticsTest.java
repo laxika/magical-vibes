@@ -126,7 +126,7 @@ class AerieMysticsTest extends BaseCardTest {
     @Test
     void gainingShroudInResponseMakesTargetedSpellFailToResolve() {
         Permanent mystics = addCreatureReady(player1, new AerieMystics());
-        int originalPower = mystics.getEffectivePower();
+        int originalPower = gqs.getEffectivePower(gd, mystics);
         harness.setHand(player1, List.of(new ConstrictingTendrils()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -137,7 +137,7 @@ class AerieMysticsTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, mystics, Keyword.SHROUD)).isTrue();
         harness.passBothPriorities();
 
-        assertThat(mystics.getEffectivePower()).isEqualTo(originalPower);
+        assertThat(gqs.getEffectivePower(gd, mystics)).isEqualTo(originalPower);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Constricting Tendrils");
     }

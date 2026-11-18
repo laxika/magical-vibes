@@ -189,8 +189,8 @@ class QuicksilverGargantuanTest extends BaseCardTest {
         assertThat(clonePerm).isNotNull();
         assertThat(clonePerm.getCard().getName()).isEqualTo("Nightmare");
         // Per CR 707.9d, the CDA is not copied — P/T should be exactly 7/7
-        assertThat(clonePerm.getEffectivePower()).isEqualTo(7);
-        assertThat(clonePerm.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, clonePerm)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, clonePerm)).isEqualTo(7);
     }
 
     @Test

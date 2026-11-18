@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SledgeClassSeedship;
@@ -69,10 +70,10 @@ class TapestryWardenTest extends BaseCardTest {
     void combatDamageUsesCurrentCharacteristics() {
         Permanent warden = addReadyCreature(player1, new TapestryWarden());
 
-        warden.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, warden, 2);
         assertThat(gqs.getEffectiveCombatDamage(gd, warden)).isEqualTo(5);
 
-        warden.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, warden, 2);
         assertThat(gqs.getEffectiveCombatDamage(gd, warden)).isEqualTo(6);
         assertThat(gqs.getPowerBasedDamage(gd, warden)).isEqualTo(5);
     }
@@ -84,7 +85,7 @@ class TapestryWardenTest extends BaseCardTest {
         Permanent seedship = harness.addToBattlefieldAndReturn(player1, new SledgeClassSeedship());
 
         harness.activateAbility(player1, battlefieldIndex(seedship), null, null);
-        warden.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, warden, 2);
         harness.passBothPriorities();
 
         assertThat(warden.isTapped()).isTrue();
@@ -98,7 +99,7 @@ class TapestryWardenTest extends BaseCardTest {
         Permanent seedship = harness.addToBattlefieldAndReturn(player1, new SledgeClassSeedship());
 
         harness.activateAbility(player1, battlefieldIndex(seedship), null, null);
-        warden.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, warden, 2);
         harness.passBothPriorities();
 
         assertThat(seedship.getCounterCount(CounterType.CHARGE)).isEqualTo(5);

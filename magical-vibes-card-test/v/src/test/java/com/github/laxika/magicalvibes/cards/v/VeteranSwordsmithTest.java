@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -185,10 +188,10 @@ class VeteranSwordsmithTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VeteranSwordsmith());
         Permanent soldier = harness.addToBattlefieldAndReturn(player1, new AvenCloudchaser());
 
-        soldier.setPowerModifier(soldier.getPowerModifier() + 5);
+        PermanentGrants.setPowerBoost(gd, soldier, PermanentGrants.powerBoostOf(gd, soldier) + 5);
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(8); // 2 base + 5 spell + 1 static
 
-        soldier.resetModifiers();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(3); // 2 base + 1 static
         assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(2);

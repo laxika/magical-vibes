@@ -55,12 +55,14 @@ public class DoubleTargetCreaturePowerEffectHandler implements NormalEffectHandl
             int effectiveTimes = SaturatingMath.multiply(times, MaroGoneNutsSupport.doublingFactor(gameData));
             for (int i = 0; i < effectiveTimes; i++) {
                 int currentPower = gameQueryService.getEffectivePower(gameData, target);
-                int newModifier = SaturatingMath.add(target.getPowerModifier(), currentPower);
-                // Doubling 0 power or a saturated modifier changes nothing, so a huge X needn't loop on.
-                if (newModifier == target.getPowerModifier()) {
+                // Doubling 0 power or a saturated power changes nothing, so a huge X needn't loop on.
+                if (currentPower == 0) {
                     break;
                 }
-                target.setPowerModifier(newModifier);
+                gameData.addPowerToughnessBoost(entry, target.getId(), currentPower, 0);
+                if (gameQueryService.getEffectivePower(gameData, target) == currentPower) {
+                    break;
+                }
             }
 
             gameLogService.append(gameData, GameLog.builder()

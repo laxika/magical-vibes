@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AnabaBodyguard;
 import com.github.laxika.magicalvibes.cards.w.WillowFaerie;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -54,8 +55,8 @@ class RetributionTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Anaba Bodyguard"));
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(faerie);
         assertThat(faerie.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(faerie.getEffectivePower()).isEqualTo(0);
-        assertThat(faerie.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, faerie)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, faerie)).isEqualTo(1);
     }
 
     @Test
@@ -71,8 +72,8 @@ class RetributionTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Willow Faerie"));
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bodyguard);
         assertThat(bodyguard.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(bodyguard.getEffectivePower()).isEqualTo(1);
-        assertThat(bodyguard.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bodyguard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bodyguard)).isEqualTo(2);
     }
 
     @Test
@@ -80,7 +81,7 @@ class RetributionTest extends BaseCardTest {
     void counterCanKillTheSurvivor() {
         Permanent bodyguard = addCreatureReady(player2, new AnabaBodyguard());
         Permanent shrunk = addCreatureReady(player2, new WillowFaerie());
-        shrunk.setToughnessModifier(-1);
+        PermanentGrants.setToughnessBoost(gd, shrunk, -1);
 
         castRetribution(bodyguard, shrunk);
         harness.handlePermanentChosen(player2, bodyguard.getId());

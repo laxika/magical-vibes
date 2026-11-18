@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GratuitousViolence;
 import com.github.laxika.magicalvibes.cards.s.ScavengerFolk;
@@ -68,7 +69,7 @@ class TrackerTest extends BaseCardTest {
     @Test
     void canTargetItselfAndDealsDamageTwice() {
         Permanent tracker = addCreatureReady(player1, new Tracker());
-        tracker.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, tracker, 3);
 
         activateTracker(tracker);
 
@@ -93,7 +94,7 @@ class TrackerTest extends BaseCardTest {
     @Test
     void sourceLeavingBeforeResolutionUsesLastKnownPower() {
         Permanent tracker = addCreatureReady(player1, new Tracker());
-        tracker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, tracker, 1);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SpittingSlug());
 
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -141,12 +142,12 @@ class TrackerTest extends BaseCardTest {
     @Test
     void usesBothCreaturesPowerAtResolution() {
         Permanent tracker = addCreatureReady(player1, new Tracker());
-        tracker.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, tracker, 3);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SpittingSlug());
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.activateAbility(player1, 0, null, target.getId());
-        tracker.setPowerModifier(1);
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, tracker, 1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
 
         harness.passBothPriorities();
 
@@ -161,7 +162,7 @@ class TrackerTest extends BaseCardTest {
     @CardUsed(GratuitousViolence.class)
     void damageDoublingForTrackerDoesNotDoubleOpponentsReturnDamage() {
         Permanent tracker = addCreatureReady(player1, new Tracker());
-        tracker.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, tracker, 3);
         harness.addToBattlefield(player1, new GratuitousViolence());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SpittingSlug());
 

@@ -27,8 +27,8 @@ class WildMightTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(7);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
     }
 
     @Test
@@ -40,8 +40,8 @@ class WildMightTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 
@@ -53,8 +53,8 @@ class WildMightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -71,8 +71,8 @@ class WildMightTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -83,8 +83,8 @@ class WildMightTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(7);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -97,8 +97,8 @@ class WildMightTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(7);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }

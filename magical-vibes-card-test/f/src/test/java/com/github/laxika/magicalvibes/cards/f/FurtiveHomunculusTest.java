@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -54,7 +55,7 @@ class FurtiveHomunculusTest extends BaseCardTest {
     @DisplayName("Skulk allows a creature with lower current power to block")
     void skulkAllowsLowerPowerCreatureToBlock() {
         Permanent blocker = addCreatureReady(player2, new FurtiveHomunculus());
-        blocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
         Permanent attacker = addCreatureReady(player1, new FurtiveHomunculus());
         attacker.setAttacking(true);
         prepareDeclareBlockers();
@@ -68,7 +69,7 @@ class FurtiveHomunculusTest extends BaseCardTest {
     @DisplayName("Skulk uses the blocker's increased current power")
     void skulkPreventsBlockingAfterBlockerPowerIncreases() {
         Permanent blocker = addCreatureReady(player2, new FurtiveHomunculus());
-        blocker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, blocker, 1);
         Permanent attacker = addCreatureReady(player1, new FurtiveHomunculus());
         attacker.setAttacking(true);
         prepareDeclareBlockers();
@@ -84,7 +85,7 @@ class FurtiveHomunculusTest extends BaseCardTest {
     void skulkPreventsBlockingAfterAttackerPowerDecreases() {
         addCreatureReady(player2, new FurtiveHomunculus());
         Permanent attacker = addCreatureReady(player1, new FurtiveHomunculus());
-        attacker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, attacker, -1);
         attacker.setAttacking(true);
         prepareDeclareBlockers();
 

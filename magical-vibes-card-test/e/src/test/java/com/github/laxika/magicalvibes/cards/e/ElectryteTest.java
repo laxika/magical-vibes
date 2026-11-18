@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Cathodion;
 import com.github.laxika.magicalvibes.cards.w.WallOfJunk;
 import com.github.laxika.magicalvibes.model.Card;
@@ -21,11 +22,11 @@ class ElectryteTest extends BaseCardTest {
     void dealsCurrentPowerToBlockingCreatures() {
         harness.setLife(player2, 20);
         Permanent electryte = addCreatureReady(player1, new Electryte());
-        electryte.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, electryte, 2);
         electryte.setAttacking(true);
         Permanent attacker = addAttackingCreature(player1, new Cathodion());
-        attacker.setPowerModifier(-3);
-        attacker.setToughnessModifier(2);
+        PermanentGrants.setPowerBoost(gd, attacker, -3);
+        PermanentGrants.setToughnessBoost(gd, attacker, 2);
         Permanent blocker = addBlockingCreature(player2, new WallOfJunk(), 1);
         Permanent bystander = addCreatureReady(player2, new WallOfJunk());
 
@@ -43,11 +44,11 @@ class ElectryteTest extends BaseCardTest {
     void dealsCurrentPowerToEveryBlockingCreature() {
         harness.setLife(player2, 20);
         Permanent electryte = addCreatureReady(player1, new Electryte());
-        electryte.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, electryte, 2);
         electryte.setAttacking(true);
         Permanent attacker = addAttackingCreature(player1, new Cathodion());
-        attacker.setPowerModifier(-3);
-        attacker.setToughnessModifier(2);
+        PermanentGrants.setPowerBoost(gd, attacker, -3);
+        PermanentGrants.setToughnessBoost(gd, attacker, 2);
         Permanent firstBlocker = addBlockingCreature(player2, new WallOfJunk(), 1);
         Permanent secondBlocker = addBlockingCreature(player2, new WallOfJunk(), 1);
 
@@ -65,7 +66,7 @@ class ElectryteTest extends BaseCardTest {
     void doesNotTriggerWhenBlocked() {
         harness.setLife(player2, 20);
         Permanent electryte = addCreatureReady(player1, new Electryte());
-        electryte.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, electryte, 2);
         electryte.setAttacking(true);
         Permanent blocker = addBlockingCreature(player2, new WallOfJunk(), 0);
 
@@ -82,14 +83,14 @@ class ElectryteTest extends BaseCardTest {
     void usesPowerAtResolution() {
         Permanent electryte = addAttackingCreature(player1, new Electryte());
         Permanent attacker = addAttackingCreature(player1, new Cathodion());
-        attacker.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, attacker, -3);
         Permanent blocker = addBlockingCreature(player2, new WallOfJunk(), 1);
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         assertThat(blocker.getMarkedDamage()).isZero();
-        electryte.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, electryte, 2);
         resolveAllTriggers();
 
         assertThat(blocker.getMarkedDamage()).isEqualTo(5);
@@ -100,7 +101,7 @@ class ElectryteTest extends BaseCardTest {
     void checksBlockingStatusAtResolution() {
         addAttackingCreature(player1, new Electryte());
         Permanent attacker = addAttackingCreature(player1, new Cathodion());
-        attacker.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, attacker, -3);
         Permanent blocker = addBlockingCreature(player2, new WallOfJunk(), 1);
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
@@ -115,15 +116,15 @@ class ElectryteTest extends BaseCardTest {
     @DisplayName("Does not trigger when its combat damage is zero")
     void doesNotTriggerForZeroCombatDamage() {
         Permanent electryte = addAttackingCreature(player1, new Electryte());
-        electryte.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, electryte, -3);
         Permanent attacker = addAttackingCreature(player1, new Cathodion());
-        attacker.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, attacker, -3);
         Permanent blocker = addBlockingCreature(player2, new WallOfJunk(), 1);
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
 
         assertThat(gd.stack).isEmpty();
-        electryte.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, electryte, 2);
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -135,13 +136,13 @@ class ElectryteTest extends BaseCardTest {
     void usesLastKnownPowerAfterSourceDies() {
         Permanent electryte = addAttackingCreature(player1, new Electryte());
         Permanent attacker = addAttackingCreature(player1, new Cathodion());
-        attacker.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, attacker, -3);
         Permanent blocker = addBlockingCreature(player2, new WallOfJunk(), 1);
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
 
-        electryte.setPowerModifier(2);
-        electryte.setToughnessModifier(-3);
+        PermanentGrants.setPowerBoost(gd, electryte, 2);
+        PermanentGrants.setToughnessBoost(gd, electryte, -3);
         harness.runStateBasedActions();
         harness.assertInGraveyard(player1, "Electryte");
         resolveAllTriggers();
@@ -154,13 +155,13 @@ class ElectryteTest extends BaseCardTest {
     void dealsNoDamageWithZeroPowerAtResolution() {
         Permanent electryte = addAttackingCreature(player1, new Electryte());
         Permanent attacker = addAttackingCreature(player1, new Cathodion());
-        attacker.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, attacker, -3);
         Permanent blocker = addBlockingCreature(player2, new WallOfJunk(), 1);
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        electryte.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, electryte, -3);
         resolveAllTriggers();
 
         assertThat(blocker.getMarkedDamage()).isZero();

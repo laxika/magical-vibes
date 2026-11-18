@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,8 +25,8 @@ class ShamblingStriderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(strider.getPowerModifier()).isEqualTo(1);
-        assertThat(strider.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, strider)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, strider)).isEqualTo(-1);
     }
 
     @Test
@@ -40,8 +41,8 @@ class ShamblingStriderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(strider.getPowerModifier()).isEqualTo(2);
-        assertThat(strider.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, strider)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, strider)).isEqualTo(-2);
     }
 
     @Test
@@ -77,10 +78,10 @@ class ShamblingStriderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isEqualTo(-1);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -105,13 +106,13 @@ class ShamblingStriderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(strider.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, strider)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(strider.getPowerModifier()).isEqualTo(0);
-        assertThat(strider.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, strider)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, strider)).isEqualTo(0);
     }
 
     @Test
@@ -124,12 +125,12 @@ class ShamblingStriderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(strider.getPowerModifier()).isZero();
-        assertThat(strider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, strider)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, strider)).isZero();
         harness.passBothPriorities();
 
-        assertThat(strider.getPowerModifier()).isEqualTo(1);
-        assertThat(strider.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, strider)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, strider)).isEqualTo(-1);
         assertThat(strider.isTapped()).isTrue();
     }
 

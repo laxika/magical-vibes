@@ -34,8 +34,8 @@ class CankerousThirstTest extends BaseCardTest {
         castAt(creature, ManaColor.BLACK, 4); // {3}{B/G} all black → only {B} spent
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -45,8 +45,8 @@ class CankerousThirstTest extends BaseCardTest {
         castAt(creature, ManaColor.GREEN, 4); // {3}{B/G} all green → only {G} spent
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(7);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
     }
 
     @Test
@@ -56,8 +56,8 @@ class CankerousThirstTest extends BaseCardTest {
         castAt(creature, ManaColor.BLACK, 4);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -76,8 +76,8 @@ class CankerousThirstTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // -3/-3
         harness.handleMayAbilityChosen(player1, true); // +3/+3
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -86,14 +86,14 @@ class CankerousThirstTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new AirElemental()); // 4/4
         castAt(creature, ManaColor.GREEN, 4);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(creature.getEffectivePower()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -129,10 +129,10 @@ class CankerousThirstTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(shrinkTarget.getEffectivePower()).isEqualTo(1);
-        assertThat(shrinkTarget.getEffectiveToughness()).isEqualTo(1);
-        assertThat(pumpTarget.getEffectivePower()).isEqualTo(7);
-        assertThat(pumpTarget.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, shrinkTarget)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shrinkTarget)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, pumpTarget)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, pumpTarget)).isEqualTo(7);
     }
 
     @Test
@@ -142,8 +142,8 @@ class CankerousThirstTest extends BaseCardTest {
         castAt(creature, ManaColor.GREEN, 4);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test

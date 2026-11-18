@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CollectiveRestraint;
 import com.github.laxika.magicalvibes.cards.k.KavuTitan;
 import com.github.laxika.magicalvibes.cards.m.MeddlingMage;
@@ -29,15 +30,15 @@ class WaxWaneTest extends BaseCardTest {
         harness.castInstant(player1, 0, 0, kavu.getId());
         harness.passBothPriorities();
 
-        assertThat(kavu.getPowerModifier()).isEqualTo(2);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(kavu.getPowerModifier()).isZero();
-        assertThat(kavu.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isZero();
     }
 
     @Test
@@ -50,8 +51,8 @@ class WaxWaneTest extends BaseCardTest {
         harness.castInstant(player1, 0, 0, kavu.getId());
         harness.passBothPriorities();
 
-        assertThat(kavu.getPowerModifier()).isEqualTo(2);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(2);
     }
 
     @Test

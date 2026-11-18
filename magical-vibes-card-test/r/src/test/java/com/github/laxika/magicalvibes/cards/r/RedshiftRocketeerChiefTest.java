@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BrightfieldGlider;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -28,7 +29,7 @@ class RedshiftRocketeerChiefTest extends BaseCardTest {
     @DisplayName("Tap ability adds ability-only mana equal to current power")
     void tapAddsAbilityOnlyManaEqualToPower() {
         Permanent redshift = addReadyRedshift();
-        redshift.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, redshift, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, "BLUE");

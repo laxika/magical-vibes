@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -81,15 +82,15 @@ class FellShepherdTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(shepherd);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(fodderCard);
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -167,8 +168,8 @@ class FellShepherdTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(shepherd);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(fodder);
-        assertThat(shepherd.getPowerModifier()).isEqualTo(-2);
-        assertThat(shepherd.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, shepherd)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shepherd)).isEqualTo(-2);
     }
 
     @Test

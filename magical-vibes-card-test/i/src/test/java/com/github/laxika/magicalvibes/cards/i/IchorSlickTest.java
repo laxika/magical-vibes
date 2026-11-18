@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AugurOfSkulls;
 import com.github.laxika.magicalvibes.cards.t.Tombstalker;
 import com.github.laxika.magicalvibes.cards.z.ZoeticCavern;
@@ -30,8 +31,8 @@ class IchorSlickTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, tombstalker.getId());
 
-        assertThat(tombstalker.getPowerModifier()).isEqualTo(-3);
-        assertThat(tombstalker.getToughnessModifier()).isEqualTo(-3);
+        assertThat(PermanentGrants.powerBoostOf(gd, tombstalker)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tombstalker)).isEqualTo(-3);
     }
 
     @Test
@@ -46,8 +47,8 @@ class IchorSlickTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(tombstalker.getPowerModifier()).isZero();
-        assertThat(tombstalker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tombstalker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tombstalker)).isZero();
     }
 
     @Test

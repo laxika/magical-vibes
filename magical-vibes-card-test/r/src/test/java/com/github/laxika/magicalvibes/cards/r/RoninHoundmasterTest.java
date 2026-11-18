@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -28,8 +29,8 @@ class RoninHoundmasterTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(houndmaster.getPowerModifier()).isEqualTo(1);
-        assertThat(houndmaster.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, houndmaster)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, houndmaster)).isEqualTo(1);
     }
 
     @Test
@@ -42,8 +43,8 @@ class RoninHoundmasterTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(houndmaster.getPowerModifier()).isEqualTo(1);
-        assertThat(houndmaster.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, houndmaster)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, houndmaster)).isEqualTo(1);
     }
 
     @Test
@@ -54,8 +55,8 @@ class RoninHoundmasterTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(houndmaster.getPowerModifier()).isZero();
-        assertThat(houndmaster.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, houndmaster)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, houndmaster)).isZero();
     }
 
     @Test
@@ -70,8 +71,8 @@ class RoninHoundmasterTest extends BaseCardTest {
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(houndmaster.getPowerModifier()).isEqualTo(1);
-        assertThat(houndmaster.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, houndmaster)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, houndmaster)).isEqualTo(1);
     }
 
     @Test
@@ -88,8 +89,8 @@ class RoninHoundmasterTest extends BaseCardTest {
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
         resolveAllTriggers();
 
-        assertThat(houndmaster.getPowerModifier()).isEqualTo(1);
-        assertThat(houndmaster.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, houndmaster)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, houndmaster)).isEqualTo(1);
     }
 
     @Test
@@ -102,15 +103,15 @@ class RoninHoundmasterTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(houndmaster.getPowerModifier()).isEqualTo(1);
-        assertThat(houndmaster.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, houndmaster)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, houndmaster)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(houndmaster.getPowerModifier()).isZero();
-        assertThat(houndmaster.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, houndmaster)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, houndmaster)).isZero();
     }
 
     @Test

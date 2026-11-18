@@ -35,7 +35,7 @@ class UmaroRagingYetiTest extends BaseCardTest {
 
         Set<String> modes = new HashSet<>();
         for (int i = 0; i < 90 && modes.size() < 3; i++) {
-            int bearPower = bear.getEffectivePower();
+            int bearPower = gqs.getEffectivePower(gd, bear);
             int graveyardSize = gd.playerGraveyards.get(controller.getId()).size();
             int opponentLife = gd.playerLifeTotals.get(opponent.getId());
 
@@ -49,7 +49,7 @@ class UmaroRagingYetiTest extends BaseCardTest {
             }
             resolveAllTriggers();
 
-            if (bear.getEffectivePower() > bearPower) {
+            if (gqs.getEffectivePower(gd, bear) > bearPower) {
                 modes.add("pump");
                 assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
             }
@@ -62,7 +62,7 @@ class UmaroRagingYetiTest extends BaseCardTest {
         }
 
         assertThat(modes).containsExactlyInAnyOrder("pump", "discard-and-draw", "damage");
-        assertThat(umaro.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, umaro)).isEqualTo(6);
     }
 
     @Test
@@ -116,15 +116,15 @@ class UmaroRagingYetiTest extends BaseCardTest {
 
         for (int i = 0; i < 90; i++) {
             enterOwnCombatAndResolve();
-            if (ally.getEffectivePower() != 2) {
-                assertThat(ally.getEffectivePower()).isEqualTo(5);
-                assertThat(ally.getEffectiveToughness()).isEqualTo(2);
+            if (gqs.getEffectivePower(gd, ally) != 2) {
+                assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(5);
+                assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(2);
                 assertThat(gqs.hasKeyword(gd, ally, Keyword.TRAMPLE)).isTrue();
-                assertThat(umaro.getEffectivePower()).isEqualTo(6);
-                assertThat(opponent.getEffectivePower()).isEqualTo(2);
+                assertThat(gqs.getEffectivePower(gd, umaro)).isEqualTo(6);
+                assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
                 assertThat(gqs.hasKeyword(gd, opponent, Keyword.TRAMPLE)).isFalse();
                 Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-                assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
+                assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
                 assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.TRAMPLE)).isFalse();
                 return;
             }

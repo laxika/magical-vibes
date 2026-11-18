@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -38,8 +39,8 @@ class ElderOfLaurelsTest extends BaseCardTest {
 
         // Target should get +3/+3 (3 creatures controlled by player1)
         Permanent target = findPermanent(player2, "Grizzly Bears");
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -59,8 +60,8 @@ class ElderOfLaurelsTest extends BaseCardTest {
 
         // Target should get +1/+1 (only 1 creature: Elder itself)
         Permanent target = findPermanent(player2, "Grizzly Bears");
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -78,8 +79,8 @@ class ElderOfLaurelsTest extends BaseCardTest {
 
         // Target should get +2/+2 (2 creatures controlled by player1)
         Permanent target = findPermanent(player1, "Grizzly Bears");
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -114,11 +115,11 @@ class ElderOfLaurelsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElderOfLaurels());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         harness.addToBattlefield(player1, new ElderOfLaurels());
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -134,8 +135,8 @@ class ElderOfLaurelsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -152,10 +153,10 @@ class ElderOfLaurelsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, elder.getId());
         harness.passBothPriorities();
 
-        assertThat(elder.getPowerModifier()).isEqualTo(2);
-        assertThat(elder.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, elder)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elder)).isEqualTo(2);
         harness.passUntil(TurnStep.CLEANUP);
-        assertThat(elder.getPowerModifier()).isZero();
-        assertThat(elder.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elder)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elder)).isZero();
     }
 }

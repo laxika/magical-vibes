@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DawnhartDisciple;
 import com.github.laxika.magicalvibes.cards.v.VoldarenBloodcaster;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,9 +28,9 @@ class MarkovRetributionTest extends BaseCardTest {
 
         cast(new int[]{0}, List.of());
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(1);
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(opponentCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
     }
 
     @Test
@@ -40,7 +41,7 @@ class MarkovRetributionTest extends BaseCardTest {
 
         cast(new int[]{1}, List.of(vampire.getId(), target.getId()));
 
-        assertThat(target.getMarkedDamage()).isEqualTo(vampire.getEffectivePower());
+        assertThat(target.getMarkedDamage()).isEqualTo(gqs.getEffectivePower(gd, vampire));
     }
 
     @Test
@@ -51,8 +52,8 @@ class MarkovRetributionTest extends BaseCardTest {
 
         cast(new int[]{0, 1}, List.of(vampire.getId(), target.getId()));
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getMarkedDamage()).isEqualTo(vampire.getEffectivePower());
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(1);
+        assertThat(target.getMarkedDamage()).isEqualTo(gqs.getEffectivePower(gd, vampire));
     }
 
     @Test
@@ -80,7 +81,7 @@ class MarkovRetributionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(vampire.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isZero();
     }
 
     private void cast(int[] modes, List<java.util.UUID> targetIds) {
@@ -94,8 +95,8 @@ class MarkovRetributionTest extends BaseCardTest {
 
         cast(new int[]{0}, List.of());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -106,7 +107,7 @@ class MarkovRetributionTest extends BaseCardTest {
         cast(new int[]{1}, List.of(vampire.getId(), target.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
-        assertThat(vampire.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isZero();
         resolveAllTriggers();
     }
 
@@ -128,7 +129,7 @@ class MarkovRetributionTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(vampire.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, vampire)).isEqualTo(1);
         assertThat(vampire.getMarkedDamage()).isZero();
     }
 
@@ -143,7 +144,7 @@ class MarkovRetributionTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -152,7 +153,7 @@ class MarkovRetributionTest extends BaseCardTest {
 
         Permanent creature = addCreatureReady(player1, new DawnhartDisciple());
 
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
     }
 
     private void castWithoutResolving(int[] modes, List<java.util.UUID> targetIds) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -35,8 +36,8 @@ class ElectricEelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(eel.getPowerModifier()).isEqualTo(2);
-        assertThat(eel.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, eel)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, eel)).isZero();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
     }
 
@@ -48,13 +49,13 @@ class ElectricEelTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(eel.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, eel)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(eel.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, eel)).isZero();
     }
 
     @Test
@@ -89,7 +90,7 @@ class ElectricEelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(eel.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, eel)).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
     }
 
@@ -103,18 +104,18 @@ class ElectricEelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(eel.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, eel)).isZero();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
 
         harness.passBothPriorities();
 
-        assertThat(eel.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, eel)).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
 
         harness.passBothPriorities();
 
-        assertThat(eel.getPowerModifier()).isEqualTo(4);
-        assertThat(eel.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, eel)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, eel)).isZero();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
     }
@@ -130,7 +131,7 @@ class ElectricEelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(eel.isTapped()).isTrue();
-        assertThat(eel.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, eel)).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
     }
 

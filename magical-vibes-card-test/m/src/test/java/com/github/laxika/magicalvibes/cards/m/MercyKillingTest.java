@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlexiosDeimosOfKosmos;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -86,7 +87,7 @@ class MercyKillingTest extends BaseCardTest {
     @DisplayName("Uses modified power immediately before sacrifice")
     void usesModifiedPower() {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        bears.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, bears, 3);
 
         castAt(bears);
 
@@ -98,7 +99,7 @@ class MercyKillingTest extends BaseCardTest {
     @DisplayName("Negative power creates no tokens but still sacrifices the creature")
     void negativePowerCreatesNoTokens() {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        bears.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, bears, -3);
 
         castAt(bears);
 

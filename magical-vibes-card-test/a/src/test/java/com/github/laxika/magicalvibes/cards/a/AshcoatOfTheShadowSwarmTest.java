@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BogRats;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -34,14 +35,14 @@ class AshcoatOfTheShadowSwarmTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(ownRat.getEffectivePower()).isEqualTo(3);
-        assertThat(ownRat.getEffectiveToughness()).isEqualTo(3);
-        assertThat(ashcoat.getEffectivePower()).isEqualTo(3);
-        assertThat(ashcoat.getEffectiveToughness()).isEqualTo(4);
-        assertThat(ownBear.getEffectivePower()).isEqualTo(2);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opposingRat.getEffectivePower()).isEqualTo(1);
-        assertThat(opposingRat.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownRat)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownRat)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ashcoat)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ashcoat)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingRat)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingRat)).isEqualTo(1);
     }
 
     @Test
@@ -55,10 +56,10 @@ class AshcoatOfTheShadowSwarmTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 
-        assertThat(ownRat.getEffectivePower()).isEqualTo(3);
-        assertThat(ownRat.getEffectiveToughness()).isEqualTo(3);
-        assertThat(ashcoat.getEffectivePower()).isEqualTo(3);
-        assertThat(ashcoat.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownRat)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownRat)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ashcoat)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ashcoat)).isEqualTo(4);
     }
 
     @Test
@@ -182,10 +183,10 @@ class AshcoatOfTheShadowSwarmTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent laterRat = addCreatureReady(player1, new BogRats());
 
-        assertThat(rat.getPowerModifier()).isEqualTo(2);
-        assertThat(rat.getToughnessModifier()).isEqualTo(2);
-        assertThat(laterRat.getPowerModifier()).isZero();
-        assertThat(laterRat.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rat)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rat)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, laterRat)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterRat)).isZero();
     }
 
     private void advanceToEndStep() {

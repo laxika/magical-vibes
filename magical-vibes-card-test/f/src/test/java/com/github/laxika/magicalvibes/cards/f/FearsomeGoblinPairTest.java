@@ -30,8 +30,8 @@ class FearsomeGoblinPairTest extends BaseCardTest {
 
         Permanent army = findPermanent(player1, "Goblin Army");
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(army.getEffectivePower()).isEqualTo(4);
-        assertThat(army.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, army)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, army)).isEqualTo(4);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
@@ -54,10 +55,10 @@ class DismemberTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent djinn = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(djinn.getPowerModifier()).isEqualTo(-5);
-        assertThat(djinn.getToughnessModifier()).isEqualTo(-5);
-        assertThat(djinn.getEffectivePower()).isEqualTo(0);
-        assertThat(djinn.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, djinn)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, djinn)).isEqualTo(-5);
+        assertThat(gqs.getEffectivePower(gd, djinn)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, djinn)).isEqualTo(1);
     }
 
     @Test
@@ -89,10 +90,10 @@ class DismemberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent djinn = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(djinn.getPowerModifier()).isEqualTo(0);
-        assertThat(djinn.getToughnessModifier()).isEqualTo(0);
-        assertThat(djinn.getEffectivePower()).isEqualTo(5);
-        assertThat(djinn.getEffectiveToughness()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, djinn)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, djinn)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, djinn)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, djinn)).isEqualTo(6);
     }
 
     @Test

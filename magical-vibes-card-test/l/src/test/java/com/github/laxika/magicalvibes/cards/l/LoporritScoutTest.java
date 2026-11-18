@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -21,8 +22,8 @@ class LoporritScoutTest extends BaseCardTest {
         Permanent scout = addScout();
         castScout(player1);
 
-        assertThat(scout.getPowerModifier()).isEqualTo(1);
-        assertThat(scout.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, scout)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scout)).isEqualTo(1);
     }
 
     @Test
@@ -35,8 +36,8 @@ class LoporritScoutTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent scout = findPermanent(player1, "Loporrit Scout");
-        assertThat(scout.getPowerModifier()).isEqualTo(0);
-        assertThat(scout.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, scout)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scout)).isEqualTo(0);
     }
 
     @Test
@@ -49,8 +50,8 @@ class LoporritScoutTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(scout.getPowerModifier()).isEqualTo(0);
-        assertThat(scout.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, scout)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scout)).isEqualTo(0);
     }
 
     @Test
@@ -66,8 +67,8 @@ class LoporritScoutTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(scout.getPowerModifier()).isEqualTo(0);
-        assertThat(scout.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, scout)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scout)).isEqualTo(0);
     }
 
     @Test
@@ -77,8 +78,8 @@ class LoporritScoutTest extends BaseCardTest {
         castScout(player1);
         castScout(player1);
 
-        assertThat(scout.getPowerModifier()).isEqualTo(2);
-        assertThat(scout.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, scout)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scout)).isEqualTo(2);
     }
 
     @Test
@@ -94,10 +95,10 @@ class LoporritScoutTest extends BaseCardTest {
         Permanent secondScout = findPermanents(player1, "Loporrit Scout").stream()
                 .filter(permanent -> !permanent.getId().equals(firstScout.getId()))
                 .findFirst().orElseThrow();
-        assertThat(firstScout.getPowerModifier()).isEqualTo(1);
-        assertThat(firstScout.getToughnessModifier()).isEqualTo(1);
-        assertThat(secondScout.getPowerModifier()).isZero();
-        assertThat(secondScout.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstScout)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstScout)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondScout)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondScout)).isZero();
     }
 
     @Test
@@ -112,13 +113,13 @@ class LoporritScoutTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Loporrit Scout")).isEqualTo(2);
         assertThat(gd.stack).hasSize(1);
-        assertThat(scout.getPowerModifier()).isZero();
-        assertThat(scout.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, scout)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scout)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(scout.getPowerModifier()).isEqualTo(1);
-        assertThat(scout.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, scout)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, scout)).isEqualTo(1);
     }
     private Permanent addScout() {
         Permanent scout = harness.addToBattlefieldAndReturn(player1, new LoporritScout());

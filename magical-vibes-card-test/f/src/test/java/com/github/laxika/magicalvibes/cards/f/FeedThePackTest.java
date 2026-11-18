@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GavonyIronwright;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -117,7 +118,7 @@ class FeedThePackTest extends BaseCardTest {
     void usesEffectiveToughness() {
         harness.addToBattlefield(player1, new FeedThePack());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GavonyIronwright());
-        creature.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, creature, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

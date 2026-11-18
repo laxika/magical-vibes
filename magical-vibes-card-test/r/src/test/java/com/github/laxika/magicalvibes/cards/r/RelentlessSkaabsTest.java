@@ -74,8 +74,8 @@ class RelentlessSkaabsTest extends BaseCardTest {
 
         Permanent returnedSkaabs = findPermanent(player1, "Relentless Skaabs");
         assertThat(returnedSkaabs.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(returnedSkaabs.getEffectivePower()).isEqualTo(5);
-        assertThat(returnedSkaabs.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, returnedSkaabs)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, returnedSkaabs)).isEqualTo(5);
         harness.assertNotInGraveyard(player1, "Relentless Skaabs");
     }
 

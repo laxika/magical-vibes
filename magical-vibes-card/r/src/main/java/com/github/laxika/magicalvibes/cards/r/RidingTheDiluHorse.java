@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect;
 
 import java.util.Set;
 
@@ -13,6 +13,6 @@ public class RidingTheDiluHorse extends Card {
 
     public RidingTheDiluHorse() {
         // Target creature gets +2/+2 and gains horsemanship. (This effect lasts indefinitely.)
-        addSpellEffect(new BuffTargetCreatureIndefinitelyEffect(2, 2, Set.of(Keyword.HORSEMANSHIP)));
+        addSpellEffect(new PowerToughnessBoostEffect(2, 2, Set.of(Keyword.HORSEMANSHIP)));
     }
 }

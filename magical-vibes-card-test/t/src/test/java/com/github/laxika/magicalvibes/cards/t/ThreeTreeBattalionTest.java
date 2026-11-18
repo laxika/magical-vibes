@@ -37,13 +37,13 @@ class ThreeTreeBattalionTest extends BaseCardTest {
         assertThat(bearsOnBattlefield).hasSize(2);
         assertThat(bearsOnBattlefield).anySatisfy(permanent -> {
             assertThat(permanent.getCard()).isSameAs(bears);
-            assertThat(permanent.getEffectivePower()).isEqualTo(2);
-            assertThat(permanent.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(2);
         });
         assertThat(bearsOnBattlefield).anySatisfy(permanent -> {
             assertThat(permanent.getCard()).isNotSameAs(bears);
-            assertThat(permanent.getEffectivePower()).isEqualTo(1);
-            assertThat(permanent.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(1);
         });
     }
 

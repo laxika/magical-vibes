@@ -32,8 +32,8 @@ class LlanowarBehemothTest extends BaseCardTest {
 
         assertThat(bears.isTapped()).isTrue();
         assertThat(behemoth.isTapped()).isFalse();
-        assertThat(behemoth.getEffectivePower()).isEqualTo(5);
-        assertThat(behemoth.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(5);
     }
 
     @Test
@@ -46,8 +46,8 @@ class LlanowarBehemothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(behemoth.isTapped()).isTrue();
-        assertThat(behemoth.getEffectivePower()).isEqualTo(5);
-        assertThat(behemoth.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(5);
     }
 
     @Test
@@ -66,8 +66,8 @@ class LlanowarBehemothTest extends BaseCardTest {
 
         assertThat(bears.isTapped()).isTrue();
         assertThat(behemoth.isTapped()).isTrue();
-        assertThat(behemoth.getEffectivePower()).isEqualTo(6);
-        assertThat(behemoth.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(6);
     }
 
     @Test
@@ -83,8 +83,8 @@ class LlanowarBehemothTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(behemoth.getEffectivePower()).isEqualTo(4);
-        assertThat(behemoth.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(4);
     }
 
     @Test
@@ -124,8 +124,8 @@ class LlanowarBehemothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(behemoth.getEffectivePower()).isEqualTo(5);
-        assertThat(behemoth.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(5);
     }
 
     @Test
@@ -151,13 +151,13 @@ class LlanowarBehemothTest extends BaseCardTest {
         harness.activateAbility(player1, idx, null, null);
 
         assertThat(behemoth.isTapped()).isTrue();
-        assertThat(behemoth.getEffectivePower()).isEqualTo(4);
-        assertThat(behemoth.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(4);
 
         harness.passBothPriorities();
 
-        assertThat(behemoth.getEffectivePower()).isEqualTo(5);
-        assertThat(behemoth.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(5);
     }
 
     @Test
@@ -171,13 +171,13 @@ class LlanowarBehemothTest extends BaseCardTest {
         harness.activateAbility(player1, idx, null, null);
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(behemoth.getEffectivePower()).isEqualTo(4);
-        assertThat(behemoth.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(4);
 
         harness.passBothPriorities();
 
         assertThat(behemoth.isTapped()).isTrue();
-        assertThat(behemoth.getEffectivePower()).isEqualTo(5);
-        assertThat(behemoth.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(5);
     }
 }

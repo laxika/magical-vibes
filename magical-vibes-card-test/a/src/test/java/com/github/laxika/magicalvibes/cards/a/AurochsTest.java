@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.b.BullAurochs;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -40,8 +41,8 @@ class AurochsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(aurochs.getPowerModifier()).isEqualTo(0);
-        assertThat(aurochs.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, aurochs)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, aurochs)).isEqualTo(0);
     }
 
     @Test
@@ -53,8 +54,8 @@ class AurochsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(aurochs.getPowerModifier()).isEqualTo(1);
-        assertThat(aurochs.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, aurochs)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, aurochs)).isEqualTo(0);
     }
 
     @Test
@@ -67,8 +68,8 @@ class AurochsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(aurochs.getPowerModifier()).isEqualTo(2);
-        assertThat(aurochs.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, aurochs)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, aurochs)).isEqualTo(0);
     }
 
     @Test
@@ -80,8 +81,8 @@ class AurochsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(aurochs.getPowerModifier()).isEqualTo(0);
-        assertThat(aurochs.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, aurochs)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, aurochs)).isEqualTo(0);
     }
 
     @Test
@@ -93,8 +94,8 @@ class AurochsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(aurochs.getPowerModifier()).isEqualTo(1);
-        assertThat(aurochs.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, aurochs)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, aurochs)).isEqualTo(0);
     }
 
     @Test
@@ -108,8 +109,8 @@ class AurochsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(aurochs.getPowerModifier()).isEqualTo(1);
-        assertThat(aurochs.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, aurochs)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, aurochs)).isEqualTo(0);
     }
 
     @Test
@@ -122,8 +123,8 @@ class AurochsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(aurochs.getPowerModifier()).isEqualTo(1);
-        assertThat(aurochs.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, aurochs)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, aurochs)).isEqualTo(0);
     }
 
     @Test
@@ -135,14 +136,14 @@ class AurochsTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(aurochs.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, aurochs)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(aurochs.getPowerModifier()).isEqualTo(0);
-        assertThat(aurochs.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, aurochs)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, aurochs)).isEqualTo(0);
     }
 
     @Test
@@ -156,8 +157,8 @@ class AurochsTest extends BaseCardTest {
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, other));
         resolveAllTriggers();
 
-        assertThat(aurochs.getPowerModifier()).isZero();
-        assertThat(aurochs.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, aurochs)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, aurochs)).isZero();
     }
 
     @Test
@@ -170,12 +171,12 @@ class AurochsTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
-        assertThat(aurochs.getPowerModifier()).isEqualTo(1);
-        assertThat(other.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, aurochs)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(1);
 
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, other));
-        assertThat(aurochs.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, aurochs)).isEqualTo(1);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -191,6 +192,6 @@ class AurochsTest extends BaseCardTest {
         harness.assertLife(player2, 19);
         harness.assertInGraveyard(player2, "Balduvian Bears");
         harness.assertOnBattlefield(player1, "Aurochs");
-        assertThat(aurochs.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, aurochs)).isZero();
     }
 }

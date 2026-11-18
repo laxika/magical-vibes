@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -32,10 +33,10 @@ class AppealAuthorityTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, own1.getId());
 
         // X = 2 (own1 + own2); opponent creature ignored
-        assertThat(own1.getPowerModifier()).isEqualTo(2);
-        assertThat(own1.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, own1)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, own1)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, own1, Keyword.TRAMPLE)).isTrue();
-        assertThat(own2.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, own2)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, own2, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -52,7 +53,7 @@ class AppealAuthorityTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -160,8 +161,8 @@ class AppealAuthorityTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -176,8 +177,8 @@ class AppealAuthorityTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         gd.playerBattlefields.get(player1.getId()).clear();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
@@ -269,7 +270,7 @@ class AppealAuthorityTest extends BaseCardTest {
         harness.castAndResolveFlashback(player1, 0, opponent.getId());
 
         assertThat(opponent.isTapped()).isTrue();
-        assertThat(own.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, own, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, own, Keyword.VIGILANCE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);

@@ -34,8 +34,8 @@ class ChorusOfMightTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = gqs.findPermanentById(gd, bearId);
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.TRAMPLE);
     }
 
@@ -51,8 +51,8 @@ class ChorusOfMightTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, enemyBearId);
 
         Permanent enemyBear = gqs.findPermanentById(gd, enemyBearId);
-        assertThat(enemyBear.getPowerModifier()).isEqualTo(1);
-        assertThat(enemyBear.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, enemyBear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enemyBear)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, enemyBear)).contains(Keyword.TRAMPLE);
     }
 
@@ -71,8 +71,8 @@ class ChorusOfMightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gqs.findPermanentById(gd, bearId);
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.TRAMPLE);
     }
 
@@ -102,8 +102,8 @@ class ChorusOfMightTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent target = gqs.findPermanentById(gd, targetId);
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -121,8 +121,8 @@ class ChorusOfMightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = gqs.findPermanentById(gd, targetId);
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.addToBattlefield(player1, new GrizzlyBears());

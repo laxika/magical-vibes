@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -26,8 +27,8 @@ class RavineRaiderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(raider.getPowerModifier()).isEqualTo(1);
-        assertThat(raider.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, raider)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raider)).isEqualTo(1);
     }
 
     @Test
@@ -41,8 +42,8 @@ class RavineRaiderTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(raider.getPowerModifier()).isEqualTo(2);
-        assertThat(raider.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, raider)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raider)).isEqualTo(2);
     }
 
     @Test
@@ -53,15 +54,15 @@ class RavineRaiderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(raider.getPowerModifier()).isEqualTo(1);
-        assertThat(raider.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, raider)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raider)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(raider.getPowerModifier()).isEqualTo(0);
-        assertThat(raider.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, raider)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raider)).isEqualTo(0);
     }
 
     @Test
@@ -101,12 +102,12 @@ class RavineRaiderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(raider.getPowerModifier()).isZero();
-        assertThat(raider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, raider)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raider)).isZero();
         harness.passBothPriorities();
 
-        assertThat(raider.getPowerModifier()).isEqualTo(1);
-        assertThat(raider.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, raider)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, raider)).isEqualTo(1);
         assertThat(raider.isTapped()).isTrue();
     }
 
@@ -120,11 +121,11 @@ class RavineRaiderTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(firstRaider.getPowerModifier()).isZero();
-        assertThat(firstRaider.getToughnessModifier()).isZero();
-        assertThat(secondRaider.getPowerModifier()).isEqualTo(1);
-        assertThat(secondRaider.getToughnessModifier()).isEqualTo(1);
-        assertThat(opposingRaider.getPowerModifier()).isZero();
-        assertThat(opposingRaider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstRaider)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstRaider)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, secondRaider)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondRaider)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingRaider)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingRaider)).isZero();
     }
 }

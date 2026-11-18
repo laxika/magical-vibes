@@ -64,8 +64,8 @@ class LazotepQuarryTest extends BaseCardTest {
                         && permanent.getCard().getName().equals("Grizzly Bears"))
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getColors()).containsExactly(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
         assertThat(gd.getPlayerExiledCards(player1.getId()))

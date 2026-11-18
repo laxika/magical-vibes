@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -61,9 +62,9 @@ class HellkiteIgniterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent hellkite = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(hellkite.getEffectivePower()).isEqualTo(5);
-        assertThat(hellkite.getEffectiveToughness()).isEqualTo(5);
-        assertThat(hellkite.getPowerModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, hellkite)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, hellkite)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isEqualTo(0);
     }
 
     @Test
@@ -78,9 +79,9 @@ class HellkiteIgniterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent hellkite = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(hellkite.getEffectivePower()).isEqualTo(6);
-        assertThat(hellkite.getEffectiveToughness()).isEqualTo(5);
-        assertThat(hellkite.getPowerModifier()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, hellkite)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, hellkite)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isEqualTo(1);
     }
 
     @Test
@@ -97,9 +98,9 @@ class HellkiteIgniterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent hellkite = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(hellkite.getEffectivePower()).isEqualTo(8);
-        assertThat(hellkite.getEffectiveToughness()).isEqualTo(5);
-        assertThat(hellkite.getPowerModifier()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, hellkite)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, hellkite)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isEqualTo(3);
     }
 
     @Test
@@ -115,8 +116,8 @@ class HellkiteIgniterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent hellkite = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(hellkite.getEffectivePower()).isEqualTo(5);
-        assertThat(hellkite.getPowerModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, hellkite)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isEqualTo(0);
     }
 
     @Test
@@ -135,8 +136,8 @@ class HellkiteIgniterTest extends BaseCardTest {
 
         Permanent hellkite = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         // +2 from first activation, +2 from second activation = +4 total
-        assertThat(hellkite.getEffectivePower()).isEqualTo(9);
-        assertThat(hellkite.getPowerModifier()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, hellkite)).isEqualTo(9);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isEqualTo(4);
     }
 
     @Test
@@ -152,15 +153,15 @@ class HellkiteIgniterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent hellkite = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(hellkite.getEffectivePower()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, hellkite)).isEqualTo(7);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(hellkite.getPowerModifier()).isEqualTo(0);
-        assertThat(hellkite.getEffectivePower()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, hellkite)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, hellkite)).isEqualTo(5);
     }
 
     @Test
@@ -239,12 +240,12 @@ class HellkiteIgniterTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new IchorWellspring());
         harness.passBothPriorities();
 
-        assertThat(hellkite.getEffectivePower()).isEqualTo(6);
-        assertThat(hellkite.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, hellkite)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, hellkite)).isEqualTo(5);
         harness.getGameData().playerBattlefields.get(player1.getId()).remove(artifact);
         harness.addToBattlefield(player1, new IchorWellspring());
         harness.addToBattlefield(player1, new IchorWellspring());
-        assertThat(hellkite.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, hellkite)).isEqualTo(6);
     }
 
     @Test
@@ -259,8 +260,8 @@ class HellkiteIgniterTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(hellkite.getEffectivePower()).isEqualTo(5);
-        assertThat(hellkite.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, hellkite)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, hellkite)).isEqualTo(5);
     }
 
     @Test
@@ -276,8 +277,8 @@ class HellkiteIgniterTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(returned.getEffectivePower()).isEqualTo(5);
-        assertThat(returned.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(5);
         assertThat(harness.getGameData().stack).isEmpty();
     }
 }

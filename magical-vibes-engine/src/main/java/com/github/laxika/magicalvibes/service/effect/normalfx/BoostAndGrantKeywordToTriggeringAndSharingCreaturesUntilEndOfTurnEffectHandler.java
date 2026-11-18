@@ -63,8 +63,7 @@ public class BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEf
                 continue;
             }
 
-            permanent.setPowerModifier(permanent.getPowerModifier() + boost.powerBoost());
-            permanent.setToughnessModifier(permanent.getToughnessModifier() + boost.toughnessBoost());
+            gameData.addPowerToughnessBoost(entry, permanent.getId(), boost.powerBoost(), boost.toughnessBoost());
 
             Set<Keyword> grantableKeywords = boost.keywords().stream()
                     .filter(keyword -> !gameQueryService.cantHaveOrGainKeyword(gameData, permanent, keyword))

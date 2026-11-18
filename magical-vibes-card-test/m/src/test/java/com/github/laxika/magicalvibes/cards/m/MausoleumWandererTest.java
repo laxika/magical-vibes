@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BumpInTheNight;
 import com.github.laxika.magicalvibes.cards.c.ChapelGeist;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -31,8 +32,8 @@ class MausoleumWandererTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent wanderer = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(wanderer.getPowerModifier()).isZero();
-        assertThat(wanderer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wanderer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wanderer)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -44,8 +45,8 @@ class MausoleumWandererTest extends BaseCardTest {
         harness.castFromHand(player2, new MausoleumWanderer(), "{U}");
         harness.passBothPriorities();
 
-        assertThat(wanderer.getPowerModifier()).isZero();
-        assertThat(wanderer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wanderer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wanderer)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -56,10 +57,10 @@ class MausoleumWandererTest extends BaseCardTest {
         for (int i = 0; i < 2; i++) {
             castChapelGeist(player1);
             harness.passBothPriorities();
-            assertThat(wanderer.getPowerModifier()).isEqualTo(i);
+            assertThat(PermanentGrants.powerBoostOf(gd, wanderer)).isEqualTo(i);
             harness.passBothPriorities();
-            assertThat(wanderer.getPowerModifier()).isEqualTo(i + 1);
-            assertThat(wanderer.getToughnessModifier()).isEqualTo(i + 1);
+            assertThat(PermanentGrants.powerBoostOf(gd, wanderer)).isEqualTo(i + 1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, wanderer)).isEqualTo(i + 1);
         }
     }
 
@@ -114,8 +115,8 @@ class MausoleumWandererTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Geist
         harness.passBothPriorities(); // resolve Wanderer trigger
 
-        assertThat(wanderer.getPowerModifier()).isEqualTo(1);
-        assertThat(wanderer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wanderer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wanderer)).isEqualTo(1);
     }
 
     @Test
@@ -125,8 +126,8 @@ class MausoleumWandererTest extends BaseCardTest {
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
-        assertThat(wanderer.getPowerModifier()).isEqualTo(0);
-        assertThat(wanderer.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, wanderer)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wanderer)).isEqualTo(0);
     }
 
     @Test
@@ -136,15 +137,15 @@ class MausoleumWandererTest extends BaseCardTest {
         castChapelGeist(player1);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(wanderer.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wanderer)).isEqualTo(1);
 
         harness.setHand(player1, new ArrayList<>());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wanderer.getPowerModifier()).isEqualTo(0);
-        assertThat(wanderer.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, wanderer)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wanderer)).isEqualTo(0);
     }
 
     @Test
@@ -177,7 +178,7 @@ class MausoleumWandererTest extends BaseCardTest {
         castChapelGeist(player1);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(wanderer.getPowerModifier()).isEqualTo(1); // 2 power
+        assertThat(PermanentGrants.powerBoostOf(gd, wanderer)).isEqualTo(1); // 2 power
 
         GrizzlyBears bears = new GrizzlyBears();
         harness.addToBattlefield(player1, bears);

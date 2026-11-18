@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LavaSpike;
@@ -111,8 +112,8 @@ class ToshiroUmezawaTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(toshiro.getPowerModifier()).isEqualTo(1);
-        assertThat(toshiro.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, toshiro)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, toshiro)).isEqualTo(1);
     }
 
     @Test
@@ -125,8 +126,8 @@ class ToshiroUmezawaTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(toshiro.getPowerModifier()).isEqualTo(1);
-        assertThat(toshiro.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, toshiro)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, toshiro)).isEqualTo(1);
     }
 
     @Test
@@ -161,8 +162,8 @@ class ToshiroUmezawaTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
-        assertThat(toshiro.getPowerModifier()).isZero();
-        assertThat(toshiro.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, toshiro)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, toshiro)).isZero();
     }
 
     @Test
@@ -176,8 +177,8 @@ class ToshiroUmezawaTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(toshiro.getPowerModifier()).isEqualTo(1);
-        assertThat(toshiro.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, toshiro)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, toshiro)).isEqualTo(1);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.SamutsSprint;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -25,8 +26,8 @@ class RubblebeltRiotersTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(rioters.getPowerModifier()).isEqualTo(3);
-        assertThat(rioters.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rioters)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rioters)).isZero();
     }
 
     @Test
@@ -38,7 +39,7 @@ class RubblebeltRiotersTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(rioters.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rioters)).isZero();
     }
 
     @Test
@@ -49,11 +50,11 @@ class RubblebeltRiotersTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        assertThat(rioters.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, rioters)).isEqualTo(3);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(rioters.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rioters)).isZero();
     }
 
     @Test
@@ -71,13 +72,13 @@ class RubblebeltRiotersTest extends BaseCardTest {
             harness.castAndResolveInstant(player1, 0, rioters.getId());
             resolveAllTriggers();
 
-            assertThat(rioters.getPowerModifier()).isEqualTo(4);
-            assertThat(rioters.getToughnessModifier()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, rioters)).isEqualTo(4);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, rioters)).isEqualTo(1);
 
             harness.castAndResolveInstant(player1, 0, rioters.getId());
 
-            assertThat(rioters.getPowerModifier()).isEqualTo(6);
-            assertThat(rioters.getToughnessModifier()).isEqualTo(2);
+            assertThat(PermanentGrants.powerBoostOf(gd, rioters)).isEqualTo(6);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, rioters)).isEqualTo(2);
         });
     }
 
@@ -87,15 +88,15 @@ class RubblebeltRiotersTest extends BaseCardTest {
         var rioters = addCreatureReady(player1, new RubblebeltRioters());
         var smaller = addCreatureReady(player1, new RubblebeltRioters());
         var greatest = addCreatureReady(player1, new RubblebeltRioters());
-        smaller.setPowerModifier(2);
-        greatest.setPowerModifier(5);
+        PermanentGrants.setPowerBoost(gd, smaller, 2);
+        PermanentGrants.setPowerBoost(gd, greatest, 5);
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(rioters.getPowerModifier()).isEqualTo(5);
-        assertThat(smaller.getPowerModifier()).isEqualTo(2);
-        assertThat(greatest.getPowerModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, rioters)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, smaller)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, greatest)).isEqualTo(5);
     }
 
     @Test
@@ -103,13 +104,13 @@ class RubblebeltRiotersTest extends BaseCardTest {
     void simultaneousAttackTriggersUseEarlierResolvedBoosts() {
         var first = addCreatureReady(player1, new RubblebeltRioters());
         var second = addCreatureReady(player1, new RubblebeltRioters());
-        first.setPowerModifier(2);
-        second.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, first, 2);
+        PermanentGrants.setPowerBoost(gd, second, 2);
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(List.of(first.getPowerModifier(), second.getPowerModifier()))
+        assertThat(List.of(PermanentGrants.powerBoostOf(gd, first), PermanentGrants.powerBoostOf(gd, second)))
                 .containsExactlyInAnyOrder(4, 6);
     }
 
@@ -118,11 +119,11 @@ class RubblebeltRiotersTest extends BaseCardTest {
     void hasteAllowsAttackAndTriggerOnArrivalTurn() {
         var rioters = addCreatureReady(player1, new RubblebeltRioters());
         rioters.setSummoningSick(true);
-        rioters.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, rioters, 2);
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(rioters.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, rioters)).isEqualTo(4);
     }
 }

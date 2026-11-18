@@ -52,8 +52,8 @@ class WoodlurkerMimicTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve the triggered ability
 
-        assertThat(mimic.getEffectivePower()).isEqualTo(4);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, mimic, Keyword.WITHER)).isTrue();
     }
 
@@ -67,13 +67,13 @@ class WoodlurkerMimicTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        assertThat(mimic.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(4);
 
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
-        assertThat(mimic.getEffectivePower()).isEqualTo(2);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, mimic, Keyword.WITHER)).isFalse();
     }
 
@@ -87,8 +87,8 @@ class WoodlurkerMimicTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(mimic.getEffectivePower()).isEqualTo(2);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, mimic, Keyword.WITHER)).isFalse();
     }
 
@@ -100,21 +100,21 @@ class WoodlurkerMimicTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
         assertThat(gd.stack).hasSize(2);
-        assertThat(mimic.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, mimic, Keyword.WITHER)).isFalse();
 
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
-        assertThat(mimic.getEffectivePower()).isEqualTo(4);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, mimic, Keyword.WITHER)).isTrue();
 
         harness.passBothPriorities();
         Permanent enteringMimic = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> !permanent.getId().equals(mimic.getId()))
                 .findFirst().orElseThrow();
-        assertThat(enteringMimic.getEffectivePower()).isEqualTo(2);
-        assertThat(enteringMimic.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, enteringMimic)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, enteringMimic)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, enteringMimic, Keyword.WITHER)).isFalse();
     }
 
@@ -129,8 +129,8 @@ class WoodlurkerMimicTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(mimic.getEffectivePower()).isEqualTo(2);
-        assertThat(mimic.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, mimic, Keyword.WITHER)).isFalse();
     }
 }

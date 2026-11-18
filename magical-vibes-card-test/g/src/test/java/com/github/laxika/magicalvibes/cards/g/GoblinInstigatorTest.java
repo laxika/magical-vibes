@@ -31,8 +31,8 @@ class GoblinInstigatorTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Goblin");
         assertThat(token.getCard().isToken()).isTrue();
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.GOBLIN);
     }

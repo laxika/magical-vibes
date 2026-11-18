@@ -30,8 +30,8 @@ class SunbathingRootwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(5);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(5);
     }
 
     @Test
@@ -45,8 +45,8 @@ class SunbathingRootwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(3);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(3);
     }
 
     @Test
@@ -73,13 +73,13 @@ class SunbathingRootwallaTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(2);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(2);
     }
 
     @Test
@@ -93,8 +93,8 @@ class SunbathingRootwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(4);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(4);
     }
 
     @Test
@@ -108,8 +108,8 @@ class SunbathingRootwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(2);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(2);
     }
 
     @Test
@@ -123,13 +123,13 @@ class SunbathingRootwallaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Island());
         harness.passBothPriorities();
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(4);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(4);
 
         harness.addToBattlefield(player1, new Mountain());
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(4);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(4);
     }
 
     @Test
@@ -163,8 +163,8 @@ class SunbathingRootwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(rootwalla.getEffectivePower()).isEqualTo(3);
-        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(3);
     }
 
     private void addActivationMana() {

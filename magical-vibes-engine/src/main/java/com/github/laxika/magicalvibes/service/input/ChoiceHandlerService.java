@@ -142,6 +142,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerAndPermanentsHexproofFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
 @Slf4j
 @Service
@@ -3880,7 +3881,7 @@ public class ChoiceHandlerService {
         if (ctx.boostSourcePermanentId() != null && removedTotal > 0) {
             Permanent boosted = gameQueryService.findPermanentById(gameData, ctx.boostSourcePermanentId());
             if (boosted != null) {
-                boosted.setPowerModifier(boosted.getPowerModifier() + removedTotal);
+                gameData.addPowerToughnessBoost(boosted, removedTotal, 0);
                 gameLogService.append(gameData, GameLog.builder().card(boosted.getCard())
                         .text(" gets +" + removedTotal + "/+0 until end of turn.").build());
             }
@@ -6765,12 +6766,9 @@ public class ChoiceHandlerService {
         if (perm != null) {
             // "As this creature enters, it becomes ..." — lock in the chosen shape's base P/T,
             // keyword, and extra creature type for the life of the permanent (CR 614.1c).
-            perm.setBasePowerOverriddenPermanently(true);
-            perm.setPermanentBasePowerOverride(form.power());
-            perm.setPermanentBasePowerOverrideTimestamp(gameData.nextTimestamp());
-            perm.setBaseToughnessOverriddenPermanently(true);
-            perm.setPermanentBaseToughnessOverride(form.toughness());
-            perm.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
+            gameData.addEffectOnPermanent(perm.getCard().getName(), perm.getId(), player.getId(),
+                    new SetBasePowerToughnessEffect(form.power(), form.toughness(), GrantScope.TARGET,
+                            Duration.PERMANENT), perm.getId(), Duration.PERMANENT);
             if (form.keyword() != null) {
                 gameData.addEffectOnPermanent(perm.getCard().getName(), perm.getId(), player.getId(),
                         new GrantKeywordEffect(form.keyword(), GrantScope.TARGET), perm.getId(), Duration.PERMANENT);

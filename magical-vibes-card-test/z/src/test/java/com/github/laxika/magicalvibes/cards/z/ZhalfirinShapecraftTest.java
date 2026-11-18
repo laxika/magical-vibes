@@ -27,8 +27,8 @@ class ZhalfirinShapecraftTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         castZhalfirinShapecraft(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         harness.assertInHand(player1, "Forest");
     }
 
@@ -38,15 +38,15 @@ class ZhalfirinShapecraftTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castZhalfirinShapecraft(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -70,8 +70,8 @@ class ZhalfirinShapecraftTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         castZhalfirinShapecraft(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         harness.assertInHand(player1, "Forest");
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
@@ -83,8 +83,8 @@ class ZhalfirinShapecraftTest extends BaseCardTest {
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         castZhalfirinShapecraft(target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         assertThat(target.getPlusOnePlusOneCounters()).isEqualTo(2);
     }
 

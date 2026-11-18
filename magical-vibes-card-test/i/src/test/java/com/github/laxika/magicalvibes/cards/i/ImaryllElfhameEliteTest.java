@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.o.Overrun;
@@ -28,8 +29,8 @@ class ImaryllElfhameEliteTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(imaryll.getPowerModifier()).isZero();
-        assertThat(imaryll.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, imaryll)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, imaryll)).isZero();
     }
 
     @Test
@@ -46,11 +47,11 @@ class ImaryllElfhameEliteTest extends BaseCardTest {
         addCreatureReady(player1, new LlanowarElves());
         resolveAllTriggers();
 
-        assertThat(imaryll.getPowerModifier()).isEqualTo(2);
-        assertThat(imaryll.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, imaryll)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, imaryll)).isEqualTo(2);
         addCreatureReady(player1, new LlanowarElves());
-        assertThat(imaryll.getPowerModifier()).isEqualTo(2);
-        assertThat(imaryll.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, imaryll)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, imaryll)).isEqualTo(2);
     }
 
     @Test
@@ -87,8 +88,8 @@ class ImaryllElfhameEliteTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(imaryll.getPowerModifier()).isEqualTo(2);
-        assertThat(imaryll.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, imaryll)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, imaryll)).isEqualTo(2);
     }
 
     @Test
@@ -99,13 +100,13 @@ class ImaryllElfhameEliteTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
-        assertThat(imaryll.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, imaryll)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(imaryll.getPowerModifier()).isZero();
-        assertThat(imaryll.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, imaryll)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, imaryll)).isZero();
     }
 
     @Test

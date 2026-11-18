@@ -26,9 +26,9 @@ class ChaosMoonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectivePower()).isEqualTo(4);
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectiveToughness()).isEqualTo(3);
-        assertThat(findPermanent(player1, "Balduvian Bears").getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Balduvian Bears"))).isEqualTo(2);
     }
 
     @Test
@@ -40,8 +40,8 @@ class ChaosMoonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(1);
     }
 
     @Test
@@ -55,8 +55,8 @@ class ChaosMoonTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, mountain));
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(1);
     }
 
     @Test
@@ -69,8 +69,8 @@ class ChaosMoonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectivePower()).isEqualTo(4);
-        assertThat(findPermanent(player2, "Balduvian Barbarians").getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Balduvian Barbarians"))).isEqualTo(4);
     }
 
     @Test
@@ -84,7 +84,7 @@ class ChaosMoonTest extends BaseCardTest {
         resolveAllTriggers();
         harness.tapPermanent(player2, 0);
 
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(4);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(2);
     }
 
@@ -174,8 +174,8 @@ class ChaosMoonTest extends BaseCardTest {
         resolveAllTriggers();
         harness.addToBattlefield(player1, new BalduvianBarbarians());
 
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectivePower()).isEqualTo(3);
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(2);
     }
 
     @Test
@@ -203,8 +203,8 @@ class ChaosMoonTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, moon));
         harness.tapPermanent(player2, 0);
 
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectivePower()).isEqualTo(4);
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(2);
     }
 
@@ -232,15 +232,15 @@ class ChaosMoonTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.tapPermanent(player1, 2);
 
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectivePower()).isEqualTo(3);
-        assertThat(findPermanent(player1, "Balduvian Barbarians").getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Balduvian Barbarians"))).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 }

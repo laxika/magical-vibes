@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WallOfWonder;
@@ -46,8 +47,8 @@ class ThePrideOfHullCladeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, wall.getId());
         harness.passBothPriorities();
 
-        int expectedDraws = wall.getEffectiveToughness();
-        assertThat(wall.getPowerModifier()).isEqualTo(1);
+        int expectedDraws = gqs.getEffectiveToughness(gd, wall);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(1);
 
         harness.setLibrary(player1, List.of(
                 new Forest(), new Forest(), new Forest(), new Forest(), new Forest(),
@@ -58,7 +59,7 @@ class ThePrideOfHullCladeTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20 - wall.getEffectivePower());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20 - gqs.getEffectivePower(gd, wall));
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + expectedDraws);
     }
 

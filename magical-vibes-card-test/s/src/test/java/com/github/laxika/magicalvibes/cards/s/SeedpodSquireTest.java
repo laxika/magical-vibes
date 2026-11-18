@@ -42,8 +42,8 @@ class SeedpodSquireTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(1);
     }
 
     @Test
@@ -55,14 +55,14 @@ class SeedpodSquireTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         resolveAllTriggers();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -75,8 +75,8 @@ class SeedpodSquireTest extends BaseCardTest {
         PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.FLYING);
         resolveAllTriggers();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -91,8 +91,8 @@ class SeedpodSquireTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(bears);
         resolveAllTriggers();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -107,8 +107,8 @@ class SeedpodSquireTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(squire.getCard());
         resolveAllTriggers();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(1);
     }
 
     @Test
@@ -122,7 +122,7 @@ class SeedpodSquireTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(opponentBears.getPowerModifier()).isZero();
-        assertThat(opponentBears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentBears)).isZero();
     }
 }

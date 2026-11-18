@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AncestorsProphet;
 import com.github.laxika.magicalvibes.cards.f.FallenCleric;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
@@ -184,7 +185,7 @@ class StarlitSanctumTest extends BaseCardTest {
     void negativePowerCausesNoLifeChange() {
         harness.addToBattlefield(player1, new StarlitSanctum());
         Permanent cleric = harness.addToBattlefieldAndReturn(player1, new AncestorsProphet());
-        cleric.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, cleric, -3);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.setLife(player2, 20);
         prepareAbility();

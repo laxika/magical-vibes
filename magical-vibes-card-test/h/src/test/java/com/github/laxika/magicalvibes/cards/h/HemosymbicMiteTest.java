@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -35,7 +36,7 @@ class HemosymbicMiteTest extends BaseCardTest {
     @Test
     @DisplayName("Becoming tapped boosts the target by the Mite's current power")
     void becomingTappedBoostsByCurrentPower() {
-        addCreatureReady(player1, new HemosymbicMite()).setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, addCreatureReady(player1, new HemosymbicMite()), 2);
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0));
@@ -76,7 +77,7 @@ class HemosymbicMiteTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());
-        mite.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, mite, 3);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
@@ -113,11 +114,11 @@ class HemosymbicMiteTest extends BaseCardTest {
     void negativePowerProducesZeroBoost() {
         Permanent mite = addCreatureReady(player1, new HemosymbicMite());
         Permanent target = addCreatureReady(player1, new HemosymbicMite());
-        target.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, target, 3);
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());
-        mite.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, mite, -3);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);

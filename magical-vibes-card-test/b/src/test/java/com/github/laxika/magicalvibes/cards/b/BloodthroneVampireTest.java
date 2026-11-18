@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -93,10 +94,10 @@ class BloodthroneVampireTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         Permanent vamp = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(vamp.getCard().getName()).isEqualTo("Bloodthrone Vampire");
-        assertThat(vamp.getPowerModifier()).isEqualTo(2);
-        assertThat(vamp.getToughnessModifier()).isEqualTo(2);
-        assertThat(vamp.getEffectivePower()).isEqualTo(3);
-        assertThat(vamp.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, vamp)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vamp)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, vamp)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, vamp)).isEqualTo(3);
     }
 
     @Test
@@ -119,10 +120,10 @@ class BloodthroneVampireTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         Permanent vamp = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(vamp.getCard().getName()).isEqualTo("Bloodthrone Vampire");
-        assertThat(vamp.getPowerModifier()).isEqualTo(4);
-        assertThat(vamp.getToughnessModifier()).isEqualTo(4);
-        assertThat(vamp.getEffectivePower()).isEqualTo(5);
-        assertThat(vamp.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, vamp)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vamp)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, vamp)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, vamp)).isEqualTo(5);
 
         harness.assertInGraveyard(player1, "Runeclaw Bear");
         harness.assertNotInGraveyard(player1, "Saproling Token");
@@ -202,18 +203,18 @@ class BloodthroneVampireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent vamp = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(vamp.getEffectivePower()).isEqualTo(3);
-        assertThat(vamp.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, vamp)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, vamp)).isEqualTo(3);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(vamp.getPowerModifier()).isEqualTo(0);
-        assertThat(vamp.getToughnessModifier()).isEqualTo(0);
-        assertThat(vamp.getEffectivePower()).isEqualTo(1);
-        assertThat(vamp.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, vamp)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vamp)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, vamp)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, vamp)).isEqualTo(1);
     }
 
     @Test
@@ -244,8 +245,8 @@ class BloodthroneVampireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Runeclaw Bear");
-        assertThat(vamp.getEffectivePower()).isEqualTo(3);
-        assertThat(vamp.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, vamp)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, vamp)).isEqualTo(3);
         assertThat(vamp.isTapped()).isTrue();
     }
 
@@ -258,7 +259,7 @@ class BloodthroneVampireTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bear.getId());
-        assertThat(source.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(1);
 
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.stack).hasSize(2);
@@ -268,8 +269,8 @@ class BloodthroneVampireTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Bloodthrone Vampire");
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
     private Permanent addBloodthroneVampireReady(Player player) {

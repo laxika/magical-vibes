@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BeastWithin;
 import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.s.SakuraTribeElder;
@@ -26,8 +27,8 @@ class LifeOfThePartyTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(lifeOfTheParty.getPowerModifier()).isEqualTo(2);
-        assertThat(lifeOfTheParty.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, lifeOfTheParty)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lifeOfTheParty)).isZero();
     }
 
     @Test
@@ -66,8 +67,8 @@ class LifeOfThePartyTest extends BaseCardTest {
         addCreatureReady(player1, new SakuraTribeElder());
         resolveAllTriggers();
 
-        assertThat(source.getPowerModifier()).isEqualTo(3);
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
     }
 
     @Test
@@ -108,8 +109,8 @@ class LifeOfThePartyTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
 
-        assertThat(token.getPowerModifier()).isEqualTo(3);
-        assertThat(token.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, token)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, token)).isZero();
     }
 
     private void castLifeOfThePartyWithPendingTrigger() {

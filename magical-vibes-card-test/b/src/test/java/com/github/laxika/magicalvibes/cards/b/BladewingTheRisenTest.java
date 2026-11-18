@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DragonMage;
 import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
 import com.github.laxika.magicalvibes.cards.n.NamelessInversion;
@@ -115,11 +116,11 @@ class BladewingTheRisenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null); // Bladewing's {B}{R} ability
         harness.passBothPriorities();
 
-        assertThat(ownDragon.getEffectivePower()).isEqualTo(6);
-        assertThat(ownDragon.getEffectiveToughness()).isEqualTo(6);
-        assertThat(opponentDragon.getEffectivePower()).isEqualTo(6); // all players' Dragons
-        assertThat(nonDragon.getEffectivePower()).isEqualTo(2);      // Goblin Brigand unaffected
-        assertThat(nonDragon.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownDragon)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, ownDragon)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opponentDragon)).isEqualTo(6); // all players' Dragons
+        assertThat(gqs.getEffectivePower(gd, nonDragon)).isEqualTo(2);      // Goblin Brigand unaffected
+        assertThat(gqs.getEffectiveToughness(gd, nonDragon)).isEqualTo(2);
     }
 
     @Test
@@ -133,12 +134,12 @@ class BladewingTheRisenTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(dragon.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(0);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(0);
     }
 
     @Test
@@ -185,9 +186,9 @@ class BladewingTheRisenTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent laterDragon = harness.addToBattlefieldAndReturn(player2, new DragonMage());
 
-        assertThat(bladewing.getEffectivePower()).isEqualTo(6);
-        assertThat(bladewing.getEffectiveToughness()).isEqualTo(6);
-        assertThat(laterDragon.getEffectivePower()).isEqualTo(5);
-        assertThat(laterDragon.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bladewing)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bladewing)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, laterDragon)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, laterDragon)).isEqualTo(5);
     }
 }

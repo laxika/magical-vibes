@@ -85,8 +85,8 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
 
         assertThat(forest.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
-        assertThat(forest.getEffectivePower()).isEqualTo(8);
-        assertThat(forest.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(8);
         assertThat(gqs.isCreature(gd, forest)).isTrue();
     }
 
@@ -117,8 +117,8 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         forest.resetModifiers();
 
         assertThat(forest.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
-        assertThat(forest.getEffectivePower()).isEqualTo(8);
-        assertThat(forest.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(8);
         assertThat(gqs.isCreature(gd, forest)).isTrue();
     }
 
@@ -227,10 +227,10 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId(), mountain.getId()));
 
-        assertThat(forest.getEffectivePower()).isEqualTo(8);
-        assertThat(forest.getEffectiveToughness()).isEqualTo(8);
-        assertThat(mountain.getEffectivePower()).isEqualTo(8);
-        assertThat(mountain.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(8);
         assertThat(gqs.isCreature(gd, forest)).isTrue();
         assertThat(gqs.isCreature(gd, mountain)).isTrue();
     }

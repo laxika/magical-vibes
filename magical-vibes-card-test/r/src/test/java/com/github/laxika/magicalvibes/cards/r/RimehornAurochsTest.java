@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BorealCentaur;
 import com.github.laxika.magicalvibes.cards.b.BullAurochs;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -28,8 +29,8 @@ class RimehornAurochsTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2, 3));
         resolveAllTriggers();
 
-        assertThat(rimehorn.getPowerModifier()).isEqualTo(2);
-        assertThat(rimehorn.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rimehorn)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rimehorn)).isZero();
     }
 
     @Test
@@ -42,8 +43,8 @@ class RimehornAurochsTest extends BaseCardTest {
         declareAttackers(List.of(0, 2));
         resolveAllTriggers();
 
-        assertThat(rimehorn.getPowerModifier()).isZero();
-        assertThat(rimehorn.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rimehorn)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rimehorn)).isZero();
     }
 
     @Test
@@ -144,7 +145,7 @@ class RimehornAurochsTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(bull.getCard());
         resolveAllTriggers();
 
-        assertThat(rimehorn.getPowerModifier()).isZero();
-        assertThat(rimehorn.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rimehorn)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rimehorn)).isZero();
     }
 }

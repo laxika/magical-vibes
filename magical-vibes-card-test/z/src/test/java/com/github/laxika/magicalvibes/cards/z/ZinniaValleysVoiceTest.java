@@ -41,7 +41,7 @@ class ZinniaValleysVoiceTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .hasSize(1)
-                .allMatch(token -> token.getEffectivePower() == 1
-                        && token.getEffectiveToughness() == 1);
+                .allMatch(token -> gqs.getEffectivePower(gd, token) == 1
+                        && gqs.getEffectiveToughness(gd, token) == 1);
     }
 }

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -171,10 +174,10 @@ class ElvishChampionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvishChampion());
         Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
 
-        elf.setPowerModifier(elf.getPowerModifier() + 5);
+        PermanentGrants.setPowerBoost(gd, elf, PermanentGrants.powerBoostOf(gd, elf) + 5);
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(7);
 
-        elf.resetModifiers();
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(2);

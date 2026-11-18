@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -107,7 +108,7 @@ class DeathWardTest extends BaseCardTest {
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
-        bear.setToughnessModifier(-2);
+        PermanentGrants.setToughnessBoost(gd, bear, -2);
 
         harness.runStateBasedActions();
 

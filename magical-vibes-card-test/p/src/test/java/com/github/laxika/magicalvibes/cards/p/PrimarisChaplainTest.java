@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,8 +27,8 @@ class PrimarisChaplainTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, chaplain, Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(chaplain.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, chaplain)).isZero();
     }
 
     @Test
@@ -39,14 +40,14 @@ class PrimarisChaplainTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
         assertThat(gqs.hasKeyword(gd, chaplain, Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, chaplain, Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -59,7 +60,7 @@ class PrimarisChaplainTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, chaplain, Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -71,8 +72,8 @@ class PrimarisChaplainTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, chaplain, Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(chaplain.getPowerModifier()).isZero();
-        assertThat(chaplain.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, chaplain)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, chaplain)).isZero();
     }
 
     @Test
@@ -87,9 +88,9 @@ class PrimarisChaplainTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, stayingBack, Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(stayingBack.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, stayingBack)).isZero();
         assertThat(gqs.hasKeyword(gd, opponent, Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -104,8 +105,8 @@ class PrimarisChaplainTest extends BaseCardTest {
 
         for (Permanent chaplain : List.of(first, second, third)) {
             assertThat(gqs.hasKeyword(gd, chaplain, Keyword.INDESTRUCTIBLE)).isTrue();
-            assertThat(chaplain.getPowerModifier()).isEqualTo(2);
-            assertThat(chaplain.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, chaplain)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, chaplain)).isZero();
         }
     }
 }

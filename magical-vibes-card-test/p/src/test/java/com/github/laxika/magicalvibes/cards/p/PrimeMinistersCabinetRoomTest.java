@@ -48,8 +48,8 @@ class PrimeMinistersCabinetRoomTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opposingCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
     }
 
     @Test
@@ -64,8 +64,8 @@ class PrimeMinistersCabinetRoomTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opposingCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test

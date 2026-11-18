@@ -32,8 +32,8 @@ class CurseOfClingingWebsTest extends BaseCardTest {
                 .noneMatch(card -> card.getId().equals(bears.getCard().getId()));
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(bears.getCard().getId()));
         Permanent spider = findPermanent(player1, "Spider");
-        assertThat(spider.getEffectivePower()).isEqualTo(1);
-        assertThat(spider.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(2);
         assertThat(spider.getCard().getSubtypes()).contains(CardSubtype.SPIDER);
         assertThat(spider.getCard().getKeywords()).contains(Keyword.REACH);
     }

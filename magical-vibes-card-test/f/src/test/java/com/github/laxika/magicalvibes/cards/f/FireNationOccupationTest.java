@@ -123,8 +123,8 @@ class FireNationOccupationTest extends BaseCardTest {
     private void assertSoldierWithFirebending() {
         Permanent soldier = findPermanent(player1, "Soldier");
         assertThat(soldier.getCard().hasType(CardType.CREATURE)).isTrue();
-        assertThat(soldier.getEffectivePower()).isEqualTo(2);
-        assertThat(soldier.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, soldier, Keyword.FIREBENDING)).isTrue();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -47,7 +48,7 @@ class KitsaOtterballEliteTest extends BaseCardTest {
     @DisplayName("Copies a target instant or sorcery spell when Kitsa has enough power")
     void copiesOwnSpellAtPowerThreshold() {
         Permanent kitsa = addReadyKitsa();
-        kitsa.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, kitsa, 2);
 
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
         harness.setHand(player1, List.of(counsel));
@@ -96,7 +97,7 @@ class KitsaOtterballEliteTest extends BaseCardTest {
     @Test
     void powerReductionAfterActivationDoesNotPreventCopy() {
         Permanent kitsa = addReadyKitsa();
-        kitsa.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, kitsa, 2);
         PearlOfWisdom pearl = new PearlOfWisdom();
         harness.setHand(player1, List.of(pearl));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -104,7 +105,7 @@ class KitsaOtterballEliteTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.activateAbility(player1, 0, 1, null, pearl.getId());
 
-        kitsa.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, kitsa, 0);
         harness.passBothPriorities();
 
         assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
@@ -113,7 +114,7 @@ class KitsaOtterballEliteTest extends BaseCardTest {
     @Test
     void resolvesOriginalAndCopyWithoutTriggeringProwessForCopy() {
         Permanent kitsa = addReadyKitsa();
-        kitsa.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, kitsa, 1);
         PearlOfWisdom pearl = new PearlOfWisdom();
         harness.setHand(player1, List.of(pearl));
         harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(), new Island()));
@@ -134,7 +135,7 @@ class KitsaOtterballEliteTest extends BaseCardTest {
     @Test
     void cannotCopyOpponentsSpell() {
         Permanent kitsa = addReadyKitsa();
-        kitsa.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, kitsa, 2);
         ShoreUp shore = new ShoreUp();
         Permanent opponentKitsa = addCreatureReady(player2, new KitsaOtterballElite());
         harness.setHand(player2, List.of(shore));
@@ -150,7 +151,7 @@ class KitsaOtterballEliteTest extends BaseCardTest {
     @Test
     void mayRetargetAnInstantCopyWithoutChangingOriginalTarget() {
         Permanent kitsa = addReadyKitsa();
-        kitsa.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, kitsa, 2);
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         ShoreUp shore = new ShoreUp();
         harness.setHand(player1, List.of(shore));
@@ -183,7 +184,7 @@ class KitsaOtterballEliteTest extends BaseCardTest {
     @Test
     void cannotCopyCreatureSpell() {
         Permanent kitsa = addReadyKitsa();
-        kitsa.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, kitsa, 2);
         KitsaOtterballElite creatureSpell = new KitsaOtterballElite();
         harness.setHand(player1, List.of(creatureSpell));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -198,7 +199,7 @@ class KitsaOtterballEliteTest extends BaseCardTest {
     @Test
     void copyPreservesPromisedGiftAndItsBonus() {
         Permanent kitsa = addReadyKitsa();
-        kitsa.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, kitsa, 2);
         SazacapsBrew brew = new SazacapsBrew();
         Island discarded = new Island();
         harness.setHand(player1, List.of(brew, discarded));

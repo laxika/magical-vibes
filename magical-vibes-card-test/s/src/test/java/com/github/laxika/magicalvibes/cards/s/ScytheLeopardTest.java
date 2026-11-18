@@ -21,17 +21,17 @@ class ScytheLeopardTest extends BaseCardTest {
         Permanent leopard = harness.addToBattlefieldAndReturn(player1, new ScytheLeopard());
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
-        assertThat(leopard.getEffectivePower()).isEqualTo(1);
-        assertThat(leopard.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, leopard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, leopard)).isEqualTo(1);
         resolveAllTriggers();
-        assertThat(leopard.getEffectivePower()).isEqualTo(2);
-        assertThat(leopard.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, leopard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, leopard)).isEqualTo(2);
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
         resolveAllTriggers();
 
-        assertThat(leopard.getEffectivePower()).isEqualTo(3);
-        assertThat(leopard.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, leopard)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, leopard)).isEqualTo(3);
     }
 
     @Test
@@ -44,10 +44,10 @@ class ScytheLeopardTest extends BaseCardTest {
         harness.playLand(player1, 0);
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(2);
-        assertThat(first.getEffectiveToughness()).isEqualTo(2);
-        assertThat(second.getEffectivePower()).isEqualTo(2);
-        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
     }
 
     @Test
@@ -58,8 +58,8 @@ class ScytheLeopardTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new ScytheLeopard());
         resolveAllTriggers();
 
-        assertThat(leopard.getEffectivePower()).isEqualTo(1);
-        assertThat(leopard.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, leopard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, leopard)).isEqualTo(1);
     }
 
     @Test
@@ -71,8 +71,8 @@ class ScytheLeopardTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(leopard.getEffectivePower()).isEqualTo(2);
-        assertThat(leopard.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, leopard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, leopard)).isEqualTo(2);
     }
 
     @Test
@@ -85,8 +85,8 @@ class ScytheLeopardTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(leopard.getEffectivePower()).isEqualTo(1);
-        assertThat(leopard.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, leopard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, leopard)).isEqualTo(1);
     }
 
     @Test
@@ -97,13 +97,13 @@ class ScytheLeopardTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        assertThat(leopard.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, leopard)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(leopard.getEffectivePower()).isEqualTo(1);
-        assertThat(leopard.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, leopard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, leopard)).isEqualTo(1);
     }
 }

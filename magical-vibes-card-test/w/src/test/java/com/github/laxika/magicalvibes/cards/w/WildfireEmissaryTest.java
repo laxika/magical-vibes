@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EkunduGriffin;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.r.Regeneration;
@@ -30,8 +31,8 @@ class WildfireEmissaryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(emissary.getPowerModifier()).isEqualTo(1);
-        assertThat(emissary.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, emissary)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, emissary)).isZero();
     }
 
     @Test
@@ -45,7 +46,7 @@ class WildfireEmissaryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(emissary.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, emissary)).isEqualTo(2);
     }
 
     @Test
@@ -59,7 +60,7 @@ class WildfireEmissaryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(emissary.isTapped()).isTrue();
-        assertThat(emissary.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, emissary)).isEqualTo(1);
     }
 
     @Test
@@ -95,8 +96,8 @@ class WildfireEmissaryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(emissary.getPowerModifier()).isZero();
-        assertThat(emissary.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, emissary)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, emissary)).isZero();
     }
 
     @Test
@@ -163,11 +164,11 @@ class WildfireEmissaryTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(emissary.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, emissary)).isZero();
         harness.passBothPriorities();
 
-        assertThat(emissary.getPowerModifier()).isEqualTo(1);
-        assertThat(emissary.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, emissary)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, emissary)).isZero();
         assertThat(emissary.isTapped()).isFalse();
     }
 
@@ -181,9 +182,9 @@ class WildfireEmissaryTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 
     @Test

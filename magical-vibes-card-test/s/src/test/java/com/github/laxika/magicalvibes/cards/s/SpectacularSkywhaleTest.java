@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -41,8 +42,8 @@ class SpectacularSkywhaleTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(skywhale.getPowerModifier()).isEqualTo(3);
-        assertThat(skywhale.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skywhale)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skywhale)).isZero();
         assertThat(skywhale.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -57,7 +58,7 @@ class SpectacularSkywhaleTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 3);
         harness.passBothPriorities();
 
-        assertThat(skywhale.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, skywhale)).isEqualTo(3);
         assertThat(skywhale.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -73,7 +74,7 @@ class SpectacularSkywhaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(skywhale.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(skywhale.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skywhale)).isZero();
     }
 
     @Test
@@ -87,7 +88,7 @@ class SpectacularSkywhaleTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(skywhale.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skywhale)).isZero();
         assertThat(skywhale.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -102,7 +103,7 @@ class SpectacularSkywhaleTest extends BaseCardTest {
         harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(skywhale.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skywhale)).isZero();
         assertThat(skywhale.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -120,14 +121,14 @@ class SpectacularSkywhaleTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(skywhale.getPowerModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, skywhale)).isEqualTo(6);
         assertThat(skywhale.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(skywhale.getPowerModifier()).isZero();
-        assertThat(skywhale.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skywhale)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skywhale)).isZero();
     }
 
     @Test
@@ -142,7 +143,7 @@ class SpectacularSkywhaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(skywhale.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(skywhale.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skywhale)).isZero();
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(skywhale);
 
@@ -150,7 +151,7 @@ class SpectacularSkywhaleTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(skywhale.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(skywhale.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skywhale)).isZero();
     }
 
     @Test
@@ -166,7 +167,7 @@ class SpectacularSkywhaleTest extends BaseCardTest {
         Permanent replacement = addSkywhale(player1);
         harness.passBothPriorities();
 
-        assertThat(replacement.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, replacement)).isZero();
         assertThat(replacement.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -182,7 +183,7 @@ class SpectacularSkywhaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(skywhale.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(skywhale.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skywhale)).isZero();
 
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.RED, 1);
@@ -190,7 +191,7 @@ class SpectacularSkywhaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(skywhale.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(skywhale.getPowerModifier()).isEqualTo(3);
-        assertThat(skywhale.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, skywhale)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skywhale)).isZero();
     }
 }

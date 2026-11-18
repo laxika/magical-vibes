@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.v.Vorstclaw;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
@@ -69,9 +70,9 @@ class UndeadExecutionerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent bears = permanentById(player2.getId(), bearsId);
-        assertThat(bears.getPowerModifier()).isEqualTo(-2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(-2);
-        assertThat(bears.getEffectivePower()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isZero();
     }
 
     @Test
@@ -89,9 +90,9 @@ class UndeadExecutionerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         Permanent bears = permanentById(player2.getId(), bearsId);
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -132,14 +133,14 @@ class UndeadExecutionerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent target = permanentById(player2.getId(), toughId);
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -173,10 +174,10 @@ class UndeadExecutionerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -191,14 +192,14 @@ class UndeadExecutionerTest extends BaseCardTest {
 
         resolveCombat();
         harness.handlePermanentChosen(player1, target.getId());
-        target.setToughnessModifier(-7);
+        PermanentGrants.setToughnessBoost(gd, target, -7);
         harness.runStateBasedActions();
         harness.assertInGraveyard(player1, "Vorstclaw");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
     }
 }

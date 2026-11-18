@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.k.KrakenHatchling;
 import com.github.laxika.magicalvibes.cards.s.StoneworkPuma;
@@ -28,10 +29,10 @@ class MarshCasualtiesTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        assertThat(own.getPowerModifier()).isZero();
-        assertThat(own.getToughnessModifier()).isZero();
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, own)).isZero();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -47,10 +48,10 @@ class MarshCasualtiesTest extends BaseCardTest {
                 null, null, List.of(), null, List.of(), true);
         harness.passBothPriorities();
 
-        assertThat(own.getPowerModifier()).isZero();
-        assertThat(own.getToughnessModifier()).isZero();
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, own)).isZero();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -61,13 +62,13 @@ class MarshCasualtiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -81,12 +82,12 @@ class MarshCasualtiesTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player1.getId());
 
-        assertThat(first.getEffectivePower()).isEqualTo(1);
-        assertThat(first.getEffectiveToughness()).isEqualTo(1);
-        assertThat(second.getEffectivePower()).isEqualTo(-1);
-        assertThat(second.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -104,14 +105,14 @@ class MarshCasualtiesTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Stonework Puma");
         harness.assertInGraveyard(player2, "Stonework Puma");
-        assertThat(survivor.getEffectivePower()).isEqualTo(-2);
-        assertThat(survivor.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(survivor.getEffectivePower()).isZero();
-        assertThat(survivor.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, survivor)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(4);
     }
 
     @Test
@@ -126,12 +127,12 @@ class MarshCasualtiesTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(affected.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, affected)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> !permanent.getId().equals(affected.getId()))
                 .singleElement().satisfies(permanent -> {
-                    assertThat(permanent.getPowerModifier()).isZero();
-                    assertThat(permanent.getToughnessModifier()).isZero();
+                    assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isZero();
+                    assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isZero();
                 });
     }
 }

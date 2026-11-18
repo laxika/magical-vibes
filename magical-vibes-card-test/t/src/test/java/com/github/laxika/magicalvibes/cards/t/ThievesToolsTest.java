@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -81,7 +82,7 @@ class ThievesToolsTest extends BaseCardTest {
     @DisplayName("An equipped creature at exactly 3 power cannot be blocked")
     void exactlyThreePowerCantBeBlocked() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         Permanent tools = addToolsReady(player1);
         tools.setAttachedTo(attacker.getId());
         addCreatureReady(player2, new GrizzlyBears());
@@ -100,7 +101,7 @@ class ThievesToolsTest extends BaseCardTest {
         Permanent tools = addToolsReady(player1);
         tools.setAttachedTo(attacker.getId());
         assertThat(harness.getGameQueryService().hasCantBeBlocked(gd, attacker)).isTrue();
-        attacker.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, attacker, 2);
         addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
         prepareDeclareBlockers();
@@ -116,7 +117,7 @@ class ThievesToolsTest extends BaseCardTest {
         Permanent tools = addToolsReady(player1);
         tools.setAttachedTo(attacker.getId());
         assertThat(harness.getGameQueryService().hasCantBeBlocked(gd, attacker)).isFalse();
-        attacker.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, attacker, -3);
         addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
         prepareDeclareBlockers();

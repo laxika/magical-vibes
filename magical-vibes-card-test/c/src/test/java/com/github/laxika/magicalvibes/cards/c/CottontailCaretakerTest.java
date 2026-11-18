@@ -37,8 +37,8 @@ class CottontailCaretakerTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .singleElement()
                 .satisfies(token -> {
-                    assertThat(token.getEffectivePower()).isEqualTo(1);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
                 });
     }
 

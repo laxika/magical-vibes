@@ -38,8 +38,8 @@ class CryptbreakerTest extends BaseCardTest {
                 .filter(p -> p.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
     }
 

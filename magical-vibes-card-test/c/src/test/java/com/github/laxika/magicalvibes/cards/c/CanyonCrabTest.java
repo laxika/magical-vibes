@@ -32,15 +32,15 @@ class CanyonCrabTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(crab.getEffectivePower()).isEqualTo(2);
-        assertThat(crab.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, crab)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, crab)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(crab.getEffectivePower()).isZero();
-        assertThat(crab.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, crab)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, crab)).isEqualTo(5);
     }
 
     @Test

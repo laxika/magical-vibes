@@ -35,8 +35,8 @@ class ContagionClaspTest extends BaseCardTest {
 
         Permanent forger = findPermanent(player2, "Carapace Forger");
         assertThat(forger.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(forger.getEffectivePower()).isEqualTo(1);
-        assertThat(forger.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, forger)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, forger)).isEqualTo(1);
     }
 
     @Test

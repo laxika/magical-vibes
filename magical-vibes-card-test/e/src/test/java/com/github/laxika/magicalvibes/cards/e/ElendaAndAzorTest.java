@@ -138,8 +138,8 @@ class ElendaAndAzorTest extends BaseCardTest {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
             assertThat(token.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.VAMPIRE, CardSubtype.KNIGHT);
             assertThat(token.getCard().getKeywords()).contains(Keyword.LIFELINK);
-            assertThat(token.getEffectivePower()).isEqualTo(1);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         });
     }
 

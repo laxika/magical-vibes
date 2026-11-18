@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -67,7 +68,7 @@ class MastersGuidanceTest extends BaseCardTest {
     void drawsAtEndStepWithHighPowerCreature() {
         harness.addToBattlefield(player1, new MastersGuidance());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, bears, 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
 
@@ -154,13 +155,13 @@ class MastersGuidanceTest extends BaseCardTest {
     void rechecksPowerWhenEndStepTriggerResolves() {
         harness.addToBattlefield(player1, new MastersGuidance());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, bears, 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
 
         advanceToEndStep();
         assertThat(gd.stack).hasSize(1);
-        bears.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, bears, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -203,7 +204,7 @@ class MastersGuidanceTest extends BaseCardTest {
     void opponentsCreatureDoesNotQualifyForDraw() {
         harness.addToBattlefield(player1, new MastersGuidance());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        bears.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, bears, 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
 
@@ -218,7 +219,7 @@ class MastersGuidanceTest extends BaseCardTest {
     void doesNotTriggerOnOpponentsEndStep() {
         harness.addToBattlefield(player1, new MastersGuidance());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, bears, 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.forceActivePlayer(player2);

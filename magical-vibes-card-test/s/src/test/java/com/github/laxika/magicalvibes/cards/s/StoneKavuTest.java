@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -22,8 +23,8 @@ class StoneKavuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(kavu.getPowerModifier()).isEqualTo(1);
-        assertThat(kavu.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isZero();
     }
 
     @Test
@@ -35,8 +36,8 @@ class StoneKavuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(kavu.getPowerModifier()).isZero();
-        assertThat(kavu.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(1);
     }
 
     @Test
@@ -51,8 +52,8 @@ class StoneKavuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(kavu.getPowerModifier()).isEqualTo(1);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(1);
     }
 
     @Test
@@ -71,8 +72,8 @@ class StoneKavuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(kavu.getPowerModifier()).isEqualTo(2);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(2);
     }
 
     @Test
@@ -89,8 +90,8 @@ class StoneKavuTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(kavu.isTapped()).isTrue();
-        assertThat(kavu.getPowerModifier()).isEqualTo(1);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(1);
     }
 
     @Test
@@ -104,24 +105,24 @@ class StoneKavuTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
 
-        assertThat(kavu.getPowerModifier()).isZero();
-        assertThat(kavu.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isZero();
 
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, 1, null, null);
 
-        assertThat(kavu.getPowerModifier()).isEqualTo(1);
-        assertThat(kavu.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(kavu.getPowerModifier()).isEqualTo(1);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(1);
         assertThat(kavu.isTapped()).isFalse();
-        assertThat(otherKavu.getPowerModifier()).isZero();
-        assertThat(otherKavu.getToughnessModifier()).isZero();
-        assertThat(opposingKavu.getPowerModifier()).isZero();
-        assertThat(opposingKavu.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherKavu)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherKavu)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingKavu)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingKavu)).isZero();
     }
 
     @Test
@@ -140,7 +141,7 @@ class StoneKavuTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(kavu.getPowerModifier()).isZero();
-        assertThat(kavu.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isZero();
     }
 }

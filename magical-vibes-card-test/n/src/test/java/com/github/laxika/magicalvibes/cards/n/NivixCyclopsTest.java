@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.u.UncoveredClues;
@@ -46,9 +47,9 @@ class NivixCyclopsTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(cyclops.getPowerModifier()).isEqualTo(3);
-        assertThat(cyclops.getToughnessModifier()).isEqualTo(0);
-        assertThat(cyclops.getEffectivePower()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cyclops)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, cyclops)).isEqualTo(4);
 
         harness.addToBattlefield(player2, new GrizzlyBears());
         declareAttackers(List.of(0));
@@ -67,13 +68,13 @@ class NivixCyclopsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(cyclops.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(cyclops.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isEqualTo(0);
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -92,7 +93,7 @@ class NivixCyclopsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(cyclops.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isEqualTo(0);
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -109,11 +110,11 @@ class NivixCyclopsTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0);
 
-        assertThat(cyclops.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isZero();
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
 
-        assertThat(cyclops.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, cyclops)).isEqualTo(4);
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -131,8 +132,8 @@ class NivixCyclopsTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(cyclops.getEffectivePower()).isEqualTo(7);
-        assertThat(cyclops.getToughnessModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, cyclops)).isEqualTo(7);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cyclops)).isZero();
     }
 
     @Test
@@ -146,7 +147,7 @@ class NivixCyclopsTest extends BaseCardTest {
         harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(cyclops.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isZero();
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
@@ -164,7 +165,7 @@ class NivixCyclopsTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(cyclops.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, cyclops)).isEqualTo(3);
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");

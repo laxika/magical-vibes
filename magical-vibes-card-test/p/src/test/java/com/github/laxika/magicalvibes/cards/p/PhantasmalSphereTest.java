@@ -59,8 +59,8 @@ class PhantasmalSphereTest extends BaseCardTest {
         assertThat(orb.getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(orb.getCard().getSubtypes()).containsExactly(CardSubtype.ORB);
         assertThat(orb.getCard().getKeywords()).contains(Keyword.FLYING);
-        assertThat(orb.getEffectivePower()).isEqualTo(3);
-        assertThat(orb.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, orb)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, orb)).isEqualTo(3);
     }
 
     @Test
@@ -104,8 +104,8 @@ class PhantasmalSphereTest extends BaseCardTest {
         harness.assertInHand(player1, "Phantasmal Sphere");
         assertThat(gd.playerBattlefields.get(player2.getId())).singleElement().satisfies(orb -> {
             assertThat(orb.getCard().getName()).isEqualTo("Orb");
-            assertThat(orb.getEffectivePower()).isEqualTo(2);
-            assertThat(orb.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, orb)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, orb)).isEqualTo(2);
         });
     }
 
@@ -125,8 +125,8 @@ class PhantasmalSphereTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(orb -> {
             assertThat(orb.getCard().getName()).isEqualTo("Orb");
-            assertThat(orb.getEffectivePower()).isEqualTo(3);
-            assertThat(orb.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, orb)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, orb)).isEqualTo(3);
         });
     }
 

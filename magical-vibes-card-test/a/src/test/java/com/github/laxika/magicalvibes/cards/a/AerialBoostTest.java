@@ -24,8 +24,8 @@ class AerialBoostTest extends BaseCardTest {
     void boostsAndGrantsFlying() {
         Permanent target = castAerialBoost(new GrizzlyBears());
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
@@ -38,8 +38,8 @@ class AerialBoostTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
@@ -57,7 +57,7 @@ class AerialBoostTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
@@ -89,11 +89,11 @@ class AerialBoostTest extends BaseCardTest {
         assertThat(helper.isTapped()).isTrue();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
-        assertThat(helper.getEffectivePower()).isEqualTo(2);
-        assertThat(helper.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, helper)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, helper)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, helper, Keyword.FLYING)).isFalse();
     }
 
@@ -117,8 +117,8 @@ class AerialBoostTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
@@ -170,8 +170,8 @@ class AerialBoostTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof AerialBoost);

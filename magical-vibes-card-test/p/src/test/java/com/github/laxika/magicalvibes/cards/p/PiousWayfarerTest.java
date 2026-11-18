@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.n.NyxbornCourser;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,8 +24,8 @@ class PiousWayfarerTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -39,8 +40,8 @@ class PiousWayfarerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         resolveAllTriggers();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -53,8 +54,8 @@ class PiousWayfarerTest extends BaseCardTest {
         harness.castFromHand(player2, new NyxbornCourser(), "{1}{W}{W}");
         resolveAllTriggers();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -70,8 +71,8 @@ class PiousWayfarerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -86,8 +87,8 @@ class PiousWayfarerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, courser.getId());
         resolveAllTriggers();
 
-        assertThat(courser.getPowerModifier()).isEqualTo(1);
-        assertThat(courser.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, courser)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, courser)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -100,12 +101,12 @@ class PiousWayfarerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, wayfarer.getId());
         resolveAllTriggers();
 
-        assertThat(wayfarer.getPowerModifier()).isEqualTo(1);
-        assertThat(wayfarer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wayfarer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wayfarer)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(wayfarer.getPowerModifier()).isZero();
-        assertThat(wayfarer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wayfarer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wayfarer)).isZero();
     }
 }

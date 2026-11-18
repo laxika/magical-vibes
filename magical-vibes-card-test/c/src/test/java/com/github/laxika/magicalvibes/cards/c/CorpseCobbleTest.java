@@ -32,8 +32,8 @@ class CorpseCobbleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent token = findPermanent(player1, "Zombie");
-        assertThat(token.getEffectivePower()).isEqualTo(5);
-        assertThat(token.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, token, Keyword.MENACE)).isTrue();
     }
 
@@ -48,8 +48,8 @@ class CorpseCobbleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent token = findPermanent(player1, "Zombie");
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Corpse Cobble"));
     }

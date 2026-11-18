@@ -37,8 +37,8 @@ class PromiseOfPowerTest extends BaseCardTest {
                 List.of());
 
         Permanent demon = findPermanent(player1, "Demon");
-        assertThat(demon.getEffectivePower()).isEqualTo(4);
-        assertThat(demon.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(4);
         assertThat(demon.getCard().getSubtypes()).contains(CardSubtype.DEMON);
         assertThat(demon.getCard().getKeywords()).contains(Keyword.FLYING);
     }
@@ -53,8 +53,8 @@ class PromiseOfPowerTest extends BaseCardTest {
         Permanent demon = findPermanent(player1, "Demon");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
-        assertThat(demon.getEffectivePower()).isEqualTo(7);
-        assertThat(demon.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(7);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
@@ -82,12 +82,12 @@ class PromiseOfPowerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent demon = findPermanent(player1, "Demon");
-        assertThat(demon.getEffectivePower()).isEqualTo(3);
-        assertThat(demon.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(3);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         harness.setHand(player1, List.of());
-        assertThat(demon.getEffectivePower()).isEqualTo(3);
-        assertThat(demon.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(3);
     }
 
     @Test
@@ -107,8 +107,8 @@ class PromiseOfPowerTest extends BaseCardTest {
                 List.of(new YotianSoldier(), new YotianSoldier(), new YotianSoldier(), new YotianSoldier(), new YotianSoldier()));
 
         Permanent demon = findPermanent(player1, "Demon");
-        assertThat(demon.getEffectivePower()).isEqualTo(5);
-        assertThat(demon.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(5);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
     }
     private void cast(int[] modes, boolean entwined, List<Card> hand, List<Card> library) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.ArmoredKincaller;
 import com.github.laxika.magicalvibes.cards.c.CosmiumBlast;
@@ -24,9 +25,9 @@ class SovereignOkinecAhauTest extends BaseCardTest {
     void putsCountersEqualToPowerAboveBasePower() {
         Permanent sovereign = addCreatureReady(player1, new SovereignOkinecAhau());
         Permanent oneAboveBase = addCreatureReady(player1, new GrizzlyBears());
-        oneAboveBase.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, oneAboveBase, 1);
         Permanent threeAboveBase = addCreatureReady(player1, new GrizzlyBears());
-        threeAboveBase.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, threeAboveBase, 3);
         Permanent unmodified = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(sovereign)));
@@ -45,7 +46,7 @@ class SovereignOkinecAhauTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(sovereign)));
-        creature.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, creature, 2);
         resolveAllTriggers();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -57,9 +58,9 @@ class SovereignOkinecAhauTest extends BaseCardTest {
         sovereign.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent creature = addCreatureReady(player1, new ArmoredKincaller());
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        creature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, creature, 1);
         Permanent reduced = addCreatureReady(player1, new ArmoredKincaller());
-        reduced.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, reduced, -1);
         Permanent opponent = addCreatureReady(player2, new ArmoredKincaller());
         opponent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
@@ -91,9 +92,7 @@ class SovereignOkinecAhauTest extends BaseCardTest {
     void basePowerSettingDoesNotCountAsPowerBonus() {
         addCreatureReady(player1, new SovereignOkinecAhau());
         Permanent creature = addCreatureReady(player1, new ArmoredKincaller());
-        creature.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
-        creature.setBasePowerOverride(6);
-        creature.setBaseToughnessOverride(6);
+        PermanentGrants.basePowerToughnessUntilEndOfTurn(gd, creature, 6, 6);
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         declareAttackers(List.of(0));
@@ -106,10 +105,10 @@ class SovereignOkinecAhauTest extends BaseCardTest {
     void noCountersWhenPowerBonusDisappearsBeforeResolution() {
         addCreatureReady(player1, new SovereignOkinecAhau());
         Permanent creature = addCreatureReady(player1, new ArmoredKincaller());
-        creature.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, creature, 2);
 
         declareAttackers(List.of(0));
-        creature.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, creature, 0);
         resolveAllTriggers();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

@@ -30,8 +30,8 @@ class MirkwoodMeditatorTest extends BaseCardTest {
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(meditator.getEffectivePower()).isEqualTo(4);
-        assertThat(meditator.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, meditator)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, meditator)).isEqualTo(2);
     }
 
     @Test
@@ -44,8 +44,8 @@ class MirkwoodMeditatorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(meditator.getEffectivePower()).isEqualTo(2);
-        assertThat(meditator.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, meditator)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, meditator)).isEqualTo(4);
     }
 
     @Test
@@ -61,8 +61,8 @@ class MirkwoodMeditatorTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(meditator.getEffectivePower()).isEqualTo(2);
-        assertThat(meditator.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, meditator)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, meditator)).isEqualTo(4);
     }
 
     @Test
@@ -76,8 +76,8 @@ class MirkwoodMeditatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(meditator.getEffectivePower()).isEqualTo(2);
-        assertThat(meditator.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, meditator)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, meditator)).isEqualTo(4);
     }
 
     @Test

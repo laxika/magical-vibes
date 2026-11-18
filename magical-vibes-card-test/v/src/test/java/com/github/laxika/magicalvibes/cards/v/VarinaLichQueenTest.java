@@ -76,8 +76,8 @@ class VarinaLichQueenTest extends BaseCardTest {
         assertThat(zombie.isTapped()).isTrue();
         assertThat(zombie.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(zombie.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
-        assertThat(zombie.getEffectivePower()).isEqualTo(2);
-        assertThat(zombie.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(2);
     }
 
     @Test

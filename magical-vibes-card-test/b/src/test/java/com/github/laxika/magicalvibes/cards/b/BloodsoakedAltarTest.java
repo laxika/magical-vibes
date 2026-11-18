@@ -43,8 +43,8 @@ class BloodsoakedAltarTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(demon.isTapped()).isFalse();
-        assertThat(demon.getEffectivePower()).isEqualTo(5);
-        assertThat(demon.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(5);
         assertThat(demon.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(demon.getCard().getSubtypes()).contains(CardSubtype.DEMON);
         assertThat(demon.getCard().getKeywords()).contains(Keyword.FLYING);

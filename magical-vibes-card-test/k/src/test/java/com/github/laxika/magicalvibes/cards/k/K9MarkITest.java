@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
@@ -32,7 +33,7 @@ class K9MarkITest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
-        assertThat(legendary.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, legendary)).isZero();
     }
 
     @Test
@@ -43,7 +44,7 @@ class K9MarkITest extends BaseCardTest {
         castGrowthAt(player2, k9, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(k9.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, k9)).isEqualTo(3);
     }
 
     @Test
@@ -64,7 +65,7 @@ class K9MarkITest extends BaseCardTest {
         castGrowthAt(player2, legendary, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(legendary.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, legendary)).isEqualTo(3);
     }
 
     @Test
@@ -114,7 +115,7 @@ class K9MarkITest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         resolveAllTriggers();
 
-        assertThat(legendary.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, legendary)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -126,7 +127,7 @@ class K9MarkITest extends BaseCardTest {
         castGrowthAt(player2, creature, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -137,7 +138,7 @@ class K9MarkITest extends BaseCardTest {
         castGrowthAt(player1, legendary, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(legendary.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, legendary)).isEqualTo(3);
     }
 
     @Test
@@ -148,7 +149,7 @@ class K9MarkITest extends BaseCardTest {
         castGrowthAt(player1, legendary, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(legendary.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, legendary)).isEqualTo(3);
     }
 
     @Test
@@ -225,7 +226,7 @@ class K9MarkITest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
         resolveAllTriggers();
-        assertThat(legendary.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, legendary)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

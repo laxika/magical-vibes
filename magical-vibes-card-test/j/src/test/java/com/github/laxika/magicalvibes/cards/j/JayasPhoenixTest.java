@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.ChandraNovicePyromancer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -38,7 +39,7 @@ class JayasPhoenixTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(chandra), 0, null, null);
         resolveAllTriggers();
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(4);
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
     }
 
@@ -128,7 +129,7 @@ class JayasPhoenixTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(defendingChandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
-        assertThat(elemental.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(4);
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
     }
 

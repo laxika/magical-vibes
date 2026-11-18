@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzledLeotau;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -29,10 +30,10 @@ class LeoninArmorguardTest extends BaseCardTest {
 
         Permanent armorguard = findPermanent(player1, "Leonin Armorguard");
 
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(1);
-        assertThat(armorguard.getPowerModifier()).isEqualTo(1);
-        assertThat(armorguard.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, armorguard)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, armorguard)).isEqualTo(1);
     }
 
     @Test
@@ -44,8 +45,8 @@ class LeoninArmorguardTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(opponentBears.getPowerModifier()).isEqualTo(0);
-        assertThat(opponentBears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentBears)).isEqualTo(0);
     }
 
     @Test
@@ -61,8 +62,8 @@ class LeoninArmorguardTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test
@@ -74,8 +75,8 @@ class LeoninArmorguardTest extends BaseCardTest {
         Permanent leotau = harness.enterBattlefieldAndReturn(player1, new GrizzledLeotau());
         harness.passBothPriorities();
 
-        assertThat(leotau.getPowerModifier()).isEqualTo(1);
-        assertThat(leotau.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, leotau)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, leotau)).isEqualTo(1);
     }
 
     @Test
@@ -87,8 +88,8 @@ class LeoninArmorguardTest extends BaseCardTest {
 
         Permanent leotau = harness.enterBattlefieldAndReturn(player1, new GrizzledLeotau());
 
-        assertThat(leotau.getPowerModifier()).isZero();
-        assertThat(leotau.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, leotau)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, leotau)).isZero();
     }
 
     @Test
@@ -100,11 +101,11 @@ class LeoninArmorguardTest extends BaseCardTest {
         Permanent second = harness.enterBattlefieldAndReturn(player1, new LeoninArmorguard());
         resolveAllTriggers();
 
-        assertThat(leotau.getPowerModifier()).isEqualTo(2);
-        assertThat(leotau.getToughnessModifier()).isEqualTo(2);
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, leotau)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, leotau)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(1);
     }
 }

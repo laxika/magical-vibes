@@ -29,8 +29,8 @@ class WanderingGoblinsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 0/3 base, +0/+0 with zero basic land types
-        assertThat(goblins.getEffectivePower()).isZero();
-        assertThat(goblins.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, goblins)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, goblins)).isEqualTo(3);
     }
 
     @Test
@@ -46,8 +46,8 @@ class WanderingGoblinsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 3 distinct basic land types => +3/+0 => 3/3
-        assertThat(goblins.getEffectivePower()).isEqualTo(3);
-        assertThat(goblins.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, goblins)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, goblins)).isEqualTo(3);
     }
 
     @Test
@@ -62,8 +62,8 @@ class WanderingGoblinsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only one distinct type (Forest) => +1/+0
-        assertThat(goblins.getEffectivePower()).isEqualTo(1);
-        assertThat(goblins.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, goblins)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblins)).isEqualTo(3);
     }
 
     @Test
@@ -76,13 +76,13 @@ class WanderingGoblinsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(goblins.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, goblins)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(goblins.getEffectivePower()).isZero();
-        assertThat(goblins.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, goblins)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, goblins)).isEqualTo(3);
     }
 
     @Test
@@ -109,8 +109,8 @@ class WanderingGoblinsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(goblins.getEffectivePower()).isEqualTo(5);
-        assertThat(goblins.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, goblins)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, goblins)).isEqualTo(3);
     }
 
     @Test
@@ -125,8 +125,8 @@ class WanderingGoblinsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(goblins.getEffectivePower()).isEqualTo(1);
-        assertThat(goblins.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, goblins)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goblins)).isEqualTo(3);
     }
 
     @Test
@@ -137,14 +137,14 @@ class WanderingGoblinsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(goblins.getEffectivePower()).isZero();
+        assertThat(gqs.getEffectivePower(gd, goblins)).isZero();
         harness.addToBattlefield(player1, new Island());
         harness.passBothPriorities();
 
-        assertThat(goblins.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, goblins)).isEqualTo(2);
         harness.addToBattlefield(player1, new Mountain());
-        assertThat(goblins.getEffectivePower()).isEqualTo(2);
-        assertThat(goblins.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, goblins)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblins)).isEqualTo(3);
     }
 
     @Test
@@ -160,8 +160,8 @@ class WanderingGoblinsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(goblins.getEffectivePower()).isEqualTo(4);
-        assertThat(goblins.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, goblins)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, goblins)).isEqualTo(3);
         assertThat(goblins.isTapped()).isFalse();
     }
 }

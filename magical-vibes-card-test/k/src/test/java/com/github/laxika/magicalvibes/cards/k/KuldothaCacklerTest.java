@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,8 +29,8 @@ class KuldothaCacklerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(cackler.getPowerModifier()).isEqualTo(2);
-        assertThat(cackler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cackler)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cackler)).isZero();
     }
 
     @Test
@@ -42,7 +43,7 @@ class KuldothaCacklerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(cackler.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, cackler)).isEqualTo(2);
     }
 
     @Test
@@ -53,13 +54,13 @@ class KuldothaCacklerTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        assertThat(cackler.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cackler)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(cackler.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cackler)).isZero();
     }
 
     @Test
@@ -73,8 +74,8 @@ class KuldothaCacklerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(cackler.getPowerModifier()).isEqualTo(1);
-        assertThat(cackler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cackler)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cackler)).isZero();
     }
 
     @Test
@@ -86,11 +87,11 @@ class KuldothaCacklerTest extends BaseCardTest {
         addOilPermanent(player1);
         resolveAllTriggers();
 
-        assertThat(cackler.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, cackler)).isEqualTo(2);
         cackler.setCounterCount(CounterType.OIL, 0);
         addOilPermanent(player1);
         addOilPermanent(player1);
-        assertThat(cackler.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, cackler)).isEqualTo(2);
     }
 
     @Test
@@ -102,8 +103,8 @@ class KuldothaCacklerTest extends BaseCardTest {
         cackler.setCounterCount(CounterType.OIL, 0);
         resolveAllTriggers();
 
-        assertThat(cackler.getPowerModifier()).isZero();
-        assertThat(cackler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cackler)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cackler)).isZero();
     }
 
     private void addOilPermanent(Player player) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DistortingLens;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.h.HiredGiant;
@@ -112,7 +113,7 @@ class UnnaturalHungerTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToUpkeep(player2);
-        enchanted.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, enchanted, 2);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 6);
@@ -198,7 +199,7 @@ class UnnaturalHungerTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToUpkeep(player2);
-        enchanted.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, enchanted, 2);
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, enchanted);
         harness.passBothPriorities();
 
@@ -210,7 +211,7 @@ class UnnaturalHungerTest extends BaseCardTest {
     void negativePowerDealsNoDamage() {
         Permanent enchanted = attachToOpponentCreature(new HiredGiant());
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
-        enchanted.setPowerModifier(-5);
+        PermanentGrants.setPowerBoost(gd, enchanted, -5);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();

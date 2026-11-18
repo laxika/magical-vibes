@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EnergyRefractor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,8 +31,8 @@ class PenregonStrongbullTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Energy Refractor");
-        assertThat(bull.getPowerModifier()).isEqualTo(1);
-        assertThat(bull.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bull)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bull)).isEqualTo(1);
         assertThat(gd.getLife(player1.getId())).isEqualTo(playerLife);
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 1);
     }
@@ -50,8 +51,8 @@ class PenregonStrongbullTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bull.getPowerModifier()).isEqualTo(0);
-        assertThat(bull.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bull)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bull)).isEqualTo(0);
     }
 
     @Test
@@ -80,14 +81,14 @@ class PenregonStrongbullTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Energy Refractor");
         harness.assertInGraveyard(player1, "Energy Refractor");
         assertThat(gd.stack).hasSize(1);
-        assertThat(bull.getPowerModifier()).isZero();
-        assertThat(bull.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bull)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bull)).isZero();
         harness.assertLife(player2, opponentLife);
 
         harness.passBothPriorities();
 
-        assertThat(bull.getPowerModifier()).isEqualTo(1);
-        assertThat(bull.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bull)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bull)).isEqualTo(1);
         harness.assertLife(player2, opponentLife - 1);
     }
 
@@ -107,8 +108,8 @@ class PenregonStrongbullTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bull.getPowerModifier()).isEqualTo(2);
-        assertThat(bull.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bull)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bull)).isEqualTo(2);
         assertThat(bull.isTapped()).isFalse();
         harness.assertLife(player2, opponentLife - 2);
     }

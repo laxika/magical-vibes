@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.o.OvergrownBattlement;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -73,8 +74,8 @@ class MomentousFallTest extends BaseCardTest {
     @Test
     void usesModifiedStatsBeforeSacrifice() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new OvergrownBattlement());
-        sacrifice.setPowerModifier(3);
-        sacrifice.setToughnessModifier(2);
+        PermanentGrants.setPowerBoost(gd, sacrifice, 3);
+        PermanentGrants.setToughnessBoost(gd, sacrifice, 2);
         harness.setHand(player1, List.of(new MomentousFall()));
         harness.addMana(player1, ManaColor.GREEN, 4);
         int lifeBefore = gd.getLife(player1.getId());
@@ -91,7 +92,7 @@ class MomentousFallTest extends BaseCardTest {
     @Test
     void negativePowerDrawsNoCardsButStillGainsLife() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new OvergrownBattlement());
-        sacrifice.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, sacrifice, -2);
         harness.setHand(player1, List.of(new MomentousFall()));
         harness.addMana(player1, ManaColor.GREEN, 4);
         int lifeBefore = gd.getLife(player1.getId());

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -34,7 +35,7 @@ class GuardianOfNewBenaliaTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
         harness.passBothPriorities();
 
-        assertThat(guardian.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, guardian)).isEqualTo(2);
     }
 
     @Test
@@ -62,7 +63,7 @@ class GuardianOfNewBenaliaTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
         assertThat(supporter.isTapped()).isFalse();
-        assertThat(guardian.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, guardian)).isZero();
     }
 
     @Test
@@ -165,7 +166,7 @@ class GuardianOfNewBenaliaTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
         assertThat(supporter.isTapped()).isTrue();
-        assertThat(guardian.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, guardian)).isEqualTo(2);
     }
 
     private Permanent addGuardianReady() {

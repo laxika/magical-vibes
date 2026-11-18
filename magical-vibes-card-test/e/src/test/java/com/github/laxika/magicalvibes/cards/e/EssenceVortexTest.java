@@ -81,7 +81,7 @@ class EssenceVortexTest extends BaseCardTest {
     @DisplayName("Boosted toughness raises the life the controller must pay")
     void boostedToughnessRaisesLifeCost() {
         Permanent target = addCreatureReady(player2, new BalduvianBears());
-        target.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, target, 3);
         harness.setLife(player2, 20);
         castVortexOn(target);
 
@@ -98,7 +98,7 @@ class EssenceVortexTest extends BaseCardTest {
         harness.setLife(player2, 20);
         castVortexOnStack(target);
 
-        target.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, target, 3);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
 

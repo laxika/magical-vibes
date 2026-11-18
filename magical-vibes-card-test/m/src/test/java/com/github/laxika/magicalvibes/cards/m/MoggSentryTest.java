@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GoblinRaider;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -49,8 +50,8 @@ class MoggSentryTest extends BaseCardTest {
         opponentCastsInstantSpell();
         harness.passBothPriorities();
 
-        assertThat(sentry().getPowerModifier()).isEqualTo(2);
-        assertThat(sentry().getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentry())).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry())).isEqualTo(2);
     }
 
     @Test
@@ -62,8 +63,8 @@ class MoggSentryTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Mogg Sentry trigger
 
         Permanent sentry = sentry();
-        assertThat(sentry.getPowerModifier()).isEqualTo(2);
-        assertThat(sentry.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentry)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry)).isEqualTo(2);
     }
 
     @Test
@@ -76,8 +77,8 @@ class MoggSentryTest extends BaseCardTest {
         opponentCastsSpell();
         harness.passBothPriorities(); // Resolve the second Mogg Sentry trigger
 
-        assertThat(sentry().getPowerModifier()).isEqualTo(4);
-        assertThat(sentry().getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentry())).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry())).isEqualTo(4);
     }
 
     @Test
@@ -99,8 +100,8 @@ class MoggSentryTest extends BaseCardTest {
         opponentCastsInstantSpell();
         resolveAllTriggers();
 
-        assertThat(sentry().getPowerModifier()).isEqualTo(4);
-        assertThat(sentry().getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentry())).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry())).isEqualTo(4);
     }
 
     @Test
@@ -111,7 +112,7 @@ class MoggSentryTest extends BaseCardTest {
         opponentCastsSpell();
         harness.passBothPriorities(); // Resolve Mogg Sentry trigger
 
-        assertThat(sentry().getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentry())).isEqualTo(2);
 
         resolveAllTriggers();
         harness.forceStep(TurnStep.END_STEP);
@@ -119,8 +120,8 @@ class MoggSentryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent sentry = sentry();
-        assertThat(sentry.getPowerModifier()).isEqualTo(0);
-        assertThat(sentry.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentry)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry)).isEqualTo(0);
     }
 
     @Test
@@ -131,8 +132,8 @@ class MoggSentryTest extends BaseCardTest {
         harness.castFromHand(player2, new HolyDay(), "{W}");
         harness.passBothPriorities();
 
-        assertThat(sentry().getPowerModifier()).isEqualTo(2);
-        assertThat(sentry().getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sentry())).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sentry())).isEqualTo(2);
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -146,12 +147,12 @@ class MoggSentryTest extends BaseCardTest {
         opponentCastsInstantSpell();
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isEqualTo(2);
-        assertThat(opposing.getPowerModifier()).isZero();
-        assertThat(opposing.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposing)).isZero();
     }
 
     private Permanent sentry() {

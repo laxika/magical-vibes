@@ -34,8 +34,8 @@ class GhorClanRampagerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bears.getEffectivePower()).isEqualTo(6);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
         harness.assertInGraveyard(player1, "Ghor-Clan Rampager");
     }
@@ -59,8 +59,8 @@ class GhorClanRampagerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -95,13 +95,13 @@ class GhorClanRampagerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Ghor-Clan Rampager");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).hasSize(1);
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(6);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -122,8 +122,8 @@ class GhorClanRampagerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Ghor-Clan Rampager");
     }

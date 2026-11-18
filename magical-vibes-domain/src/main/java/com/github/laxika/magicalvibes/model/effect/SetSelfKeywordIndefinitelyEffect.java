@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 
 /**
  * "This creature gains [keyword]." / "This creature loses [keyword]." with no stated duration, so
- * the continuous effect lasts indefinitely (CR 611.2b) — Mist Dragon's two {@code {0}} abilities.
+ * the continuous effect lasts indefinitely (CR 611.2a) — Mist Dragon's two {@code {0}} abilities.
  *
  * <p>The handler records a {@code PERMANENT} floating continuous effect on the source permanent,
  * replacing any earlier one for the same permanent and keyword so the most recent activation wins.

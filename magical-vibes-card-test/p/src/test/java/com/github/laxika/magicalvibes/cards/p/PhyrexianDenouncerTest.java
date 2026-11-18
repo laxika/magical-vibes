@@ -27,8 +27,8 @@ class PhyrexianDenouncerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Phyrexian Denouncer");
         harness.assertInGraveyard(player1, "Phyrexian Denouncer");
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -40,14 +40,14 @@ class PhyrexianDenouncerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -108,13 +108,13 @@ class PhyrexianDenouncerTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Phyrexian Denouncer");
         harness.assertInGraveyard(player1, "Phyrexian Denouncer");
         assertThat(gd.stack).hasSize(1);
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
 
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -146,7 +146,7 @@ class PhyrexianDenouncerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player1, "Phyrexian Denouncer");
-        assertThat(bystander.getEffectivePower()).isEqualTo(4);
-        assertThat(bystander.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bystander)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bystander)).isEqualTo(4);
     }
 }

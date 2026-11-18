@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -38,8 +39,8 @@ class DrizztDoUrdenTest extends BaseCardTest {
         assertThat(guenhwyvar.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(guenhwyvar.getCard().getSubtypes()).containsExactly(CardSubtype.CAT);
         assertThat(guenhwyvar.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
-        assertThat(guenhwyvar.getEffectivePower()).isEqualTo(4);
-        assertThat(guenhwyvar.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, guenhwyvar)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, guenhwyvar)).isEqualTo(1);
         assertThat(guenhwyvar.hasKeyword(Keyword.TRAMPLE)).isTrue();
     }
 
@@ -137,7 +138,7 @@ class DrizztDoUrdenTest extends BaseCardTest {
     @DisplayName("The difference uses Drizzt's actual negative power")
     void subtractsNegativeDrizztPower() {
         Permanent drizzt = harness.addToBattlefieldAndReturn(player1, new DrizztDoUrden());
-        drizzt.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, drizzt, -4);
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         bears.setMarkedDamage(gqs.getEffectiveToughness(gd, bears));
@@ -153,9 +154,9 @@ class DrizztDoUrdenTest extends BaseCardTest {
     @DisplayName("The difference preserves a dying creature's negative power")
     void preservesNegativeDyingPower() {
         Permanent drizzt = harness.addToBattlefieldAndReturn(player1, new DrizztDoUrden());
-        drizzt.setPowerModifier(-5);
+        PermanentGrants.setPowerBoost(gd, drizzt, -5);
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        bears.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, bears, -3);
         bears.setMarkedDamage(gqs.getEffectiveToughness(gd, bears));
 
         harness.runStateBasedActions();

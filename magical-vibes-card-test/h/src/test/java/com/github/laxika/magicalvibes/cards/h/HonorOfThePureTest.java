@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
@@ -141,11 +144,11 @@ class HonorOfThePureTest extends BaseCardTest {
         Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new EliteVanguard());
 
         // Add a temporary spell boost
-        vanguard.setPowerModifier(vanguard.getPowerModifier() + 3);
+        PermanentGrants.setPowerBoost(gd, vanguard, PermanentGrants.powerBoostOf(gd, vanguard) + 3);
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(6); // 2 base + 3 spell + 1 static
 
-        // Reset end-of-turn modifiers
-        vanguard.resetModifiers();
+        // The cleanup step ends the until-end-of-turn effects
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         // Spell bonus gone, static bonus still computed
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(3); // 2 base + 1 static

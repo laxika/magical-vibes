@@ -29,12 +29,12 @@ class SwarmyardMassacreTest extends BaseCardTest {
         castSwarmyardMassacre();
 
         assertThat(findPermanents(player1, "Squirrel")).hasSize(2);
-        assertThat(ownSpider.getEffectivePower()).isEqualTo(2);
-        assertThat(ownSpider.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opposingSpider.getEffectivePower()).isEqualTo(2);
-        assertThat(opposingSpider.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opposingDreadmaw.getEffectivePower()).isEqualTo(3);
-        assertThat(opposingDreadmaw.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownSpider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownSpider)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingSpider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingSpider)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingDreadmaw)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingDreadmaw)).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(opposingBears.getId()));
     }
@@ -46,15 +46,15 @@ class SwarmyardMassacreTest extends BaseCardTest {
 
         castSwarmyardMassacre();
 
-        assertThat(opposingDreadmaw.getEffectivePower()).isEqualTo(4);
-        assertThat(opposingDreadmaw.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingDreadmaw)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingDreadmaw)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(opposingDreadmaw.getEffectivePower()).isEqualTo(6);
-        assertThat(opposingDreadmaw.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opposingDreadmaw)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, opposingDreadmaw)).isEqualTo(6);
     }
 
     private void castSwarmyardMassacre() {

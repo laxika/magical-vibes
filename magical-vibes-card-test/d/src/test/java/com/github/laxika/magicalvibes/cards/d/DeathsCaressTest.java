@@ -134,7 +134,7 @@ class DeathsCaressTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.castSorcery(player1, 0, human.getId());
-        human.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, human, 3);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Gavony Ironwright");

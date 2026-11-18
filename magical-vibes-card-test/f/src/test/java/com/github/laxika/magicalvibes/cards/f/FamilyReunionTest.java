@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -30,10 +31,10 @@ class FamilyReunionTest extends BaseCardTest {
 
         cast(player1, 0);
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(1);
-        assertThat(opposingCreature.getPowerModifier()).isZero();
-        assertThat(opposingCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingCreature)).isZero();
     }
 
     @Test
@@ -62,12 +63,12 @@ class FamilyReunionTest extends BaseCardTest {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         cast(player1, 0);
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
     }
 
     @Test
@@ -98,12 +99,12 @@ class FamilyReunionTest extends BaseCardTest {
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         for (Permanent affected : List.of(first, beforeResolution)) {
-            assertThat(affected.getPowerModifier()).isEqualTo(mode == 0 ? 1 : 0);
-            assertThat(affected.getToughnessModifier()).isEqualTo(mode == 0 ? 1 : 0);
+            assertThat(PermanentGrants.powerBoostOf(gd, affected)).isEqualTo(mode == 0 ? 1 : 0);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, affected)).isEqualTo(mode == 0 ? 1 : 0);
             assertThat(gqs.hasKeyword(gd, affected, Keyword.HEXPROOF)).isEqualTo(mode == 1);
         }
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
         assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.HEXPROOF)).isFalse();
     }
 

@@ -27,8 +27,8 @@ class RampagingBalothsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent beast = findPermanent(player1, "Beast");
-        assertThat(beast.getEffectivePower()).isEqualTo(4);
-        assertThat(beast.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(4);
     }
 
     @Test

@@ -32,8 +32,8 @@ class ClearTheStageTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         GameData gameData = harness.getGameData();
         assertThat(gameData.playerHands.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(graveyardCreature.getId()));
@@ -49,8 +49,8 @@ class ClearTheStageTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(graveyardCreature));
         cast(target, null, graveyardCreature);
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(harness.getGameData().playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(graveyardCreature.getId()));
     }
@@ -60,14 +60,14 @@ class ClearTheStageTest extends BaseCardTest {
     void shrinkWearsOffAtEndOfTurn() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RampagingRendhorn());
         cast(target, null, null);
-        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -100,8 +100,8 @@ class ClearTheStageTest extends BaseCardTest {
 
         cast(target, target, graveyardCreature);
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardCreature);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(graveyardCreature);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -116,8 +116,8 @@ class ClearTheStageTest extends BaseCardTest {
 
         cast(target, largeCreature, graveyardCreature);
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardCreature);
@@ -134,7 +134,7 @@ class ClearTheStageTest extends BaseCardTest {
 
         cast(target, null, graveyardCreature);
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardCreature);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(graveyardCreature);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -149,8 +149,8 @@ class ClearTheStageTest extends BaseCardTest {
 
         cast(target, largeCreature, null);
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardCreature);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -188,8 +188,8 @@ class ClearTheStageTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(graveyardCreature);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -224,7 +224,7 @@ class ClearTheStageTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.playerHands.get(player1.getId())).contains(graveyardCreature);
@@ -243,7 +243,7 @@ class ClearTheStageTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardCreature);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(graveyardCreature);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -262,7 +262,7 @@ class ClearTheStageTest extends BaseCardTest {
     private void cast(Permanent target, Permanent largeCreature, Card graveyardCard) {
         prepareCast();
         if (largeCreature != null) {
-            assertThat(largeCreature.getEffectivePower()).isGreaterThanOrEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, largeCreature)).isGreaterThanOrEqualTo(4);
         }
         if (graveyardCard == null) {
             harness.castAndResolveInstant(player1, 0, List.of(target.getId()));

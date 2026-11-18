@@ -44,8 +44,8 @@ class HammerOfPurphorosTest extends BaseCardTest {
         assertThat(hammer.isTapped()).isTrue();
 
         Permanent golem = findPermanent(player1, "Golem");
-        assertThat(golem.getEffectivePower()).isEqualTo(3);
-        assertThat(golem.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(3);
         assertThat(golem.getCard().getColors()).isEmpty();
         assertThat(golem.getCard().getSubtypes()).contains(CardSubtype.GOLEM);
         assertThat(golem.getCard().hasType(CardType.CREATURE)).isTrue();

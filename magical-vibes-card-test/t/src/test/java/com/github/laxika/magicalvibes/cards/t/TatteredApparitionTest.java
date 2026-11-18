@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,14 +24,14 @@ class TatteredApparitionTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(apparition.getEffectivePower()).isEqualTo(2);
-        assertThat(apparition.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, apparition)).isEqualTo(2);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(apparition.getEffectivePower()).isEqualTo(3);
-        assertThat(apparition.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, apparition)).isEqualTo(3);
     }
 
     @Test
@@ -45,8 +46,8 @@ class TatteredApparitionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(apparition.getEffectivePower()).isEqualTo(4);
-        assertThat(apparition.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, apparition)).isEqualTo(4);
     }
 
     @Test
@@ -62,10 +63,10 @@ class TatteredApparitionTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(apparition.getPowerModifier()).isEqualTo(0);
-        assertThat(apparition.getToughnessModifier()).isEqualTo(0);
-        assertThat(apparition.getEffectivePower()).isEqualTo(2);
-        assertThat(apparition.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, apparition)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, apparition)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, apparition)).isEqualTo(2);
     }
 
     @Test
@@ -80,8 +81,8 @@ class TatteredApparitionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(apparition.isTapped()).isTrue();
-        assertThat(apparition.getEffectivePower()).isEqualTo(3);
-        assertThat(apparition.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, apparition)).isEqualTo(3);
     }
 
     @Test
@@ -95,12 +96,12 @@ class TatteredApparitionTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(2);
-        assertThat(first.getEffectiveToughness()).isEqualTo(2);
-        assertThat(second.getEffectivePower()).isEqualTo(3);
-        assertThat(second.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opposing.getEffectivePower()).isEqualTo(2);
-        assertThat(opposing.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(2);
     }
 
     @Test
@@ -114,8 +115,8 @@ class TatteredApparitionTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(apparition.getPowerModifier()).isZero();
-        assertThat(apparition.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, apparition)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, apparition)).isZero();
     }
 
     @Test

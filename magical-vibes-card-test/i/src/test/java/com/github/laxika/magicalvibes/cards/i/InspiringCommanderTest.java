@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -114,7 +115,7 @@ class InspiringCommanderTest extends BaseCardTest {
 
         var enteringCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
         assertThat(gd.stack).hasSize(1);
-        enteringCreature.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, enteringCreature, 3);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 21);

@@ -128,7 +128,7 @@ class ReaveSoulTest extends BaseCardTest {
     void cannotTargetBoostedCreature() {
         harness.addToBattlefield(player1, new MaritimeGuard());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BoggartBrute());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         prepare();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
@@ -140,7 +140,7 @@ class ReaveSoulTest extends BaseCardTest {
     @DisplayName("Can destroy a creature whose effective power has been reduced to 3")
     void destroysCreatureWithReducedPower() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Cobblebrute());
-        target.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, target, -2);
 
         prepare();
         harness.castSorcery(player1, 0, target.getId());

@@ -71,8 +71,8 @@ class MascotExhibitionTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
 
-        assertThat(token.getEffectivePower()).isEqualTo(power);
-        assertThat(token.getEffectiveToughness()).isEqualTo(toughness);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(toughness);
         assertThat(token.getCard().getColors()).containsExactlyInAnyOrderElementsOf(colors);
         assertThat(token.getCard().getSubtypes()).contains(subtype);
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isEqualTo(flying);

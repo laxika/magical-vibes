@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BranchsnapLorian;
 import com.github.laxika.magicalvibes.cards.m.MacetailHystrodon;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
@@ -34,21 +35,21 @@ class AphettoExterminatorTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
-        assertThat(other.getEffectivePower()).isEqualTo(4);
-        assertThat(other.getEffectiveToughness()).isEqualTo(4);
-        assertThat(exterminator.getEffectivePower()).isEqualTo(3);
-        assertThat(exterminator.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, exterminator)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, exterminator)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
-        assertThat(other.getEffectivePower()).isEqualTo(4);
-        assertThat(other.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
     }
 
     @Test
@@ -96,8 +97,8 @@ class AphettoExterminatorTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Aphetto Exterminator");
         harness.assertOnBattlefield(player2, "Branchsnap Lorian");
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }

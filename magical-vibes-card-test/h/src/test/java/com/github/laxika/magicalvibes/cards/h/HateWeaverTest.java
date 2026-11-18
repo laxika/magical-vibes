@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Firescreamer;
 import com.github.laxika.magicalvibes.cards.k.KavuAggressor;
 import com.github.laxika.magicalvibes.cards.s.SkyWeaver;
@@ -182,7 +183,7 @@ class HateWeaverTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, target));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         harness.assertInGraveyard(player2, "Sky Weaver");
         assertThat(gd.stack).isEmpty();
     }

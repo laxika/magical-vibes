@@ -31,8 +31,8 @@ class OvinizeTest extends BaseCardTest {
 
         castOvinize(riftwatcher.getId());
 
-        assertThat(riftwatcher.getEffectivePower()).isZero();
-        assertThat(riftwatcher.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, riftwatcher)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, riftwatcher)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, riftwatcher, Keyword.FLYING)).isFalse();
     }
 
@@ -41,13 +41,13 @@ class OvinizeTest extends BaseCardTest {
     void preservesOtherPowerAndToughnessModifiers() {
         Permanent riftwatcher = harness.addToBattlefieldAndReturn(player2, new AvenRiftwatcher());
         riftwatcher.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        assertThat(riftwatcher.getEffectivePower()).isEqualTo(3);
-        assertThat(riftwatcher.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, riftwatcher)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, riftwatcher)).isEqualTo(4);
 
         castOvinize(riftwatcher.getId());
 
-        assertThat(riftwatcher.getEffectivePower()).isEqualTo(1);
-        assertThat(riftwatcher.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, riftwatcher)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, riftwatcher)).isEqualTo(2);
     }
 
     @Test
@@ -71,8 +71,8 @@ class OvinizeTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(riftwatcher.getEffectivePower()).isEqualTo(2);
-        assertThat(riftwatcher.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, riftwatcher)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, riftwatcher)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, riftwatcher, Keyword.FLYING)).isTrue();
     }
 

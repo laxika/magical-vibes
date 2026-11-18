@@ -29,8 +29,8 @@ class CleverLumimancerTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(lumimancer.getEffectivePower()).isEqualTo(2);
-        assertThat(lumimancer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, lumimancer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lumimancer)).isEqualTo(3);
     }
 
     @Test
@@ -48,8 +48,8 @@ class CleverLumimancerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        assertThat(lumimancer.getEffectivePower()).isEqualTo(4);
-        assertThat(lumimancer.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, lumimancer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, lumimancer)).isEqualTo(5);
     }
 
     @Test
@@ -62,14 +62,14 @@ class CleverLumimancerTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
         resolveAllTriggers();
-        assertThat(lumimancer.getEffectivePower()).isEqualTo(2);
-        assertThat(lumimancer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, lumimancer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lumimancer)).isEqualTo(3);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(lumimancer.getEffectivePower()).isZero();
-        assertThat(lumimancer.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, lumimancer)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, lumimancer)).isEqualTo(1);
     }
 
     @Test
@@ -81,11 +81,11 @@ class CleverLumimancerTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, lumimancer.getId());
 
-        assertThat(lumimancer.getEffectivePower()).isEqualTo(2);
-        assertThat(lumimancer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, lumimancer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lumimancer)).isEqualTo(3);
         resolveAllTriggers();
-        assertThat(lumimancer.getEffectivePower()).isEqualTo(4);
-        assertThat(lumimancer.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, lumimancer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, lumimancer)).isEqualTo(5);
     }
 
     @Test
@@ -100,8 +100,8 @@ class CleverLumimancerTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, target.getId());
         resolveAllTriggers();
 
-        assertThat(lumimancer.getEffectivePower()).isZero();
-        assertThat(lumimancer.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, lumimancer)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, lumimancer)).isEqualTo(1);
     }
 
     @Test
@@ -114,8 +114,8 @@ class CleverLumimancerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(lumimancer.getEffectivePower()).isZero();
-        assertThat(lumimancer.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, lumimancer)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, lumimancer)).isEqualTo(1);
     }
 
     @Test
@@ -131,8 +131,8 @@ class CleverLumimancerTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         resolveAllTriggers();
 
-        assertThat(lumimancer.getEffectivePower()).isEqualTo(4);
-        assertThat(lumimancer.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, lumimancer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, lumimancer)).isEqualTo(5);
     }
 
     @Test
@@ -150,9 +150,9 @@ class CleverLumimancerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        assertThat(controllerLumimancer.getEffectivePower()).isEqualTo(4);
-        assertThat(controllerLumimancer.getEffectiveToughness()).isEqualTo(5);
-        assertThat(opponentLumimancer.getEffectivePower()).isZero();
-        assertThat(opponentLumimancer.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, controllerLumimancer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, controllerLumimancer)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opponentLumimancer)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, opponentLumimancer)).isEqualTo(1);
     }
 }

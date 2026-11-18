@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.cards.k.Karakas;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -35,8 +36,8 @@ class ShieldWallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertBoostedCreature(ownCreature);
-        assertThat(opponentCreature.getPowerModifier()).isEqualTo(0);
-        assertThat(opponentCreature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isEqualTo(0);
         assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
@@ -50,8 +51,8 @@ class ShieldWallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertBoostedCreature(creature);
-        assertThat(karakas.getPowerModifier()).isEqualTo(0);
-        assertThat(karakas.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, karakas)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, karakas)).isEqualTo(0);
     }
 
     @Test
@@ -66,8 +67,8 @@ class ShieldWallTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(creature.getPowerModifier()).isEqualTo(0);
-        assertThat(creature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(0);
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
@@ -90,8 +91,8 @@ class ShieldWallTest extends BaseCardTest {
 
         Permanent laterCreature = addCreatureReady(player1, new BarbaryApes());
 
-        assertThat(laterCreature.getPowerModifier()).isEqualTo(0);
-        assertThat(laterCreature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, laterCreature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterCreature)).isEqualTo(0);
         assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
     }
@@ -131,8 +132,8 @@ class ShieldWallTest extends BaseCardTest {
     }
 
     private void assertBoostedCreature(Permanent creature) {
-        assertThat(creature.getPowerModifier()).isEqualTo(0);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -138,7 +139,7 @@ class DemolitionStomperTest extends BaseCardTest {
     void boostedTwoPowerCreatureCanBlock() {
         addAttackingStomper();
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        bears.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, bears, 1);
         prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -150,7 +151,7 @@ class DemolitionStomperTest extends BaseCardTest {
     void weakenedThreePowerCreatureCannotBlock() {
         addAttackingStomper();
         Permanent giant = addCreatureReady(player2, new HillGiant());
-        giant.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, giant, -1);
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))

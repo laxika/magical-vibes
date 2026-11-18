@@ -34,7 +34,7 @@ class WidespreadBrutalityTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, army)).isEqualTo(2);
         assertThat(army.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(opponent.getId()));

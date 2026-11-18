@@ -26,8 +26,8 @@ class RetrieveTheEsperTest extends BaseCardTest {
         Permanent token = findPermanent(player1, "Robot Warrior");
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(token.getEffectivePower()).isEqualTo(3);
-        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
     }
 
     @Test
@@ -41,8 +41,8 @@ class RetrieveTheEsperTest extends BaseCardTest {
         Permanent token = findPermanent(player1, "Robot Warrior");
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(token.getEffectivePower()).isEqualTo(5);
-        assertThat(token.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(5);
         harness.assertNotInGraveyard(player1, "Retrieve the Esper");
     }
 
@@ -66,8 +66,8 @@ class RetrieveTheEsperTest extends BaseCardTest {
                 .filter(token -> !token.getId().equals(originalToken.getId()))
                 .findFirst().orElseThrow();
         assertThat(newToken.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(newToken.getEffectivePower()).isEqualTo(5);
-        assertThat(newToken.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, newToken)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, newToken)).isEqualTo(5);
         harness.assertNotInGraveyard(player1, "Retrieve the Esper");
         assertThat(gd.exiledCards).anySatisfy(entry -> {
             assertThat(entry.card().getId()).isEqualTo(spell.getId());

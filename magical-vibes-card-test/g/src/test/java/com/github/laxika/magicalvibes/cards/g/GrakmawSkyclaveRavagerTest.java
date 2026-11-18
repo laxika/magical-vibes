@@ -71,8 +71,8 @@ class GrakmawSkyclaveRavagerTest extends BaseCardTest {
         List<Permanent> hydras = findPermanents(player1, "Hydra");
         assertThat(hydras).hasSize(1);
         Permanent hydra = hydras.getFirst();
-        assertThat(hydra.getEffectivePower()).isEqualTo(5);
-        assertThat(hydra.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, hydra)).isEqualTo(5);
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(hydra.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(hydra.getCard().getColors()).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);

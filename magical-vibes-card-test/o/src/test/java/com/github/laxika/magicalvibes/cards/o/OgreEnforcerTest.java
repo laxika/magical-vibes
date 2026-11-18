@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Fireblast;
 import com.github.laxika.magicalvibes.cards.h.HearthCharm;
 import com.github.laxika.magicalvibes.cards.l.LightningCloud;
@@ -55,7 +56,7 @@ class OgreEnforcerTest extends BaseCardTest {
     @DisplayName("Still dies to 0 toughness")
     void diesToZeroToughness() {
         Permanent enforcer = harness.addToBattlefieldAndReturn(player2, new OgreEnforcer());
-        enforcer.setToughnessModifier(-4);
+        PermanentGrants.setToughnessBoost(gd, enforcer, -4);
 
         harness.runStateBasedActions();
 
@@ -136,11 +137,11 @@ class OgreEnforcerTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        enforcer.setToughnessModifier(-2);
+        PermanentGrants.setToughnessBoost(gd, enforcer, -2);
         harness.runStateBasedActions();
         harness.assertOnBattlefield(player2, "Ogre Enforcer");
 
-        enforcer.setToughnessModifier(-3);
+        PermanentGrants.setToughnessBoost(gd, enforcer, -3);
         harness.runStateBasedActions();
         harness.assertNotOnBattlefield(player2, "Ogre Enforcer");
     }
@@ -149,7 +150,7 @@ class OgreEnforcerTest extends BaseCardTest {
     @DisplayName("Four damage from one source is not lethal while toughness is five")
     void survivesSingleSourceDamageBelowModifiedToughness() {
         Permanent enforcer = harness.addToBattlefieldAndReturn(player2, new OgreEnforcer());
-        enforcer.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, enforcer, 1);
         harness.setHand(player1, List.of(new Fireblast()));
         harness.addMana(player1, ManaColor.RED, 6);
 
@@ -158,7 +159,7 @@ class OgreEnforcerTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Ogre Enforcer");
         assertThat(enforcer.getMarkedDamage()).isEqualTo(4);
 
-        enforcer.setToughnessModifier(0);
+        PermanentGrants.setToughnessBoost(gd, enforcer, 0);
         harness.runStateBasedActions();
         harness.assertNotOnBattlefield(player2, "Ogre Enforcer");
     }

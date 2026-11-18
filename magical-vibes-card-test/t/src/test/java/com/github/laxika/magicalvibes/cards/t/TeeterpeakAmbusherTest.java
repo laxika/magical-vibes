@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class TeeterpeakAmbusherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ambusher.getPowerModifier()).isEqualTo(2);
-        assertThat(ambusher.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ambusher)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ambusher)).isEqualTo(0);
     }
 
     @Test
@@ -39,8 +40,8 @@ class TeeterpeakAmbusherTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ambusher.getPowerModifier()).isEqualTo(0);
-        assertThat(ambusher.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ambusher)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ambusher)).isEqualTo(0);
     }
 
     @Test
@@ -55,15 +56,15 @@ class TeeterpeakAmbusherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(ambusher.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ambusher)).isZero();
         harness.passBothPriorities();
-        assertThat(ambusher.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ambusher)).isEqualTo(2);
         harness.passBothPriorities();
 
-        assertThat(ambusher.getPowerModifier()).isEqualTo(4);
-        assertThat(ambusher.getToughnessModifier()).isZero();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ambusher)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ambusher)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -77,8 +78,8 @@ class TeeterpeakAmbusherTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ambusher.getPowerModifier()).isEqualTo(2);
-        assertThat(ambusher.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ambusher)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ambusher)).isZero();
         assertThat(ambusher.isTapped()).isTrue();
     }
 
@@ -92,7 +93,7 @@ class TeeterpeakAmbusherTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(ambusher.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ambusher)).isZero();
     }
 
     @Test
@@ -106,7 +107,7 @@ class TeeterpeakAmbusherTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(ambusher.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ambusher)).isZero();
     }
 
     private Permanent addReadyAmbusher() {

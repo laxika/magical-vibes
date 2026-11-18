@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -322,7 +323,7 @@ class AttackLegalityServiceTest extends BaseCardTest {
         gd.planechase.faceUp.add(new PlanarObject(new HedronFieldsOfAgadeem(), gd.nextTimestamp()));
 
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setPowerModifier(5);
+        PermanentGrants.setPowerBoost(gd, attacker, 5);
 
         assertThat(als.canAttack(gd, attacker, player1.getId())).isFalse();
     }

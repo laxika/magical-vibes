@@ -26,24 +26,24 @@ class DefenderOfTheOrderTest extends BaseCardTest {
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(defender));
         harness.passBothPriorities();
 
-        assertThat(ownEnvoy.getEffectivePower()).isEqualTo(0);
-        assertThat(ownEnvoy.getEffectiveToughness()).isEqualTo(4);
-        assertThat(defender.getEffectivePower()).isEqualTo(2);
-        assertThat(defender.getEffectiveToughness()).isEqualTo(6);
-        assertThat(opposingEnvoy.getEffectivePower()).isEqualTo(0);
-        assertThat(opposingEnvoy.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownEnvoy)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, ownEnvoy)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opposingEnvoy)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, opposingEnvoy)).isEqualTo(2);
 
         Permanent laterEnvoy = harness.addToBattlefieldAndReturn(player1, new AvenEnvoy());
-        assertThat(laterEnvoy.getEffectivePower()).isEqualTo(0);
-        assertThat(laterEnvoy.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterEnvoy)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, laterEnvoy)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ownEnvoy.getEffectivePower()).isEqualTo(0);
-        assertThat(ownEnvoy.getEffectiveToughness()).isEqualTo(2);
-        assertThat(defender.getEffectivePower()).isEqualTo(2);
-        assertThat(defender.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownEnvoy)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, ownEnvoy)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(4);
     }
 
     @Test
@@ -72,12 +72,12 @@ class DefenderOfTheOrderTest extends BaseCardTest {
         harness.castFromHand(player1, new DefenderOfTheOrder(), "{3}{W}");
         harness.passBothPriorities();
 
-        assertThat(ownEnvoy.getEffectivePower()).isEqualTo(0);
-        assertThat(ownEnvoy.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opposingEnvoy.getEffectivePower()).isEqualTo(0);
-        assertThat(opposingEnvoy.getEffectiveToughness()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Defender of the Order").getEffectivePower()).isEqualTo(2);
-        assertThat(findPermanent(player1, "Defender of the Order").getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownEnvoy)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, ownEnvoy)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingEnvoy)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, opposingEnvoy)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Defender of the Order"))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Defender of the Order"))).isEqualTo(4);
     }
 
     @Test
@@ -90,16 +90,16 @@ class DefenderOfTheOrderTest extends BaseCardTest {
 
         assertThat(defender.isFaceDown()).isFalse();
         assertThat(gd.stack).hasSize(1);
-        assertThat(ownEnvoy.getEffectiveToughness()).isEqualTo(2);
-        assertThat(defender.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownEnvoy)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(4);
 
         Permanent arrivingEnvoy = harness.addToBattlefieldAndReturn(player1, new AvenEnvoy());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(ownEnvoy.getEffectiveToughness()).isEqualTo(4);
-        assertThat(arrivingEnvoy.getEffectiveToughness()).isEqualTo(4);
-        assertThat(defender.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, ownEnvoy)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, arrivingEnvoy)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(6);
     }
 
     private Permanent castFaceDown() {

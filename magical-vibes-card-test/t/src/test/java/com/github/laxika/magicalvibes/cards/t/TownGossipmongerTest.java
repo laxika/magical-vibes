@@ -61,15 +61,15 @@ class TownGossipmongerTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(rabble), null, null);
         harness.passBothPriorities();
 
-        assertThat(rabble.getEffectivePower()).isEqualTo(3);
-        assertThat(rabble.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rabble)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, rabble)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(rabble.getEffectivePower()).isEqualTo(2);
-        assertThat(rabble.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rabble)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rabble)).isEqualTo(3);
     }
 
     @Test
@@ -178,16 +178,16 @@ class TownGossipmongerTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(rabble), null, null);
         harness.passBothPriorities();
 
-        assertThat(rabble.getEffectivePower()).isEqualTo(4);
-        assertThat(rabble.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rabble)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rabble)).isEqualTo(3);
         assertThat(rabble.isTapped()).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(rabble.getEffectivePower()).isEqualTo(2);
-        assertThat(rabble.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rabble)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rabble)).isEqualTo(3);
     }
 
     @Test
@@ -199,7 +199,7 @@ class TownGossipmongerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(rabble), null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(rabble.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rabble)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 

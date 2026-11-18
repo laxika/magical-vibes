@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlleyStrangler;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.r.RenegadeMap;
@@ -33,8 +34,8 @@ class WeldfastEngineerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, familiar.getId());
         harness.passBothPriorities();
 
-        assertThat(familiar.getPowerModifier()).isEqualTo(2);
-        assertThat(familiar.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, familiar)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, familiar)).isEqualTo(0);
     }
 
     @Test
@@ -74,11 +75,11 @@ class WeldfastEngineerTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, familiar.getId());
         harness.passBothPriorities();
-        assertThat(familiar.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, familiar)).isEqualTo(2);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(familiar.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, familiar)).isEqualTo(0);
     }
 
     @Test
@@ -91,7 +92,7 @@ class WeldfastEngineerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(thopter.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, thopter)).isZero();
     }
 
     @Test
@@ -132,8 +133,8 @@ class WeldfastEngineerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, chosen.getId());
         harness.passBothPriorities();
 
-        assertThat(chosen.getPowerModifier()).isEqualTo(2);
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, chosen)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -148,7 +149,7 @@ class WeldfastEngineerTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(engineer.getCard());
         harness.passBothPriorities();
 
-        assertThat(thopter.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, thopter)).isEqualTo(2);
     }
 
     @Test
@@ -164,6 +165,6 @@ class WeldfastEngineerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(thopter.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, thopter)).isZero();
     }
 }

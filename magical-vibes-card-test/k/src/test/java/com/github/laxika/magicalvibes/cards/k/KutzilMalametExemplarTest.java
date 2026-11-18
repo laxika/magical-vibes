@@ -55,7 +55,7 @@ class KutzilMalametExemplarTest extends BaseCardTest {
     void modifiedCreatureDraws() {
         addKutzil();
         Permanent attacker = addReadyAttacker();
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard));
 
@@ -70,9 +70,9 @@ class KutzilMalametExemplarTest extends BaseCardTest {
     void multipleQualifyingCreaturesDrawOnce() {
         addKutzil();
         Permanent firstAttacker = addReadyAttacker();
-        firstAttacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, firstAttacker, 1);
         Permanent secondAttacker = addReadyAttacker();
-        secondAttacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, secondAttacker, 1);
         Card topCard = new GrizzlyBears();
         Card nextCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard, nextCard));
@@ -113,7 +113,7 @@ class KutzilMalametExemplarTest extends BaseCardTest {
     void mixedQualifyingAndUnmodifiedAttackersDrawOnce() {
         addKutzil();
         addReadyAttacker();
-        addReadyAttacker().setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, addReadyAttacker(), 1);
         Card topCard = new GrizzlyBears();
         Card nextCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard, nextCard));
@@ -144,7 +144,7 @@ class KutzilMalametExemplarTest extends BaseCardTest {
     @Test
     void toughnessIncreaseAloneDoesNotDraw() {
         addKutzil();
-        addReadyAttacker().setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, addReadyAttacker(), 2);
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard));
 
@@ -158,9 +158,7 @@ class KutzilMalametExemplarTest extends BaseCardTest {
     void increasedBasePowerAloneDoesNotDraw() {
         addKutzil();
         Permanent attacker = addReadyAttacker();
-        attacker.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
-        attacker.setBasePowerOverride(4);
-        attacker.setBaseToughnessOverride(4);
+        PermanentGrants.basePowerToughnessUntilEndOfTurn(gd, attacker, 4, 4);
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard));
 
@@ -174,9 +172,7 @@ class KutzilMalametExemplarTest extends BaseCardTest {
     void powerIncreaseAboveOverriddenBasePowerDraws() {
         addKutzil();
         Permanent attacker = addReadyAttacker();
-        attacker.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
-        attacker.setBasePowerOverride(1);
-        attacker.setBaseToughnessOverride(1);
+        PermanentGrants.basePowerToughnessUntilEndOfTurn(gd, attacker, 1, 1);
         attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard));
@@ -191,12 +187,12 @@ class KutzilMalametExemplarTest extends BaseCardTest {
     void drawDoesNotRecheckPowerWhenTriggerResolves() {
         addKutzil();
         Permanent attacker = addReadyAttacker();
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard));
 
         resolveCombat();
-        attacker.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, attacker, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
@@ -206,7 +202,7 @@ class KutzilMalametExemplarTest extends BaseCardTest {
     void doubleStrikeDrawsInEachDamageStep() {
         addKutzil();
         Permanent attacker = addReadyAttacker();
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.DOUBLE_STRIKE);
         Card firstCard = new GrizzlyBears();
         Card secondCard = new GrizzlyBears();
@@ -225,7 +221,7 @@ class KutzilMalametExemplarTest extends BaseCardTest {
         addKutzil();
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard));
 

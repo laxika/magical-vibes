@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -27,8 +28,8 @@ class YavimayaAncientsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(ancients.getEffectivePower()).isEqualTo(3);
-        assertThat(ancients.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ancients)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ancients)).isEqualTo(5);
     }
 
     @Test
@@ -40,8 +41,8 @@ class YavimayaAncientsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ancients.getEffectivePower()).isEqualTo(3);
-        assertThat(ancients.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ancients)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ancients)).isEqualTo(5);
     }
 
     @Test
@@ -57,8 +58,8 @@ class YavimayaAncientsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ancients.isTapped()).isTrue();
-        assertThat(ancients.getEffectivePower()).isEqualTo(3);
-        assertThat(ancients.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ancients)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ancients)).isEqualTo(5);
     }
 
     @Test
@@ -75,8 +76,8 @@ class YavimayaAncientsTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(ancients.getEffectivePower()).isEqualTo(5);
-        assertThat(ancients.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ancients)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ancients)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ancients);
 
         harness.passBothPriorities();
@@ -88,8 +89,8 @@ class YavimayaAncientsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(otherAncients.getPowerModifier()).isZero();
-        assertThat(otherAncients.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAncients)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherAncients)).isZero();
     }
 
     @Test
@@ -117,13 +118,13 @@ class YavimayaAncientsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(ancients.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ancients)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ancients.getPowerModifier()).isEqualTo(0);
-        assertThat(ancients.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ancients)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ancients)).isEqualTo(0);
     }
 }

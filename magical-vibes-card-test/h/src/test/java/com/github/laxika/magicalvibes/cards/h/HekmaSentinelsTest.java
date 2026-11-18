@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Censor;
 import com.github.laxika.magicalvibes.cards.d.DoomedDissenter;
 import com.github.laxika.magicalvibes.cards.u.Unburden;
@@ -30,8 +31,8 @@ class HekmaSentinelsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the boost trigger
 
         Permanent hekma = getHekmaSentinels();
-        assertThat(hekma.getPowerModifier()).isEqualTo(1);
-        assertThat(hekma.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hekma)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hekma)).isEqualTo(1);
     }
 
     @Test
@@ -48,8 +49,8 @@ class HekmaSentinelsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent hekma = getHekmaSentinels();
-        assertThat(hekma.getPowerModifier()).isEqualTo(2);
-        assertThat(hekma.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, hekma)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hekma)).isEqualTo(2);
     }
 
     @Test
@@ -64,12 +65,12 @@ class HekmaSentinelsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent hekma = getHekmaSentinels();
-        assertThat(hekma.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hekma)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(hekma.getPowerModifier()).isEqualTo(0);
-        assertThat(hekma.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, hekma)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hekma)).isEqualTo(0);
     }
 
     @Test
@@ -88,14 +89,14 @@ class HekmaSentinelsTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         Permanent hekma = getHekmaSentinels();
-        assertThat(hekma.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hekma)).isZero();
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
-        assertThat(hekma.getPowerModifier()).isEqualTo(1);
-        assertThat(hekma.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hekma)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hekma)).isEqualTo(1);
         harness.passBothPriorities();
-        assertThat(hekma.getPowerModifier()).isEqualTo(2);
-        assertThat(hekma.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, hekma)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hekma)).isEqualTo(2);
     }
 
     @Test
@@ -110,8 +111,8 @@ class HekmaSentinelsTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(getHekmaSentinels().getPowerModifier()).isZero();
-        assertThat(getHekmaSentinels().getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, getHekmaSentinels())).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, getHekmaSentinels())).isZero();
         harness.assertInHand(player2, "Doomed Dissenter");
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -45,10 +46,10 @@ class CaveTigerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(tiger.getPowerModifier()).isEqualTo(1);
-        assertThat(tiger.getToughnessModifier()).isEqualTo(1);
-        assertThat(tiger.getEffectivePower()).isEqualTo(3);
-        assertThat(tiger.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, tiger)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tiger)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tiger)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, tiger)).isEqualTo(3);
     }
 
     @Test
@@ -68,14 +69,14 @@ class CaveTigerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
 
-        assertThat(tiger.getPowerModifier()).isEqualTo(1);
-        assertThat(tiger.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, tiger)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tiger)).isEqualTo(1);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(tiger.getPowerModifier()).isEqualTo(2);
-        assertThat(tiger.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, tiger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tiger)).isEqualTo(2);
     }
 
     @Test
@@ -89,8 +90,8 @@ class CaveTigerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(tiger.getPowerModifier()).isZero();
-        assertThat(tiger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tiger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tiger)).isZero();
     }
 
     @Test
@@ -103,8 +104,8 @@ class CaveTigerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(tiger.getPowerModifier()).isZero();
-        assertThat(tiger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tiger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tiger)).isZero();
     }
 
     @Test
@@ -118,14 +119,14 @@ class CaveTigerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(tiger.getPowerModifier()).isEqualTo(1);
-        assertThat(tiger.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, tiger)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tiger)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(tiger.getPowerModifier()).isZero();
-        assertThat(tiger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tiger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tiger)).isZero();
     }
 }

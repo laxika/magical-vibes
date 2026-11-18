@@ -23,19 +23,19 @@ class GoldenDemiseTest extends BaseCardTest {
 
         castAndResolve();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(3);
     }
 
     @Test
@@ -50,8 +50,8 @@ class GoldenDemiseTest extends BaseCardTest {
         castAndResolve();
 
         assertThat(gd.playersWithCityBlessing).contains(player1.getId());
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposingCreature);
     }
 
@@ -67,8 +67,8 @@ class GoldenDemiseTest extends BaseCardTest {
         castAndResolve();
 
         assertThat(gd.playersWithCityBlessing).doesNotContain(player1.getId());
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
@@ -102,8 +102,8 @@ class GoldenDemiseTest extends BaseCardTest {
 
         assertThat(gd.playersWithCityBlessing).contains(player1.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
@@ -123,7 +123,7 @@ class GoldenDemiseTest extends BaseCardTest {
 
         assertThat(gd.playersWithCityBlessing).contains(player1.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test
@@ -134,10 +134,10 @@ class GoldenDemiseTest extends BaseCardTest {
 
         Permanent laterCreature = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThat(existingCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, existingCreature)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(laterCreature);
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
     }
 
     private void castAndResolve() {

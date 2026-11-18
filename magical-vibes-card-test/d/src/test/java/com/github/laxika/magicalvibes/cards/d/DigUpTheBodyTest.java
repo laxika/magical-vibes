@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BackupAgent;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
@@ -185,7 +186,7 @@ class DigUpTheBodyTest extends BaseCardTest {
     @DisplayName("Casualty rejects a creature whose current power is zero")
     void casualtyRejectsZeroPowerCreature() {
         Permanent creature = addCreatureReady(player1, new BackupAgent());
-        creature.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, creature, -1);
         Card spell = new DigUpTheBody();
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLACK, 3);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -35,8 +36,8 @@ class KilnWalkerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(walker.getPowerModifier()).isEqualTo(3);
-        assertThat(walker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, walker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, walker)).isEqualTo(0);
     }
 
     @Test
@@ -47,13 +48,13 @@ class KilnWalkerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(walker.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, walker)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(walker.getPowerModifier()).isEqualTo(0);
-        assertThat(walker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, walker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, walker)).isEqualTo(0);
     }
 
     @Test
@@ -65,13 +66,13 @@ class KilnWalkerTest extends BaseCardTest {
                 () -> declareAttackers(player1, List.of(0)));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(walker.getPowerModifier()).isZero();
-        assertThat(walker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, walker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, walker)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(walker.getPowerModifier()).isEqualTo(3);
-        assertThat(walker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, walker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, walker)).isZero();
     }
 
     @Test
@@ -84,9 +85,9 @@ class KilnWalkerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(3);
-        assertThat(attacker.getToughnessModifier()).isZero();
-        assertThat(nonattacker.getPowerModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
     }
 }

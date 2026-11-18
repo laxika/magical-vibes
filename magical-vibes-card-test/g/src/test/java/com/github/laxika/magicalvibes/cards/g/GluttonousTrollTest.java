@@ -36,8 +36,8 @@ class GluttonousTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getEffectivePower()).isEqualTo(5);
-        assertThat(troll.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, troll)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, troll)).isEqualTo(5);
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
@@ -100,10 +100,10 @@ class GluttonousTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.assertNotOnBattlefield(player1, "Food");
-        assertThat(troll.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, troll)).isEqualTo(3);
         harness.passBothPriorities();
-        assertThat(troll.getEffectivePower()).isEqualTo(5);
-        assertThat(troll.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, troll)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, troll)).isEqualTo(5);
         harness.assertLife(player1, 20);
     }
 
@@ -134,14 +134,14 @@ class GluttonousTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(troll.getEffectivePower()).isEqualTo(7);
-        assertThat(troll.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, troll)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, troll)).isEqualTo(7);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(troll.getEffectivePower()).isEqualTo(3);
-        assertThat(troll.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, troll)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, troll)).isEqualTo(3);
     }
 }

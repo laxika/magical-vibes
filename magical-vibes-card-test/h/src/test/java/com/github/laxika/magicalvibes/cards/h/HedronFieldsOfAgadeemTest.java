@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -84,7 +85,7 @@ class HedronFieldsOfAgadeemTest extends BaseCardTest {
     @Test
     void creatureWithEffectivePowerSixCanAttack() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setPowerModifier(4);
+        PermanentGrants.setPowerBoost(gd, attacker, 4);
 
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -95,7 +96,7 @@ class HedronFieldsOfAgadeemTest extends BaseCardTest {
     void creatureWithEffectivePowerSixCanBlock() {
         addCreatureReady(player1, new GrizzlyBears());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setPowerModifier(4);
+        PermanentGrants.setPowerBoost(gd, blocker, 4);
         declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -106,7 +107,7 @@ class HedronFieldsOfAgadeemTest extends BaseCardTest {
     @Test
     void increasedPowerIsUsedForAttackRestriction() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setPowerModifier(5);
+        PermanentGrants.setPowerBoost(gd, attacker, 5);
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
@@ -117,7 +118,7 @@ class HedronFieldsOfAgadeemTest extends BaseCardTest {
     void increasedPowerIsUsedForBlockRestriction() {
         addCreatureReady(player1, new GrizzlyBears());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setPowerModifier(5);
+        PermanentGrants.setPowerBoost(gd, blocker, 5);
         declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
@@ -129,7 +130,7 @@ class HedronFieldsOfAgadeemTest extends BaseCardTest {
     @Test
     void restrictionAlsoPreventsOpponentsCreaturesWithPowerAboveSevenFromAttacking() {
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
-        attacker.setPowerModifier(6);
+        PermanentGrants.setPowerBoost(gd, attacker, 6);
         gd.planechase.controllerId = player2.getId();
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
@@ -167,7 +168,7 @@ class HedronFieldsOfAgadeemTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent token = findPermanent(player1, "Eldrazi");
         token.setSummoningSick(false);
-        token.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, token, -1);
         Permanent chosen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent remaining = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 

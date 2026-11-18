@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,12 +31,12 @@ class RallyToBattleTest extends BaseCardTest {
         cast();
 
         assertThat(ownCreature.isTapped()).isFalse();
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(3);
         assertThat(ownLand.isTapped()).isTrue();
         assertThat(opponentCreature.isTapped()).isTrue();
-        assertThat(opponentCreature.getPowerModifier()).isZero();
-        assertThat(opponentCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isZero();
     }
 
     @Test
@@ -46,17 +47,17 @@ class RallyToBattleTest extends BaseCardTest {
         addMana();
 
         harness.castAndResolveInstant(player1, 0);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getToughnessModifier()).isZero();
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test
@@ -80,18 +81,18 @@ class RallyToBattleTest extends BaseCardTest {
         creatureBeforeResolution.tap();
         harness.passBothPriorities();
 
-        assertThat(existingCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(existingCreature.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, existingCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, existingCreature)).isEqualTo(5);
         assertThat(existingCreature.isTapped()).isFalse();
-        assertThat(creatureBeforeResolution.getEffectivePower()).isEqualTo(3);
-        assertThat(creatureBeforeResolution.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creatureBeforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creatureBeforeResolution)).isEqualTo(5);
         assertThat(creatureBeforeResolution.isTapped()).isFalse();
 
         Permanent creatureAfterResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         creatureAfterResolution.tap();
 
-        assertThat(creatureAfterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(creatureAfterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creatureAfterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creatureAfterResolution)).isEqualTo(2);
         assertThat(creatureAfterResolution.isTapped()).isTrue();
     }
 

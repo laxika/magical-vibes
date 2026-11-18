@@ -105,15 +105,15 @@ class NissaGenesisMageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(nissa.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
-        assertThat(bear.getEffectivePower()).isEqualTo(7);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(7);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -259,8 +259,8 @@ class NissaGenesisMageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(7);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(7);
     }
 
     @Test

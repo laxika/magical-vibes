@@ -61,8 +61,8 @@ class RakshasaGravecallerTest extends BaseCardTest {
             assertThat(zombie.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(zombie.getCard().getColor()).isEqualTo(CardColor.BLACK);
             assertThat(zombie.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
-            assertThat(zombie.getEffectivePower()).isEqualTo(2);
-            assertThat(zombie.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(2);
             assertThat(zombie.isTapped()).isFalse();
         });
         assertThat(countPermanents(player2, "Zombie")).isZero();

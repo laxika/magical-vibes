@@ -32,8 +32,8 @@ class BlightedShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(shaman.isTapped()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(swamp.getCard().getId()));
@@ -52,8 +52,8 @@ class BlightedShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         // The Shaman was the sacrificed creature.
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -71,8 +71,8 @@ class BlightedShamanTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, fodder.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(shaman.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(shaman).doesNotContain(fodder);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -91,14 +91,14 @@ class BlightedShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -111,8 +111,8 @@ class BlightedShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(shaman.getCard().getId()));
@@ -229,8 +229,8 @@ class BlightedShamanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(shaman.isTapped()).isTrue();
-        assertThat(shaman.getPowerModifier()).isZero();
-        assertThat(shaman.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, shaman)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shaman)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -241,14 +241,14 @@ class BlightedShamanTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 }

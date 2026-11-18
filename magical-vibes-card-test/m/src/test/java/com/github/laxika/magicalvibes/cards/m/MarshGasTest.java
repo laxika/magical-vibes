@@ -22,10 +22,10 @@ class MarshGasTest extends BaseCardTest {
         harness.castFromHand(player1, new MarshGas(), "{B}");
         harness.passBothPriorities();
 
-        assertThat(own.getEffectivePower()).isEqualTo(0);
-        assertThat(own.getEffectiveToughness()).isEqualTo(2);
-        assertThat(theirs.getEffectivePower()).isEqualTo(0);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 
     @Test
@@ -36,14 +36,14 @@ class MarshGasTest extends BaseCardTest {
         harness.castFromHand(player1, new MarshGas(), "{B}");
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -54,8 +54,8 @@ class MarshGasTest extends BaseCardTest {
 
         Permanent lateCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThat(lateCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(lateCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lateCreature)).isEqualTo(2);
     }
 
     @Test
@@ -66,8 +66,8 @@ class MarshGasTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(0);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -80,15 +80,15 @@ class MarshGasTest extends BaseCardTest {
         harness.castFromHand(player1, new MarshGas(), "{B}");
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(-2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 }

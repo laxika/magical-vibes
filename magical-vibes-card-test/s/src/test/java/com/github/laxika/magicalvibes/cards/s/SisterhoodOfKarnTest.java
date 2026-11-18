@@ -22,8 +22,8 @@ class SisterhoodOfKarnTest extends BaseCardTest {
         Permanent sisterhood = castSisterhood();
 
         assertThat(sisterhood.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(sisterhood.getEffectivePower()).isEqualTo(1);
-        assertThat(sisterhood.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sisterhood)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, sisterhood)).isEqualTo(1);
     }
 
     @Test

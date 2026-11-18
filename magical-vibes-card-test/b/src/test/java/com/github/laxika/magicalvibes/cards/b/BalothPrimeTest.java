@@ -55,7 +55,7 @@ class BalothPrimeTest extends BaseCardTest {
         assertThat(beast.isTapped()).isTrue();
         assertThat(beast.getCard().getColors()).containsExactly(CardColor.GREEN);
         assertThat(beast.getCard().getSubtypes()).containsExactly(CardSubtype.BEAST);
-        assertThat(beast.getEffectivePower()).isEqualTo(4);
-        assertThat(beast.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(4);
     }
 }

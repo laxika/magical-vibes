@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PatientNaturalist;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -62,8 +63,8 @@ class MournersSurpriseTest extends BaseCardTest {
         harness.activateAbility(player1, mercenaryIndex, 0, null, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(mercenary.isTapped()).isTrue();
     }
 
@@ -184,14 +185,14 @@ class MournersSurpriseTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, mercenary.getId());
         harness.passBothPriorities();
 
-        assertThat(mercenary.getPowerModifier()).isEqualTo(1);
-        assertThat(mercenary.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mercenary)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mercenary)).isZero();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mercenary.getPowerModifier()).isZero();
-        assertThat(mercenary.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mercenary)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mercenary)).isZero();
     }
 
     private void castMournersSurprise() {

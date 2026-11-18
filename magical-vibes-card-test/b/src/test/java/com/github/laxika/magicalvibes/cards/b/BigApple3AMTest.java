@@ -60,8 +60,8 @@ class BigApple3AMTest extends BaseCardTest {
         assertThat(rats).hasSize(1);
         assertThat(rats.getFirst().getCard().getColors()).containsExactly(CardColor.BLACK);
         assertThat(rats.getFirst().getCard().getSubtypes()).contains(CardSubtype.RAT);
-        assertThat(rats.getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(rats.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, rats.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, rats.getFirst())).isEqualTo(1);
     }
 
     @ParameterizedTest

@@ -51,8 +51,8 @@ class GuulDrazMucklordTest extends BaseCardTest {
 
         Permanent colony = findPermanent(player1, "Gnarlid Colony");
         assertThat(colony.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(colony.getEffectivePower()).isEqualTo(3);
-        assertThat(colony.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, colony)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, colony)).isEqualTo(3);
     }
 
     @Test

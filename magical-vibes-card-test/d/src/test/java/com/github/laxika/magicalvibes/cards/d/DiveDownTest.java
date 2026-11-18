@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.cards.q.QueensBaySoldier;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -47,10 +48,10 @@ class DiveDownTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(3);
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isTrue();
     }
 
@@ -69,8 +70,8 @@ class DiveDownTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isFalse();
     }
 
@@ -97,7 +98,7 @@ class DiveDownTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(creature);
         harness.passBothPriorities();
 
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Dive Down");
@@ -148,8 +149,8 @@ class DiveDownTest extends BaseCardTest {
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isTrue();
     }
 

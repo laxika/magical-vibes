@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,8 +25,8 @@ class PavelMalikiTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(pavel.getPowerModifier()).isEqualTo(1);
-        assertThat(pavel.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pavel)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pavel)).isZero();
     }
 
     @Test
@@ -40,7 +41,7 @@ class PavelMalikiTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(pavel.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, pavel)).isEqualTo(2);
     }
 
     @Test
@@ -56,7 +57,7 @@ class PavelMalikiTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(pavel.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pavel)).isZero();
     }
 
     @Test
@@ -81,7 +82,7 @@ class PavelMalikiTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(pavel.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, pavel)).isEqualTo(1);
     }
 
     @Test
@@ -95,8 +96,8 @@ class PavelMalikiTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(pavel.getPowerModifier()).isEqualTo(1);
-        assertThat(pavel.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pavel)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pavel)).isZero();
         assertThat(pavel.isTapped()).isFalse();
     }
 
@@ -110,18 +111,18 @@ class PavelMalikiTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(pavel.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pavel)).isZero();
         assertThat(gd.stack).hasSize(2);
 
         harness.passBothPriorities();
 
-        assertThat(pavel.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, pavel)).isEqualTo(1);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(pavel.getPowerModifier()).isEqualTo(2);
-        assertThat(pavel.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pavel)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pavel)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

@@ -25,8 +25,8 @@ class PheresBandTromperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(tromper.getCounters().getOrDefault(CounterType.PLUS_ONE_PLUS_ONE, 0)).isEqualTo(1);
-        assertThat(tromper.getEffectivePower()).isEqualTo(4);
-        assertThat(tromper.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, tromper)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tromper)).isEqualTo(4);
     }
 
     @Test

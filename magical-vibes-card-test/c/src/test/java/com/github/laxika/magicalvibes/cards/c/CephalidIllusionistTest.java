@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -206,8 +207,8 @@ class CephalidIllusionistTest extends BaseCardTest {
                                   Player defender,
                                   int power, int toughness) {
         Permanent perm = addCreatureReady(owner, new GrizzlyBears());
-        perm.setPowerModifier(power - 2);
-        perm.setToughnessModifier(toughness - 2);
+        PermanentGrants.setPowerBoost(gd, perm, power - 2);
+        PermanentGrants.setToughnessBoost(gd, perm, toughness - 2);
         perm.setAttacking(true);
         perm.setAttackTarget(defender.getId());
         return perm;
@@ -216,8 +217,8 @@ class CephalidIllusionistTest extends BaseCardTest {
     private Permanent addBlocker(Player owner,
                                  int power, int toughness, int blockedAttackerIndex) {
         Permanent perm = addCreatureReady(owner, new GrizzlyBears());
-        perm.setPowerModifier(power - 2);
-        perm.setToughnessModifier(toughness - 2);
+        PermanentGrants.setPowerBoost(gd, perm, power - 2);
+        PermanentGrants.setToughnessBoost(gd, perm, toughness - 2);
         perm.setBlocking(true);
         perm.addBlockingTarget(blockedAttackerIndex);
         return perm;

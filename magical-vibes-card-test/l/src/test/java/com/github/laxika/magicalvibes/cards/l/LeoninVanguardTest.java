@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChildOfNight;
 import com.github.laxika.magicalvibes.cards.d.Disperse;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -40,8 +41,8 @@ class LeoninVanguardTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.passBothPriorities();
 
-        assertThat(vanguard(player1).getPowerModifier()).isEqualTo(1);
-        assertThat(vanguard(player1).getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, vanguard(player1))).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vanguard(player1))).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 1);
     }
 
@@ -55,8 +56,8 @@ class LeoninVanguardTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.passBothPriorities();
 
-        assertThat(vanguard(player1).getPowerModifier()).isEqualTo(0);
-        assertThat(vanguard(player1).getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vanguard(player1))).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vanguard(player1))).isEqualTo(0);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife);
     }
 
@@ -71,7 +72,7 @@ class LeoninVanguardTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.passBothPriorities();
 
-        assertThat(vanguard(player1).getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vanguard(player1))).isEqualTo(0);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife);
     }
 
@@ -86,7 +87,7 @@ class LeoninVanguardTest extends BaseCardTest {
         advanceToCombat(player2);
         harness.passBothPriorities();
 
-        assertThat(vanguard(player1).getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vanguard(player1))).isEqualTo(0);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife);
     }
 
@@ -100,15 +101,15 @@ class LeoninVanguardTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.passBothPriorities();
-        assertThat(vanguard(player1).getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, vanguard(player1))).isEqualTo(1);
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.CLEANUP);
 
-        assertThat(vanguard(player1).getPowerModifier()).isEqualTo(0);
-        assertThat(vanguard(player1).getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vanguard(player1))).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vanguard(player1))).isEqualTo(0);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 1);
     }
 
@@ -128,8 +129,8 @@ class LeoninVanguardTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, support.getId());
         harness.passBothPriorities();
 
-        assertThat(vanguard(player1).getPowerModifier()).isZero();
-        assertThat(vanguard(player1).getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, vanguard(player1))).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vanguard(player1))).isZero();
         harness.assertLife(player1, startingLife);
     }
 
@@ -167,8 +168,8 @@ class LeoninVanguardTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new ChildOfNight());
         harness.passBothPriorities();
 
-        assertThat(vanguard(player1).getPowerModifier()).isZero();
-        assertThat(vanguard(player1).getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, vanguard(player1))).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vanguard(player1))).isZero();
         harness.assertLife(player1, startingLife);
     }
 }

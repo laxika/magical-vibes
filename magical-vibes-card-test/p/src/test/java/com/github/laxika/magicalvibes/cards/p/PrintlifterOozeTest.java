@@ -35,8 +35,8 @@ class PrintlifterOozeTest extends BaseCardTest {
 
         Permanent ooze = findPermanent(player1, "Ooze");
         assertThat(ooze.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(ooze.getEffectivePower()).isEqualTo(3);
-        assertThat(ooze.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(3);
         assertThat(ooze.getCard().getKeywords()).contains(Keyword.TRAMPLE);
         assertThat(ooze.getCard().hasType(CardType.CREATURE)).isTrue();
     }

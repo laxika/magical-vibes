@@ -27,8 +27,8 @@ class KozileksShriekerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shrieker.getEffectivePower()).isEqualTo(4);
-        assertThat(shrieker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shrieker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, shrieker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, shrieker, Keyword.MENACE)).isTrue();
     }
 
@@ -44,8 +44,8 @@ class KozileksShriekerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shrieker.getEffectivePower()).isEqualTo(3);
-        assertThat(shrieker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shrieker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shrieker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, shrieker, Keyword.MENACE)).isFalse();
     }
 
@@ -59,8 +59,8 @@ class KozileksShriekerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("mana");
 
-        assertThat(shrieker.getEffectivePower()).isEqualTo(3);
-        assertThat(shrieker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shrieker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shrieker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, shrieker, Keyword.MENACE)).isFalse();
     }
 
@@ -76,10 +76,10 @@ class KozileksShriekerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(shrieker.getEffectivePower()).isEqualTo(5);
-        assertThat(shrieker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shrieker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, shrieker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, shrieker, Keyword.MENACE)).isTrue();
-        assertThat(other.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, other, Keyword.MENACE)).isFalse();
     }
 
@@ -94,7 +94,7 @@ class KozileksShriekerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(shrieker.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, shrieker)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, shrieker, Keyword.MENACE)).isTrue();
         assertThat(shrieker.isTapped()).isTrue();
     }

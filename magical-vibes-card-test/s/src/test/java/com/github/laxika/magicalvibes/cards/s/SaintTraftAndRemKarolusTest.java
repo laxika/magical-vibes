@@ -31,8 +31,8 @@ class SaintTraftAndRemKarolusTest extends BaseCardTest {
         Permanent human = findPermanent(player1, "Human");
         assertThat(human.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(human.getCard().getSubtypes()).containsExactly(CardSubtype.HUMAN);
-        assertThat(human.getEffectivePower()).isEqualTo(1);
-        assertThat(human.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(1);
 
         saintTraftAndRemKarolus.untap();
         tap(saintTraftAndRemKarolus);
@@ -49,8 +49,8 @@ class SaintTraftAndRemKarolusTest extends BaseCardTest {
         assertThat(angel.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(angel.getCard().getSubtypes()).containsExactly(CardSubtype.ANGEL);
         assertThat(angel.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(angel.getEffectivePower()).isEqualTo(4);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
 
         saintTraftAndRemKarolus.untap();
         tap(saintTraftAndRemKarolus);

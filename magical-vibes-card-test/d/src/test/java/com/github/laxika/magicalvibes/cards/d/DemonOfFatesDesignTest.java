@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EfficientConstruction;
 import com.github.laxika.magicalvibes.cards.m.ManaBloom;
 import com.github.laxika.magicalvibes.cards.r.ReadTheBones;
@@ -68,14 +69,14 @@ class DemonOfFatesDesignTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(demon.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, demon)).isEqualTo(4);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(enchantment);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(demon.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, demon)).isZero();
     }
 
     @Test
@@ -192,12 +193,12 @@ class DemonOfFatesDesignTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(enchantment);
-        assertThat(demon.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, demon)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(demon.getPowerModifier()).isEqualTo(4);
-        assertThat(demon.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, demon)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, demon)).isZero();
     }
 }

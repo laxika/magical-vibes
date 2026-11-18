@@ -36,8 +36,8 @@ class MtendaHerderTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isZero();
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
     }
 
     @Test
@@ -72,10 +72,10 @@ class MtendaHerderTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
-        assertThat(firstBlocker.getEffectivePower()).isZero();
-        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(3);
-        assertThat(secondBlocker.getEffectivePower()).isZero();
-        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firstBlocker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, firstBlocker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondBlocker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, secondBlocker)).isEqualTo(3);
     }
 
     @Test
@@ -89,15 +89,15 @@ class MtendaHerderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isZero();
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
     }
 
     @Test
@@ -136,10 +136,10 @@ class MtendaHerderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getEffectivePower()).isEqualTo(1);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(4);
-        assertThat(herder.getEffectivePower()).isEqualTo(1);
-        assertThat(herder.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, herder)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, herder)).isEqualTo(1);
     }
 
 }

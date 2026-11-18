@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -33,10 +34,10 @@ class AugerSpreeTest extends BaseCardTest {
         Permanent dragon = harness.addToBattlefieldAndReturn(player1, new ShivanDragon()); // 5/5
         castOn(dragon);
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(4);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(-4);
-        assertThat(dragon.getEffectivePower()).isEqualTo(9);
-        assertThat(dragon.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(-4);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(1);
     }
 
     @Test
@@ -54,16 +55,16 @@ class AugerSpreeTest extends BaseCardTest {
     void wearsOffAtEndOfTurn() {
         Permanent dragon = harness.addToBattlefieldAndReturn(player1, new ShivanDragon());
         castOn(dragon);
-        assertThat(dragon.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dragon.getPowerModifier()).isEqualTo(0);
-        assertThat(dragon.getToughnessModifier()).isEqualTo(0);
-        assertThat(dragon.getEffectivePower()).isEqualTo(5);
-        assertThat(dragon.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, dragon)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dragon)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(5);
     }
 
     @Test
@@ -92,10 +93,10 @@ class AugerSpreeTest extends BaseCardTest {
         castOn(target);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
-        assertThat(target.getEffectivePower()).isEqualTo(9);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         harness.assertInGraveyard(player1, "Auger Spree");
     }
 

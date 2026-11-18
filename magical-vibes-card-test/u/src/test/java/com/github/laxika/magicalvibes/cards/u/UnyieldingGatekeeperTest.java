@@ -50,8 +50,8 @@ class UnyieldingGatekeeperTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         Permanent detective = findPermanent(player2, "Detective");
-        assertThat(detective.getEffectivePower()).isEqualTo(2);
-        assertThat(detective.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, detective)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, detective)).isEqualTo(2);
         assertThat(detective.getCard().getColors()).containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLUE);
     }
 

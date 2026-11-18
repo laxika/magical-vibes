@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -47,10 +48,10 @@ class RallyingRoarTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(1);
-                assertThat(p.getToughnessModifier()).isEqualTo(1);
-                assertThat(p.getEffectivePower()).isEqualTo(3);
-                assertThat(p.getEffectiveToughness()).isEqualTo(3);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(1);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(1);
+                assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(3);
+                assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(3);
             }
         }
     }
@@ -68,8 +69,8 @@ class RallyingRoarTest extends BaseCardTest {
         List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
         for (Permanent p : p2Battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
-                assertThat(p.getToughnessModifier()).isEqualTo(0);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
             }
         }
     }
@@ -131,10 +132,10 @@ class RallyingRoarTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         assertThat(bear.isTapped()).isFalse();
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
     }
 
     @Test
@@ -153,10 +154,10 @@ class RallyingRoarTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getPowerModifier()).isEqualTo(0);
-                assertThat(p.getToughnessModifier()).isEqualTo(0);
-                assertThat(p.getEffectivePower()).isEqualTo(2);
-                assertThat(p.getEffectiveToughness()).isEqualTo(2);
+                assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(0);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(0);
+                assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(2);
+                assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(2);
             }
         }
     }
@@ -185,8 +186,8 @@ class RallyingRoarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.isTapped()).isFalse();
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
     }
 
     @Test
@@ -202,11 +203,11 @@ class RallyingRoarTest extends BaseCardTest {
         lateArrival.tap();
 
         assertThat(original.isTapped()).isFalse();
-        assertThat(original.getEffectivePower()).isEqualTo(3);
-        assertThat(original.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(3);
         assertThat(lateArrival.isTapped()).isTrue();
-        assertThat(lateArrival.getEffectivePower()).isEqualTo(2);
-        assertThat(lateArrival.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, lateArrival)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lateArrival)).isEqualTo(2);
     }
 
     @Test
@@ -221,14 +222,14 @@ class RallyingRoarTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         assertThat(bear.isTapped()).isFalse();
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 }

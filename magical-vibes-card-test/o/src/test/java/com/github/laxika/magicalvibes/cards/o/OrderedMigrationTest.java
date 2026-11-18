@@ -37,8 +37,8 @@ class OrderedMigrationTest extends BaseCardTest {
                     assertThat(permanent.getCard().getColor()).isEqualTo(CardColor.BLUE);
                     assertThat(permanent.getCard().getSubtypes()).contains(CardSubtype.BIRD);
                     assertThat(permanent.hasKeyword(Keyword.FLYING)).isTrue();
-                    assertThat(permanent.getEffectivePower()).isEqualTo(1);
-                    assertThat(permanent.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(1);
                 });
     }
 

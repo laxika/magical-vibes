@@ -28,14 +28,14 @@ class TeeteringPeaksTest extends BaseCardTest {
 
         Permanent peaks = findPermanent(player1, "Teetering Peaks");
         assertThat(peaks.isTapped()).isTrue();
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -48,8 +48,8 @@ class TeeteringPeaksTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -85,14 +85,14 @@ class TeeteringPeaksTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.handlePermanentChosen(player1, chosen.getId());
 
-        assertThat(chosen.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, chosen)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(chosen.getEffectivePower()).isEqualTo(4);
-        assertThat(chosen.getEffectiveToughness()).isEqualTo(2);
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, chosen)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, chosen)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
     }
 }

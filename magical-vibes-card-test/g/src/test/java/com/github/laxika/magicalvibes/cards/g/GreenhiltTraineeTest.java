@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SpinedThopter;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -38,8 +39,8 @@ class GreenhiltTraineeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent thopter = findPermanent(player1, "Spined Thopter");
-        assertThat(thopter.getPowerModifier()).isEqualTo(4);
-        assertThat(thopter.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, thopter)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thopter)).isEqualTo(4);
     }
 
     @Test
@@ -52,8 +53,8 @@ class GreenhiltTraineeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent thopter = findPermanent(player1, "Spined Thopter");
-        assertThat(thopter.getPowerModifier()).isEqualTo(4);
-        assertThat(thopter.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, thopter)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thopter)).isEqualTo(4);
     }
 
     @Test
@@ -106,8 +107,8 @@ class GreenhiltTraineeTest extends BaseCardTest {
 
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -146,8 +147,8 @@ class GreenhiltTraineeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
     }
 
     @Test

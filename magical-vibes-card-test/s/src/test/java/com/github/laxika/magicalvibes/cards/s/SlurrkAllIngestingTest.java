@@ -82,8 +82,8 @@ class SlurrkAllIngestingTest extends BaseCardTest {
         Permanent survivor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         dyingBear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         survivor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        slurrk.setMarkedDamage(slurrk.getEffectiveToughness());
-        dyingBear.setMarkedDamage(dyingBear.getEffectiveToughness());
+        slurrk.setMarkedDamage(gqs.getEffectiveToughness(gd, slurrk));
+        dyingBear.setMarkedDamage(gqs.getEffectiveToughness(gd, dyingBear));
 
         harness.runStateBasedActions();
         harness.passBothPriorities();
@@ -105,7 +105,7 @@ class SlurrkAllIngestingTest extends BaseCardTest {
         dyingBear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         losingCounter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         opponentBear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        dyingBear.setMarkedDamage(dyingBear.getEffectiveToughness());
+        dyingBear.setMarkedDamage(gqs.getEffectiveToughness(gd, dyingBear));
         harness.runStateBasedActions();
 
         losingCounter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
@@ -134,7 +134,7 @@ class SlurrkAllIngestingTest extends BaseCardTest {
     }
 
     private void kill(Permanent creature) {
-        creature.setMarkedDamage(creature.getEffectiveToughness());
+        creature.setMarkedDamage(gqs.getEffectiveToughness(gd, creature));
         harness.runStateBasedActions();
         harness.passBothPriorities();
     }

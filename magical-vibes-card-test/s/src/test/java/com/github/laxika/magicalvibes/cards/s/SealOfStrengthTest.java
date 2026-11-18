@@ -28,8 +28,8 @@ class SealOfStrengthTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Seal of Strength");
         harness.assertInGraveyard(player1, "Seal of Strength");
         assertThat(gd.stack).hasSize(1);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -43,8 +43,8 @@ class SealOfStrengthTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Seal of Strength");
         harness.assertInGraveyard(player1, "Seal of Strength");
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -56,8 +56,8 @@ class SealOfStrengthTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -72,8 +72,8 @@ class SealOfStrengthTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -119,8 +119,8 @@ class SealOfStrengthTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Laccolith Grunt");
         assertThat(returned.getId()).isNotEqualTo(target.getId());
-        assertThat(returned.getEffectivePower()).isEqualTo(2);
-        assertThat(returned.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(2);
     }
 
     @Test

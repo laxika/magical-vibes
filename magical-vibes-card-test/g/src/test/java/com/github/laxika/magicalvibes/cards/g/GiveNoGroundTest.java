@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FieldCreeper;
 import com.github.laxika.magicalvibes.cards.t.Terrarion;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -26,8 +27,8 @@ class GiveNoGroundTest extends BaseCardTest {
         Permanent target = addCreature(player2);
         castGiveNoGround(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(6);
     }
 
     @Test
@@ -61,8 +62,8 @@ class GiveNoGroundTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.additionalBlocksThisTurn(target.getId())).isZero();
     }
 
@@ -86,10 +87,10 @@ class GiveNoGroundTest extends BaseCardTest {
 
         castGiveNoGround(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(6);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gd.additionalBlocksThisTurn(other.getId())).isZero();
     }
 
@@ -102,8 +103,8 @@ class GiveNoGroundTest extends BaseCardTest {
         castGiveNoGround(blocker);
         castGiveNoGround(blocker);
 
-        assertThat(blocker.getPowerModifier()).isEqualTo(4);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(12);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(12);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -141,11 +142,11 @@ class GiveNoGroundTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.additionalBlocksThisTurn(target.getId())).isZero();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gd.additionalBlocksThisTurn(other.getId())).isZero();
         harness.assertInGraveyard(player1, "Give No Ground");
         assertThat(gd.stack).isEmpty();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.MotherBear;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -43,15 +44,15 @@ class TreetopAmbusherTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ownCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
     }
 
     @Test
@@ -85,8 +86,8 @@ class TreetopAmbusherTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ambusher.getId());
         resolveAllTriggers();
 
-        assertThat(ambusher.getPowerModifier()).isEqualTo(1);
-        assertThat(ambusher.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ambusher)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ambusher)).isEqualTo(1);
     }
 
     @Test

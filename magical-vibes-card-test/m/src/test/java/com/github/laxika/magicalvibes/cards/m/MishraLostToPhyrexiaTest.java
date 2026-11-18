@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianDragonEngine;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -87,10 +88,10 @@ class MishraLostToPhyrexiaTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, laterOwnCreature, Keyword.MENACE)).isFalse();
         assertThat(gqs.hasKeyword(gd, laterOwnCreature, Keyword.TRAMPLE)).isFalse();
-        assertThat(opposingCreature.getPowerModifier()).isEqualTo(-1);
-        assertThat(opposingCreature.getToughnessModifier()).isEqualTo(-1);
-        assertThat(laterOpposingCreature.getPowerModifier()).isZero();
-        assertThat(laterOpposingCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingCreature)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, laterOpposingCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterOpposingCreature)).isZero();
         assertThat(findPermanents(player1, "Powerstone")).hasSize(2).allMatch(Permanent::isTapped);
     }
 

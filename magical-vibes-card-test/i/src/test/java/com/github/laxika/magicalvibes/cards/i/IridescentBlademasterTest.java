@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,8 +25,8 @@ class IridescentBlademasterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(blademaster.getPowerModifier()).isEqualTo(2);
-        assertThat(blademaster.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blademaster)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blademaster)).isEqualTo(2);
     }
 
     @Test
@@ -40,8 +41,8 @@ class IridescentBlademasterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(blademaster.getPowerModifier()).isEqualTo(4);
-        assertThat(blademaster.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, blademaster)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blademaster)).isEqualTo(4);
     }
 
     @Test
@@ -80,8 +81,8 @@ class IridescentBlademasterTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blademaster.getPowerModifier()).isEqualTo(0);
-        assertThat(blademaster.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, blademaster)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blademaster)).isEqualTo(0);
     }
 
     private void addAbilityMana(Player player) {
@@ -103,8 +104,8 @@ class IridescentBlademasterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(blademaster.getPowerModifier()).isEqualTo(2);
-        assertThat(blademaster.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blademaster)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blademaster)).isEqualTo(2);
         assertThat(blademaster.isTapped()).isFalse();
     }
 
@@ -130,16 +131,16 @@ class IridescentBlademasterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(source.getPowerModifier()).isEqualTo(0);
-        assertThat(source.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(0);
 
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(2);
-        assertThat(source.getToughnessModifier()).isEqualTo(2);
-        assertThat(other.getPowerModifier()).isEqualTo(0);
-        assertThat(other.getToughnessModifier()).isEqualTo(0);
-        assertThat(opposing.getPowerModifier()).isEqualTo(0);
-        assertThat(opposing.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposing)).isEqualTo(0);
     }
 }

@@ -32,8 +32,8 @@ class UnderworldChargerTest extends BaseCardTest {
 
         Permanent charger = findPermanent(player1, "Underworld Charger");
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(charger.getEffectivePower()).isEqualTo(3);
-        assertThat(charger.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, charger)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, charger)).isEqualTo(3);
     }
 
     @Test
@@ -49,8 +49,8 @@ class UnderworldChargerTest extends BaseCardTest {
 
         Permanent escapedCharger = findPermanent(player1, "Underworld Charger");
         assertThat(escapedCharger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(escapedCharger.getEffectivePower()).isEqualTo(5);
-        assertThat(escapedCharger.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, escapedCharger)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, escapedCharger)).isEqualTo(5);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
     }

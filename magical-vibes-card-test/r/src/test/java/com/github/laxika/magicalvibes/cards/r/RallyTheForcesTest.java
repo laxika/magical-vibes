@@ -34,13 +34,13 @@ class RallyTheForcesTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         // Attacking creature gets +1/+0 and first strike
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isTrue();
 
         // Non-attacking creature is unaffected
-        assertThat(nonAttacker.getEffectivePower()).isEqualTo(2);
-        assertThat(nonAttacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonAttacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, nonAttacker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -57,14 +57,14 @@ class RallyTheForcesTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isFalse();
     }
     @Test
@@ -79,10 +79,10 @@ class RallyTheForcesTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(defender.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, defender, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -100,9 +100,9 @@ class RallyTheForcesTest extends BaseCardTest {
         attacker.setAttacking(false);
         laterAttacker.setAttacking(true);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(laterAttacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterAttacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, laterAttacker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -117,8 +117,8 @@ class RallyTheForcesTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         creature.setAttacking(true);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
         harness.assertInGraveyard(player1, "Rally the Forces");
     }

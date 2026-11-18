@@ -23,8 +23,8 @@ class KavuGliderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(glider.getEffectivePower()).isEqualTo(2);
-        assertThat(glider.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, glider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, glider)).isEqualTo(2);
     }
 
     @Test
@@ -55,8 +55,8 @@ class KavuGliderTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(glider.getEffectivePower()).isEqualTo(2);
-        assertThat(glider.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, glider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, glider)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, glider, Keyword.FLYING)).isFalse();
     }
 
@@ -73,11 +73,11 @@ class KavuGliderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(glider.getEffectivePower()).isEqualTo(2);
-        assertThat(glider.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, glider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, glider)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, glider, Keyword.FLYING)).isTrue();
-        assertThat(otherGlider.getEffectivePower()).isEqualTo(2);
-        assertThat(otherGlider.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, otherGlider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherGlider)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, otherGlider, Keyword.FLYING)).isFalse();
     }
 
@@ -92,8 +92,8 @@ class KavuGliderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(glider.getEffectivePower()).isEqualTo(2);
-        assertThat(glider.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, glider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, glider)).isEqualTo(3);
     }
 
     @Test
@@ -110,8 +110,8 @@ class KavuGliderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(glider.getEffectivePower()).isEqualTo(2);
-        assertThat(glider.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, glider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, glider)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, glider, Keyword.FLYING)).isTrue();
         assertThat(glider.isTapped()).isTrue();
     }

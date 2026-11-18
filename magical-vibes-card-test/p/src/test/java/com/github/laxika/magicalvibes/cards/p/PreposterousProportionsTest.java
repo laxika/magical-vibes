@@ -28,13 +28,13 @@ class PreposterousProportionsTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         Permanent ownCreature = findPermanent(player1, "Bear Cub");
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(12);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(12);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.VIGILANCE)).isTrue();
 
         Permanent opposingCreature = findPermanent(player2, "Bear Cub");
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -48,16 +48,16 @@ class PreposterousProportionsTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         Permanent creature = findPermanent(player1, "Bear Cub");
-        assertThat(creature.getEffectivePower()).isEqualTo(12);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(12);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -74,12 +74,12 @@ class PreposterousProportionsTest extends BaseCardTest {
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new BearCub());
 
         for (Permanent affected : List.of(original, beforeResolution)) {
-            assertThat(affected.getEffectivePower()).isEqualTo(12);
-            assertThat(affected.getEffectiveToughness()).isEqualTo(12);
+            assertThat(gqs.getEffectivePower(gd, affected)).isEqualTo(12);
+            assertThat(gqs.getEffectiveToughness(gd, affected)).isEqualTo(12);
             assertThat(gqs.hasKeyword(gd, affected, Keyword.VIGILANCE)).isTrue();
         }
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -94,8 +94,8 @@ class PreposterousProportionsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Preposterous Proportions");
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new BearCub());
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -111,6 +111,6 @@ class PreposterousProportionsTest extends BaseCardTest {
 
         assertThat(creature.isTapped()).isFalse();
         assertThat(creature.isAttacking()).isTrue();
-        assertThat(creature.getEffectivePower()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(12);
     }
 }

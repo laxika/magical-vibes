@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CabarettiInitiate;
 import com.github.laxika.magicalvibes.cards.m.MaskedBandits;
 import com.github.laxika.magicalvibes.cards.s.SlipOutTheBack;
@@ -28,8 +29,8 @@ class DealGoneBadTest extends BaseCardTest {
 
         cast(bear.getId(), player2.getId());
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySize - 3);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
     }
@@ -45,8 +46,8 @@ class DealGoneBadTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(5);
     }
 
     @Test
@@ -71,8 +72,8 @@ class DealGoneBadTest extends BaseCardTest {
 
         cast(creature.getId(), player1.getId());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second, third).hasSize(4);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(opponentLibrarySize);
@@ -88,7 +89,7 @@ class DealGoneBadTest extends BaseCardTest {
 
         cast(creature.getId(), player2.getId());
 
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first, second);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
@@ -101,8 +102,8 @@ class DealGoneBadTest extends BaseCardTest {
 
         cast(creature.getId(), player2.getId());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
@@ -151,8 +152,8 @@ class DealGoneBadTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySize - 3);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
     }

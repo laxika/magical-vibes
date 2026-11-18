@@ -23,8 +23,8 @@ class BlisteringDieflynTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dieflyn.getEffectivePower()).isEqualTo(1);
-        assertThat(dieflyn.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, dieflyn)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, dieflyn)).isEqualTo(1);
     }
 
     @Test
@@ -36,7 +36,7 @@ class BlisteringDieflynTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dieflyn.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, dieflyn)).isEqualTo(1);
     }
 
     @Test
@@ -60,8 +60,8 @@ class BlisteringDieflynTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dieflyn.getEffectivePower()).isEqualTo(2);
-        assertThat(dieflyn.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, dieflyn)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, dieflyn)).isEqualTo(1);
     }
 
     @Test
@@ -73,14 +73,14 @@ class BlisteringDieflynTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dieflyn.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, dieflyn)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dieflyn.getEffectivePower()).isEqualTo(0);
-        assertThat(dieflyn.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, dieflyn)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, dieflyn)).isEqualTo(1);
     }
 
     @Test
@@ -104,8 +104,8 @@ class BlisteringDieflynTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dieflyn.getEffectivePower()).isEqualTo(1);
-        assertThat(dieflyn.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, dieflyn)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, dieflyn)).isEqualTo(1);
         assertThat(dieflyn.isTapped()).isTrue();
     }
 
@@ -119,13 +119,13 @@ class BlisteringDieflynTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
 
-        assertThat(source.getEffectivePower()).isZero();
+        assertThat(gqs.getEffectivePower(gd, source)).isZero();
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(1);
-        assertThat(source.getEffectiveToughness()).isEqualTo(1);
-        assertThat(other.getEffectivePower()).isZero();
-        assertThat(opponent.getEffectivePower()).isZero();
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isZero();
+        assertThat(gqs.getEffectivePower(gd, opponent)).isZero();
     }
 
     @Test
@@ -140,8 +140,8 @@ class BlisteringDieflynTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(dieflyn.getEffectivePower()).isEqualTo(2);
-        assertThat(dieflyn.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, dieflyn)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, dieflyn)).isEqualTo(1);
         assertThat(dieflyn.isTapped()).isFalse();
     }
 }

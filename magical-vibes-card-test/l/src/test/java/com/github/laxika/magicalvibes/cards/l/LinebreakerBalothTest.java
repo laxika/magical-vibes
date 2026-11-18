@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ColossalGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -64,8 +65,8 @@ class LinebreakerBalothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(supporter.isTapped()).isTrue();
-        assertThat(baloth.getPowerModifier()).isEqualTo(2);
-        assertThat(baloth.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, baloth)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, baloth)).isZero();
     }
 
     @Test
@@ -78,7 +79,7 @@ class LinebreakerBalothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(supporter.isTapped()).isFalse();
-        assertThat(baloth.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, baloth)).isZero();
     }
 
     @Test
@@ -115,16 +116,16 @@ class LinebreakerBalothTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
             harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
-            assertThat(baloth.getPowerModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, baloth)).isZero();
             assertThat(gd.stack).hasSize(1);
             harness.castInstant(player1, 0, supporter.getId());
             harness.passBothPriorities();
-            assertThat(supporter.getPowerModifier()).isEqualTo(3);
+            assertThat(PermanentGrants.powerBoostOf(gd, supporter)).isEqualTo(3);
             harness.passBothPriorities();
         });
 
-        assertThat(baloth.getPowerModifier()).isEqualTo(7);
-        assertThat(baloth.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, baloth)).isEqualTo(7);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, baloth)).isZero();
     }
 
     @Test

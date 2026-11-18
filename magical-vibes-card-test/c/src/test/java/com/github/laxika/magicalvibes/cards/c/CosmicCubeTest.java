@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantOctopus;
@@ -122,7 +123,7 @@ class CosmicCubeTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(spell));
 
         declareAttackers(List.of(1));
-        attacker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, attacker, -1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
@@ -134,7 +135,7 @@ class CosmicCubeTest extends BaseCardTest {
         Card spell = new Ornithopter();
         harness.addToBattlefield(player1, new CosmicCube());
         var attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, attacker, -3);
         harness.setLibrary(player1, List.of(spell));
 
         declareAttackers(List.of(1));

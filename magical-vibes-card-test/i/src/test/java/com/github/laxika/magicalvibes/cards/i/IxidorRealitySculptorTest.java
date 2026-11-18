@@ -60,8 +60,8 @@ class IxidorRealitySculptorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isFaceDown()).isFalse();
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(ixidor.isTapped()).isFalse();
     }
 

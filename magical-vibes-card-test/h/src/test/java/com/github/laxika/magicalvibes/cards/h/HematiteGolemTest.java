@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,10 +24,10 @@ class HematiteGolemTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(golem.getEffectivePower()).isEqualTo(3);
-        assertThat(golem.getEffectiveToughness()).isEqualTo(4);
-        assertThat(golem.getPowerModifier()).isEqualTo(2);
-        assertThat(golem.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, golem)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, golem)).isEqualTo(0);
     }
 
     @Test
@@ -40,8 +41,8 @@ class HematiteGolemTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(golem.getPowerModifier()).isEqualTo(4);
-        assertThat(golem.getEffectivePower()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, golem)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(5);
     }
 
     @Test
@@ -56,8 +57,8 @@ class HematiteGolemTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(golem.getPowerModifier()).isEqualTo(0);
-        assertThat(golem.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, golem)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, golem)).isEqualTo(0);
     }
 
     @Test
@@ -92,11 +93,11 @@ class HematiteGolemTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(golem.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, golem)).isZero();
         harness.passBothPriorities();
 
-        assertThat(golem.getEffectivePower()).isEqualTo(3);
-        assertThat(golem.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(4);
         assertThat(golem.isTapped()).isTrue();
     }
 
@@ -111,8 +112,8 @@ class HematiteGolemTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(2);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(opposing.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isZero();
     }
 }

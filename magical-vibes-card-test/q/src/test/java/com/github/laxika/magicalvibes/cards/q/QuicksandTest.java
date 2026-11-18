@@ -55,10 +55,10 @@ class QuicksandTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Quicksand");
 
         // Attacker should have -1/-2
-        assertThat(attacker.getPowerModifier()).isEqualTo(-1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(-2);
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -102,8 +102,8 @@ class QuicksandTest extends BaseCardTest {
         attacker.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -121,8 +121,8 @@ class QuicksandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Quicksand");
-        assertThat(attacker.getPowerModifier()).isEqualTo(-1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(-2);
     }
 
     // ===== Target restrictions =====
@@ -161,8 +161,8 @@ class QuicksandTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Quicksand");
         harness.assertOnBattlefield(player2, "Hill Giant");
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -231,17 +231,17 @@ class QuicksandTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(-1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(-2);
 
         // Advance to cleanup
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(0);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
     }
 }

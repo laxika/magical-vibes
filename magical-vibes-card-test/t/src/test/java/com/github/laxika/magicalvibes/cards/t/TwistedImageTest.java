@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
@@ -73,7 +74,7 @@ class TwistedImageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         // Grizzly Bears is 2/2, give it +1/+0 to make it 3/2
-        bear.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, bear, 1);
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
 
@@ -93,7 +94,7 @@ class TwistedImageTest extends BaseCardTest {
     void switchWearsOffAtCleanup() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        bear.setPowerModifier(1); // Make it 3/2
+        PermanentGrants.setPowerBoost(gd, bear, 1); // Make it 3/2
 
         harness.setHand(player1, List.of(new TwistedImage()));
         harness.addMana(player1, ManaColor.BLUE, 1);

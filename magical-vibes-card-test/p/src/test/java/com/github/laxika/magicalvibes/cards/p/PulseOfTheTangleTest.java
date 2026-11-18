@@ -23,8 +23,8 @@ class PulseOfTheTangleTest extends BaseCardTest {
         PulseOfTheTangle pulse = cast();
 
         Permanent beast = findBeastToken();
-        assertThat(beast.getEffectivePower()).isEqualTo(3);
-        assertThat(beast.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(3);
         assertThat(beast.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(beast.getCard().getSubtypes()).containsExactly(CardSubtype.BEAST);
         assertThat(gd.playerHands.get(player1.getId())).contains(pulse);

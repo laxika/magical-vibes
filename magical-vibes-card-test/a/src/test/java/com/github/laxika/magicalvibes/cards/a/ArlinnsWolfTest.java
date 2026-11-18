@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -56,7 +57,7 @@ class ArlinnsWolfTest extends BaseCardTest {
     @DisplayName("Blocking restriction uses reduced current power, including zero and negative power")
     void cannotBeBlockedAfterPowerIsReduced(int powerModifier) {
         Permanent blocker = addCreatureReady(player2, new ArlinnsWolf());
-        blocker.setPowerModifier(powerModifier);
+        PermanentGrants.setPowerBoost(gd, blocker, powerModifier);
         Permanent wolf = addCreatureReady(player1, new ArlinnsWolf());
         wolf.setAttacking(true);
         prepareDeclareBlockers();
@@ -71,7 +72,7 @@ class ArlinnsWolfTest extends BaseCardTest {
     @DisplayName("A creature with printed power 2 can block after its power increases to 3")
     void canBeBlockedAfterPowerIsIncreased() {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, blocker, 1);
         Permanent wolf = addCreatureReady(player1, new ArlinnsWolf());
         wolf.setAttacking(true);
         prepareDeclareBlockers();

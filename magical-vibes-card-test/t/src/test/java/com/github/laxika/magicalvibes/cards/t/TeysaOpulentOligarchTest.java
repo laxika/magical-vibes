@@ -114,8 +114,8 @@ class TeysaOpulentOligarchTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Spirit")).hasSize(1);
         Permanent spirit = findPermanent(player1, "Spirit");
-        assertThat(spirit.getEffectivePower()).isEqualTo(1);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
         assertThat(spirit.getCard().getColors()).containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
         assertThat(spirit.getCard().getKeywords()).contains(Keyword.FLYING);
     }

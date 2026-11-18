@@ -29,8 +29,8 @@ class HuntingPackTest extends BaseCardTest {
         Permanent beast = tokens.getFirst();
         assertThat(beast.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(beast.getCard().getSubtypes()).containsExactly(CardSubtype.BEAST);
-        assertThat(beast.getEffectivePower()).isEqualTo(4);
-        assertThat(beast.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(4);
     }
 
     @Test

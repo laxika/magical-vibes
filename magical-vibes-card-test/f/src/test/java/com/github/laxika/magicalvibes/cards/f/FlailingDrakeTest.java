@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -36,10 +37,10 @@ class FlailingDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent boosted = findPermanent(player1, "Trained Armodon");
-        assertThat(boosted.getPowerModifier()).isEqualTo(1);
-        assertThat(boosted.getToughnessModifier()).isEqualTo(1);
-        assertThat(drake.getPowerModifier()).isZero();
-        assertThat(drake.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, boosted)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, boosted)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drake)).isZero();
     }
 
     @Test
@@ -60,12 +61,12 @@ class FlailingDrakeTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent boosted = findPermanent(player1, "Trained Armodon");
-        assertThat(boosted.getPowerModifier()).isEqualTo(2);
-        assertThat(boosted.getToughnessModifier()).isEqualTo(2);
-        assertThat(firstDrake.getPowerModifier()).isZero();
-        assertThat(firstDrake.getToughnessModifier()).isZero();
-        assertThat(secondDrake.getPowerModifier()).isZero();
-        assertThat(secondDrake.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, boosted)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, boosted)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstDrake)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstDrake)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, secondDrake)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondDrake)).isZero();
     }
 
     @Test
@@ -85,10 +86,10 @@ class FlailingDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent boosted = findPermanent(player2, "Wind Drake");
-        assertThat(boosted.getPowerModifier()).isEqualTo(1);
-        assertThat(boosted.getToughnessModifier()).isEqualTo(1);
-        assertThat(drake.getPowerModifier()).isZero();
-        assertThat(drake.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, boosted)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, boosted)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drake)).isZero();
     }
 
     @Test
@@ -113,9 +114,9 @@ class FlailingDrakeTest extends BaseCardTest {
 
         List<Permanent> blockers = findPermanents(player2, "Wind Drake");
         assertThat(blockers).hasSize(2);
-        assertThat(blockers).allMatch(p -> p.getPowerModifier() == 1 && p.getToughnessModifier() == 1);
-        assertThat(drake.getPowerModifier()).isZero();
-        assertThat(drake.getToughnessModifier()).isZero();
+        assertThat(blockers).allMatch(p -> PermanentGrants.powerBoostOf(gd, p) == 1 && PermanentGrants.toughnessBoostOf(gd, p) == 1);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drake)).isZero();
     }
 
     @Test
@@ -133,8 +134,8 @@ class FlailingDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent blocker = findPermanent(player2, "Wind Drake");
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
     }
 
     @Test
@@ -150,10 +151,10 @@ class FlailingDrakeTest extends BaseCardTest {
         assertThat(gd.stack).allMatch(StackEntry::isNonTargeting);
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
-        assertThat(blocker.getPowerModifier()).isEqualTo(1);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(1);
     }
 
     @Test
@@ -166,9 +167,9 @@ class FlailingDrakeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
-        assertThat(defender.getPowerModifier()).isZero();
-        assertThat(defender.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, defender)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, defender)).isZero();
     }
 }

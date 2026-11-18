@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -32,8 +33,8 @@ class FireGiantsFuryTest extends BaseCardTest {
         harness.castSorcery(player1, 0, giant.getId());
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(2);
-        assertThat(giant.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, giant, Keyword.TRAMPLE)).isTrue();
 
         giant.setAttacking(true);
@@ -64,8 +65,8 @@ class FireGiantsFuryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isZero();
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
         assertThat(gqs.hasKeyword(gd, giant, Keyword.TRAMPLE)).isFalse();
     }
 

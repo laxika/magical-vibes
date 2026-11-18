@@ -28,9 +28,7 @@ import java.util.UUID;
  * <p>The base-P/T set is registered as a layer-7b {@link FloatingContinuousEffect} carrying a
  * {@link SetBasePowerToughnessEffect} payload — the same shape the one-shot setter uses, so it
  * orders against other 7b setters by timestamp — but with
- * {@link Duration#UNTIL_CONTROLLERS_NEXT_UPKEEP} so it survives end-of-turn cleanup. The
- * legacy {@code basePowerToughnessOverriddenUntilEndOfTurn} fields are deliberately NOT written:
- * they are cleared during turn cleanup, which would end the effect a turn early.
+ * {@link Duration#UNTIL_CONTROLLERS_NEXT_UPKEEP} so it survives end-of-turn cleanup.
  */
 @Slf4j
 @Component

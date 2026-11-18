@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Disfigure;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -44,8 +45,8 @@ class YotianFrontlinerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ownCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(ownCreature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isEqualTo(1);
     }
 
     @Test
@@ -97,8 +98,8 @@ class YotianFrontlinerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(frontliner.getPowerModifier()).isZero();
-        assertThat(frontliner.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, frontliner)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, frontliner)).isZero();
     }
 
     @Test
@@ -166,10 +167,10 @@ class YotianFrontlinerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
         resolveAllTriggers();
 
-        assertThat(frontliner.getPowerModifier()).isZero();
-        assertThat(frontliner.getToughnessModifier()).isZero();
-        assertThat(otherCreature.getPowerModifier()).isZero();
-        assertThat(otherCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, frontliner)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, frontliner)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreature)).isZero();
     }
 
     @Test

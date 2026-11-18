@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.t.ThunderSpirit;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -28,8 +29,8 @@ class ChromiumTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(chromium.getPowerModifier()).isZero();
-        assertThat(chromium.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, chromium)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, chromium)).isZero();
     }
 
     @Test
@@ -46,8 +47,8 @@ class ChromiumTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(chromium.getPowerModifier()).isEqualTo(2);
-        assertThat(chromium.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, chromium)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, chromium)).isEqualTo(2);
     }
 
     @Test
@@ -66,8 +67,8 @@ class ChromiumTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(chromium.getPowerModifier()).isEqualTo(4);
-        assertThat(chromium.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, chromium)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, chromium)).isEqualTo(4);
     }
 
     @Test
@@ -84,15 +85,15 @@ class ChromiumTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(chromium.getPowerModifier()).isEqualTo(2);
-        assertThat(chromium.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, chromium)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, chromium)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(chromium.getPowerModifier()).isZero();
-        assertThat(chromium.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, chromium)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, chromium)).isZero();
     }
 
     @Test

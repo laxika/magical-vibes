@@ -38,16 +38,16 @@ class PrimarisEliminatorTest extends BaseCardTest {
 
         castPrimarisEliminator(1, player2.getId());
 
-        assertThat(targetCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(targetCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, targetCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, targetCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(targetCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(targetCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, targetCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, targetCreature)).isEqualTo(3);
     }
 
     @Test
@@ -77,8 +77,8 @@ class PrimarisEliminatorTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Primaris Eliminator");
         harness.assertInGraveyard(player1, "Primaris Eliminator");
-        assertThat(opponent.getEffectivePower()).isEqualTo(3);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(3);
     }
 
     @Test
@@ -91,8 +91,8 @@ class PrimarisEliminatorTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
         Permanent laterCreature = harness.enterBattlefieldAndReturn(player2, new HillGiant());
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(3);
     }
 
     @Test
@@ -104,8 +104,8 @@ class PrimarisEliminatorTest extends BaseCardTest {
         chooseModeAndTarget(1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Primaris Eliminator");
     }
 

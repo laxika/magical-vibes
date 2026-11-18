@@ -33,8 +33,8 @@ class GrahaTiaScionRebornTest extends BaseCardTest {
 
         Permanent hero = findPermanent(player1, "Hero");
         assertThat(hero.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(hero.getEffectivePower()).isEqualTo(4);
-        assertThat(hero.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(4);
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
     }
 

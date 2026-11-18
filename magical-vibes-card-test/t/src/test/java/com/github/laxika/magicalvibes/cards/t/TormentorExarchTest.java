@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -33,10 +34,10 @@ class TormentorExarchTest extends BaseCardTest {
             castWithBoostMode(targetId);
             harness.passBothPriorities(); // resolve ETB trigger
 
-            assertThat(bears.getPowerModifier()).isEqualTo(2);
-            assertThat(bears.getToughnessModifier()).isEqualTo(0);
-            assertThat(bears.getEffectivePower()).isEqualTo(4);
-            assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+            assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
+            assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         }
 
         @Test
@@ -64,10 +65,10 @@ class TormentorExarchTest extends BaseCardTest {
             castWithDebuffMode(targetId);
             harness.passBothPriorities(); // resolve ETB trigger
 
-            assertThat(giant.getPowerModifier()).isEqualTo(0);
-            assertThat(giant.getToughnessModifier()).isEqualTo(-2);
-            assertThat(giant.getEffectivePower()).isEqualTo(3);
-            assertThat(giant.getEffectiveToughness()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(0);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(-2);
+            assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
         }
 
         @Test
@@ -105,10 +106,10 @@ class TormentorExarchTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, exarch.getId());
         resolveAllTriggers();
 
-        assertThat(exarch.getPowerModifier()).isEqualTo(2);
-        assertThat(exarch.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, exarch)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, exarch)).isZero();
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(exarch.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, exarch)).isZero();
     }
 
     @Test
@@ -131,10 +132,10 @@ class TormentorExarchTest extends BaseCardTest {
         castWithDebuffMode(giant.getId());
         resolveAllTriggers();
 
-        assertThat(giant.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(-2);
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(giant.getToughnessModifier()).isZero();
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     private void chooseTriggeredMode(String mode) {

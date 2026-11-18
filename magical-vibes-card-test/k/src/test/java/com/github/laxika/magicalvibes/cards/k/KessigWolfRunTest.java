@@ -70,8 +70,8 @@ class KessigWolfRunTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.TRAMPLE);
     }
 
@@ -88,7 +88,7 @@ class KessigWolfRunTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.TRAMPLE);
     }
 

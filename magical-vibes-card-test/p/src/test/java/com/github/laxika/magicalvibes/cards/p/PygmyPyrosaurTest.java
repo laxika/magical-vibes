@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class PygmyPyrosaurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(pyrosaur.getPowerModifier()).isEqualTo(1);
-        assertThat(pyrosaur.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, pyrosaur)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pyrosaur)).isEqualTo(0);
     }
 
     @Test
@@ -42,8 +43,8 @@ class PygmyPyrosaurTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(pyrosaur.getPowerModifier()).isEqualTo(3);
-        assertThat(pyrosaur.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, pyrosaur)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pyrosaur)).isEqualTo(0);
     }
 
     @Test
@@ -55,14 +56,14 @@ class PygmyPyrosaurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(pyrosaur.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, pyrosaur)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(pyrosaur.getPowerModifier()).isEqualTo(0);
-        assertThat(pyrosaur.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, pyrosaur)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pyrosaur)).isEqualTo(0);
     }
 
     @Test
@@ -90,7 +91,7 @@ class PygmyPyrosaurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(pyrosaur.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, pyrosaur)).isEqualTo(1);
         assertThat(pyrosaur.isTapped()).isTrue();
     }
 
@@ -104,8 +105,8 @@ class PygmyPyrosaurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(pyrosaur.getPowerModifier()).isEqualTo(1);
-        assertThat(pyrosaur.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, pyrosaur)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pyrosaur)).isEqualTo(0);
         assertThat(pyrosaur.isTapped()).isFalse();
     }
 
@@ -120,7 +121,7 @@ class PygmyPyrosaurTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(pyrosaur.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, pyrosaur)).isEqualTo(0);
     }
 
     @Test
@@ -134,13 +135,13 @@ class PygmyPyrosaurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(pyrosaur.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, pyrosaur)).isEqualTo(0);
 
         resolveAllTriggers();
 
-        assertThat(pyrosaur.getPowerModifier()).isEqualTo(2);
-        assertThat(pyrosaur.getToughnessModifier()).isEqualTo(0);
-        assertThat(otherPyrosaur.getPowerModifier()).isEqualTo(0);
-        assertThat(otherPyrosaur.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, pyrosaur)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pyrosaur)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherPyrosaur)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherPyrosaur)).isEqualTo(0);
     }
 }

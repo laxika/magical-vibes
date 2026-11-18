@@ -32,8 +32,8 @@ class ChainbreakerTest extends BaseCardTest {
 
         Permanent chainbreaker = findPermanent(player1, "Chainbreaker");
         assertThat(chainbreaker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
-        assertThat(chainbreaker.getEffectivePower()).isEqualTo(1);
-        assertThat(chainbreaker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, chainbreaker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, chainbreaker)).isEqualTo(1);
     }
 
     @Test

@@ -26,8 +26,8 @@ class GoblinFireleaperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(fireleaper.getEffectivePower()).isEqualTo(2);
-        assertThat(fireleaper.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, fireleaper)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, fireleaper)).isEqualTo(1);
     }
 
     @Test

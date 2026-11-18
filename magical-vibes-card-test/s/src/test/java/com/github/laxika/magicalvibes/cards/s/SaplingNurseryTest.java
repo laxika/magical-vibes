@@ -43,8 +43,8 @@ class SaplingNurseryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent treefolk = findPermanent(player1, "Treefolk");
-        assertThat(treefolk.getEffectivePower()).isEqualTo(3);
-        assertThat(treefolk.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, treefolk)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, treefolk)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, treefolk, Keyword.REACH)).isTrue();
     }
 

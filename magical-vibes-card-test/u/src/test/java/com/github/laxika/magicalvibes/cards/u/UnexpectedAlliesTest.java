@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,8 +22,8 @@ class UnexpectedAlliesTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         cast(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_TEAM)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
     }
@@ -54,7 +55,7 @@ class UnexpectedAlliesTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_TEAM)).isFalse();
     }
 
@@ -81,7 +82,7 @@ class UnexpectedAlliesTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_TEAM)).isTrue();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -154,7 +155,7 @@ class UnexpectedAlliesTest extends BaseCardTest {
                 .hasSize(1)
                 .allMatch(card -> card instanceof GrizzlyBears);
         assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_TEAM)).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
     }
 
     private void cast(Permanent target) {

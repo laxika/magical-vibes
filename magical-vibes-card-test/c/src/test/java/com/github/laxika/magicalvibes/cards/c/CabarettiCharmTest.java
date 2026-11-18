@@ -83,17 +83,17 @@ class CabarettiCharmTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 1, null);
         harness.passBothPriorities();
 
-        assertThat(ownBear.getEffectivePower()).isEqualTo(3);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.TRAMPLE)).isTrue();
-        assertThat(opposingBear.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingBear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opposingBear, Keyword.TRAMPLE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ownBear.getEffectivePower()).isEqualTo(2);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -109,8 +109,8 @@ class CabarettiCharmTest extends BaseCardTest {
         List<Permanent> citizens = findPermanents(player1, "Citizen");
         assertThat(citizens).hasSize(2);
         assertThat(citizens).allSatisfy(citizen -> {
-            assertThat(citizen.getEffectivePower()).isEqualTo(1);
-            assertThat(citizen.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, citizen)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, citizen)).isEqualTo(1);
             assertThat(citizen.getCard().getColor()).isEqualTo(CardColor.GREEN);
             assertThat(citizen.getCard().getColors())
                     .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
@@ -171,16 +171,16 @@ class CabarettiCharmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(originalCitizens).allSatisfy(citizen -> {
-            assertThat(citizen.getEffectivePower()).isEqualTo(2);
-            assertThat(citizen.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, citizen)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, citizen)).isEqualTo(2);
             assertThat(gqs.hasKeyword(gd, citizen, Keyword.TRAMPLE)).isTrue();
         });
         List<Permanent> laterCitizens = findPermanents(player1, "Citizen").stream()
                 .filter(citizen -> !originalCitizens.contains(citizen))
                 .toList();
         assertThat(laterCitizens).hasSize(2).allSatisfy(citizen -> {
-            assertThat(citizen.getEffectivePower()).isEqualTo(1);
-            assertThat(citizen.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, citizen)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, citizen)).isEqualTo(1);
             assertThat(gqs.hasKeyword(gd, citizen, Keyword.TRAMPLE)).isFalse();
         });
     }

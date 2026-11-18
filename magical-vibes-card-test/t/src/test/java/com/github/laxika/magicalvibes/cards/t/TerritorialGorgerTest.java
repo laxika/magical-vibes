@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LiveFast;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -44,13 +45,13 @@ class TerritorialGorgerTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, List.of());
         resolveAllTriggers();
-        assertThat(gorger.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gorger)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(gorger.getPowerModifier()).isZero();
-        assertThat(gorger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gorger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gorger)).isZero();
     }
 
     @Test
@@ -64,13 +65,13 @@ class TerritorialGorgerTest extends BaseCardTest {
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
         assertThat(gd.stack).hasSize(1);
-        assertThat(gorger.getPowerModifier()).isZero();
-        assertThat(gorger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gorger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gorger)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(gorger.getPowerModifier()).isEqualTo(2);
-        assertThat(gorger.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gorger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gorger)).isEqualTo(2);
     }
 
     @Test
@@ -86,8 +87,8 @@ class TerritorialGorgerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(4);
-        assertThat(gorger.getPowerModifier()).isEqualTo(4);
-        assertThat(gorger.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, gorger)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gorger)).isEqualTo(4);
     }
 
     @Test
@@ -103,12 +104,12 @@ class TerritorialGorgerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isEqualTo(2);
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponent)).isZero();
     }
 
     @Test

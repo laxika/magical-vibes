@@ -43,8 +43,8 @@ class RecklessCrewTest extends BaseCardTest {
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.DWARF, CardSubtype.BERSERKER);
-            assertThat(token.getEffectivePower()).isEqualTo(2);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         });
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 

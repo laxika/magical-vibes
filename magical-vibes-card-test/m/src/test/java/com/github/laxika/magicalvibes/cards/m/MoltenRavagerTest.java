@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class MoltenRavagerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ravager.getPowerModifier()).isEqualTo(1);
-        assertThat(ravager.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ravager)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ravager)).isEqualTo(0);
     }
 
     @Test
@@ -35,12 +36,12 @@ class MoltenRavagerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(ravager.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ravager)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ravager.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, ravager)).isEqualTo(0);
     }
 
     @Test
@@ -53,21 +54,21 @@ class MoltenRavagerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
-        assertThat(ravager.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ravager)).isZero();
 
         harness.passBothPriorities();
-        assertThat(ravager.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ravager)).isEqualTo(1);
         harness.passBothPriorities();
 
-        assertThat(ravager.getPowerModifier()).isEqualTo(2);
-        assertThat(ravager.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ravager)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ravager)).isZero();
         assertThat(ravager.isTapped()).isFalse();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(opposing.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
-        assertThat(ravager.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ravager)).isZero();
     }
 
     @Test
@@ -81,8 +82,8 @@ class MoltenRavagerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ravager.getPowerModifier()).isEqualTo(1);
-        assertThat(ravager.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ravager)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ravager)).isZero();
         assertThat(ravager.isTapped()).isTrue();
     }
 
@@ -104,7 +105,7 @@ class MoltenRavagerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
-        assertThat(ravager.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ravager)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 

@@ -37,8 +37,8 @@ class MouthFeedTest extends BaseCardTest {
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Hippo"))
                 .findFirst()
                 .orElseThrow();
-        assertThat(hippo.getEffectivePower()).isEqualTo(3);
-        assertThat(hippo.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, hippo)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hippo)).isEqualTo(3);
         assertThat(hippo.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(hippo.getCard().getSubtypes()).contains(CardSubtype.HIPPO);
         harness.assertInGraveyard(player1, "Mouth // Feed");

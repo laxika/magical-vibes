@@ -32,8 +32,8 @@ class DragonshiftTest extends BaseCardTest {
 
         cast(angel.getId());
 
-        assertThat(angel.getEffectivePower()).isEqualTo(4);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
         assertThat(gqs.hasColor(gd, angel, CardColor.BLUE)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.RED)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isFalse();
@@ -97,7 +97,7 @@ class DragonshiftTest extends BaseCardTest {
         harness.castWithOverload(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasColor(gd, first, CardColor.BLUE)).isTrue();
         assertThat(gqs.hasColor(gd, first, CardColor.RED)).isTrue();
@@ -105,7 +105,7 @@ class DragonshiftTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, second, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
 
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
         assertThat(gd.floatingEffectsOnPermanent(theirs.getId(), GrantSubtypeEffect.class)).isEmpty();
     }
 

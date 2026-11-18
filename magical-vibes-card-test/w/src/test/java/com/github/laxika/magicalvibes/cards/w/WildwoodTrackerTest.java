@@ -29,8 +29,8 @@ class WildwoodTrackerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(tracker.getEffectivePower()).isEqualTo(2);
-        assertThat(tracker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(2);
     }
 
     @Test
@@ -42,8 +42,8 @@ class WildwoodTrackerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(tracker.getEffectivePower()).isEqualTo(1);
-        assertThat(tracker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(1);
     }
 
     @Test
@@ -60,8 +60,8 @@ class WildwoodTrackerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(tracker.getEffectivePower()).isEqualTo(2);
-        assertThat(tracker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(2);
     }
 
     @Test
@@ -76,8 +76,8 @@ class WildwoodTrackerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(tracker.getEffectivePower()).isEqualTo(1);
-        assertThat(tracker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(1);
     }
 
     @Test
@@ -88,8 +88,8 @@ class WildwoodTrackerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(tracker.getEffectivePower()).isEqualTo(1);
-        assertThat(tracker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(1);
     }
 
     @Test
@@ -105,8 +105,8 @@ class WildwoodTrackerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Gingerbrute");
         resolveAllTriggers();
 
-        assertThat(tracker.getEffectivePower()).isEqualTo(1);
-        assertThat(tracker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(1);
     }
 
     @Test
@@ -125,8 +125,8 @@ class WildwoodTrackerTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Gingerbrute");
         resolveAllTriggers();
 
-        assertThat(tracker.getEffectivePower()).isEqualTo(1);
-        assertThat(tracker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(1);
     }
 
     @Test
@@ -137,13 +137,13 @@ class WildwoodTrackerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
-        assertThat(tracker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(tracker.getEffectivePower()).isEqualTo(1);
-        assertThat(tracker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tracker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(1);
     }
 }

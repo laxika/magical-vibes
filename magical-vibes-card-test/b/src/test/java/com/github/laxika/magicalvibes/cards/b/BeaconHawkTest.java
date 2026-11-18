@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -76,14 +77,14 @@ class BeaconHawkTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hawk.getPowerModifier()).isEqualTo(0);
-        assertThat(hawk.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hawk)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hawk)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(hawk.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hawk)).isEqualTo(0);
     }
 
     @Test
@@ -112,9 +113,9 @@ class BeaconHawkTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(hawk.getPowerModifier()).isZero();
-        assertThat(hawk.getToughnessModifier()).isEqualTo(2);
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hawk)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hawk)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 
     @Test
@@ -128,8 +129,8 @@ class BeaconHawkTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hawk.getPowerModifier()).isZero();
-        assertThat(hawk.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hawk)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hawk)).isEqualTo(1);
         assertThat(hawk.isTapped()).isTrue();
     }
 

@@ -65,7 +65,7 @@ class NecromentiaTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .filteredOn(p -> p.getCard().isToken() && p.getCard().getName().equals("Zombie"))
                 .hasSize(2)
-                .allMatch(p -> p.getEffectivePower() == 2 && p.getEffectiveToughness() == 2);
+                .allMatch(p -> gqs.getEffectivePower(gd, p) == 2 && gqs.getEffectiveToughness(gd, p) == 2);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().isToken() && p.getCard().getName().equals("Zombie"));
     }

@@ -32,8 +32,8 @@ class FractalSummoningTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(fractal.getEffectivePower()).isEqualTo(3);
-        assertThat(fractal.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(3);
     }
 
     @Test
@@ -66,8 +66,8 @@ class FractalSummoningTest extends BaseCardTest {
             assertThat(fractal.getCard().getPower()).isZero();
             assertThat(fractal.getCard().getToughness()).isZero();
             assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-            assertThat(fractal.getEffectivePower()).isEqualTo(1);
-            assertThat(fractal.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(1);
         });
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
@@ -88,8 +88,8 @@ class FractalSummoningTest extends BaseCardTest {
                 .filteredOn(permanent -> !permanent.getId().equals(firstFractal.getId()))
                 .singleElement().satisfies(fractal -> {
                     assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-                    assertThat(fractal.getEffectivePower()).isEqualTo(3);
-                    assertThat(fractal.getEffectiveToughness()).isEqualTo(3);
+                    assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(3);
+                    assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(3);
                 });
     }
 }

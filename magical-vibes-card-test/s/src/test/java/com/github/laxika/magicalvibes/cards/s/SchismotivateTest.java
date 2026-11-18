@@ -27,10 +27,10 @@ class SchismotivateTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(boosted.getId(), weakened.getId()));
 
-        assertThat(boosted.getEffectivePower()).isEqualTo(6);
-        assertThat(boosted.getEffectiveToughness()).isEqualTo(2);
-        assertThat(weakened.getEffectivePower()).isEqualTo(-2);
-        assertThat(weakened.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, boosted)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, boosted)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, weakened)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, weakened)).isEqualTo(2);
     }
 
     @Test
@@ -41,15 +41,15 @@ class SchismotivateTest extends BaseCardTest {
         prepare();
 
         harness.castAndResolveInstant(player1, 0, List.of(boosted.getId(), weakened.getId()));
-        assertThat(boosted.getEffectivePower()).isEqualTo(6);
-        assertThat(weakened.getEffectivePower()).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, boosted)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, weakened)).isEqualTo(-2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(boosted.getEffectivePower()).isEqualTo(2);
-        assertThat(weakened.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, boosted)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, weakened)).isEqualTo(2);
     }
 
     @Test
@@ -63,7 +63,7 @@ class SchismotivateTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(boosted);
         harness.passBothPriorities();
 
-        assertThat(weakened.getEffectivePower()).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, weakened)).isEqualTo(-2);
     }
 
     @Test
@@ -100,8 +100,8 @@ class SchismotivateTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(weakened);
         harness.passBothPriorities();
 
-        assertThat(boosted.getEffectivePower()).isEqualTo(6);
-        assertThat(boosted.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, boosted)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, boosted)).isEqualTo(2);
     }
 
     @Test
@@ -116,8 +116,8 @@ class SchismotivateTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(weakened);
         harness.passBothPriorities();
 
-        assertThat(boosted.getEffectivePower()).isEqualTo(2);
-        assertThat(weakened.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, boosted)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, weakened)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Schismotivate");
     }

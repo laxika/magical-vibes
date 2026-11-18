@@ -25,8 +25,8 @@ class FearlessFledglingTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(fledgling.getEffectivePower()).isEqualTo(2);
-        assertThat(fledgling.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, fledgling)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, fledgling)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, fledgling, Keyword.FLYING)).isTrue();
     }
 
@@ -41,8 +41,8 @@ class FearlessFledglingTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(fledgling.getEffectivePower()).isEqualTo(2);
-        assertThat(fledgling.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, fledgling)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, fledgling)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, fledgling, Keyword.FLYING)).isFalse();
     }
 
@@ -56,8 +56,8 @@ class FearlessFledglingTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(fledgling.getEffectivePower()).isEqualTo(1);
-        assertThat(fledgling.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, fledgling)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, fledgling)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, fledgling, Keyword.FLYING)).isFalse();
     }
 
@@ -83,8 +83,8 @@ class FearlessFledglingTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(fledgling.getCounters().get(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(fledgling.getEffectivePower()).isEqualTo(3);
-        assertThat(fledgling.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, fledgling)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, fledgling)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, fledgling, Keyword.FLYING)).isTrue();
     }
 

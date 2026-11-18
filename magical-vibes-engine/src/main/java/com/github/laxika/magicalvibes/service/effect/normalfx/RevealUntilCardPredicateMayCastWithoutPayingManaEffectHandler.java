@@ -95,7 +95,7 @@ public class RevealUntilCardPredicateMayCastWithoutPayingManaEffectHandler
                 foundCard, typedEffect.castPredicate(), entry.getCard().getId(), gameData,
                 controllerId, entry.getSourcePermanentId(),
                 entry.getSourcePermanentSnapshot() == null
-                        ? null : entry.getSourcePermanentSnapshot().getEffectivePower())) {
+                        ? null : gameQueryService.ownPower(gameData, entry.getSourcePermanentSnapshot()))) {
             Collections.shuffle(revealedCards);
             deck.addAll(revealedCards);
             gameLogService.append(gameData, GameLog.text(
@@ -220,6 +220,6 @@ public class RevealUntilCardPredicateMayCastWithoutPayingManaEffectHandler
             return gameQueryService.getEffectivePower(gameData, source);
         }
         return entry.getSourcePermanentSnapshot() == null
-                ? null : entry.getSourcePermanentSnapshot().getEffectivePower();
+                ? null : gameQueryService.ownPower(gameData, entry.getSourcePermanentSnapshot());
     }
 }

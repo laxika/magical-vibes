@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -78,15 +79,15 @@ class ShadeOfTrokairTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(permanent.getPowerModifier()).isEqualTo(1);
-        assertThat(permanent.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(permanent.getPowerModifier()).isZero();
-        assertThat(permanent.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isZero();
     }
 
     @Test
@@ -116,8 +117,8 @@ class ShadeOfTrokairTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(permanent.getPowerModifier()).isEqualTo(2);
-        assertThat(permanent.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
     }
 

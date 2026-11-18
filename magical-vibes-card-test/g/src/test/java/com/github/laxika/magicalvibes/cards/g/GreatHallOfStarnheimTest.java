@@ -50,8 +50,8 @@ class GreatHallOfStarnheimTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Fearless Pup");
 
         Permanent token = findPermanent(player1, "Angel Warrior");
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(token.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.ANGEL, CardSubtype.WARRIOR);
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING, Keyword.VIGILANCE);

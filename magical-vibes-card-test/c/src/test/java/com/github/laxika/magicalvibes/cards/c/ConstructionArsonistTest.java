@@ -53,15 +53,15 @@ class ConstructionArsonistTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(arsonist.getEffectivePower()).isEqualTo(5);
-        assertThat(arsonist.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, arsonist)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, arsonist)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(arsonist.getEffectivePower()).isEqualTo(2);
-        assertThat(arsonist.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, arsonist)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, arsonist)).isEqualTo(2);
     }
 
     @Test
@@ -72,7 +72,7 @@ class ConstructionArsonistTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        assertThat(arsonist.getEffectivePower()).isEqualTo(2);
-        assertThat(arsonist.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, arsonist)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, arsonist)).isEqualTo(2);
     }
 }

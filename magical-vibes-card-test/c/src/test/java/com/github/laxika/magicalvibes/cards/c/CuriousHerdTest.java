@@ -30,8 +30,8 @@ class CuriousHerdTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Beast")).hasSize(2);
         assertThat(findPermanents(player1, "Beast"))
                 .allSatisfy(beast -> {
-                    assertThat(beast.getEffectivePower()).isEqualTo(3);
-                    assertThat(beast.getEffectiveToughness()).isEqualTo(3);
+                    assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(3);
+                    assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(3);
                 });
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.s.SengirBats;
 import com.github.laxika.magicalvibes.cards.w.WillowFaerie;
@@ -28,8 +29,8 @@ class RashkaTheSlayerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(rashka.getPowerModifier()).isEqualTo(1);
-        assertThat(rashka.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, rashka)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rashka)).isEqualTo(2);
     }
 
     @Test
@@ -41,8 +42,8 @@ class RashkaTheSlayerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(rashka.getPowerModifier()).isZero();
-        assertThat(rashka.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rashka)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rashka)).isZero();
     }
 
     @Test
@@ -54,8 +55,8 @@ class RashkaTheSlayerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(rashka.getPowerModifier()).isZero();
-        assertThat(rashka.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rashka)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rashka)).isZero();
     }
 
     @Test
@@ -72,8 +73,8 @@ class RashkaTheSlayerTest extends BaseCardTest {
                 new BlockerAssignment(rashkaIndex, 1)));
         resolveAllTriggers();
 
-        assertThat(rashka.getPowerModifier()).isEqualTo(1);
-        assertThat(rashka.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, rashka)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rashka)).isEqualTo(2);
     }
 
     @ParameterizedTest
@@ -91,8 +92,8 @@ class RashkaTheSlayerTest extends BaseCardTest {
                 new BlockerAssignment(rashkaIndex, blackFirst ? 0 : 1)));
         resolveAllTriggers();
 
-        assertThat(rashka.getPowerModifier()).isEqualTo(1);
-        assertThat(rashka.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, rashka)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rashka)).isEqualTo(2);
     }
 
     @Test
@@ -106,8 +107,8 @@ class RashkaTheSlayerTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToHand(gd, attacker);
         resolveAllTriggers();
 
-        assertThat(rashka.getPowerModifier()).isEqualTo(1);
-        assertThat(rashka.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, rashka)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rashka)).isEqualTo(2);
     }
 
     @Test
@@ -123,7 +124,7 @@ class RashkaTheSlayerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(rashka.getPowerModifier()).isZero();
-        assertThat(rashka.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rashka)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rashka)).isZero();
     }
 }

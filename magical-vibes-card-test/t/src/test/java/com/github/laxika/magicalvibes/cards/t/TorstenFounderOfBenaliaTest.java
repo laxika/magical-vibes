@@ -66,8 +66,8 @@ class TorstenFounderOfBenaliaTest extends BaseCardTest {
         assertThat(soldiers).hasSize(7);
         assertThat(soldiers).allSatisfy(soldier -> {
             assertThat(soldier.getCard().isToken()).isTrue();
-            assertThat(soldier.getEffectivePower()).isEqualTo(1);
-            assertThat(soldier.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
         });
     }
 

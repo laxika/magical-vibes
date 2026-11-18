@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FrogButler;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -68,9 +69,9 @@ class WingnutBatOnTheBelfryTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(wingnut.getPowerModifier()).isZero();
-        assertThat(otherAttacker.getPowerModifier()).isEqualTo(1);
-        assertThat(stayHome.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wingnut)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAttacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, stayHome)).isZero();
     }
 
     @Test
@@ -128,13 +129,13 @@ class WingnutBatOnTheBelfryTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
-        assertThat(otherAttacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAttacker)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(otherAttacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAttacker)).isZero();
     }
 
     private void castFrogButler() {

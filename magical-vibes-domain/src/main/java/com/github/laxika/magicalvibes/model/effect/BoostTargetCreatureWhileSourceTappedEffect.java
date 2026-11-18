@@ -15,7 +15,7 @@ import java.util.Set;
  * tapped, and the effect is expired the moment the source becomes untapped or leaves the battlefield
  * (CR 611.2b — it does not resume if the source is tapped again).
  *
- * <p>The wrapped floating effect reuses {@link BuffTargetCreatureIndefinitelyEffect}, which the CR
+ * <p>The wrapped floating effect reuses {@link PowerToughnessBoostEffect}, which the CR
  * 613 layer reader already applies in sublayer 7c; only the floating effect's duration/source differ.
  */
 public record BoostTargetCreatureWhileSourceTappedEffect(int power, int toughness,

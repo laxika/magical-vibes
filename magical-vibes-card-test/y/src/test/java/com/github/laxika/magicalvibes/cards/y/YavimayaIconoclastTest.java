@@ -24,8 +24,8 @@ class YavimayaIconoclastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent iconoclast = findPermanent();
-        assertThat(iconoclast.getEffectivePower()).isEqualTo(3);
-        assertThat(iconoclast.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, iconoclast)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, iconoclast)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, iconoclast, Keyword.HASTE)).isFalse();
     }
 
@@ -39,16 +39,16 @@ class YavimayaIconoclastTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent iconoclast = findPermanent();
-        assertThat(iconoclast.getEffectivePower()).isEqualTo(4);
-        assertThat(iconoclast.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, iconoclast)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, iconoclast)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, iconoclast, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(iconoclast.getEffectivePower()).isEqualTo(3);
-        assertThat(iconoclast.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, iconoclast)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, iconoclast)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, iconoclast, Keyword.HASTE)).isFalse();
     }
 
@@ -66,19 +66,19 @@ class YavimayaIconoclastTest extends BaseCardTest {
         Permanent kicked = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> !permanent.getId().equals(other.getId()))
                 .findFirst().orElseThrow();
-        assertThat(kicked.getEffectivePower()).isEqualTo(3);
-        assertThat(kicked.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, kicked)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, kicked)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, kicked, Keyword.HASTE)).isFalse();
         assertThat(gd.stack).hasSize(1);
 
         resolveAllTriggers();
 
-        assertThat(kicked.getEffectivePower()).isEqualTo(4);
-        assertThat(kicked.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, kicked)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, kicked)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, kicked, Keyword.HASTE)).isTrue();
         for (Permanent unaffected : List.of(other, opponent)) {
-            assertThat(unaffected.getEffectivePower()).isEqualTo(3);
-            assertThat(unaffected.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, unaffected)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, unaffected)).isEqualTo(2);
             assertThat(gqs.hasKeyword(gd, unaffected, Keyword.HASTE)).isFalse();
         }
     }

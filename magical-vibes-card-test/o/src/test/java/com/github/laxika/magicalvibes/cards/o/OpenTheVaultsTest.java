@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.g.GlazeFiend;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
@@ -228,8 +229,8 @@ class OpenTheVaultsTest extends BaseCardTest {
                 .filteredOn(p -> p.getCard().getId().equals(fiend.getId()))
                 .singleElement()
                 .satisfies(p -> {
-                    assertThat(p.getPowerModifier()).isEqualTo(2);
-                    assertThat(p.getToughnessModifier()).isEqualTo(2);
+                    assertThat(PermanentGrants.powerBoostOf(gd, p)).isEqualTo(2);
+                    assertThat(PermanentGrants.toughnessBoostOf(gd, p)).isEqualTo(2);
                 });
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(artifact, fiend);
     }

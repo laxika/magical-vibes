@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,15 +26,15 @@ class JoustingDummyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dummy.getPowerModifier()).isEqualTo(2);
-        assertThat(dummy.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dummy)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dummy)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dummy.getPowerModifier()).isZero();
-        assertThat(dummy.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dummy)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dummy)).isZero();
     }
 
     @Test
@@ -47,14 +48,14 @@ class JoustingDummyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isZero();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
         assertThat(source.isTapped()).isFalse();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -72,8 +73,8 @@ class JoustingDummyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dummy.getPowerModifier()).isEqualTo(1);
-        assertThat(dummy.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dummy)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dummy)).isZero();
         assertThat(dummy.isTapped()).isTrue();
     }
 
@@ -88,6 +89,6 @@ class JoustingDummyTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(dummy.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dummy)).isZero();
     }
 }

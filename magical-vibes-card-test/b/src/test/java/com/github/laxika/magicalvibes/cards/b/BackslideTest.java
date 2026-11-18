@@ -29,8 +29,8 @@ class BackslideTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, healer.getId());
 
         assertThat(healer.isFaceDown()).isTrue();
-        assertThat(healer.getEffectivePower()).isEqualTo(2);
-        assertThat(healer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, healer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, healer)).isEqualTo(2);
     }
 
     @Test

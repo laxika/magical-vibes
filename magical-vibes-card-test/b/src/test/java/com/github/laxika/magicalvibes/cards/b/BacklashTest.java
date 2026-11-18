@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.k.KavuAggressor;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -108,7 +109,7 @@ class BacklashTest extends BaseCardTest {
     @DisplayName("Backlash taps a creature with zero power without dealing damage")
     void zeroPowerCreatureStillTapped() {
         Permanent kavu = harness.addToBattlefieldAndReturn(player2, new KavuAggressor());
-        kavu.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, kavu, -3);
 
         harness.setHand(player1, List.of(new Backlash()));
         addBacklashMana();
@@ -123,7 +124,7 @@ class BacklashTest extends BaseCardTest {
     @DisplayName("Backlash taps a creature with negative power without gaining its controller life")
     void negativePowerCreatureDoesNotGainLife() {
         Permanent kavu = harness.addToBattlefieldAndReturn(player2, new KavuAggressor());
-        kavu.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, kavu, -4);
 
         harness.setHand(player1, List.of(new Backlash()));
         addBacklashMana();

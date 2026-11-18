@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BreakOpen;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -59,12 +60,12 @@ class ShorecrasherElementalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, 0, null);
         harness.passBothPriorities();
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(1);
-        assertThat(elemental.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isEqualTo(-1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(elemental.getPowerModifier()).isZero();
-        assertThat(elemental.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isZero();
     }
 
     @Test
@@ -75,12 +76,12 @@ class ShorecrasherElementalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, 1, null);
         harness.passBothPriorities();
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(-1);
-        assertThat(elemental.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(elemental.getPowerModifier()).isZero();
-        assertThat(elemental.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elemental)).isZero();
     }
 
     @Test

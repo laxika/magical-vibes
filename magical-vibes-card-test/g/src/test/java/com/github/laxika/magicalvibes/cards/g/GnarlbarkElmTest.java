@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -46,8 +47,8 @@ class GnarlbarkElmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(elm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
     }
 
     @Test
@@ -65,8 +66,8 @@ class GnarlbarkElmTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -126,10 +127,10 @@ class GnarlbarkElmTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, elm.getId());
 
         assertThat(elm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(elm.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elm)).isZero();
         harness.passBothPriorities();
-        assertThat(elm.getPowerModifier()).isEqualTo(-2);
-        assertThat(elm.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, elm)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elm)).isEqualTo(-2);
     }
 
     @Test
@@ -146,8 +147,8 @@ class GnarlbarkElmTest extends BaseCardTest {
         assertThat(elm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(elm.getCounterCount(CounterType.STUN)).isZero();
         harness.passBothPriorities();
-        assertThat(elm.getPowerModifier()).isEqualTo(-2);
-        assertThat(elm.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, elm)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elm)).isEqualTo(-2);
     }
 
     @Test
@@ -160,10 +161,10 @@ class GnarlbarkElmTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, elm.getId());
 
         assertThat(elm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(elm.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elm)).isZero();
         harness.passBothPriorities();
-        assertThat(elm.getPowerModifier()).isEqualTo(-2);
-        assertThat(elm.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, elm)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elm)).isEqualTo(-2);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(elm);
     }
 

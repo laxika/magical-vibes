@@ -67,7 +67,7 @@ class LostInMemoriesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castAndResolveFlashback(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(spell);
     }
 

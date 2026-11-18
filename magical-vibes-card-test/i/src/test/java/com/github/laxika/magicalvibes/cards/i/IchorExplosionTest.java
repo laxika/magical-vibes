@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -39,8 +40,8 @@ class IchorExplosionTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
 
         // Air Elemental (4/4) gets -2/-2, becoming effectively 2/2
-        assertThat(survivor.getPowerModifier()).isEqualTo(-2);
-        assertThat(survivor.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isEqualTo(-2);
     }
 
     @Test
@@ -58,10 +59,10 @@ class IchorExplosionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both surviving creatures get -1/-1
-        assertThat(target1.getPowerModifier()).isEqualTo(-1);
-        assertThat(target1.getToughnessModifier()).isEqualTo(-1);
-        assertThat(target2.getPowerModifier()).isEqualTo(-1);
-        assertThat(target2.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target1)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target1)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target2)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target2)).isEqualTo(-1);
     }
 
     @Test
@@ -79,8 +80,8 @@ class IchorExplosionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears had effective power 5, so all creatures get -5/-5
-        assertThat(survivor.getPowerModifier()).isEqualTo(-5);
-        assertThat(survivor.getToughnessModifier()).isEqualTo(-5);
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isEqualTo(-5);
     }
 
     @Test
@@ -132,7 +133,7 @@ class IchorExplosionTest extends BaseCardTest {
     @DisplayName("Zero-power sacrifice still pays the cost but does not weaken creatures")
     void zeroPowerSacrificeDoesNotWeakenCreatures() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        sacrifice.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, sacrifice, -2);
         Permanent survivor = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.setHand(player1, List.of(new IchorExplosion()));
         harness.addMana(player1, ManaColor.BLACK, 7);
@@ -142,15 +143,15 @@ class IchorExplosionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Air Elemental");
-        assertThat(survivor.getPowerModifier()).isZero();
-        assertThat(survivor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isZero();
     }
 
     @Test
     @DisplayName("Negative-power sacrifice does not give creatures a positive boost")
     void negativePowerSacrificeDoesNotBoostCreatures() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        sacrifice.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, sacrifice, -3);
         Permanent survivor = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.setHand(player1, List.of(new IchorExplosion()));
         harness.addMana(player1, ManaColor.BLACK, 7);
@@ -159,8 +160,8 @@ class IchorExplosionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(survivor.getPowerModifier()).isZero();
-        assertThat(survivor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isZero();
     }
 
     @Test
@@ -193,15 +194,15 @@ class IchorExplosionTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(survivor.getPowerModifier()).isEqualTo(-2);
-        assertThat(survivor.getToughnessModifier()).isEqualTo(-2);
-        assertThat(newcomer.getPowerModifier()).isZero();
-        assertThat(newcomer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, newcomer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, newcomer)).isZero();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(survivor.getPowerModifier()).isZero();
-        assertThat(survivor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isZero();
     }
 }

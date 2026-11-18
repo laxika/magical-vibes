@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.GameData;
@@ -56,7 +57,7 @@ class HexParasiteTest extends BaseCardTest {
         // Target should have 1 +1/+1 counter left (3 - 2)
         assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         // Hex Parasite gets +2/+0 (power modifier)
-        assertThat(hexPerm.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, hexPerm)).isEqualTo(2);
     }
 
     @Test
@@ -73,7 +74,7 @@ class HexParasiteTest extends BaseCardTest {
         // Target should have 1 charge counter left (4 - 3)
         assertThat(targetPerm.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
         // Hex Parasite gets +3/+0
-        assertThat(hexPerm.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, hexPerm)).isEqualTo(3);
     }
 
     @Test
@@ -90,7 +91,7 @@ class HexParasiteTest extends BaseCardTest {
         // Target had only 2 +1/+1 counters, all removed
         assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         // Hex Parasite only gets +2/+0 (not +5)
-        assertThat(hexPerm.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, hexPerm)).isEqualTo(2);
     }
 
     @Test
@@ -110,7 +111,7 @@ class HexParasiteTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNotNull();
         assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(targetPerm.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
-        assertThat(hexPerm.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hexPerm)).isZero();
     }
 
     @Test
@@ -125,7 +126,7 @@ class HexParasiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No counters to remove, no boost
-        assertThat(hexPerm.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, hexPerm)).isEqualTo(0);
     }
 
     @Test
@@ -140,7 +141,7 @@ class HexParasiteTest extends BaseCardTest {
 
         // No counters removed with X=0
         assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(hexPerm.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, hexPerm)).isEqualTo(0);
     }
 
     @Test
@@ -159,7 +160,7 @@ class HexParasiteTest extends BaseCardTest {
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(18);
         // Counters removed and boost applied
         assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(hexPerm.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, hexPerm)).isEqualTo(2);
     }
 
     @Test
@@ -175,7 +176,7 @@ class HexParasiteTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 1);
 
         assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(hexPerm.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hexPerm)).isEqualTo(1);
 
         // Second activation: X=1
         harness.activateAbility(player1, 0, 1, targetPerm.getId());
@@ -183,7 +184,7 @@ class HexParasiteTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 1);
 
         assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(hexPerm.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, hexPerm)).isEqualTo(2);
     }
 
     @Test
@@ -204,7 +205,7 @@ class HexParasiteTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // No boost since it fizzled
-        assertThat(hexPerm.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, hexPerm)).isEqualTo(0);
     }
 
     @Test
@@ -220,7 +221,7 @@ class HexParasiteTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 0);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
     }
 
     @ParameterizedTest
@@ -238,7 +239,7 @@ class HexParasiteTest extends BaseCardTest {
         }
 
         assertThat(target.getCounterCount(counterType)).isZero();
-        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
     }
 
     @Test
@@ -264,13 +265,13 @@ class HexParasiteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, target.getId());
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 2);
-        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -286,7 +287,7 @@ class HexParasiteTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 2);
 
         assertThat(source.getCounterCount(CounterType.CHARGE)).isZero();
-        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
         assertThat(source.isTapped()).isFalse();
     }
 

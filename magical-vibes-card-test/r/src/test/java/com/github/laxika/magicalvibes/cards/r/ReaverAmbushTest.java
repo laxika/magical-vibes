@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FrilledDeathspitter;
 import com.github.laxika.magicalvibes.cards.m.MomentOfTriumph;
 import com.github.laxika.magicalvibes.cards.s.SunSentinel;
@@ -139,7 +140,7 @@ class ReaverAmbushTest extends BaseCardTest {
     @DisplayName("Can exile a creature with negative power")
     void exilesCreatureWithNegativePower() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SunSentinel());
-        target.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, target, -3);
         giveReaverAmbush();
 
         harness.castAndResolveInstant(player1, 0, target.getId());

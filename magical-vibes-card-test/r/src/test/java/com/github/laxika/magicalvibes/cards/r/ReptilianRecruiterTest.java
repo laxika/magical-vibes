@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BakersbaneDuo;
 import com.github.laxika.magicalvibes.cards.k.KindlesparkDuo;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -100,7 +101,7 @@ class ReptilianRecruiterTest extends BaseCardTest {
         target.tap();
 
         castRecruiter(target.getId());
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
@@ -115,7 +116,7 @@ class ReptilianRecruiterTest extends BaseCardTest {
         target.tap();
 
         castRecruiter(target.getId());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);

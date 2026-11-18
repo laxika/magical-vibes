@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,10 +25,10 @@ class MetropolisSpriteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sprite.getPowerModifier()).isEqualTo(1);
-        assertThat(sprite.getToughnessModifier()).isEqualTo(-1);
-        assertThat(sprite.getEffectivePower()).isEqualTo(2);
-        assertThat(sprite.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, sprite)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sprite)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, sprite)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sprite)).isEqualTo(1);
     }
 
     @Test
@@ -38,14 +39,14 @@ class MetropolisSpriteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(sprite.getPowerModifier()).isEqualTo(1);
-        assertThat(sprite.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, sprite)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sprite)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(sprite.getPowerModifier()).isEqualTo(0);
-        assertThat(sprite.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, sprite)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sprite)).isEqualTo(0);
     }
 
     @Test
@@ -68,13 +69,13 @@ class MetropolisSpriteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(sprite.getEffectivePower()).isEqualTo(1);
-        assertThat(sprite.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, sprite)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, sprite)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(sprite.getEffectivePower()).isEqualTo(2);
-        assertThat(sprite.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sprite)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sprite)).isEqualTo(1);
         assertThat(sprite.isTapped()).isTrue();
     }
 
@@ -90,16 +91,16 @@ class MetropolisSpriteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.passBothPriorities();
-        assertThat(sprite.getEffectivePower()).isEqualTo(2);
-        assertThat(sprite.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sprite)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sprite)).isEqualTo(1);
 
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(other);
         harness.assertInGraveyard(player1, "Metropolis Sprite");
 
         harness.passBothPriorities();
-        assertThat(other.getEffectivePower()).isEqualTo(1);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 

@@ -26,8 +26,8 @@ class CatacombSifterTest extends BaseCardTest {
         Permanent scion = findPermanent(player1, "Eldrazi Scion");
         assertThat(scion.getCard().isToken()).isTrue();
         assertThat(scion.getCard().getSubtypes()).containsExactly(CardSubtype.ELDRAZI, CardSubtype.SCION);
-        assertThat(scion.getEffectivePower()).isEqualTo(1);
-        assertThat(scion.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, scion)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, scion)).isEqualTo(1);
     }
 
     @Test

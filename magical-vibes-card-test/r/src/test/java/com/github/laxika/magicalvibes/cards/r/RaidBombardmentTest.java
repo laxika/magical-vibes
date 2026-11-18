@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EnclaveCryptologist;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.k.KozileksPredator;
@@ -127,7 +128,7 @@ class RaidBombardmentTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new RaidBombardment());
         Permanent attacker = addCreatureReady(player1, new EnclaveCryptologist());
-        attacker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, attacker, -1);
 
         declareAttackers(List.of(1));
 

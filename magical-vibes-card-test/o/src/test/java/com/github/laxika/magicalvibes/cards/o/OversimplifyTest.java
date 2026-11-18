@@ -35,8 +35,8 @@ class OversimplifyTest extends BaseCardTest {
         Permanent playerTwoFractal = findPermanent(player2, "Fractal");
         assertThat(playerOneFractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
         assertThat(playerTwoFractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(playerOneFractal.getEffectivePower()).isEqualTo(6);
-        assertThat(playerTwoFractal.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, playerOneFractal)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, playerTwoFractal)).isEqualTo(2);
     }
 
     @Test

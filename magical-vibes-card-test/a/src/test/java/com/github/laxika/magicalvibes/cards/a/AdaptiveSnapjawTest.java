@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.r.RuinationWurm;
@@ -55,7 +56,7 @@ class AdaptiveSnapjawTest extends BaseCardTest {
     @DisplayName("Evolve triggers for greater power with equal toughness")
     void evolvesForGreaterPowerOnly() {
         Permanent snapjaw = harness.addToBattlefieldAndReturn(player1, new AdaptiveSnapjaw());
-        snapjaw.setToughnessModifier(4);
+        PermanentGrants.setToughnessBoost(gd, snapjaw, 4);
 
         harness.castFromHand(player1, new RuinationWurm(), "{4}{R}{G}");
         harness.passBothPriorities();
@@ -84,7 +85,7 @@ class AdaptiveSnapjawTest extends BaseCardTest {
     @DisplayName("Evolve uses the entering creature's power just before it leaves")
     void usesLastKnownPowerWhenEnteringCreatureLeaves() {
         Permanent snapjaw = harness.addToBattlefieldAndReturn(player1, new AdaptiveSnapjaw());
-        snapjaw.setToughnessModifier(4);
+        PermanentGrants.setToughnessBoost(gd, snapjaw, 4);
 
         harness.castFromHand(player1, new RuinationWurm(), "{4}{R}{G}");
         harness.passBothPriorities();
@@ -92,7 +93,7 @@ class AdaptiveSnapjawTest extends BaseCardTest {
         Permanent wurm = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof RuinationWurm)
                 .findFirst().orElseThrow();
-        wurm.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, wurm, -2);
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, wurm));
         harness.passBothPriorities();
 

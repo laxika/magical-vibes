@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -43,8 +44,8 @@ class BattlesongBerserkerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
     }
 
@@ -62,7 +63,7 @@ class BattlesongBerserkerTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isFalse();
     }
 
@@ -80,9 +81,9 @@ class BattlesongBerserkerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, berserker.getId());
         harness.passBothPriorities();
 
-        assertThat(berserker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, berserker, Keyword.MENACE)).isTrue();
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.MENACE)).isFalse();
     }
 
@@ -101,7 +102,7 @@ class BattlesongBerserkerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(firstAttacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstAttacker)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, firstAttacker, Keyword.MENACE)).isTrue();
     }
 
@@ -114,7 +115,7 @@ class BattlesongBerserkerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, berserker.getId());
         harness.passBothPriorities();
 
-        assertThat(berserker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, berserker, Keyword.MENACE)).isTrue();
     }
 
@@ -129,7 +130,7 @@ class BattlesongBerserkerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(berserker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isZero();
         assertThat(gqs.hasKeyword(gd, berserker, Keyword.MENACE)).isFalse();
     }
 

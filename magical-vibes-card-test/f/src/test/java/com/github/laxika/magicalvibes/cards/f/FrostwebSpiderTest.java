@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BorealCentaur;
 import com.github.laxika.magicalvibes.cards.b.BorealGriffin;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -24,7 +25,7 @@ class FrostwebSpiderTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BorealGriffin());
         attacker.setAttacking(true);
         Permanent spider = addCreatureReady(player2, new FrostwebSpider());
-        spider.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, spider, 1);
 
         declareBlock(spider, attacker);
         harness.passBothPriorities();
@@ -44,7 +45,7 @@ class FrostwebSpiderTest extends BaseCardTest {
         Permanent spider = addCreatureReady(player2, new FrostwebSpider());
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
-        spider.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, spider, 1);
 
         declareBlock(spider, attacker);
         leaveEndOfCombat();

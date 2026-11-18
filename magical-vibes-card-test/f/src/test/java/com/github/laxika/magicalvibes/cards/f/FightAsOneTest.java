@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;
 import com.github.laxika.magicalvibes.cards.c.CheckpointOfficer;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -24,8 +25,8 @@ class FightAsOneTest extends BaseCardTest {
 
         castFightAsOne(new int[]{0}, List.of(human.getId()));
 
-        assertThat(human.getPowerModifier()).isEqualTo(1);
-        assertThat(human.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, human)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, human, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
@@ -35,8 +36,8 @@ class FightAsOneTest extends BaseCardTest {
 
         castFightAsOne(new int[]{1}, List.of(nonHuman.getId()));
 
-        assertThat(nonHuman.getPowerModifier()).isEqualTo(1);
-        assertThat(nonHuman.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonHuman)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonHuman)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, nonHuman, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
@@ -47,11 +48,11 @@ class FightAsOneTest extends BaseCardTest {
 
         castFightAsOne(new int[]{0, 1}, List.of(human.getId(), nonHuman.getId()));
 
-        assertThat(human.getPowerModifier()).isEqualTo(1);
-        assertThat(human.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, human)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, human, Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(nonHuman.getPowerModifier()).isEqualTo(1);
-        assertThat(nonHuman.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonHuman)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonHuman)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, nonHuman, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
@@ -100,11 +101,11 @@ class FightAsOneTest extends BaseCardTest {
         gd.playerHands.get(player1.getId()).add(human.getCard());
         harness.passBothPriorities();
 
-        assertThat(nonHuman.getPowerModifier()).isEqualTo(1);
-        assertThat(nonHuman.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonHuman)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonHuman)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, nonHuman, Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(human.getPowerModifier()).isZero();
-        assertThat(human.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, human)).isZero();
         assertThat(gqs.hasKeyword(gd, human, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -116,11 +117,11 @@ class FightAsOneTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(human.getPowerModifier()).isZero();
-        assertThat(human.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, human)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, human)).isZero();
         assertThat(gqs.hasKeyword(gd, human, Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(nonHuman.getPowerModifier()).isZero();
-        assertThat(nonHuman.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonHuman)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonHuman)).isZero();
         assertThat(gqs.hasKeyword(gd, nonHuman, Keyword.INDESTRUCTIBLE)).isFalse();
     }
     private void castFightAsOne(int[] modeIndices, List<java.util.UUID> targetIds) {

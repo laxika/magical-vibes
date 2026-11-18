@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.p.PerilousVoyage;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,8 +28,8 @@ class TilonallisKnightTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(knight.getPowerModifier()).isEqualTo(1);
-        assertThat(knight.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(1);
     }
 
     @Test
@@ -40,14 +41,14 @@ class TilonallisKnightTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(knight.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(knight.getPowerModifier()).isEqualTo(0);
-        assertThat(knight.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(0);
     }
 
     @Test
@@ -70,8 +71,8 @@ class TilonallisKnightTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(knight.getPowerModifier()).isEqualTo(0);
-        assertThat(knight.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(0);
     }
 
     @Test
@@ -103,8 +104,8 @@ class TilonallisKnightTest extends BaseCardTest {
         harness.assertInHand(player1, "Colossal Dreadmaw");
         resolveAllTriggers();
 
-        assertThat(knight.getPowerModifier()).isEqualTo(0);
-        assertThat(knight.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(0);
     }
 
     @Test
@@ -117,8 +118,8 @@ class TilonallisKnightTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(knight.getPowerModifier()).isEqualTo(1);
-        assertThat(knight.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(1);
     }
 
     @Test
@@ -130,7 +131,7 @@ class TilonallisKnightTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(knight.getPowerModifier()).isEqualTo(0);
-        assertThat(knight.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, knight)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, knight)).isEqualTo(0);
     }
 }

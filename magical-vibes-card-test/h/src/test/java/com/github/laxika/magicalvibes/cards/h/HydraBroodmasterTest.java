@@ -35,8 +35,8 @@ class HydraBroodmasterTest extends BaseCardTest {
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.HYDRA);
-            assertThat(token.getEffectivePower()).isEqualTo(2);
-            assertThat(token.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         });
     }
 
@@ -91,8 +91,8 @@ class HydraBroodmasterTest extends BaseCardTest {
         assertThat(hydraBroodmaster.isMonstrous()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())).hasSize(3).allSatisfy(token -> {
-                    assertThat(token.getEffectivePower()).isEqualTo(3);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(3);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
                 });
     }
 

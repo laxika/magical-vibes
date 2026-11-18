@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -63,8 +64,8 @@ class PainsmithTest extends BaseCardTest {
 
         // Carapace Forger should have +2/+0 and deathtouch
         Permanent bears = findPermanent(player1, "Carapace Forger");
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isTrue();
     }
 
@@ -89,7 +90,7 @@ class PainsmithTest extends BaseCardTest {
 
         // Carapace Forger should not be boosted
         Permanent bears = findPermanent(player1, "Carapace Forger");
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isFalse();
     }
 
@@ -142,12 +143,12 @@ class PainsmithTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent bears = findPermanent(player1, "Carapace Forger");
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isFalse();
     }
 
@@ -165,7 +166,7 @@ class PainsmithTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent bears = findPermanent(player2, "Carapace Forger");
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isTrue();
     }
 
@@ -192,7 +193,7 @@ class PainsmithTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent painsmith = findPermanent(player1, "Painsmith");
-        assertThat(painsmith.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, painsmith)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, painsmith, Keyword.DEATHTOUCH)).isTrue();
         harness.assertNotOnBattlefield(player1, "Memnite");
         assertThat(harness.getGameData().stack).anyMatch(e -> e.getCard() != null && e.getCard().getName().equals("Memnite"));

@@ -83,8 +83,8 @@ class BlossombindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test

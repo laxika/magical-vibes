@@ -27,9 +27,9 @@ class EliminateTheImpossibleTest extends BaseCardTest {
         castEliminateTheImpossible();
 
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
-        assertThat(own.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectivePower()).isEqualTo(0);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
         assertThat(own.isSuspected()).isTrue();
         assertThat(opponent.isSuspected()).isFalse();
     }
@@ -40,12 +40,12 @@ class EliminateTheImpossibleTest extends BaseCardTest {
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new RedHerring());
 
         castEliminateTheImpossible();
-        assertThat(opponent.getEffectivePower()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(0);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
     }
 
     @Test
@@ -84,18 +84,18 @@ class EliminateTheImpossibleTest extends BaseCardTest {
         Permanent later = harness.addToBattlefieldAndReturn(player2, new RedHerring());
         later.setSuspected(true);
 
-        assertThat(first.getEffectivePower()).isZero();
-        assertThat(second.getEffectivePower()).isZero();
+        assertThat(gqs.getEffectivePower(gd, first)).isZero();
+        assertThat(gqs.getEffectivePower(gd, second)).isZero();
         assertThat(first.isSuspected()).isFalse();
         assertThat(second.isSuspected()).isFalse();
-        assertThat(later.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
         assertThat(later.isSuspected()).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(2);
-        assertThat(second.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
         assertThat(first.isSuspected()).isFalse();
         assertThat(second.isSuspected()).isFalse();
         assertThat(later.isSuspected()).isTrue();
@@ -109,8 +109,8 @@ class EliminateTheImpossibleTest extends BaseCardTest {
         castEliminateTheImpossible();
         castEliminateTheImpossible();
 
-        assertThat(opponent.getEffectivePower()).isEqualTo(-2);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
         assertThat(findPermanents(player1, "Clue")).hasSize(2);
     }
 

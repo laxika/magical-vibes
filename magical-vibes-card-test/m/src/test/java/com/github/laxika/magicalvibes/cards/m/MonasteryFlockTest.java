@@ -24,16 +24,16 @@ class MonasteryFlockTest extends BaseCardTest {
 
         Permanent flock = findPermanent(player1, "Monastery Flock");
         assertThat(flock.isFaceDown()).isTrue();
-        assertThat(flock.getEffectivePower()).isEqualTo(2);
-        assertThat(flock.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, flock)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, flock)).isEqualTo(2);
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(flock));
         harness.passBothPriorities();
 
         assertThat(flock.isFaceDown()).isFalse();
-        assertThat(flock.getEffectivePower()).isZero();
-        assertThat(flock.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, flock)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, flock)).isEqualTo(5);
     }
 
     @Test

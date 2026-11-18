@@ -32,8 +32,8 @@ class FarmerCottonTest extends BaseCardTest {
         assertThat(halflings).allSatisfy(halfling -> {
             assertThat(halfling.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(halfling.getCard().getSubtypes()).contains(CardSubtype.HALFLING);
-            assertThat(halfling.getEffectivePower()).isEqualTo(1);
-            assertThat(halfling.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, halfling)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, halfling)).isEqualTo(1);
         });
         assertThat(food).hasSize(2);
         assertThat(food).allSatisfy(token -> {

@@ -29,7 +29,7 @@ class RunescaleStormbroodTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(stormbrood.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, stormbrood)).isEqualTo(4);
     }
 
     @Test
@@ -40,7 +40,7 @@ class RunescaleStormbroodTest extends BaseCardTest {
         harness.castFromHand(player1, new RunescaleStormbrood(), "{3}{R}");
         harness.passBothPriorities();
 
-        assertThat(stormbrood.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, stormbrood)).isEqualTo(4);
     }
 
     @Test
@@ -51,7 +51,7 @@ class RunescaleStormbroodTest extends BaseCardTest {
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
-        assertThat(stormbrood.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, stormbrood)).isEqualTo(2);
     }
 
     @Test
@@ -104,13 +104,13 @@ class RunescaleStormbroodTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(stormbrood.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, stormbrood)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(stormbrood.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, stormbrood)).isEqualTo(2);
     }
 
     @Test
@@ -122,7 +122,7 @@ class RunescaleStormbroodTest extends BaseCardTest {
         harness.castInstant(player2, 0, player1.getId());
         resolveAllTriggers();
 
-        assertThat(stormbrood.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, stormbrood)).isEqualTo(2);
     }
 
     @Test
@@ -136,8 +136,8 @@ class RunescaleStormbroodTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 
-        assertThat(stormbrood.getEffectivePower()).isEqualTo(6);
-        assertThat(stormbrood.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, stormbrood)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, stormbrood)).isEqualTo(4);
     }
 
     @Test
@@ -173,8 +173,8 @@ class RunescaleStormbroodTest extends BaseCardTest {
         harness.castWithAlternateCost(player1, 0, spell.getId());
         resolveAllTriggers();
 
-        assertThat(stormbrood.getEffectivePower()).isEqualTo(4);
-        assertThat(stormbrood.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, stormbrood)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, stormbrood)).isEqualTo(4);
         assertThat(gd.playerDecks.get(player1.getId())).contains(omen);
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -35,8 +36,8 @@ class AppealToEirduTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(bearId));
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPowerModifier()).isEqualTo(2);
-        assertThat(bear.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
     }
 
     @Test
@@ -56,10 +57,10 @@ class AppealToEirduTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(id1, id2));
 
         bf = harness.getGameData().playerBattlefields.get(player1.getId());
-        assertThat(bf.get(0).getPowerModifier()).isEqualTo(2);
-        assertThat(bf.get(0).getToughnessModifier()).isEqualTo(1);
-        assertThat(bf.get(1).getPowerModifier()).isEqualTo(2);
-        assertThat(bf.get(1).getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bf.get(0))).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bf.get(0))).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bf.get(1))).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bf.get(1))).isEqualTo(1);
     }
 
     @Test
@@ -91,8 +92,8 @@ class AppealToEirduTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = harness.getGameData().playerBattlefields.get(player1.getId()).get(0);
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -119,8 +120,8 @@ class AppealToEirduTest extends BaseCardTest {
         assertThat(bf.get(0).isTapped()).isTrue();
 
         // Target should get boost
-        assertThat(bf.get(1).getPowerModifier()).isEqualTo(2);
-        assertThat(bf.get(1).getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bf.get(1))).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bf.get(1))).isEqualTo(1);
 
         // Pool should have 0 mana left (3 red spent on {3})
         assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
@@ -145,8 +146,8 @@ class AppealToEirduTest extends BaseCardTest {
 
         bf = harness.getGameData().playerBattlefields.get(player1.getId());
         assertThat(bf.get(0).isTapped()).isTrue();
-        assertThat(bf.get(1).getPowerModifier()).isEqualTo(2);
-        assertThat(bf.get(1).getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bf.get(1))).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bf.get(1))).isEqualTo(1);
         assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
 
@@ -202,8 +203,8 @@ class AppealToEirduTest extends BaseCardTest {
         // Spell should partially resolve — second creature gets boost
         bf = harness.getGameData().playerBattlefields.get(player1.getId());
         assertThat(bf).hasSize(1);
-        assertThat(bf.getFirst().getPowerModifier()).isEqualTo(2);
-        assertThat(bf.getFirst().getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bf.getFirst())).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bf.getFirst())).isEqualTo(1);
     }
 
     @Test

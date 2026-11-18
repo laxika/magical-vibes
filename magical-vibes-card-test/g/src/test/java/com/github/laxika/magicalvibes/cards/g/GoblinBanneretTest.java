@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -54,8 +55,8 @@ class GoblinBanneretTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(banneret.getPowerModifier()).isEqualTo(2);
-        assertThat(banneret.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, banneret)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, banneret)).isZero();
     }
 
     @Test
@@ -72,8 +73,8 @@ class GoblinBanneretTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(banneret.getPowerModifier()).isZero();
-        assertThat(banneret.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, banneret)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, banneret)).isZero();
     }
 
     @Test
@@ -129,7 +130,7 @@ class GoblinBanneretTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         harness.handlePermanentChosen(player1, ornithopter.getId());
-        banneret.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, banneret, -1);
         resolveAllTriggers();
 
         assertThat(ornithopter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -171,8 +172,8 @@ class GoblinBanneretTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(banneret.getPowerModifier()).isEqualTo(4);
-        assertThat(banneret.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, banneret)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, banneret)).isZero();
         assertThat(banneret.isTapped()).isTrue();
     }
 }

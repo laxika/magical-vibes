@@ -25,10 +25,10 @@ class DeathsHeadBuzzardTest extends BaseCardTest {
 
         destroyBuzzard(buzzard);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
     }
 
     @Test
@@ -41,16 +41,16 @@ class DeathsHeadBuzzardTest extends BaseCardTest {
 
         destroyBuzzard(buzzard);
 
-        assertThat(sturdyCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(sturdyCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sturdyCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, sturdyCreature)).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Treetop Scout");
         harness.assertNotOnBattlefield(player2, "Treetop Scout");
         harness.assertInGraveyard(player1, "Treetop Scout");
         harness.assertInGraveyard(player2, "Treetop Scout");
 
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GoblinBrigand());
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
     }
 
     @Test
@@ -66,10 +66,10 @@ class DeathsHeadBuzzardTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -83,12 +83,12 @@ class DeathsHeadBuzzardTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Death's-Head Buzzard");
         Permanent entrant = harness.addToBattlefieldAndReturn(player2, new GoblinBrigand());
-        assertThat(entrant.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, entrant)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(entrant.getEffectivePower()).isEqualTo(1);
-        assertThat(entrant.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, entrant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, entrant)).isEqualTo(1);
     }
 
     @Test
@@ -104,8 +104,8 @@ class DeathsHeadBuzzardTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Death's-Head Buzzard");
         harness.assertInGraveyard(player2, "Death's-Head Buzzard");
         harness.assertNotOnBattlefield(player2, "Death's-Head Buzzard");
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(1);
 
         harness.passBothPriorities();
 

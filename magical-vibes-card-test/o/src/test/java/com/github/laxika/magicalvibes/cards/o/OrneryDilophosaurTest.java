@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.s.SkysovereignConsulFlagship;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -24,8 +25,8 @@ class OrneryDilophosaurTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(dilophosaur.getPowerModifier()).isEqualTo(0);
-        assertThat(dilophosaur.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dilophosaur)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dilophosaur)).isEqualTo(0);
     }
 
     @Test
@@ -37,8 +38,8 @@ class OrneryDilophosaurTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(dilophosaur.getPowerModifier()).isEqualTo(2);
-        assertThat(dilophosaur.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dilophosaur)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dilophosaur)).isEqualTo(2);
     }
 
     @Test
@@ -54,8 +55,8 @@ class OrneryDilophosaurTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dilophosaur.getPowerModifier()).isEqualTo(0);
-        assertThat(dilophosaur.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, dilophosaur)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dilophosaur)).isEqualTo(0);
     }
 
     @Test
@@ -66,8 +67,8 @@ class OrneryDilophosaurTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(dilophosaur.getPowerModifier()).isZero();
-        assertThat(dilophosaur.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dilophosaur)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dilophosaur)).isZero();
     }
 
     @Test
@@ -80,36 +81,36 @@ class OrneryDilophosaurTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         resolveAllTriggers();
-        assertThat(dilophosaur.getPowerModifier()).isZero();
-        assertThat(dilophosaur.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dilophosaur)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dilophosaur)).isZero();
     }
 
     @Test
     void doesNotTriggerBelowFourPowerEvenIfPowerIncreasesLater() {
         Permanent dilophosaur = addCreatureReady(player1, new OrneryDilophosaur());
-        dilophosaur.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, dilophosaur, 1);
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> declareAttackers(player1, List.of(0)));
 
         assertThat(gd.stack).isEmpty();
-        dilophosaur.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, dilophosaur, 2);
         resolveAllTriggers();
 
-        assertThat(dilophosaur.getPowerModifier()).isEqualTo(2);
-        assertThat(dilophosaur.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dilophosaur)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dilophosaur)).isZero();
     }
 
     @Test
     void canQualifyItselfAtExactlyFourPower() {
         Permanent dilophosaur = addCreatureReady(player1, new OrneryDilophosaur());
-        dilophosaur.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, dilophosaur, 2);
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(dilophosaur.getPowerModifier()).isEqualTo(4);
-        assertThat(dilophosaur.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dilophosaur)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dilophosaur)).isEqualTo(2);
     }
 
     @Test
@@ -120,11 +121,11 @@ class OrneryDilophosaurTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> declareAttackers(player1, List.of(0)));
         assertThat(gd.stack).hasSize(1);
-        largeCreature.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, largeCreature, -3);
         resolveAllTriggers();
 
-        assertThat(dilophosaur.getPowerModifier()).isZero();
-        assertThat(dilophosaur.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, dilophosaur)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dilophosaur)).isZero();
     }
 
     @Test
@@ -135,11 +136,11 @@ class OrneryDilophosaurTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> declareAttackers(player1, List.of(0)));
         assertThat(gd.stack).hasSize(1);
-        largeCreature.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, largeCreature, -3);
         addCreatureReady(player1, new ColossalDreadmaw());
         resolveAllTriggers();
 
-        assertThat(dilophosaur.getPowerModifier()).isEqualTo(2);
-        assertThat(dilophosaur.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, dilophosaur)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, dilophosaur)).isEqualTo(2);
     }
 }

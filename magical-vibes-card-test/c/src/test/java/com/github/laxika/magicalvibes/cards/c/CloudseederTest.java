@@ -42,8 +42,8 @@ class CloudseederTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Cloud Sprite")).isEqualTo(1);
         assertThat(token.getCard().getName()).isEqualTo("Cloud Sprite");
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLUE);
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.FAERIE);
         assertThat(token.getCard().hasKeyword(Keyword.FLYING)).isTrue();
     }

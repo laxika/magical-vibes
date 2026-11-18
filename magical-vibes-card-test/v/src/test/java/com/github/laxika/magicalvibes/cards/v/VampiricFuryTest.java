@@ -29,8 +29,8 @@ class VampiricFuryTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(vampire.getEffectivePower()).isEqualTo(4);  // 2 + 2
-        assertThat(vampire.getEffectiveToughness()).isEqualTo(1);  // unchanged
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(4);  // 2 + 2
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(1);  // unchanged
         assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -44,8 +44,8 @@ class VampiricFuryTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -60,10 +60,10 @@ class VampiricFuryTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(ownVampire.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownVampire)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ownVampire, Keyword.FIRST_STRIKE)).isTrue();
 
-        assertThat(opponentVampire.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentVampire)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opponentVampire, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -77,15 +77,15 @@ class VampiricFuryTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(vampire.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(vampire.getEffectivePower()).isEqualTo(2);
-        assertThat(vampire.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -115,8 +115,8 @@ class VampiricFuryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         for (Permanent vampire : List.of(first, second)) {
-            assertThat(vampire.getEffectivePower()).isEqualTo(4);
-            assertThat(vampire.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(1);
             assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isTrue();
         }
     }
@@ -132,10 +132,10 @@ class VampiricFuryTest extends BaseCardTest {
 
         Permanent later = harness.enterBattlefieldAndReturn(player1, new VampireInterloper());
 
-        assertThat(original.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, original, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(later.getEffectivePower()).isEqualTo(2);
-        assertThat(later.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, later, Keyword.FIRST_STRIKE)).isFalse();
     }
 

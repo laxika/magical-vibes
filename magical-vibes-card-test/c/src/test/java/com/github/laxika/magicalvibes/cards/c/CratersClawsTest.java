@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlpineGrizzly;
 import com.github.laxika.magicalvibes.cards.f.FleetwheelCruiser;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -56,7 +57,7 @@ class CratersClawsTest extends BaseCardTest {
     @Test
     void creatureBelowFourPowerDoesNotEnableFerocious() {
         var creature = harness.addToBattlefieldAndReturn(player1, new AlpineGrizzly());
-        creature.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, creature, -1);
         castCratersClaws(3);
 
         harness.assertLife(player2, 17);
@@ -67,7 +68,7 @@ class CratersClawsTest extends BaseCardTest {
         var creature = harness.addToBattlefieldAndReturn(player1, new AlpineGrizzly());
         prepareCratersClaws(3);
         harness.castSorcery(player1, 0, 3, player2.getId());
-        creature.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, creature, -1);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 17);
@@ -76,10 +77,10 @@ class CratersClawsTest extends BaseCardTest {
     @Test
     void gainingFerociousBeforeResolutionAddsTwoDamage() {
         var creature = harness.addToBattlefieldAndReturn(player1, new AlpineGrizzly());
-        creature.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, creature, -1);
         prepareCratersClaws(3);
         harness.castSorcery(player1, 0, 3, player2.getId());
-        creature.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, creature, 0);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 15);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArmoredTransport;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,7 +28,7 @@ class LuminatePrimordialTest extends BaseCardTest {
     void exilesTargetCreatureAndGainsLifeEqualToPower() {
         harness.setLife(player2, 10);
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bear.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, bear, 3);
 
         castLuminatePrimordial(List.of(bear.getId()));
 
@@ -67,7 +68,7 @@ class LuminatePrimordialTest extends BaseCardTest {
         Player player3 = addThirdPlayer();
         Permanent first = harness.addToBattlefieldAndReturn(player2, new ArmoredTransport());
         Permanent second = harness.addToBattlefieldAndReturn(player3, new ArmoredTransport());
-        second.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, second, 3);
 
         castWithThreePlayers(player3, List.of(first.getId(), second.getId()));
         passUntilStackSize(player3, 0);
@@ -83,7 +84,7 @@ class LuminatePrimordialTest extends BaseCardTest {
     void gainsNoLifeForCreatureThatLeftBeforeResolution() {
         Player player3 = addThirdPlayer();
         Permanent first = harness.addToBattlefieldAndReturn(player2, new ArmoredTransport());
-        first.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, first, 3);
         Permanent second = harness.addToBattlefieldAndReturn(player3, new ArmoredTransport());
 
         castWithThreePlayers(player3, List.of(first.getId(), second.getId()));
@@ -122,7 +123,7 @@ class LuminatePrimordialTest extends BaseCardTest {
     @DisplayName("Exiling a negative-power creature does not cause life loss")
     void negativePowerDoesNotCauseLifeLoss() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ArmoredTransport());
-        target.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, target, -3);
 
         castLuminatePrimordial(List.of(target.getId()));
 

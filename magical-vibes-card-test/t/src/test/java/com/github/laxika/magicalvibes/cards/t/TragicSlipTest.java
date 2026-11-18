@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -33,10 +34,10 @@ class TragicSlipTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -118,8 +119,8 @@ class TragicSlipTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -178,8 +179,8 @@ class TragicSlipTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(target.getPowerModifier()).isEqualTo(-13);
-        assertThat(target.getToughnessModifier()).isEqualTo(-13);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-13);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-13);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
 
@@ -187,8 +188,8 @@ class TragicSlipTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(16);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(16);
     }
@@ -209,8 +210,8 @@ class TragicSlipTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Tragic Slip");
-        assertThat(survivor.getPowerModifier()).isZero();
-        assertThat(survivor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

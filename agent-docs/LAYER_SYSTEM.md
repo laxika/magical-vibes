@@ -263,28 +263,29 @@ overwritten by the merge, so no new suppression was needed); floating one-shot
 `SetBasePowerToughnessEffect`s at their resolution timestamp; March of the Machines' MV/MV at
 March's own timestamp (moved out of the assembly source loop; still gated off for
 self-animating artifacts via `hasSelfBecomeCreatureEffect`, which needed a `@Lazy
-GameQueryService` in `LayerSystemService`); migrated animation base P/T (below); and permanent
-exchange overrides (Evra, Tree of Redemption) which keep their `Permanent` field storage but
-are ordered via the new `permanentBase*OverrideTimestamp` fields stamped at exchange time
-(timestamp 0 = "before everything" for pre-migration/hand-built state). Entries are
-per-component — a power-only exchange leaves toughness to the earlier layers. **7a**:
+GameQueryService` in `LayerSystemService`); migrated animation base P/T (below). A setter with
+no stated duration (an exchange of life and power — Evra, Tree of Redemption — a chosen form, an
+as-enters base P/T) is a `PERMANENT` floating `SetBasePowerToughnessEffect` on the permanent with
+the timestamp it got as it was made (CR 611.2a, 613.7b). Entries are per-component — a
+power-only exchange leaves toughness to the earlier layers. **7a**:
 `SetPowerToughnessToAmountSelfEffectHandler` now writes a base-P/T *override* instead of adding
 onto a 0/0 base, and the assembly merges the 7b winner OVER it — a 7b setter beats the CDA in
 layer order no matter the timestamps (`basePTSetterOverridesCda`); the lose-all 7a suppression
-is unchanged. **7c**: `powerModifier`/counters/static boosts remain storage and sum on top of
-whichever base won; `getEffectivePower(Permanent, StaticBonus)` trusts
+is unchanged. **7c**: counters and the permanent's perpetual modifier are its own storage; every
+resolved "gets +X/+Y" is a floating `PowerToughnessBoostEffect` on the permanent
+(`GameData.addPowerToughnessBoost`, amounts fixed as it begins, CR 608.2h; one per creature for a
+group, CR 611.2c) that the assembly adds with the static boosts on top of whichever base won; `getEffectivePower(Permanent, StaticBonus)` trusts
 `bonus.basePTOverridden()` unconditionally — the hardcoded "one-shot flag beats static setter"
 guard is gone. `Permanent.getRawPower/getRawToughness` split into public
 `getBasePower()/getBaseToughness()` + modifiers; the ladder **no longer decides layered
 precedence** — it is the fallback for direct `Permanent` readers (views' raw term — the view
 path is layered because `GameViewProjectionFactory` passes `gqs.getEffectivePower(p,bonus) �?�
 p.getEffectivePower()` as the view bonus — plus last-known-information reads and the power/
-toughness predicate leaves). One-shot setters **dual-write** (step-5 pattern, deviation from
-this step's "migrate away from the fields" plan): `SetBasePowerToughnessEffectHandler` and
-`SetAllOwnCreaturesBasePowerToughnessEffectHandler` still set
-`basePowerToughnessOverriddenUntilEndOfTurn`/`basePowerOverride`/`baseToughnessOverride` for
-direct/LKI readers AND create the floating 7b instance that drives precedence (per-permanent
-instances for the mass setter — locks the affected set per CR 611.2c).
+toughness predicate leaves). No base-P/T or P/T-modifying effect is kept on the `Permanent`: a
+departed snapshot reads the floating 7b and 7c effects still on its id as its last-known
+characteristics (`computeStaticBonus`, and `GameQueryService.ownPower/ownToughness` for a
+last-known read that recorded no power), and the mass setters add one floating 7b effect per
+creature (CR 611.2c).
 
 **Animations:** no animation writes a flag. Whatever its duration (until end of turn or combat, until your next
 turn, `PERMANENT`, `WHILE_SOURCE_ON_BATTLEFIELD`), each characteristic an animation changes is its own floating effect
@@ -494,6 +495,15 @@ so no later grant brings them back), and `GameQueryService.hasLostPrintedProtect
 layered queries (`GameQueryService.hasKeyword`, `hasProtectionFrom…`, `computeStaticBonus(...).grantedEffects()`);
 `Permanent.hasKeyword` is intrinsic only. The player chosen as a permanent enters (True-Name Nemesis, Guardian Archon)
 is `Permanent.chosenPlayerIds`, read by `ProtectionFromChosenPlayerEffect`.
+
+**P/T boosts and base P/T.** "Gets +2/+2 until end of turn" (or until end of combat, or your next turn) is a floating
+`PowerToughnessBoostEffect` on the permanent (`GameData.addPowerToughnessBoost`), applied in sublayer 7c
+(CR 613.4c); "has base power and toughness 1/1 until end of turn" and a base P/T with no stated duration (an exchange
+of life and power, a chosen form) are floating `SetBasePowerToughnessEffect`s on it, applied in sublayer 7b in
+timestamp order (CR 613.4b, 613.7); switching stays 7d, after both. An amount computed as the effect begins is fixed
+(CR 608.2h), and a boost to a group is one effect per creature (CR 611.2c). Counters and perpetual modifiers are the
+permanent's own. Tests give and read these through `testutil.PermanentGrants` (`boostUntilEndOfTurn`,
+`powerBoostOf`, `basePowerToughnessUntilEndOfTurn`).
 
 An effect on a card outside the battlefield ("you may play that card this turn", "it gains flashback until end of
 turn", "it is revealed until your next turn") is on that card through `onCard` (`affectedCardId`); it ends as the card
@@ -832,15 +842,19 @@ authoritative per-step record; this section is the reconciled summary.
 
 ### Known limitations
 
-- **Dual-write fields remain** for P/T modifiers and abilities:
+- **Dual-write fields remain** for abilities:
   one-shot handlers write legacy `Permanent` fields AND the floating effect; the fields feed
   LKI, mid-pass predicate leaves, null-`GameData` fallbacks, and views. One-shot colours, card
   types, subtypes (land and creature type setters, lost subtypes), animations, keyword grants and
-  removals and protection grants are floating effects only, applied in timestamp order (CR 613.7) with no legacy precedence; `Permanent`'s
+  removals, protection grants, base-P/T setters and P/T boosts are floating effects only, applied in timestamp order (CR 613.7) with no legacy precedence; `Permanent`'s
   `getEffectiveColor(s)` and the `GameData`-less type checks are intrinsic only. A departed
   snapshot carries the layered colours and types copied at departure, and `computeStaticBonus`
-  folds the floating card-type, subtype and keyword grants and keyword removals still on its id, plus
-  the keywords baked into `Permanent.lastKnownKeywords` (CR 608.2h).
+  folds the floating card-type, subtype and keyword grants, keyword removals, base-P/T setters and
+  P/T boosts still on its id, plus the keywords baked into `Permanent.lastKnownKeywords` (CR 608.2h).
+  `Permanent.getEffectivePower/Toughness` are intrinsic only (base, counters, perpetual modifier). Every departure
+  records the layered power and toughness as it leaves (`lastKnownPower/Toughness`, CR 603.10a), the state-based Aura
+  sweep included (with its last-known card types); `ownPower/ownToughness` is only the fallback for an object that
+  left as a noncreature.
 - **Flag-only 7b stragglers**: the AWAKENING-counter 8/8 (counters carry no timestamp) — any
   real 7b entry beats it regardless of relative order.
 - **LKI misses layered state**: a dying creature's last-known power
@@ -1038,9 +1052,10 @@ surviving effects as `GrantedAbilityView` records, and sends only their display 
 — raw `CardEffect` records never cross the wire. Chosen-color protection and temporary
 unblockability are projected from their final runtime state; source attribution is omitted when
 legacy storage did not retain it.
-One-shot pumps stored on the `Permanent` (`powerModifier`) are
-deliberately un-attributed — the client reconciles them as an "Other effects" remainder
-against the aggregate fields, which stay authoritative. Pinned by `ModifierExplanationTest`.
+One-shot pumps (floating layer-7c boosts on the permanent) are
+attributed to the card that made them; anything else unattributed the client reconciles as an
+"Other effects" remainder against the aggregate fields, which stay authoritative. Pinned by
+`ModifierExplanationTest`.
 - **AI simulation copies start cold**: `simulationCopy()` builds a fresh `GameData` and never
   copies the slot, so a simulated board can never be served to the real game or vice versa
   (the shared-`Card` leak precedent). Pinned by `LayeredBoardCacheTest`.

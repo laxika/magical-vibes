@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HavengulLich;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -52,8 +53,8 @@ class PhoenixOfAshTest extends BaseCardTest {
 
         Permanent escapedPhoenix = findPermanent(player1, "Phoenix of Ash");
         assertThat(escapedPhoenix.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(escapedPhoenix.getEffectivePower()).isEqualTo(3);
-        assertThat(escapedPhoenix.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, escapedPhoenix)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, escapedPhoenix)).isEqualTo(3);
     }
 
     @Test
@@ -77,15 +78,15 @@ class PhoenixOfAshTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(phoenix.getPowerModifier()).isEqualTo(2);
-        assertThat(phoenix.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, phoenix)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, phoenix)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(phoenix.getPowerModifier()).isZero();
-        assertThat(phoenix.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, phoenix)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, phoenix)).isZero();
     }
 
     @Test
@@ -137,8 +138,8 @@ class PhoenixOfAshTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(phoenix.getPowerModifier()).isEqualTo(4);
-        assertThat(phoenix.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, phoenix)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, phoenix)).isZero();
         assertThat(phoenix.isTapped()).isFalse();
     }
 }

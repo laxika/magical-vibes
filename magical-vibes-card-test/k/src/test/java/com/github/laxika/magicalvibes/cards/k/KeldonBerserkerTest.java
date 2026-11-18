@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RhysticCave;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -21,8 +22,8 @@ class KeldonBerserkerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(berserker.getPowerModifier()).isEqualTo(3);
-        assertThat(berserker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isZero();
     }
 
     @Test
@@ -33,7 +34,7 @@ class KeldonBerserkerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(berserker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isZero();
     }
 
     @Test
@@ -45,7 +46,7 @@ class KeldonBerserkerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(berserker.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(3);
     }
 
     @Test
@@ -58,7 +59,7 @@ class KeldonBerserkerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(berserker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isZero();
     }
 
     @Test
@@ -69,7 +70,7 @@ class KeldonBerserkerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(berserker.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(3);
     }
 
     @Test
@@ -84,7 +85,7 @@ class KeldonBerserkerTest extends BaseCardTest {
         land.untap();
         resolveAllTriggers();
 
-        assertThat(berserker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isZero();
     }
 
     @Test
@@ -99,7 +100,7 @@ class KeldonBerserkerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(berserker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isZero();
     }
 
     @Test
@@ -112,11 +113,11 @@ class KeldonBerserkerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(3);
-        assertThat(second.getPowerModifier()).isEqualTo(3);
-        assertThat(nonattacker.getPowerModifier()).isZero();
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 
     @Test
@@ -125,13 +126,13 @@ class KeldonBerserkerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
-        assertThat(berserker.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(berserker.getPowerModifier()).isZero();
-        assertThat(berserker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isZero();
     }
 }

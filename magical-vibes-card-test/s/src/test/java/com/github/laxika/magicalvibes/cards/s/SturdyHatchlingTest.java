@@ -39,8 +39,8 @@ class SturdyHatchlingTest extends BaseCardTest {
 
         Permanent hatchling = findHatchling(player1);
         assertThat(hatchling.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(4);
-        assertThat(hatchling.getEffectivePower()).isEqualTo(2);
-        assertThat(hatchling.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hatchling)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hatchling)).isEqualTo(2);
     }
 
     @Test
@@ -180,8 +180,8 @@ class SturdyHatchlingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hatchling.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(hatchling.getEffectivePower()).isEqualTo(6);
-        assertThat(hatchling.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, hatchling)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, hatchling)).isEqualTo(6);
     }
 
     @Test

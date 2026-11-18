@@ -33,8 +33,8 @@ class VoidAttendantTest extends BaseCardTest {
         Permanent scion = findPermanent(player1, "Eldrazi Scion");
         assertThat(scion.getCard().isToken()).isTrue();
         assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(1);
-        assertThat(scion.getEffectivePower()).isEqualTo(1);
-        assertThat(scion.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, scion)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, scion)).isEqualTo(1);
         assertThat(scion.getCard().getColors()).isEmpty();
     }
 

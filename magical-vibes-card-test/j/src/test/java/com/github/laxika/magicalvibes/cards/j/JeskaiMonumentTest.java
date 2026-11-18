@@ -73,8 +73,8 @@ class JeskaiMonumentTest extends BaseCardTest {
                         && permanent.getCard().getName().equals("Bird"))
                 .hasSize(2)
                 .allSatisfy(token -> {
-                    assertThat(token.getEffectivePower()).isEqualTo(1);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
                     assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
                     assertThat(token.getCard().getSubtypes()).contains(CardSubtype.BIRD);
                     assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);

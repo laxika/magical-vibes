@@ -184,20 +184,20 @@ class ProgenitorMimicTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 6);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(mimic.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(5);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken()).findFirst().orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
 
         harness.addMana(player1, ManaColor.GREEN, 6);
         int tokenIndex = gd.playerBattlefields.get(player1.getId()).indexOf(token);
         harness.activateAbility(player1, tokenIndex, null, null);
         harness.passBothPriorities();
-        assertThat(token.getEffectivePower()).isEqualTo(5);
-        assertThat(token.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(5);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvenRiftwatcher;
 import com.github.laxika.magicalvibes.cards.d.DeadGone;
 import com.github.laxika.magicalvibes.cards.e.Electrolyze;
@@ -167,19 +168,19 @@ class TorchlingTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 3, null, null);
         harness.passBothPriorities();
-        assertThat(torchling.getEffectivePower()).isEqualTo(4);
-        assertThat(torchling.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, torchling)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, torchling)).isEqualTo(2);
 
         harness.activateAbility(player1, 0, 4, null, null);
         harness.passBothPriorities();
-        assertThat(torchling.getEffectivePower()).isEqualTo(3);
-        assertThat(torchling.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, torchling)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, torchling)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(torchling.getPowerModifier()).isEqualTo(0);
-        assertThat(torchling.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, torchling)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, torchling)).isEqualTo(0);
     }
 
     @Test

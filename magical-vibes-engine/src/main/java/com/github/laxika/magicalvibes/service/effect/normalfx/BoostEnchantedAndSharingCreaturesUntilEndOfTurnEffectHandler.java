@@ -49,8 +49,7 @@ public class BoostEnchantedAndSharingCreaturesUntilEndOfTurnEffectHandler implem
         });
 
         for (Permanent permanent : toBoost) {
-            permanent.setPowerModifier(permanent.getPowerModifier() + boost.powerBoost());
-            permanent.setToughnessModifier(permanent.getToughnessModifier() + boost.toughnessBoost());
+            gameData.addPowerToughnessBoost(entry, permanent.getId(), boost.powerBoost(), boost.toughnessBoost());
         }
     }
 }

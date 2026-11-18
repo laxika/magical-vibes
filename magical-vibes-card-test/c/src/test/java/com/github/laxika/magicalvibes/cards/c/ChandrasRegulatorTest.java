@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -37,7 +38,7 @@ class ChandrasRegulatorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(4);
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
     }
 
@@ -87,7 +88,7 @@ class ChandrasRegulatorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(2);
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
@@ -148,7 +149,7 @@ class ChandrasRegulatorTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(elemental.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, elemental)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 

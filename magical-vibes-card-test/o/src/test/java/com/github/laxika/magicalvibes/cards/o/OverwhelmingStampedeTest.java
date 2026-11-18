@@ -34,10 +34,10 @@ class OverwhelmingStampedeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         // HillGiant: 3+3=6/3+3=6, GrizzlyBears: 2+3=5/2+3=5
-        assertThat(hillGiant.getEffectivePower()).isEqualTo(6);
-        assertThat(hillGiant.getEffectiveToughness()).isEqualTo(6);
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, hillGiant)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, hillGiant)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
 
         assertThat(gqs.hasKeyword(gd, hillGiant, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
@@ -53,8 +53,8 @@ class OverwhelmingStampedeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -80,16 +80,16 @@ class OverwhelmingStampedeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);  // 2 + 2 (greatest power is 2)
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);  // 2 + 2 (greatest power is 2)
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 

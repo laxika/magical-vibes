@@ -25,8 +25,8 @@ class ChronomatonTest extends BaseCardTest {
 
         assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(golem.isTapped()).isTrue();
-        assertThat(golem.getEffectivePower()).isEqualTo(2);
-        assertThat(golem.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(2);
     }
 
     @Test
@@ -42,7 +42,7 @@ class ChronomatonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(golem.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(3);
     }
 
     @Test

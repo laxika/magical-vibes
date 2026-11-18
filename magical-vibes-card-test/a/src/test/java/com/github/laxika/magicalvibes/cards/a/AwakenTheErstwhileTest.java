@@ -38,12 +38,12 @@ class AwakenTheErstwhileTest extends BaseCardTest {
         assertThat(countPermanents(player2, "Zombie")).isEqualTo(4);
         assertThat(findPermanents(player1, "Zombie"))
                 .allMatch(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.ZOMBIE)
-                        && permanent.getEffectivePower() == 2
-                        && permanent.getEffectiveToughness() == 2);
+                        && gqs.getEffectivePower(gd, permanent) == 2
+                        && gqs.getEffectiveToughness(gd, permanent) == 2);
         assertThat(findPermanents(player2, "Zombie"))
                 .allMatch(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.ZOMBIE)
-                        && permanent.getEffectivePower() == 2
-                        && permanent.getEffectiveToughness() == 2);
+                        && gqs.getEffectivePower(gd, permanent) == 2
+                        && gqs.getEffectiveToughness(gd, permanent) == 2);
     }
 
     @Test

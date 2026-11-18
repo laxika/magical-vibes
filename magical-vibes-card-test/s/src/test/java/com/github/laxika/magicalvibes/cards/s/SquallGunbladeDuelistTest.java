@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -48,8 +49,8 @@ class SquallGunbladeDuelistTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player2.getId());
         declareAttackers(player1, List.of(1));
         assertThat(gd.stack).hasSize(1);
-        bears.setPowerModifier(1);
-        bears.setToughnessModifier(1);
+        PermanentGrants.setPowerBoost(gd, bears, 1);
+        PermanentGrants.setToughnessBoost(gd, bears, 1);
         resolveAllTriggers();
 
         // No creature attacking player2 has power or toughness 2 as the ability resolves: only the Bears' combat damage.

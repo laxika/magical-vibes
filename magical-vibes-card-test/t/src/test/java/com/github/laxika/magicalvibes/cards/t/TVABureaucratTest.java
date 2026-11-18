@@ -20,14 +20,14 @@ class TVABureaucratTest extends BaseCardTest {
     @DisplayName("Casting a noncreature spell boosts TVA Bureaucrat and makes it unblockable")
     void noncreatureSpellBoostsAndMakesUnblockable() {
         Permanent bureaucrat = addBureaucrat();
-        int initialPower = bureaucrat.getEffectivePower();
+        int initialPower = gqs.getEffectivePower(gd, bureaucrat);
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(bureaucrat.getEffectivePower()).isEqualTo(initialPower + 1);
+        assertThat(gqs.getEffectivePower(gd, bureaucrat)).isEqualTo(initialPower + 1);
         assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isTrue();
     }
 
@@ -41,7 +41,7 @@ class TVABureaucratTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        assertThat(bureaucrat.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bureaucrat)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isFalse();
     }
 
@@ -55,14 +55,14 @@ class TVABureaucratTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(bureaucrat.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bureaucrat)).isEqualTo(2);
         assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bureaucrat.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bureaucrat)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isFalse();
     }
 
@@ -70,21 +70,21 @@ class TVABureaucratTest extends BaseCardTest {
     @DisplayName("The cast trigger resolves before the noncreature spell")
     void triggerResolvesBeforeSpell() {
         Permanent bureaucrat = addBureaucrat();
-        int initialPower = bureaucrat.getEffectivePower();
-        int initialToughness = bureaucrat.getEffectiveToughness();
+        int initialPower = gqs.getEffectivePower(gd, bureaucrat);
+        int initialToughness = gqs.getEffectiveToughness(gd, bureaucrat);
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
 
-        assertThat(bureaucrat.getEffectivePower()).isEqualTo(initialPower);
+        assertThat(gqs.getEffectivePower(gd, bureaucrat)).isEqualTo(initialPower);
         assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(bureaucrat.getEffectivePower()).isEqualTo(initialPower + 1);
-        assertThat(bureaucrat.getEffectiveToughness()).isEqualTo(initialToughness);
+        assertThat(gqs.getEffectivePower(gd, bureaucrat)).isEqualTo(initialPower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, bureaucrat)).isEqualTo(initialToughness);
         assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isTrue();
         harness.assertLife(player2, 20);
 
@@ -97,7 +97,7 @@ class TVABureaucratTest extends BaseCardTest {
     @DisplayName("Each noncreature spell adds another boost in the same turn")
     void multipleNoncreatureSpellsStackBoosts() {
         Permanent bureaucrat = addBureaucrat();
-        int initialPower = bureaucrat.getEffectivePower();
+        int initialPower = gqs.getEffectivePower(gd, bureaucrat);
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -106,14 +106,14 @@ class TVABureaucratTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(bureaucrat.getEffectivePower()).isEqualTo(initialPower + 2);
+        assertThat(gqs.getEffectivePower(gd, bureaucrat)).isEqualTo(initialPower + 2);
         assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bureaucrat.getEffectivePower()).isEqualTo(initialPower);
+        assertThat(gqs.getEffectivePower(gd, bureaucrat)).isEqualTo(initialPower);
         assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isFalse();
     }
 
@@ -121,7 +121,7 @@ class TVABureaucratTest extends BaseCardTest {
     @DisplayName("An opponent's noncreature spell does not trigger TVA Bureaucrat")
     void opponentNoncreatureSpellDoesNotTrigger() {
         Permanent bureaucrat = addBureaucrat();
-        int initialPower = bureaucrat.getEffectivePower();
+        int initialPower = gqs.getEffectivePower(gd, bureaucrat);
         harness.forceActivePlayer(player2);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new LightningBolt()));
@@ -129,7 +129,7 @@ class TVABureaucratTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(bureaucrat.getEffectivePower()).isEqualTo(initialPower);
+        assertThat(gqs.getEffectivePower(gd, bureaucrat)).isEqualTo(initialPower);
         assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isFalse();
     }
 
@@ -137,7 +137,7 @@ class TVABureaucratTest extends BaseCardTest {
     @DisplayName("The controller's noncreature spell also triggers during an opponent's turn")
     void controllerSpellTriggersOnOpponentTurn() {
         Permanent bureaucrat = addBureaucrat();
-        int initialPower = bureaucrat.getEffectivePower();
+        int initialPower = gqs.getEffectivePower(gd, bureaucrat);
         harness.forceActivePlayer(player2);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new LightningBolt()));
@@ -145,7 +145,7 @@ class TVABureaucratTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(bureaucrat.getEffectivePower()).isEqualTo(initialPower + 1);
+        assertThat(gqs.getEffectivePower(gd, bureaucrat)).isEqualTo(initialPower + 1);
         assertThat(gqs.hasCantBeBlocked(gd, bureaucrat)).isTrue();
     }
 

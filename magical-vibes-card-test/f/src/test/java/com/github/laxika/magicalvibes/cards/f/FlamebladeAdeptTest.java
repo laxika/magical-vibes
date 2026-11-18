@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Censor;
 import com.github.laxika.magicalvibes.cards.m.MiasmicMummy;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -31,8 +32,8 @@ class FlamebladeAdeptTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities(); // resolve the boost trigger
 
-        assertThat(adept.getPowerModifier()).isEqualTo(1);
-        assertThat(adept.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, adept)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, adept)).isEqualTo(0);
     }
 
     @Test
@@ -48,8 +49,8 @@ class FlamebladeAdeptTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        assertThat(adept.getPowerModifier()).isEqualTo(2);
-        assertThat(adept.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, adept)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, adept)).isEqualTo(0);
     }
 
     @Test
@@ -63,13 +64,13 @@ class FlamebladeAdeptTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        assertThat(adept.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, adept)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(adept.getPowerModifier()).isEqualTo(0);
-        assertThat(adept.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, adept)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, adept)).isEqualTo(0);
     }
 
     @Test
@@ -82,14 +83,14 @@ class FlamebladeAdeptTest extends BaseCardTest {
 
         harness.activateHandAbility(player1, 0, null);
 
-        assertThat(adept.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, adept)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.passBothPriorities();
-        assertThat(adept.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, adept)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         resolveAllTriggers();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(adept.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, adept)).isEqualTo(1);
     }
 
     @Test
@@ -103,8 +104,8 @@ class FlamebladeAdeptTest extends BaseCardTest {
         harness.activateHandAbility(player2, 0, null);
         resolveAllTriggers();
 
-        assertThat(adept.getPowerModifier()).isZero();
-        assertThat(adept.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, adept)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, adept)).isZero();
     }
 
     @Test
@@ -122,11 +123,11 @@ class FlamebladeAdeptTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
         harness.assertInGraveyard(player1, "Censor");
     }
 

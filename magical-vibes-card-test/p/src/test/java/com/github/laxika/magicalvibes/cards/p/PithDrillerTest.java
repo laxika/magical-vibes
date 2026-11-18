@@ -32,8 +32,8 @@ class PithDrillerTest extends BaseCardTest {
         // Puresteel Paladin survives as a 1/1 with one -1/-1 counter.
         Permanent paladin = findPermanent(player2, "Puresteel Paladin");
         assertThat(paladin.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(paladin.getEffectivePower()).isEqualTo(1);
-        assertThat(paladin.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, paladin)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, paladin)).isEqualTo(1);
     }
 
     @Test
@@ -108,8 +108,8 @@ class PithDrillerTest extends BaseCardTest {
 
         Permanent driller = findPermanent(player1, "Pith Driller");
         assertThat(driller.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(driller.getEffectivePower()).isEqualTo(1);
-        assertThat(driller.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, driller)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, driller)).isEqualTo(3);
     }
 
     @Test

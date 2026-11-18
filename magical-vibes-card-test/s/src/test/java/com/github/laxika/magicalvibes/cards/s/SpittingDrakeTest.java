@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class SpittingDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drake.getPowerModifier()).isEqualTo(1);
-        assertThat(drake.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drake)).isEqualTo(0);
     }
 
     @Test
@@ -36,7 +37,7 @@ class SpittingDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drake.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isEqualTo(1);
         assertThat(drake.isTapped()).isFalse();
     }
 
@@ -73,14 +74,14 @@ class SpittingDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drake.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(drake.getPowerModifier()).isEqualTo(0);
-        assertThat(drake.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drake)).isEqualTo(0);
     }
 
     @Test
@@ -100,7 +101,7 @@ class SpittingDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drake.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isEqualTo(1);
     }
 
     @Test
@@ -115,8 +116,8 @@ class SpittingDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(firstDrake.getPowerModifier()).isEqualTo(1);
-        assertThat(secondDrake.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstDrake)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondDrake)).isEqualTo(1);
     }
 
     @Test
@@ -127,15 +128,15 @@ class SpittingDrakeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(drake.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isEqualTo(0);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once each turn");
 
         harness.passBothPriorities();
 
-        assertThat(drake.getPowerModifier()).isEqualTo(1);
-        assertThat(drake.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drake)).isEqualTo(0);
     }
 
     @Test
@@ -151,8 +152,8 @@ class SpittingDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drake.getPowerModifier()).isEqualTo(1);
-        assertThat(drake.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drake)).isEqualTo(0);
     }
 
     @Test
@@ -165,8 +166,8 @@ class SpittingDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(drake.getPowerModifier()).isEqualTo(1);
-        assertThat(drake.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drake)).isEqualTo(0);
         assertThat(drake.isTapped()).isTrue();
     }
 }

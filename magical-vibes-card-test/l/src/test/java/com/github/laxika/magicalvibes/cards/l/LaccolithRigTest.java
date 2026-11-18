@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.d.DefenderEnVec;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
@@ -118,7 +119,7 @@ class LaccolithRigTest extends BaseCardTest {
         declareBlock(attacker, blocker);
 
         harness.handlePermanentChosen(player1, victim.getId());
-        attacker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, attacker, -1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -175,7 +176,7 @@ class LaccolithRigTest extends BaseCardTest {
 
         declareBlock(attacker, blocker);
         harness.handlePermanentChosen(player1, victim.getId());
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(seal),
                 null, attacker.getId());
         harness.passBothPriorities();
@@ -220,7 +221,7 @@ class LaccolithRigTest extends BaseCardTest {
 
         declareBlock(attacker, blocker);
         harness.handlePermanentChosen(player1, victim.getId());
-        attacker.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, attacker, -2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 

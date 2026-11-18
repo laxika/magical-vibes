@@ -48,8 +48,8 @@ class GreensleevesMaroSorcererTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.BADGER))
                 .findFirst()
                 .orElseThrow();
-        assertThat(badger.getEffectivePower()).isEqualTo(3);
-        assertThat(badger.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, badger)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, badger)).isEqualTo(3);
     }
 
     @Test

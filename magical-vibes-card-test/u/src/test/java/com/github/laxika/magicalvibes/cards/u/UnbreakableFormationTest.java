@@ -29,8 +29,8 @@ class UnbreakableFormationTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         assertThat(ownBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(ownBear.getEffectivePower()).isEqualTo(3);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.VIGILANCE)).isTrue();
         assertThat(opponentBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -65,8 +65,8 @@ class UnbreakableFormationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ownBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(ownBear.getEffectivePower()).isEqualTo(3);
-        assertThat(ownBear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.VIGILANCE)).isFalse();
     }

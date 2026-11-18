@@ -32,9 +32,9 @@ class RoilmagesTrickTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(-1);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
     }
 
@@ -49,7 +49,7 @@ class RoilmagesTrickTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(findPermanent(player2, "Oran-Rief Invoker").getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Oran-Rief Invoker"))).isEqualTo(1);
     }
 
     @Test
@@ -64,13 +64,13 @@ class RoilmagesTrickTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         Permanent opposingCreature = findPermanent(player2, "Oran-Rief Invoker");
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(2);
     }
 
     @Test
@@ -86,10 +86,10 @@ class RoilmagesTrickTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(first.getEffectivePower()).isEqualTo(-2);
-        assertThat(second.getEffectivePower()).isEqualTo(-2);
-        assertThat(first.getEffectiveToughness()).isEqualTo(2);
-        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
     }
 
     @Test
@@ -118,8 +118,8 @@ class RoilmagesTrickTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         Permanent later = harness.addToBattlefieldAndReturn(player2, new OranRiefInvoker());
 
-        assertThat(affected.getEffectivePower()).isEqualTo(1);
-        assertThat(later.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, affected)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
     }
 
     @Test
@@ -132,7 +132,7 @@ class RoilmagesTrickTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new OranRiefInvoker());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }

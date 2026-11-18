@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DauthiMercenary;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -66,8 +67,8 @@ class AtKnifepointTest extends BaseCardTest {
         harness.activateAbility(player1, mercenaryIndex, 0, null, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(mercenary.isTapped()).isTrue();
     }
 
@@ -203,11 +204,11 @@ class AtKnifepointTest extends BaseCardTest {
 
         harness.activateAbility(player1, index, 0, null, mercenary.getId());
         resolveAllTriggers();
-        assertThat(mercenary.getPowerModifier()).isEqualTo(1);
-        assertThat(mercenary.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mercenary)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mercenary)).isZero();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(mercenary.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mercenary)).isZero();
         assertThat(countPermanents(player1, "Mercenary")).isEqualTo(1);
     }
 

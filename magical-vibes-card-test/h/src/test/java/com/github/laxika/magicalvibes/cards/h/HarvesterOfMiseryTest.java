@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,10 +27,10 @@ class HarvesterOfMiseryTest extends BaseCardTest {
         castHarvester();
         resolveAllTriggers();
 
-        assertThat(ownGiant.getPowerModifier()).isEqualTo(-2);
-        assertThat(ownGiant.getToughnessModifier()).isEqualTo(-2);
-        assertThat(opposingGiant.getPowerModifier()).isEqualTo(-2);
-        assertThat(opposingGiant.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownGiant)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownGiant)).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingGiant)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingGiant)).isEqualTo(-2);
         harness.assertOnBattlefield(player1, "Harvester of Misery");
     }
 
@@ -60,8 +61,8 @@ class HarvesterOfMiseryTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, giant.getId());
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(-2);
-        assertThat(giant.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(-2);
         harness.assertInGraveyard(player1, "Harvester of Misery");
     }
 
@@ -77,14 +78,14 @@ class HarvesterOfMiseryTest extends BaseCardTest {
 
         harness.activateHandAbility(player1, 0, giant.getId());
         harness.passBothPriorities();
-        assertThat(giant.getPowerModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(-2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(0);
-        assertThat(giant.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(0);
     }
 
     @Test
@@ -115,21 +116,21 @@ class HarvesterOfMiseryTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent harvester = findPermanent(player1, "Harvester of Misery");
-        assertThat(harvester.getPowerModifier()).isZero();
-        assertThat(harvester.getToughnessModifier()).isZero();
-        assertThat(giant.getPowerModifier()).isEqualTo(-2);
-        assertThat(giant.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, harvester)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, harvester)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isEqualTo(-2);
 
         Permanent lateCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        assertThat(lateCreature.getPowerModifier()).isZero();
-        assertThat(lateCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, lateCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lateCreature)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isZero();
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
@@ -147,11 +148,11 @@ class HarvesterOfMiseryTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Harvester of Misery");
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(giant.getPowerModifier()).isZero();
-        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, giant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, giant)).isZero();
     }
 }

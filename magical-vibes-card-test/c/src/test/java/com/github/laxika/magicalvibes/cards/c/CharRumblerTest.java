@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -26,8 +27,8 @@ class CharRumblerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(charRumbler.getPowerModifier()).isEqualTo(1);
-        assertThat(charRumbler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, charRumbler)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, charRumbler)).isZero();
     }
 
     @Test
@@ -41,8 +42,8 @@ class CharRumblerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(charRumbler.getPowerModifier()).isEqualTo(2);
-        assertThat(charRumbler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, charRumbler)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, charRumbler)).isZero();
     }
 
     @Test
@@ -57,8 +58,8 @@ class CharRumblerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(charRumbler.getPowerModifier()).isZero();
-        assertThat(charRumbler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, charRumbler)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, charRumbler)).isZero();
     }
 
     @Test
@@ -132,10 +133,10 @@ class CharRumblerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
         assertThat(source.isTapped()).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
     }
 }

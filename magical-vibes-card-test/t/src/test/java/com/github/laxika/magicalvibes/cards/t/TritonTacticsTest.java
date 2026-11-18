@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -34,9 +35,9 @@ class TritonTacticsTest extends BaseCardTest {
 
         assertThat(first.isTapped()).isFalse();
         assertThat(second.isTapped()).isFalse();
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(first.getToughnessModifier()).isEqualTo(3);
-        assertThat(second.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(3);
     }
 
     @Test
@@ -134,13 +135,13 @@ class TritonTacticsTest extends BaseCardTest {
         Permanent target = addTappedCreature(player2);
 
         castTritonTactics(List.of(target.getId()));
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -161,7 +162,7 @@ class TritonTacticsTest extends BaseCardTest {
         castTritonTactics(List.of());
 
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         harness.assertInGraveyard(player1, "Triton Tactics");
     }
 

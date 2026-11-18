@@ -23,8 +23,8 @@ class ProwlingFelidarTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(felidar.getEffectivePower()).isEqualTo(3);
-        assertThat(felidar.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, felidar)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, felidar)).isEqualTo(4);
     }
 
     @Test
@@ -37,8 +37,8 @@ class ProwlingFelidarTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(felidar.getEffectivePower()).isEqualTo(2);
-        assertThat(felidar.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, felidar)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, felidar)).isEqualTo(3);
     }
 
     @Test

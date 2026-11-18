@@ -32,8 +32,8 @@ class InvadeTheCityTest extends BaseCardTest {
         assertThat(army.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.ZOMBIE, CardSubtype.ARMY);
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(army.getEffectivePower()).isEqualTo(2);
-        assertThat(army.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, army)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, army)).isEqualTo(2);
     }
 
     @Test

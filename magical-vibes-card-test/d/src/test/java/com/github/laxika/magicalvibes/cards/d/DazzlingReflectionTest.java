@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
@@ -96,7 +97,7 @@ class DazzlingReflectionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, target.getId());
-        target.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, target, 3);
 
         harness.passBothPriorities();
 

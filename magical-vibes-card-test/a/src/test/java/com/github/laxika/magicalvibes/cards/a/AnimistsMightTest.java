@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.k.KarnScionOfUrza;
@@ -109,7 +110,7 @@ class AnimistsMightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castSorcery(player1, 0, List.of(source.getId(), target.getId()));
 
-        source.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, source, -1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Air Elemental");

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -110,7 +111,7 @@ class SpawnwritheTest extends BaseCardTest {
     @DisplayName("Trample damage creates a copy even when the source dies in the same combat")
     void createsCopyAfterSourceDiesInCombat() {
         Permanent source = addReadySpawnwrithe();
-        source.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, source, 3);
         source.setAttacking(true);
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
         blocker.setBlocking(true);

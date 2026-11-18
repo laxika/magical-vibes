@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EmberBeast;
 import com.github.laxika.magicalvibes.cards.g.GreensideWatcher;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -117,7 +118,7 @@ class FoundryStreetDenizenTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(denizen.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, denizen)).isEqualTo(0);
         assertThat(gqs.getEffectivePower(gd, denizen)).isEqualTo(1);
     }
 }

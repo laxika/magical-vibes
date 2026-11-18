@@ -47,8 +47,8 @@ class DarkDepthsTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Dark Depths");
         Permanent maritLage = findPermanent(player1, "Marit Lage");
-        assertThat(maritLage.getEffectivePower()).isEqualTo(20);
-        assertThat(maritLage.getEffectiveToughness()).isEqualTo(20);
+        assertThat(gqs.getEffectivePower(gd, maritLage)).isEqualTo(20);
+        assertThat(gqs.getEffectiveToughness(gd, maritLage)).isEqualTo(20);
         assertThat(maritLage.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(maritLage.getCard().getSubtypes()).containsExactly(CardSubtype.AVATAR);
         assertThat(maritLage.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);

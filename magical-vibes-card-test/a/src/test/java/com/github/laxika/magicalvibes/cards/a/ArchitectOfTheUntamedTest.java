@@ -37,8 +37,8 @@ class ArchitectOfTheUntamedTest extends BaseCardTest {
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
         Permanent beast = findPermanent(player1, "Beast");
         assertThat(beast.getCard().isToken()).isTrue();
-        assertThat(beast.getEffectivePower()).isEqualTo(6);
-        assertThat(beast.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(6);
         assertThat(beast.getCard().getColor()).isNull();
         assertThat(beast.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
     }

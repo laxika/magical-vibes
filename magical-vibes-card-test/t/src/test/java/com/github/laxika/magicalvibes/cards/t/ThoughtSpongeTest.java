@@ -32,7 +32,7 @@ class ThoughtSpongeTest extends BaseCardTest {
 
         Permanent sponge = findPermanent(player1, "Thought Sponge");
         assertThat(sponge.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(sponge.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, sponge)).isEqualTo(4);
     }
 
     @Test
@@ -49,7 +49,7 @@ class ThoughtSpongeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent sponge = findPermanent(player1, "Thought Sponge");
-        assertThat(sponge.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sponge)).isEqualTo(3);
 
         harness.setHand(player1, List.of(new Magmaquake()));
         harness.addMana(player1, ManaColor.RED, 2);

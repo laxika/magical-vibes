@@ -30,8 +30,8 @@ class GleamOfBattleTest extends BaseCardTest {
         assertThat(attacker1.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(attacker2.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(idle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(attacker1.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker1.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker1)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker1)).isEqualTo(3);
     }
 
     @Test

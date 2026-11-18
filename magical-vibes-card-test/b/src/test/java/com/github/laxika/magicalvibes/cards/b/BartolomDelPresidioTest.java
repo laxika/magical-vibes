@@ -25,8 +25,8 @@ class BartolomDelPresidioTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bartolom.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bartolom.getEffectivePower()).isEqualTo(3);
-        assertThat(bartolom.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bartolom)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bartolom)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
@@ -40,8 +40,8 @@ class BartolomDelPresidioTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bartolom.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bartolom.getEffectivePower()).isEqualTo(3);
-        assertThat(bartolom.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bartolom)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bartolom)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Spellbook");
     }
 

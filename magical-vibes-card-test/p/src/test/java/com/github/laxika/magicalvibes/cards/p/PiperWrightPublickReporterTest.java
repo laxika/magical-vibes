@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Clue;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -23,7 +24,7 @@ class PiperWrightPublickReporterTest extends BaseCardTest {
     @DisplayName("Combat damage investigates that many times")
     void combatDamageInvestigatesThatManyTimes() {
         Permanent piper = addCreatureReady(player1, new PiperWrightPublickReporter());
-        piper.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, piper, 1);
 
         declareAttackers(List.of(0));
         resolveAllTriggers();

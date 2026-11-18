@@ -28,8 +28,8 @@ class AetherRefineryTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
     }
 
     @Test
@@ -60,8 +60,8 @@ class AetherRefineryTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .singleElement().satisfies(token -> {
-                    assertThat(token.getEffectivePower()).isEqualTo(5);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(5);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(5);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(5);
                 });
     }
 
@@ -77,8 +77,8 @@ class AetherRefineryTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .singleElement().satisfies(token -> {
-                    assertThat(token.getEffectivePower()).isEqualTo(1);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
                 });
     }
 
@@ -98,8 +98,8 @@ class AetherRefineryTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .singleElement().satisfies(token -> {
-                    assertThat(token.getEffectivePower()).isEqualTo(4);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(4);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
                 });
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken());

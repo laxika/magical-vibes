@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FyndhornDruid;
 import com.github.laxika.magicalvibes.cards.l.LakeOfTheDead;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,13 +32,13 @@ class SurgeOfStrengthTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Storm Shaman");
         harness.assertNotInHand(player1, "Storm Shaman");
         harness.assertNotInGraveyard(player1, "Surge of Strength");
-        assertThat(druid.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, druid)).isZero();
         assertThat(gqs.hasKeyword(gd, druid, Keyword.TRAMPLE)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(druid.getEffectivePower()).isEqualTo(5);
-        assertThat(druid.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, druid)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, druid)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, druid, Keyword.TRAMPLE)).isTrue();
         harness.assertInGraveyard(player1, "Surge of Strength");
     }
@@ -66,8 +67,8 @@ class SurgeOfStrengthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent resolvedDruid = findPermanent(player1, "Fyndhorn Druid");
-        assertThat(resolvedDruid.getEffectivePower()).isEqualTo(5);
-        assertThat(resolvedDruid.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, resolvedDruid)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, resolvedDruid)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, resolvedDruid, Keyword.TRAMPLE)).isTrue();
         harness.assertInGraveyard(player1, "Fyndhorn Druid");
     }
@@ -83,7 +84,7 @@ class SurgeOfStrengthTest extends BaseCardTest {
         harness.castInstantWithDiscard(player1, 0, druid.getId(), 1);
         harness.passBothPriorities();
 
-        assertThat(druid.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, druid)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, druid, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -99,7 +100,7 @@ class SurgeOfStrengthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent resolvedDruid = findPermanent(player1, "Fyndhorn Druid");
-        assertThat(resolvedDruid.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, resolvedDruid)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, resolvedDruid, Keyword.TRAMPLE)).isTrue();
         harness.assertInGraveyard(player1, "Storm Shaman");
     }
@@ -120,7 +121,7 @@ class SurgeOfStrengthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent resolvedDruid = findPermanent(player1, "Fyndhorn Druid");
-        assertThat(resolvedDruid.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, resolvedDruid)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, resolvedDruid, Keyword.TRAMPLE)).isFalse();
     }
 

@@ -1002,7 +1002,7 @@ public class PredicateEvaluationService {
                         : sourcePowerAtTrigger != null
                         ? sourcePowerAtTrigger
                         : sourcePermanentSnapshot != null
-                        ? sourcePermanentSnapshot.getEffectivePower()
+                        ? gameQueryService.ownPower(gameData, sourcePermanentSnapshot)
                         : basePowerOfCardInAnyZone(gameData, sourceCardId);
                 yield sourcePower != null && card.getManaValue() <= sourcePower;
             }
@@ -1161,7 +1161,8 @@ public class PredicateEvaluationService {
                         ? sourcePowerAtTrigger
                         : sourcePermanentSnapshot != null
                         ? sourcePermanentSnapshot.getLastKnownPower() != null
-                        ? sourcePermanentSnapshot.getLastKnownPower() : sourcePermanentSnapshot.getEffectivePower()
+                        ? sourcePermanentSnapshot.getLastKnownPower()
+                        : gameQueryService.ownPower(gameData, sourcePermanentSnapshot)
                         : basePowerOfCardInAnyZone(gameData, sourceCardId);
                 Integer power = gameQueryService.getEffectiveCardPower(gameData, card);
                 yield sourcePower != null && power != null && power < sourcePower;
@@ -1302,7 +1303,7 @@ public class PredicateEvaluationService {
                 Integer lastKnownToughness = sourcePermanentSnapshot == null ? null
                         : sourcePermanentSnapshot.getLastKnownToughness() != null
                         ? sourcePermanentSnapshot.getLastKnownToughness()
-                        : sourcePermanentSnapshot.getEffectiveToughness();
+                        : gameQueryService.ownToughness(gameData, sourcePermanentSnapshot);
                 yield lastKnownToughness != null && card.getToughness() < lastKnownToughness;
             }
             case CardHasAllCardNamesPredicate ignored -> card.hasAllCardNames();
@@ -1423,6 +1424,12 @@ public class PredicateEvaluationService {
      */
     public boolean matchesPermanentPredicate(GameData gameData, Permanent permanent, PermanentPredicate predicate) {
         return matchesPermanentPredicate(permanent, predicate, FilterContext.of(gameData));
+    }
+
+    /** A departed permanent's own power, for a last-known read that recorded none: see
+     *  {@link GameQueryService#ownPower(GameData, Permanent)}. */
+    public int ownPower(GameData gameData, Permanent permanent) {
+        return gameQueryService.ownPower(gameData, permanent);
     }
 
     /**

@@ -38,8 +38,8 @@ class DragDownTest extends BaseCardTest {
         harness.castInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(1);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(1);
     }
 
     @Test
@@ -55,8 +55,8 @@ class DragDownTest extends BaseCardTest {
         harness.castInstant(player1, 0, avatar.getId());
         harness.passBothPriorities();
 
-        assertThat(avatar.getEffectivePower()).isEqualTo(5);
-        assertThat(avatar.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, avatar)).isEqualTo(5);
     }
 
     @Test
@@ -71,8 +71,8 @@ class DragDownTest extends BaseCardTest {
         harness.castInstant(player1, 0, avatar.getId());
         harness.passBothPriorities();
 
-        assertThat(avatar.getEffectivePower()).isEqualTo(7);
-        assertThat(avatar.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, avatar)).isEqualTo(7);
     }
 
     @Test
@@ -90,8 +90,8 @@ class DragDownTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -119,8 +119,8 @@ class DragDownTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Drag Down");
     }
 
@@ -139,8 +139,8 @@ class DragDownTest extends BaseCardTest {
         harness.castInstant(player1, 0, avatar.getId());
         harness.passBothPriorities();
 
-        assertThat(avatar.getEffectivePower()).isEqualTo(3);
-        assertThat(avatar.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, avatar)).isEqualTo(3);
     }
 
     @Test
@@ -172,8 +172,8 @@ class DragDownTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Island());
         harness.passBothPriorities();
 
-        assertThat(avatar.getEffectivePower()).isEqualTo(6);
-        assertThat(avatar.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, avatar)).isEqualTo(6);
 
         harness.addToBattlefield(player1, new Mountain());
 

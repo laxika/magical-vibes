@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.c.CoordinatedAssault;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -31,8 +32,8 @@ class StaunchHeartedWarriorTest extends BaseCardTest {
 
         Permanent warrior = findPermanent(player1, "Staunch-Hearted Warrior");
         assertThat(warrior.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(warrior.getEffectivePower()).isEqualTo(4);
-        assertThat(warrior.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(4);
     }
 
     @Test
@@ -75,15 +76,15 @@ class StaunchHeartedWarriorTest extends BaseCardTest {
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(second.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
 
         harness.passBothPriorities();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 

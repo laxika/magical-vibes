@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Cryptwailing;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -33,8 +34,8 @@ class AbyssalNocturnusTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(nocturnus.getPowerModifier()).isEqualTo(2);
-        assertThat(nocturnus.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, nocturnus)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nocturnus)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, nocturnus, Keyword.FEAR)).isTrue();
     }
 
@@ -63,8 +64,8 @@ class AbyssalNocturnusTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
         resolveAllTriggers();
 
-        assertThat(nocturnus.getPowerModifier()).isEqualTo(4);
-        assertThat(nocturnus.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, nocturnus)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nocturnus)).isEqualTo(4);
     }
 
     @Test
@@ -85,8 +86,8 @@ class AbyssalNocturnusTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(nocturnus.getPowerModifier()).isZero();
-        assertThat(nocturnus.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nocturnus)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nocturnus)).isZero();
         assertThat(gqs.hasKeyword(gd, nocturnus, Keyword.FEAR)).isFalse();
     }
 
@@ -105,8 +106,8 @@ class AbyssalNocturnusTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(nocturnus.getPowerModifier()).isZero();
-        assertThat(nocturnus.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nocturnus)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nocturnus)).isZero();
         assertThat(gqs.hasKeyword(gd, nocturnus, Keyword.FEAR)).isFalse();
     }
 
@@ -128,12 +129,12 @@ class AbyssalNocturnusTest extends BaseCardTest {
         resolveAllTriggers();
 
         for (Permanent nocturnus : List.of(first, second)) {
-            assertThat(nocturnus.getPowerModifier()).isEqualTo(2);
-            assertThat(nocturnus.getToughnessModifier()).isEqualTo(2);
+            assertThat(PermanentGrants.powerBoostOf(gd, nocturnus)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, nocturnus)).isEqualTo(2);
             assertThat(gqs.hasKeyword(gd, nocturnus, Keyword.FEAR)).isTrue();
         }
-        assertThat(opponentsCopy.getPowerModifier()).isZero();
-        assertThat(opponentsCopy.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentsCopy)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentsCopy)).isZero();
         assertThat(gqs.hasKeyword(gd, opponentsCopy, Keyword.FEAR)).isFalse();
     }
 
@@ -150,8 +151,8 @@ class AbyssalNocturnusTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, player2.getId());
         resolveAllTriggers();
 
-        assertThat(nocturnus.getPowerModifier()).isZero();
-        assertThat(nocturnus.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nocturnus)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nocturnus)).isZero();
         assertThat(gqs.hasKeyword(gd, nocturnus, Keyword.FEAR)).isFalse();
     }
 

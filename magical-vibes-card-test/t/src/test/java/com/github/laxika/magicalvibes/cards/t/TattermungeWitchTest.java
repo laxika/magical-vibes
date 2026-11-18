@@ -30,16 +30,16 @@ class TattermungeWitchTest extends BaseCardTest {
         activateWitch(witch);
 
         // The blocked attacker gets the buff.
-        assertThat(blockedAttacker.getEffectivePower()).isEqualTo(3);
-        assertThat(blockedAttacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blockedAttacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blockedAttacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, blockedAttacker, Keyword.TRAMPLE)).isTrue();
 
         // A non-attacking bystander is not blocked → unaffected.
-        assertThat(bystander.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bystander)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bystander, Keyword.TRAMPLE)).isFalse();
 
         // The blocker is blocking, not blocked → unaffected.
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, blocker, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -52,7 +52,7 @@ class TattermungeWitchTest extends BaseCardTest {
 
         activateWitch(witch);
 
-        assertThat(unblockedAttacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, unblockedAttacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, unblockedAttacker, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -68,14 +68,14 @@ class TattermungeWitchTest extends BaseCardTest {
 
         activateWitch(witch);
 
-        assertThat(blockedAttacker.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blockedAttacker)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, blockedAttacker, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blockedAttacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blockedAttacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, blockedAttacker, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -94,7 +94,7 @@ class TattermungeWitchTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToExile(gd, blocker);
         activateWitch(witch);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -115,9 +115,9 @@ class TattermungeWitchTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(witch), null, null);
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, blocker, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -134,8 +134,8 @@ class TattermungeWitchTest extends BaseCardTest {
         activateWitch(witch);
         activateWitch(witch);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
         assertThat(witch.isTapped()).isFalse();
     }

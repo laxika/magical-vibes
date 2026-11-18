@@ -25,10 +25,10 @@ class RamosianRallyTest extends BaseCardTest {
 
         castForMana();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
     @Test
@@ -39,8 +39,8 @@ class RamosianRallyTest extends BaseCardTest {
         castForMana();
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
     }
 
     @Test
@@ -55,10 +55,10 @@ class RamosianRallyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(paymentCreature.isTapped()).isTrue();
-        assertThat(paymentCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(paymentCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(survivingCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(survivingCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, paymentCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, paymentCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, survivingCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, survivingCreature)).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -112,10 +112,10 @@ class RamosianRallyTest extends BaseCardTest {
         harness.castWithAlternateCost(player1, 0, List.of(paymentCreature.getId()));
 
         assertThat(paymentCreature.isTapped()).isTrue();
-        assertThat(paymentCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, paymentCreature)).isEqualTo(2);
         harness.passBothPriorities();
-        assertThat(paymentCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(paymentCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, paymentCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, paymentCreature)).isEqualTo(3);
         harness.assertInGraveyard(player1, "Ramosian Rally");
     }
 
@@ -154,10 +154,10 @@ class RamosianRallyTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
 
-        assertThat(beforeResolution.getEffectivePower()).isEqualTo(3);
-        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(3);
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
     }
     private void castForMana() {
         harness.castFromHand(player1, new RamosianRally(), "{3}{W}");

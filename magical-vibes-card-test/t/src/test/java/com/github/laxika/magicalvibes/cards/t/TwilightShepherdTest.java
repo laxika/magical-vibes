@@ -102,7 +102,7 @@ class TwilightShepherdTest extends BaseCardTest {
 
         Permanent shepherd = findPermanent(player1, "Twilight Shepherd");
         assertThat(shepherd.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(shepherd.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, shepherd)).isEqualTo(4);
     }
 
     @Test

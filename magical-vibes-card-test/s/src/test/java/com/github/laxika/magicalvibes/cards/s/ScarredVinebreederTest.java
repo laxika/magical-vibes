@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ElvishPromenade;
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowHarrier;
 import com.github.laxika.magicalvibes.model.Card;
@@ -68,8 +69,8 @@ class ScarredVinebreederTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Scarred Vinebreeder");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Scarred Vinebreeder"));
-        assertThat(vinebreeder.getPowerModifier()).isEqualTo(3);
-        assertThat(vinebreeder.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, vinebreeder)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vinebreeder)).isEqualTo(3);
         // 4 - 3 ({2}{B}) = 1 remaining
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
@@ -82,7 +83,7 @@ class ScarredVinebreederTest extends BaseCardTest {
         harness.activateAbility(player1, idxOf(vinebreeder), null, null);
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
-        assertThat(vinebreeder.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, vinebreeder)).isEqualTo(3);
 
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of());
@@ -90,8 +91,8 @@ class ScarredVinebreederTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(vinebreeder.getPowerModifier()).isZero();
-        assertThat(vinebreeder.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, vinebreeder)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vinebreeder)).isZero();
     }
 
     @Test
@@ -127,13 +128,13 @@ class ScarredVinebreederTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(elf);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.stack).hasSize(1);
-        assertThat(vinebreeder.getPowerModifier()).isZero();
-        assertThat(vinebreeder.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, vinebreeder)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vinebreeder)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(vinebreeder.getPowerModifier()).isEqualTo(3);
-        assertThat(vinebreeder.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, vinebreeder)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vinebreeder)).isEqualTo(3);
     }
 
     @Test
@@ -148,8 +149,8 @@ class ScarredVinebreederTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(vinebreeder.getPowerModifier()).isEqualTo(6);
-        assertThat(vinebreeder.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, vinebreeder)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vinebreeder)).isEqualTo(6);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -166,8 +167,8 @@ class ScarredVinebreederTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(vinebreeder.getPowerModifier()).isEqualTo(3);
-        assertThat(vinebreeder.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, vinebreeder)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vinebreeder)).isEqualTo(3);
         assertThat(vinebreeder.isTapped()).isTrue();
     }
 
@@ -214,8 +215,8 @@ class ScarredVinebreederTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(elf);
-        assertThat(vinebreeder.getPowerModifier()).isEqualTo(3);
-        assertThat(vinebreeder.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, vinebreeder)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vinebreeder)).isEqualTo(3);
     }
 
     @Test
@@ -230,7 +231,7 @@ class ScarredVinebreederTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(elf);
-        assertThat(vinebreeder.getPowerModifier()).isEqualTo(3);
-        assertThat(vinebreeder.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, vinebreeder)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vinebreeder)).isEqualTo(3);
     }
 }

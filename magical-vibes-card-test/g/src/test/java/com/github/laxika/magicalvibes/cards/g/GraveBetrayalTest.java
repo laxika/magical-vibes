@@ -60,7 +60,7 @@ class GraveBetrayalTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(returned.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(3);
     }
 
     @Test
@@ -185,7 +185,7 @@ class GraveBetrayalTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(returned.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(4);
     }
 
     @Test

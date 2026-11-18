@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -32,8 +33,8 @@ class BalduvianFallenTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(fallen.getPowerModifier()).isEqualTo(2);
-        assertThat(fallen.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fallen)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fallen)).isZero();
     }
 
     @Test
@@ -50,11 +51,11 @@ class BalduvianFallenTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(fallen.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, fallen)).isEqualTo(1);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(fallen.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fallen)).isZero();
     }
 
     @Test
@@ -92,13 +93,13 @@ class BalduvianFallenTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.UPKEEP,
                 () -> harness.handleMayAbilityChosen(player1, true));
 
-        assertThat(fallen.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fallen)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(fallen.getPowerModifier()).isEqualTo(1);
-        assertThat(fallen.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fallen)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fallen)).isZero();
     }
 
     @Test
@@ -119,8 +120,8 @@ class BalduvianFallenTest extends BaseCardTest {
 
         assertThat(fallen.getCounterCount(CounterType.AGE)).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(fallen);
-        assertThat(fallen.getPowerModifier()).isZero();
-        assertThat(fallen.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fallen)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, fallen)).isZero();
     }
 
     @Test
@@ -136,7 +137,7 @@ class BalduvianFallenTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(fallen);
         harness.assertInGraveyard(player1, "Balduvian Fallen");
-        assertThat(fallen.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, fallen)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

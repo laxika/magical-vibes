@@ -58,8 +58,7 @@ public class BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffectHandler imp
             return;
         }
 
-        equippedCreature.setPowerModifier(equippedCreature.getPowerModifier() + e.powerBoost());
-        equippedCreature.setToughnessModifier(equippedCreature.getToughnessModifier() + e.toughnessBoost());
+        gameData.addPowerToughnessBoost(entry, equippedCreature.getId(), e.powerBoost(), e.toughnessBoost());
         gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(e.keyword(), GrantScope.TARGET),
                 equippedCreature.getId(), Duration.UNTIL_END_OF_TURN);
 

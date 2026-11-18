@@ -39,8 +39,8 @@ class ShapeStealerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(shapeStealer.getEffectivePower()).isEqualTo(1);
-        assertThat(shapeStealer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shapeStealer)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shapeStealer)).isEqualTo(3);
     }
 
     @Test
@@ -54,8 +54,8 @@ class ShapeStealerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(shapeStealer.getEffectivePower()).isEqualTo(1);
-        assertThat(shapeStealer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shapeStealer)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shapeStealer)).isEqualTo(3);
     }
 
     @Test
@@ -68,15 +68,15 @@ class ShapeStealerTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
-        assertThat(shapeStealer.getEffectivePower()).isEqualTo(1);
-        assertThat(shapeStealer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shapeStealer)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shapeStealer)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shapeStealer.getEffectivePower()).isEqualTo(1);
-        assertThat(shapeStealer.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shapeStealer)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shapeStealer)).isEqualTo(1);
     }
 
     @Test
@@ -99,8 +99,8 @@ class ShapeStealerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(shapeStealer.getEffectivePower()).isEqualTo(2);
-        assertThat(shapeStealer.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, shapeStealer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shapeStealer)).isEqualTo(4);
     }
 
     @Test
@@ -117,8 +117,8 @@ class ShapeStealerTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(shapeStealer.getEffectivePower()).isEqualTo(1);
-        assertThat(shapeStealer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shapeStealer)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shapeStealer)).isEqualTo(3);
     }
 
     @Test
@@ -138,8 +138,8 @@ class ShapeStealerTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Akuta, Born of Ash");
         harness.passBothPriorities();
 
-        assertThat(shapeStealer.getEffectivePower()).isEqualTo(3);
-        assertThat(shapeStealer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, shapeStealer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shapeStealer)).isEqualTo(2);
     }
 
     @Test

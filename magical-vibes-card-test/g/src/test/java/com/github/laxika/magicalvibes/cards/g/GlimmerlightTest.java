@@ -32,8 +32,8 @@ class GlimmerlightTest extends BaseCardTest {
         assertThat(glimmer.getCard().getSubtypes()).containsExactly(CardSubtype.GLIMMER);
         assertThat(glimmer.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(glimmer.getCard().hasType(CardType.ENCHANTMENT)).isTrue();
-        assertThat(glimmer.getEffectivePower()).isEqualTo(1);
-        assertThat(glimmer.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, glimmer)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, glimmer)).isEqualTo(1);
         assertThat(glimmer.getCard().isToken()).isTrue();
     }
 

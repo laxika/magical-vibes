@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FireServant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HealersHawk;
@@ -104,7 +105,7 @@ class JusticeStrikeTest extends BaseCardTest {
     @DisplayName("A creature with zero or negative power deals no damage")
     void nonpositivePowerDealsNoDamage(int powerModifier) {
         Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfSwords());
-        wall.setPowerModifier(powerModifier);
+        PermanentGrants.setPowerBoost(gd, wall, powerModifier);
         harness.setHand(player1, List.of(new JusticeStrike()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -124,7 +125,7 @@ class JusticeStrikeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0, wall.getId());
-        wall.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, wall, 1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Wall of Swords");

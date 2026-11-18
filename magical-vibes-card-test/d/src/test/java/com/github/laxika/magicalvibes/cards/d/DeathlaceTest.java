@@ -112,8 +112,8 @@ class DeathlaceTest extends BaseCardTest {
         assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.BLACK);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         harness.assertInGraveyard(player1, "Giant Growth");
         assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.GREEN);
     }

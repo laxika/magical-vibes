@@ -53,8 +53,7 @@ public class RevealDrawnCardAndBoostEquippedCreatureByManaValueEffectHandler imp
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         if (equippedCreature != null && manaValue > 0) {
-            equippedCreature.setPowerModifier(equippedCreature.getPowerModifier() + manaValue);
-            equippedCreature.setToughnessModifier(equippedCreature.getToughnessModifier() + manaValue);
+            gameData.addPowerToughnessBoost(entry, equippedCreature.getId(), manaValue, manaValue);
             gameLogService.append(gameData, GameLog.builder()
                     .card(equippedCreature.getCard())
                     .text(" gets +" + manaValue + "/+" + manaValue + " until end of turn.")

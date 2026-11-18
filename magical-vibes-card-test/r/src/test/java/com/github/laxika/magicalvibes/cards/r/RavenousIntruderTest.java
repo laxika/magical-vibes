@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,8 +26,8 @@ class RavenousIntruderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Spellbook");
-        assertThat(intruder.getPowerModifier()).isEqualTo(2);
-        assertThat(intruder.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, intruder)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, intruder)).isEqualTo(2);
     }
 
     @Test
@@ -42,8 +43,8 @@ class RavenousIntruderTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(intruder.getPowerModifier()).isEqualTo(0);
-        assertThat(intruder.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, intruder)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, intruder)).isEqualTo(0);
     }
 
     @Test
@@ -67,13 +68,13 @@ class RavenousIntruderTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Ornithopter");
         harness.assertInGraveyard(player1, "Ornithopter");
         assertThat(gd.stack).hasSize(1);
-        assertThat(intruder.getPowerModifier()).isZero();
-        assertThat(intruder.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, intruder)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, intruder)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(intruder.getPowerModifier()).isEqualTo(2);
-        assertThat(intruder.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, intruder)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, intruder)).isEqualTo(2);
     }
 
     @Test
@@ -90,8 +91,8 @@ class RavenousIntruderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(intruder.getPowerModifier()).isEqualTo(4);
-        assertThat(intruder.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, intruder)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, intruder)).isEqualTo(4);
         assertThat(intruder.isTapped()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }

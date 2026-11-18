@@ -54,8 +54,8 @@ class ProvenCombatantTest extends BaseCardTest {
 
         Permanent token = eternalizedToken();
 
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getColors()).contains(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes())
@@ -156,7 +156,7 @@ class ProvenCombatantTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(eternalizedToken().getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, eternalizedToken())).isEqualTo(4);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }

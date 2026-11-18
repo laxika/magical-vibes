@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -42,8 +43,8 @@ class CarrionTest extends BaseCardTest {
             assertThat(insect.getCard().hasType(CardType.CREATURE)).isTrue();
             assertThat(insect.getCard().getColors()).containsExactly(CardColor.BLACK);
             assertThat(insect.getCard().getSubtypes()).containsExactly(CardSubtype.INSECT);
-            assertThat(insect.getEffectivePower()).isZero();
-            assertThat(insect.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, insect)).isZero();
+            assertThat(gqs.getEffectiveToughness(gd, insect)).isEqualTo(1);
         });
     }
 
@@ -82,7 +83,7 @@ class CarrionTest extends BaseCardTest {
     @DisplayName("Sacrificing a zero-power creature creates no tokens")
     void zeroPowerCreatesNoTokens() {
         Permanent sacrifice = addCreatureReady(player1, new CadaverousKnight());
-        sacrifice.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, sacrifice, -2);
         prepare();
 
         harness.castInstantWithSacrifice(player1, 0, null, sacrifice.getId());
@@ -97,7 +98,7 @@ class CarrionTest extends BaseCardTest {
     @DisplayName("Sacrificing a negative-power creature creates no tokens")
     void negativePowerCreatesNoTokens() {
         Permanent sacrifice = addCreatureReady(player1, new CadaverousKnight());
-        sacrifice.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, sacrifice, -3);
         prepare();
 
         harness.castInstantWithSacrifice(player1, 0, null, sacrifice.getId());

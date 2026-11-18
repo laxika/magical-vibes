@@ -57,7 +57,7 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
         // Target may be a permanent or, like Glamerdye, a spell still on the stack.
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null) {
-            // CR 105.3 / 611.2b: "becomes [color]" with no stated duration is a floating layer-5 color
+            // CR 105.3 / 611.2a: "becomes [color]" with no stated duration is a floating layer-5 color
             // setter that replaces all previous colors and lasts indefinitely (Duration.PERMANENT).
             if (color != null) {
             }

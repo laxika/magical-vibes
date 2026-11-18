@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ContactOtherPlane;
 import com.github.laxika.magicalvibes.cards.c.ContentiousPlan;
 import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
@@ -73,8 +74,8 @@ class BarbarianClassTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
     }
 
@@ -146,7 +147,7 @@ class BarbarianClassTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -180,14 +181,14 @@ class BarbarianClassTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isFalse();
     }
 

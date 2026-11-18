@@ -118,8 +118,8 @@ class LordWindgraceTest extends BaseCardTest {
                 .toList();
         assertThat(tokens).hasSize(6);
         assertThat(tokens).allSatisfy(token -> {
-            assertThat(token.getEffectivePower()).isEqualTo(2);
-            assertThat(token.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
             assertThat(token.getCard().getSubtypes())
                     .containsExactlyInAnyOrder(CardSubtype.CAT, CardSubtype.WARRIOR);
             assertThat(gqs.hasKeyword(gd, token, Keyword.FORESTWALK)).isTrue();

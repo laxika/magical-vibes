@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -28,10 +29,10 @@ class DrogskolShieldmateTest extends BaseCardTest {
 
         Permanent shieldmate = findPermanent(player1, "Drogskol Shieldmate");
 
-        assertThat(cathar.getPowerModifier()).isEqualTo(0);
-        assertThat(cathar.getToughnessModifier()).isEqualTo(1);
-        assertThat(shieldmate.getPowerModifier()).isEqualTo(0);
-        assertThat(shieldmate.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, cathar)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cathar)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, shieldmate)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, shieldmate)).isEqualTo(0);
     }
 
     @Test
@@ -43,8 +44,8 @@ class DrogskolShieldmateTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(opponentCathar.getPowerModifier()).isEqualTo(0);
-        assertThat(opponentCathar.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCathar)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCathar)).isEqualTo(0);
     }
 
     @Test
@@ -60,7 +61,7 @@ class DrogskolShieldmateTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(cathar.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cathar)).isEqualTo(0);
     }
 
     @Test
@@ -75,7 +76,7 @@ class DrogskolShieldmateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Drogskol Shieldmate");
-        assertThat(cathar.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cathar)).isEqualTo(1);
     }
 
     @Test
@@ -90,8 +91,8 @@ class DrogskolShieldmateTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         harness.passBothPriorities();
 
-        assertThat(earlierShieldmate.getToughnessModifier()).isEqualTo(1);
-        assertThat(enteringShieldmate.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, earlierShieldmate)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enteringShieldmate)).isEqualTo(0);
     }
 
     @Test
@@ -103,9 +104,9 @@ class DrogskolShieldmateTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new DauntlessCathar());
 
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(0);
-        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
-        assertThat(afterResolution.getPowerModifier()).isEqualTo(0);
-        assertThat(afterResolution.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isEqualTo(0);
     }
 }

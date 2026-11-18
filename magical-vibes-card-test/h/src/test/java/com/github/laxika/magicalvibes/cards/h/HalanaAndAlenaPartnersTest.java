@@ -111,7 +111,7 @@ class HalanaAndAlenaPartnersTest extends BaseCardTest {
     @ValueSource(ints = {-2, -3})
     void grantsHasteWithoutCountersWhenSourcePowerIsZeroOrNegative(int powerModifier) {
         Permanent partners = harness.addToBattlefieldAndReturn(player1, new HalanaAndAlenaPartners());
-        partners.setPowerModifier(powerModifier);
+        PermanentGrants.setPowerBoost(gd, partners, powerModifier);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new SporebackWolf());
 
         advanceToCombat(player1);

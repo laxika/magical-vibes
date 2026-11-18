@@ -45,11 +45,11 @@ class DutyBeyondDeathTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(survivor.getEffectivePower()).isEqualTo(3);
-        assertThat(survivor.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, survivor, Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -71,8 +71,8 @@ class DutyBeyondDeathTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, survivor, Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(survivor.getEffectivePower()).isEqualTo(3);
-        assertThat(survivor.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(3);
     }
 
     @Test

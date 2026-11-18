@@ -71,7 +71,7 @@ class AnointedChoristerTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(chorister.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, chorister)).isEqualTo(1);
     }
 
     private Permanent addReadyChorister(Player player) {

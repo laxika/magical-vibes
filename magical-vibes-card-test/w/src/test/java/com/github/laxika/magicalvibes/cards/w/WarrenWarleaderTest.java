@@ -36,8 +36,8 @@ class WarrenWarleaderTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(1);
-        assertThat(tokens.getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tokens.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tokens.getFirst())).isEqualTo(1);
     }
 
     @Test
@@ -70,15 +70,15 @@ class WarrenWarleaderTest extends BaseCardTest {
         harness.handleListChoice(player1, BOOST_MODE);
         resolveAllTriggers();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(3);
-        assertThat(nonattacker.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
 
         GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -105,9 +105,9 @@ class WarrenWarleaderTest extends BaseCardTest {
         harness.handleListChoice(player1, BOOST_MODE);
         resolveAllTriggers();
 
-        assertThat(firstAttacker.getEffectivePower()).isEqualTo(3);
-        assertThat(secondAttacker.getEffectivePower()).isEqualTo(3);
-        assertThat(warleader.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, firstAttacker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondAttacker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, warleader)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -126,8 +126,8 @@ class WarrenWarleaderTest extends BaseCardTest {
         harness.handleListChoice(player1, BOOST_MODE);
         resolveAllTriggers();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.y.YavimayaBarbarian;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,8 +29,8 @@ class SparringGolemTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(golem.getPowerModifier()).isEqualTo(1);
-        assertThat(golem.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, golem)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, golem)).isEqualTo(1);
     }
 
     @Test
@@ -49,8 +50,8 @@ class SparringGolemTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(golem.getPowerModifier()).isEqualTo(3);
-        assertThat(golem.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, golem)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, golem)).isEqualTo(3);
     }
 
     @Test
@@ -63,8 +64,8 @@ class SparringGolemTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(golem.getPowerModifier()).isZero();
-        assertThat(golem.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, golem)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, golem)).isZero();
     }
 
     @Test
@@ -78,15 +79,15 @@ class SparringGolemTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(golem.getPowerModifier()).isEqualTo(1);
-        assertThat(golem.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, golem)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, golem)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(golem.getPowerModifier()).isZero();
-        assertThat(golem.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, golem)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, golem)).isZero();
     }
 
     @Test
@@ -108,8 +109,8 @@ class SparringGolemTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
         resolveAllTriggers();
 
-        assertThat(golem.getPowerModifier()).isEqualTo(1);
-        assertThat(golem.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, golem)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, golem)).isEqualTo(1);
     }
 
     @Test
@@ -131,9 +132,9 @@ class SparringGolemTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(2);
     }
 }

@@ -42,7 +42,7 @@ class KitchenFinksTest extends BaseCardTest {
         Permanent finks = findPermanent(player1, "Kitchen Finks");
         assertThat(finks).isNotNull();
         assertThat(finks.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(finks.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, finks)).isEqualTo(2);
     }
 
     @Test

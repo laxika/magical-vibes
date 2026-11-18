@@ -33,8 +33,8 @@ class RedcapRaidersTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, golem.getId());
 
         assertThat(golem.isTapped()).isTrue();
-        assertThat(raiders.getEffectivePower()).isEqualTo(4);
-        assertThat(raiders.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, raiders)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, raiders, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -49,8 +49,8 @@ class RedcapRaidersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(human.isTapped()).isFalse();
-        assertThat(raiders.getEffectivePower()).isEqualTo(3);
-        assertThat(raiders.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, raiders)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, raiders, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -66,8 +66,8 @@ class RedcapRaidersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(golem.isTapped()).isFalse();
-        assertThat(raiders.getEffectivePower()).isEqualTo(3);
-        assertThat(raiders.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, raiders)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, raiders, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -87,8 +87,8 @@ class RedcapRaidersTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(raiders.getEffectivePower()).isEqualTo(3);
-        assertThat(raiders.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, raiders)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, raiders, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -104,10 +104,10 @@ class RedcapRaidersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(helper.isTapped()).isTrue();
-        assertThat(helper.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, helper)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, helper, Keyword.TRAMPLE)).isFalse();
-        assertThat(raiders.getEffectivePower()).isEqualTo(4);
-        assertThat(raiders.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, raiders)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, raiders, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -123,8 +123,8 @@ class RedcapRaidersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(helper.isTapped()).isTrue();
-        assertThat(raiders.getEffectivePower()).isEqualTo(3);
-        assertThat(raiders.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, raiders)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, raiders, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -139,8 +139,8 @@ class RedcapRaidersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(opponentCreature.isTapped()).isFalse();
-        assertThat(raiders.getEffectivePower()).isEqualTo(3);
-        assertThat(raiders.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, raiders)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, raiders)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, raiders, Keyword.TRAMPLE)).isFalse();
     }
 }

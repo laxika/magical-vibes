@@ -28,8 +28,8 @@ class KnightOfValorTest extends BaseCardTest {
         declareBlockers(knight, blocker);
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
     }
 
     @Test
@@ -43,8 +43,8 @@ class KnightOfValorTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(knight), null, null);
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
     }
 
     @Test
@@ -58,8 +58,8 @@ class KnightOfValorTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(knight), null, null);
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -74,10 +74,10 @@ class KnightOfValorTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(knight), null, null);
         harness.passBothPriorities();
 
-        assertThat(blocker1.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker1.getEffectiveToughness()).isEqualTo(1);
-        assertThat(blocker2.getEffectivePower()).isEqualTo(1);
-        assertThat(blocker2.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker1)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker1)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker2)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker2)).isEqualTo(1);
     }
 
     @Test
@@ -98,10 +98,10 @@ class KnightOfValorTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(knight), null, null);
         harness.passBothPriorities();
 
-        assertThat(blockerOfKnight.getEffectivePower()).isEqualTo(1);
-        assertThat(blockerOfKnight.getEffectiveToughness()).isEqualTo(1);
-        assertThat(blockerOfOtherKnight.getEffectivePower()).isEqualTo(2);
-        assertThat(blockerOfOtherKnight.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blockerOfKnight)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blockerOfKnight)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blockerOfOtherKnight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blockerOfOtherKnight)).isEqualTo(2);
     }
 
     @Test
@@ -119,8 +119,8 @@ class KnightOfValorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     @Test
@@ -137,7 +137,7 @@ class KnightOfValorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(knight), null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(blocker.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
     }
 
     @Test
@@ -149,7 +149,7 @@ class KnightOfValorTest extends BaseCardTest {
         declareBlockers(knight, blocker);
         resolveAllTriggers();
 
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateAbility(player1, battlefieldIndex(knight), null, null);
         harness.passBothPriorities();
@@ -169,8 +169,8 @@ class KnightOfValorTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(knight), null, null);
         harness.passBothPriorities();
 
-        assertThat(otherCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(otherCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
         harness.clearPriorityPassed();
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(knight), null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -187,8 +187,8 @@ class KnightOfValorTest extends BaseCardTest {
         declareBlockers(knight, blocker);
         resolveAllTriggers();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
     }
 
     private void declareBlockers(Permanent attacker, Permanent... blockers) {

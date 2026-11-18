@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -94,8 +95,8 @@ class ChampionOfWitsTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Champion of Wits"));
 
         Permanent token = eternalizedToken();
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes())
                 .contains(CardSubtype.ZOMBIE, CardSubtype.SNAKE, CardSubtype.WIZARD);
@@ -136,7 +137,7 @@ class ChampionOfWitsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         Permanent champion = harness.enterBattlefieldAndReturn(player1, new ChampionOfWits());
-        champion.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, champion, -2);
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

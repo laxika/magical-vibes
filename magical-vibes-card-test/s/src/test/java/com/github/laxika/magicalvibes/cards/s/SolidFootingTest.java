@@ -127,7 +127,7 @@ class SolidFootingTest extends BaseCardTest {
     @DisplayName("A vigilant attacker uses toughness even when its power is greater")
     void vigilantAttackerUsesLowerToughness() {
         Permanent creature = addCreatureReady(player1, new ManedServal());
-        creature.setPowerModifier(5);
+        PermanentGrants.setPowerBoost(gd, creature, 5);
         attachAura(creature);
         harness.setLife(player2, 20);
 

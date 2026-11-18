@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -53,10 +54,10 @@ class WallOfFireTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getEffectivePower()).isEqualTo(1);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(5);
-        assertThat(wall.getPowerModifier()).isEqualTo(1);
-        assertThat(wall.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isEqualTo(0);
     }
 
     @Test
@@ -69,8 +70,8 @@ class WallOfFireTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(sourceWall.getEffectivePower()).isEqualTo(1);
-        assertThat(otherWall.getEffectivePower()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, sourceWall)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, otherWall)).isEqualTo(0);
     }
 
     @Test
@@ -84,17 +85,17 @@ class WallOfFireTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getEffectivePower()).isEqualTo(2);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wall.getPowerModifier()).isEqualTo(0);
-        assertThat(wall.getToughnessModifier()).isEqualTo(0);
-        assertThat(wall.getEffectivePower()).isEqualTo(0);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wall)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(5);
     }
 
     @Test
@@ -148,7 +149,7 @@ class WallOfFireTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wall)).isEqualTo(1);
         assertThat(wall.isTapped()).isTrue();
     }
 
@@ -162,17 +163,17 @@ class WallOfFireTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(wall.getEffectivePower()).isZero();
+        assertThat(gqs.getEffectivePower(gd, wall)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
 
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
-        assertThat(wall.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(1);
 
         harness.passBothPriorities();
         assertThat(gd.stack).isEmpty();
-        assertThat(wall.getEffectivePower()).isEqualTo(2);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(5);
         assertThat(wall.isTapped()).isFalse();
     }
 
@@ -187,8 +188,8 @@ class WallOfFireTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wall.getEffectivePower()).isEqualTo(1);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(5);
         assertThat(wall.isTapped()).isFalse();
     }
 }

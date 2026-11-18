@@ -30,12 +30,12 @@ class ShefetArchfiendTest extends BaseCardTest {
         Permanent opponentGiant = findPermanent(player2, "Hill Giant");
         Permanent archfiend = findPermanent(player1, "Shefet Archfiend");
 
-        assertThat(ownGiant.getEffectivePower()).isEqualTo(1);
-        assertThat(ownGiant.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponentGiant.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentGiant.getEffectiveToughness()).isEqualTo(1);
-        assertThat(archfiend.getEffectivePower()).isEqualTo(5);
-        assertThat(archfiend.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ownGiant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownGiant)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentGiant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentGiant)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, archfiend)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, archfiend)).isEqualTo(5);
     }
 
     @Test
@@ -47,16 +47,16 @@ class ShefetArchfiendTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent giant = findPermanent(player2, "Hill Giant");
-        assertThat(giant.getEffectivePower()).isEqualTo(1);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.forceStep(TurnStep.CLEANUP);
 
-        assertThat(giant.getEffectivePower()).isEqualTo(3);
-        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
     @Test
@@ -99,8 +99,8 @@ class ShefetArchfiendTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -111,11 +111,11 @@ class ShefetArchfiendTest extends BaseCardTest {
         castShefetArchfiend();
         resolveAllTriggers();
 
-        assertThat(earlier.getEffectivePower()).isEqualTo(3);
-        assertThat(earlier.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, earlier)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, earlier)).isEqualTo(3);
         Permanent source = findPermanent(player1, "Shefet Archfiend");
-        assertThat(source.getEffectivePower()).isEqualTo(5);
-        assertThat(source.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(5);
     }
 
     @Test
@@ -137,8 +137,8 @@ class ShefetArchfiendTest extends BaseCardTest {
         harness.assertInHand(player1, "Hill Giant");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         Permanent bear = findPermanent(player2, "Grizzly Bears");
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     private void castShefetArchfiend() {

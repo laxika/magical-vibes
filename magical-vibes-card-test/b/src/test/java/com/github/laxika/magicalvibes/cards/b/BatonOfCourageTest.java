@@ -83,15 +83,15 @@ class BatonOfCourageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(baton.getCounterCount(CounterType.CHARGE)).isZero();
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -139,7 +139,7 @@ class BatonOfCourageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, creature.getId());
 
         assertThat(baton.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
 
@@ -148,8 +148,8 @@ class BatonOfCourageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         assertThat(baton.isTapped()).isTrue();
     }
 
@@ -164,8 +164,8 @@ class BatonOfCourageTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(baton.getCard());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -181,7 +181,7 @@ class BatonOfCourageTest extends BaseCardTest {
 
         assertThat(baton.getCounterCount(CounterType.CHARGE)).isZero();
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }

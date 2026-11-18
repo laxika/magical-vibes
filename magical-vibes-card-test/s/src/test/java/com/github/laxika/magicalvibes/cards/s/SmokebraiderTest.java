@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HellsparkElemental;
 import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.cards.f.FlamekinBrawler;
@@ -203,7 +204,7 @@ class SmokebraiderTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(brawler.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, brawler)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId())
                 .getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.ELEMENTAL), ManaColor.RED))
                 .isEqualTo(1);
@@ -242,6 +243,6 @@ class SmokebraiderTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(brawler.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, brawler)).isZero();
     }
 }

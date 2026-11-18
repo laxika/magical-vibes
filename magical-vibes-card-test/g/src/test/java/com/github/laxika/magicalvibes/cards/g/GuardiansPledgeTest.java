@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,8 +27,8 @@ class GuardiansPledgeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         Permanent vanguard = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(vanguard.getPowerModifier()).isEqualTo(2);
-        assertThat(vanguard.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, vanguard)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vanguard)).isEqualTo(2);
     }
 
     @Test
@@ -40,8 +41,8 @@ class GuardiansPledgeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         Permanent companion = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(companion.getPowerModifier()).isEqualTo(0);
-        assertThat(companion.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, companion)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, companion)).isEqualTo(0);
     }
 
     @Test
@@ -54,8 +55,8 @@ class GuardiansPledgeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         Permanent vanguard = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(vanguard.getPowerModifier()).isEqualTo(0);
-        assertThat(vanguard.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vanguard)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vanguard)).isEqualTo(0);
     }
 
     @Test
@@ -72,8 +73,8 @@ class GuardiansPledgeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent vanguard = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(vanguard.getPowerModifier()).isEqualTo(0);
-        assertThat(vanguard.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, vanguard)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vanguard)).isEqualTo(0);
     }
 
     @Test
@@ -88,8 +89,8 @@ class GuardiansPledgeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2).allSatisfy(permanent -> {
-            assertThat(permanent.getPowerModifier()).isEqualTo(2);
-            assertThat(permanent.getToughnessModifier()).isEqualTo(2);
+            assertThat(PermanentGrants.powerBoostOf(gd, permanent)).isEqualTo(2);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, permanent)).isEqualTo(2);
         });
     }
 
@@ -104,10 +105,10 @@ class GuardiansPledgeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EliteVanguard());
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        assertThat(battlefield.getFirst().getPowerModifier()).isEqualTo(2);
-        assertThat(battlefield.getFirst().getToughnessModifier()).isEqualTo(2);
-        assertThat(battlefield.getLast().getPowerModifier()).isZero();
-        assertThat(battlefield.getLast().getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, battlefield.getFirst())).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, battlefield.getFirst())).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, battlefield.getLast())).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, battlefield.getLast())).isZero();
     }
 
     @Test

@@ -34,11 +34,11 @@ class NanogeneConversionTest extends BaseCardTest {
 
         cast(target);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opposingCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -61,14 +61,14 @@ class NanogeneConversionTest extends BaseCardTest {
         Permanent copy = addCreatureReady(player1, new GrizzlyBears());
 
         cast(target);
-        assertThat(copy.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(copy.getEffectivePower()).isEqualTo(2);
-        assertThat(copy.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(2);
     }
 
     @Test

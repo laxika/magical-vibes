@@ -88,8 +88,8 @@ class DeepwoodLegateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(legate.getEffectivePower()).isEqualTo(2);
-        assertThat(legate.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, legate)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, legate)).isEqualTo(2);
     }
 
     @Test

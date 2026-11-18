@@ -31,8 +31,8 @@ class DireFleetPoisonerTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(pirate.getEffectivePower()).isEqualTo(3);
-        assertThat(pirate.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, pirate)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, pirate)).isEqualTo(3);
         assertThat(PermanentGrants.keywordsOf(gd, pirate)).contains(Keyword.DEATHTOUCH);
     }
 
@@ -48,8 +48,8 @@ class DireFleetPoisonerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(pirate.getEffectivePower()).isEqualTo(2);
-        assertThat(pirate.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, pirate)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pirate)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, pirate)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
@@ -118,8 +118,8 @@ class DireFleetPoisonerTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(pirate.getEffectivePower()).isEqualTo(2);
-        assertThat(pirate.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, pirate)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pirate)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, pirate)).doesNotContain(Keyword.DEATHTOUCH);
         assertThat(gd.stack).isEmpty();
     }
@@ -137,8 +137,8 @@ class DireFleetPoisonerTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(pirate.getEffectivePower()).isEqualTo(2);
-        assertThat(pirate.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, pirate)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pirate)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, pirate)).doesNotContain(Keyword.DEATHTOUCH);
         assertThat(gd.stack).isEmpty();
     }
@@ -157,8 +157,8 @@ class DireFleetPoisonerTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(pirate.getEffectivePower()).isEqualTo(3);
-        assertThat(pirate.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, pirate)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, pirate)).isEqualTo(3);
         assertThat(PermanentGrants.keywordsOf(gd, pirate)).contains(Keyword.DEATHTOUCH);
     }
 
@@ -173,8 +173,8 @@ class DireFleetPoisonerTest extends BaseCardTest {
         pirate.setAttacking(false);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(pirate.getEffectivePower()).isEqualTo(3);
-        assertThat(pirate.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, pirate)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, pirate)).isEqualTo(3);
         assertThat(PermanentGrants.keywordsOf(gd, pirate)).contains(Keyword.DEATHTOUCH);
     }
 

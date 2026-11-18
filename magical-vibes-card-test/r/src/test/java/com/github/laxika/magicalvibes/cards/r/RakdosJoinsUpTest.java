@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
@@ -149,7 +150,7 @@ class RakdosJoinsUpTest extends BaseCardTest {
     void negativePowerLegendaryCreatureStillTriggersButDealsNoDamage() {
         harness.addToBattlefield(player1, new RakdosJoinsUp());
         Permanent legendary = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
-        legendary.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, legendary, -3);
         int opponentLife = gd.getLife(player2.getId());
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);

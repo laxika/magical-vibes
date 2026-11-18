@@ -36,8 +36,8 @@ class MercilessJavelineerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), CantBlockEffect.class)).isTrue();
         // Discard cost paid: the card moved from hand to graveyard.
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

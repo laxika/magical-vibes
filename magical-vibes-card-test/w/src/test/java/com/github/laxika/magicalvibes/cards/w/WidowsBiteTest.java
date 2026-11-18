@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.l.LlanowarWastes;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -26,8 +27,8 @@ class WidowsBiteTest extends BaseCardTest {
         cast(new int[]{0}, List.of(target.getId()), List.of());
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -36,8 +37,8 @@ class WidowsBiteTest extends BaseCardTest {
 
         cast(new int[]{1}, List.of(target.getId()), List.of());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isFalse();
     }
 
@@ -49,8 +50,8 @@ class WidowsBiteTest extends BaseCardTest {
         cast(new int[]{0, 1}, List.of(target.getId(), target.getId()), List.of(teammate.getId()));
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
         assertThat(teammate.isTapped()).isTrue();
     }
 
@@ -99,10 +100,10 @@ class WidowsBiteTest extends BaseCardTest {
                 List.of(deathtouchTarget.getId()));
 
         assertThat(gqs.hasKeyword(gd, deathtouchTarget, Keyword.DEATHTOUCH)).isTrue();
-        assertThat(deathtouchTarget.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, deathtouchTarget)).isZero();
         assertThat(gqs.hasKeyword(gd, reducedTarget, Keyword.DEATHTOUCH)).isFalse();
-        assertThat(reducedTarget.getPowerModifier()).isEqualTo(-2);
-        assertThat(reducedTarget.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, reducedTarget)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, reducedTarget)).isEqualTo(-2);
         assertThat(deathtouchTarget.isTapped()).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -110,15 +111,15 @@ class WidowsBiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, deathtouchTarget, Keyword.DEATHTOUCH)).isFalse();
-        assertThat(reducedTarget.getPowerModifier()).isZero();
-        assertThat(reducedTarget.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, reducedTarget)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, reducedTarget)).isZero();
     }
 
     @Test
     void teamworkRejectsInsufficientTotalPower() {
         Permanent target = addCreatureReady(player2, new CrawWurm());
         Permanent teammate = addCreatureReady(player1, new CrawWurm());
-        teammate.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, teammate, -4);
 
         assertThatThrownBy(() -> cast(new int[]{0, 1}, List.of(target.getId(), target.getId()),
                 List.of(teammate.getId()))).isInstanceOf(IllegalStateException.class);
@@ -130,19 +131,19 @@ class WidowsBiteTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new CrawWurm());
         Permanent teammate = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
         teammate.setSummoningSick(true);
-        teammate.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, teammate, -3);
 
         cast(new int[]{0, 1}, List.of(target.getId(), target.getId()), List.of(teammate.getId()));
 
         assertThat(teammate.isTapped()).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
     }
 
     @Test
     void minusTwoModeKillsACreatureWithTwoRemainingToughness() {
         Permanent target = addCreatureReady(player2, new CrawWurm());
-        target.setToughnessModifier(-2);
+        PermanentGrants.setToughnessBoost(gd, target, -2);
 
         cast(new int[]{1}, List.of(target.getId()), List.of());
 

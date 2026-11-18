@@ -33,8 +33,8 @@ class ArboreaPegasusTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING);
     }
 
@@ -50,15 +50,15 @@ class ArboreaPegasusTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.FLYING);
     }
 
@@ -83,8 +83,8 @@ class ArboreaPegasusTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, pegasus.getId());
         harness.passBothPriorities();
 
-        assertThat(pegasus.getPowerModifier()).isEqualTo(1);
-        assertThat(pegasus.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, pegasus)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pegasus)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, pegasus, Keyword.FLYING)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
@@ -100,8 +100,8 @@ class ArboreaPegasusTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, pegasus));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         harness.assertInGraveyard(player1, "Arborea Pegasus");
         assertThat(gd.stack).isEmpty();
@@ -118,11 +118,11 @@ class ArboreaPegasusTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, target));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.FLYING);
-        assertThat(pegasus.getPowerModifier()).isZero();
-        assertThat(pegasus.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pegasus)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pegasus)).isZero();
         harness.assertInGraveyard(player2, "Scaled Herbalist");
         assertThat(gd.stack).isEmpty();
     }

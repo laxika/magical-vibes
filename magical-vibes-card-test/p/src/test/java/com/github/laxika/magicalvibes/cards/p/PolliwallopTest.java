@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.d.DaggerfangDuo;
 import com.github.laxika.magicalvibes.cards.f.Frogmite;
@@ -103,7 +104,7 @@ class PolliwallopTest extends BaseCardTest {
         addPolliwallopMana(2);
 
         harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
-        source.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, source, -1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Daggerfang Duo");

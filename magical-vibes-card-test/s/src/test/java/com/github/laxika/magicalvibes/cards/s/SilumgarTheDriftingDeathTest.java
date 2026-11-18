@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,10 +27,10 @@ class SilumgarTheDriftingDeathTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(silumgar.getPowerModifier()).isZero();
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(defendingCreature.getPowerModifier()).isEqualTo(-1);
-        assertThat(defendingCreature.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, silumgar)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, defendingCreature)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, defendingCreature)).isEqualTo(-1);
     }
 
     @Test
@@ -41,8 +42,8 @@ class SilumgarTheDriftingDeathTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(defendingCreature.getPowerModifier()).isZero();
-        assertThat(defendingCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, defendingCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, defendingCreature)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -55,8 +56,8 @@ class SilumgarTheDriftingDeathTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(defendingCreature.getPowerModifier()).isEqualTo(-2);
-        assertThat(defendingCreature.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, defendingCreature)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, defendingCreature)).isEqualTo(-2);
     }
 
     @Test
@@ -66,12 +67,12 @@ class SilumgarTheDriftingDeathTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
-        assertThat(defendingCreature.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, defendingCreature)).isEqualTo(-1);
 
         GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
 
-        assertThat(defendingCreature.getPowerModifier()).isZero();
-        assertThat(defendingCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, defendingCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, defendingCreature)).isZero();
     }
 
     @Test
@@ -85,8 +86,8 @@ class SilumgarTheDriftingDeathTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(silumgar.isAttacking()).isFalse();
-        assertThat(defender.getPowerModifier()).isEqualTo(-1);
-        assertThat(defender.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, defender)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, defender)).isEqualTo(-1);
     }
 
     @Test
@@ -99,8 +100,8 @@ class SilumgarTheDriftingDeathTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
     }
 
     @Test
@@ -114,11 +115,11 @@ class SilumgarTheDriftingDeathTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent afterResolution = addCreatureReady(player2, new GrizzlyBears());
 
-        assertThat(original.getToughnessModifier()).isEqualTo(-1);
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(-1);
-        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(-1);
-        assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, original)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, afterResolution)).isZero();
     }
 
     @Test
@@ -136,7 +137,7 @@ class SilumgarTheDriftingDeathTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Shivan Dragon");
         harness.assertNotOnBattlefield(player1, "Shivan Dragon");
-        assertThat(defender.getPowerModifier()).isEqualTo(-1);
-        assertThat(defender.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, defender)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, defender)).isEqualTo(-1);
     }
 }

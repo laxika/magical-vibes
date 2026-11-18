@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.cards.f.FesteringGoblin;
@@ -99,8 +100,8 @@ class UltimaTest extends BaseCardTest {
     void discardsBeforeRemovingDamageAndTemporaryModifiers() {
         Permanent myr = harness.addToBattlefieldAndReturn(player2, new DarksteelMyr());
         myr.setMarkedDamage(1);
-        myr.setPowerModifier(3);
-        myr.setToughnessModifier(3);
+        PermanentGrants.setPowerBoost(gd, myr, 3);
+        PermanentGrants.setToughnessBoost(gd, myr, 3);
         harness.setHand(player1, List.of(new Ultima(),
                 new Forest(), new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Forest(), new Forest()));
@@ -111,14 +112,14 @@ class UltimaTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(myr.getMarkedDamage()).isEqualTo(1);
-        assertThat(myr.getPowerModifier()).isEqualTo(3);
-        assertThat(myr.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, myr)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myr)).isEqualTo(3);
 
         harness.handleCardChosen(player1, 0);
 
         assertThat(myr.getMarkedDamage()).isZero();
-        assertThat(myr.getPowerModifier()).isZero();
-        assertThat(myr.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, myr)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, myr)).isZero();
         harness.assertOnBattlefield(player2, "Darksteel Myr");
     }
 }

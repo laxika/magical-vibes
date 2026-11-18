@@ -33,8 +33,8 @@ class EndlessRanksOfHYDRATest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(villains).hasSize(1);
-        assertThat(villains.getFirst().getEffectivePower()).isEqualTo(2);
-        assertThat(villains.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, villains.getFirst())).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, villains.getFirst())).isEqualTo(1);
         assertThat(villains.getFirst().hasKeyword(Keyword.MENACE)).isTrue();
     }
 

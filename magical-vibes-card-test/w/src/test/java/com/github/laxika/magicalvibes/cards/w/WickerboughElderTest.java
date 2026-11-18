@@ -37,8 +37,8 @@ class WickerboughElderTest extends BaseCardTest {
         Permanent elder = findPermanent(player1, "Wickerbough Elder");
         assertThat(gd.stack).isEmpty();
         assertThat(elder.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(elder.getEffectivePower()).isEqualTo(3);
-        assertThat(elder.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, elder)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elder)).isEqualTo(3);
     }
 
     @Test
@@ -124,7 +124,7 @@ class WickerboughElderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Angel's Feather"));
 
         assertThat(elder.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(elder.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elder)).isEqualTo(4);
         harness.assertOnBattlefield(player1, "Angel's Feather");
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Angel's Feather");

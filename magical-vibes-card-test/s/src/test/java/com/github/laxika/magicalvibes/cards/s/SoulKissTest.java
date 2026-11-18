@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -130,8 +131,8 @@ class SoulKissTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bearsPerm.getPowerModifier()).isEqualTo(0);
-        assertThat(bearsPerm.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bearsPerm)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bearsPerm)).isEqualTo(0);
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(2);
     }

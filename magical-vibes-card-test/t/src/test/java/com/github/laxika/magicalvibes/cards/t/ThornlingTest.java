@@ -85,8 +85,8 @@ class ThornlingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, null, null);
         harness.passBothPriorities();
 
-        assertThat(thornling.getPowerModifier()).isEqualTo(1);
-        assertThat(thornling.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, thornling)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thornling)).isEqualTo(-1);
     }
 
     // ===== {1}: -1/+1 until end of turn (ability 4) =====
@@ -100,8 +100,8 @@ class ThornlingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 4, null, null);
         harness.passBothPriorities();
 
-        assertThat(thornling.getPowerModifier()).isEqualTo(-1);
-        assertThat(thornling.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, thornling)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thornling)).isEqualTo(1);
     }
 
     @Test
@@ -112,14 +112,14 @@ class ThornlingTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 3, null, null);
         harness.passBothPriorities();
-        assertThat(thornling.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, thornling)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(thornling.getPowerModifier()).isEqualTo(0);
-        assertThat(thornling.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, thornling)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thornling)).isEqualTo(0);
     }
     @Test
     @DisplayName("Trample and indestructible expire at end of turn")
@@ -151,23 +151,23 @@ class ThornlingTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 4, null, null);
             harness.passBothPriorities();
         }
-        assertThat(thornling.getPowerModifier()).isEqualTo(-2);
-        assertThat(thornling.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, thornling)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thornling)).isEqualTo(2);
 
         harness.activateAbility(player1, 0, 3, null, null);
         harness.passBothPriorities();
 
-        assertThat(thornling.getPowerModifier()).isEqualTo(-1);
-        assertThat(thornling.getToughnessModifier()).isEqualTo(1);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, thornling)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thornling)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(thornling.getPowerModifier()).isZero();
-        assertThat(thornling.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, thornling)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, thornling)).isZero();
     }
 
     @Test

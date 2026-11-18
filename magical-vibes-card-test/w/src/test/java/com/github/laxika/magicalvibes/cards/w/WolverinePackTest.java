@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -31,8 +32,8 @@ class WolverinePackTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(pack.getPowerModifier()).isZero();
-        assertThat(pack.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pack)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pack)).isZero();
     }
 
     @Test
@@ -50,8 +51,8 @@ class WolverinePackTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(pack.getPowerModifier()).isEqualTo(2);
-        assertThat(pack.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, pack)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pack)).isEqualTo(2);
     }
 
     @Test
@@ -71,8 +72,8 @@ class WolverinePackTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(pack.getPowerModifier()).isEqualTo(4);
-        assertThat(pack.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, pack)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pack)).isEqualTo(4);
     }
 
     @Test
@@ -85,8 +86,8 @@ class WolverinePackTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(pack.getPowerModifier()).isZero();
-        assertThat(pack.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pack)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pack)).isZero();
     }
 
     @Test
@@ -104,15 +105,15 @@ class WolverinePackTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(pack.getPowerModifier()).isEqualTo(2);
-        assertThat(pack.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, pack)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pack)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(pack.getPowerModifier()).isZero();
-        assertThat(pack.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pack)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pack)).isZero();
     }
     @ParameterizedTest
     @ValueSource(ints = {1, 2})
@@ -132,15 +133,15 @@ class WolverinePackTest extends BaseCardTest {
                 : List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(pack.getPowerModifier()).isZero();
-        assertThat(pack.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pack)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pack)).isZero();
         harness.castInstant(player1, 0, blocker.getId());
         resolveAllTriggers();
 
         assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(blockerCount - 1);
         harness.assertInHand(player2, "Grizzly Bears");
-        assertThat(pack.getPowerModifier()).isZero();
-        assertThat(pack.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pack)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pack)).isZero();
     }
 
     @Test
@@ -157,13 +158,13 @@ class WolverinePackTest extends BaseCardTest {
                 new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(pack.getPowerModifier()).isEqualTo(2);
-        assertThat(pack.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, pack)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pack)).isEqualTo(2);
         harness.castAndResolveInstant(player1, 0, blocker.getId());
 
         assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(1);
         harness.assertInHand(player2, "Grizzly Bears");
-        assertThat(pack.getPowerModifier()).isEqualTo(2);
-        assertThat(pack.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, pack)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pack)).isEqualTo(2);
     }
 }

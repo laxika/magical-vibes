@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChargingPaladin;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -37,7 +38,7 @@ class WizardsStaffTest extends BaseCardTest {
         declareAttackers(player1, java.util.List.of(0));
         resolveAllTriggers();
 
-        assertThat(paladin.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(6);
     }
 
     @Test
@@ -70,8 +71,8 @@ class WizardsStaffTest extends BaseCardTest {
         harness.castFromHand(player1, new WizardsStaff(), "{1}{U}");
         resolveAllTriggers();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -83,8 +84,8 @@ class WizardsStaffTest extends BaseCardTest {
         harness.castFromHand(player1, new FugitiveWizard(), "{U}");
         resolveAllTriggers();
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -98,8 +99,8 @@ class WizardsStaffTest extends BaseCardTest {
         harness.castFromHand(player1, new WizardsStaff(), "{1}{U}");
         resolveAllTriggers();
 
-        assertThat(creature.getPowerModifier()).isEqualTo(6);
-        assertThat(creature.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(6);
     }
 
     @Test
@@ -114,7 +115,7 @@ class WizardsStaffTest extends BaseCardTest {
         declareAttackers(player1, java.util.List.of(0));
         resolveAllTriggers();
 
-        assertThat(paladin.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(6);
     }
 
     @Test
@@ -127,7 +128,7 @@ class WizardsStaffTest extends BaseCardTest {
         declareAttackers(player1, java.util.List.of(0));
         resolveAllTriggers();
 
-        assertThat(paladin.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(6);
     }
 
     @Test
@@ -139,7 +140,7 @@ class WizardsStaffTest extends BaseCardTest {
         declareAttackers(player2, java.util.List.of(0));
         resolveAllTriggers();
 
-        assertThat(paladin.getToughnessModifier()).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(6);
     }
 
     @Test

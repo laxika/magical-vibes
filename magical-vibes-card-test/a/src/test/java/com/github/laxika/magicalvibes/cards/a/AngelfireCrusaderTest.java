@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class AngelfireCrusaderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(crusader.getPowerModifier()).isEqualTo(1);
-        assertThat(crusader.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, crusader)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crusader)).isEqualTo(0);
     }
 
     @Test
@@ -38,8 +39,8 @@ class AngelfireCrusaderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(crusader.getPowerModifier()).isEqualTo(2);
-        assertThat(crusader.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, crusader)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crusader)).isEqualTo(0);
     }
 
     @Test
@@ -73,8 +74,8 @@ class AngelfireCrusaderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(crusader.getPowerModifier()).isEqualTo(1);
-        assertThat(crusader.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, crusader)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crusader)).isZero();
     }
 
     @Test
@@ -90,8 +91,8 @@ class AngelfireCrusaderTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(crusader.getPowerModifier()).isEqualTo(0);
-        assertThat(crusader.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, crusader)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crusader)).isEqualTo(0);
     }
 
     @Test
@@ -105,18 +106,18 @@ class AngelfireCrusaderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(crusader.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, crusader)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(crusader.getPowerModifier()).isEqualTo(1);
-        assertThat(crusader.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, crusader)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crusader)).isZero();
         assertThat(crusader.isTapped()).isTrue();
-        assertThat(otherCrusader.getPowerModifier()).isZero();
-        assertThat(otherCrusader.getToughnessModifier()).isZero();
-        assertThat(opposingCrusader.getPowerModifier()).isZero();
-        assertThat(opposingCrusader.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCrusader)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCrusader)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCrusader)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingCrusader)).isZero();
     }
 
 }

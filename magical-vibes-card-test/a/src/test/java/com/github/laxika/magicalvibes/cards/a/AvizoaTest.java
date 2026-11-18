@@ -24,15 +24,15 @@ class AvizoaTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(avizoa), null, null);
         harness.passBothPriorities();
 
-        assertThat(avizoa.getEffectivePower()).isEqualTo(4);
-        assertThat(avizoa.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, avizoa)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, avizoa)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(avizoa.getEffectivePower()).isEqualTo(2);
-        assertThat(avizoa.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, avizoa)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, avizoa)).isEqualTo(2);
     }
 
     @Test
@@ -103,8 +103,8 @@ class AvizoaTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(avizoa), null, null);
         harness.passBothPriorities();
 
-        assertThat(avizoa.getEffectivePower()).isEqualTo(4);
-        assertThat(avizoa.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, avizoa)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, avizoa)).isEqualTo(4);
         assertThat(gd.skipNextCount(player1.getId(), SkipKind.UNTAP_STEP)).isEqualTo(1);
     }
 
@@ -120,8 +120,8 @@ class AvizoaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(avizoa.isTapped()).isTrue();
-        assertThat(avizoa.getEffectivePower()).isEqualTo(4);
-        assertThat(avizoa.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, avizoa)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, avizoa)).isEqualTo(4);
         assertThat(gd.skipNextCount(player1.getId(), SkipKind.UNTAP_STEP)).isEqualTo(1);
     }
 
@@ -139,7 +139,7 @@ class AvizoaTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(avizoa.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, avizoa)).isEqualTo(4);
         assertThat(gd.skipNextCount(player1.getId(), SkipKind.UNTAP_STEP)).isEqualTo(1);
     }
 
@@ -158,8 +158,8 @@ class AvizoaTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(second), null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(second.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
 
         declareAttackers(player1, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);

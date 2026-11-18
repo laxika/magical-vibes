@@ -30,8 +30,8 @@ class PhylathWorldSculptorTest extends BaseCardTest {
         List<Permanent> plants = findPermanents(player1, "Plant");
         assertThat(plants).hasSize(2);
         assertThat(plants).allSatisfy(plant -> {
-            assertThat(plant.getEffectivePower()).isZero();
-            assertThat(plant.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, plant)).isZero();
+            assertThat(gqs.getEffectiveToughness(gd, plant)).isEqualTo(1);
         });
     }
 
@@ -50,8 +50,8 @@ class PhylathWorldSculptorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(plant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(plant.getEffectivePower()).isEqualTo(4);
-        assertThat(plant.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, plant)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, plant)).isEqualTo(5);
     }
 
     @Test

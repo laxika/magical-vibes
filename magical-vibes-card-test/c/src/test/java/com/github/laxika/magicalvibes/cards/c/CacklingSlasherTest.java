@@ -26,8 +26,8 @@ class CacklingSlasherTest extends BaseCardTest {
 
         Permanent slasher = findSlasher();
         assertThat(slasher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(slasher.getEffectivePower()).isEqualTo(3);
-        assertThat(slasher.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, slasher)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, slasher)).isEqualTo(3);
     }
 
     @Test
@@ -48,8 +48,8 @@ class CacklingSlasherTest extends BaseCardTest {
 
         Permanent slasher = findSlasher();
         assertThat(slasher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(slasher.getEffectivePower()).isEqualTo(4);
-        assertThat(slasher.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, slasher)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, slasher)).isEqualTo(4);
     }
 
     @Test

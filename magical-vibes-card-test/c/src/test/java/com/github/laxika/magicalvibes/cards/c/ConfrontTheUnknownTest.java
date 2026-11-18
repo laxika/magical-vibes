@@ -34,8 +34,8 @@ class ConfrontTheUnknownTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(bear.getId()));
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
         assertThat(findPermanents(player1, "Clue")).hasSize(2);
     }
 
@@ -48,15 +48,15 @@ class ConfrontTheUnknownTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(bear.getId()));
 
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -73,8 +73,8 @@ class ConfrontTheUnknownTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
         assertThat(findPermanents(player2, "Clue")).hasSize(1);
-        assertThat(wolf.getEffectivePower()).isEqualTo(3);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(3);
     }
 
     @Test
@@ -92,8 +92,8 @@ class ConfrontTheUnknownTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Clue")).hasSize(2);
-        assertThat(wolf.getEffectivePower()).isEqualTo(4);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(4);
         Permanent clue = findPermanents(player1, "Clue").getFirst();
         int clueIndex = gd.playerBattlefields.get(player1.getId()).indexOf(clue);
         harness.activateAbility(player1, clueIndex, null, null);
@@ -101,8 +101,8 @@ class ConfrontTheUnknownTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
         harness.assertInHand(player1, "Forest");
-        assertThat(wolf.getEffectivePower()).isEqualTo(4);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(4);
     }
 
     @Test

@@ -32,10 +32,10 @@ class SuffocatingFumesTest extends BaseCardTest {
 
         castFumes();
 
-        assertThat(mine.getEffectivePower()).isEqualTo(2);
-        assertThat(mine.getEffectiveToughness()).isEqualTo(2);
-        assertThat(theirs.getEffectivePower()).isEqualTo(1);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mine)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(1);
     }
 
     @Test
@@ -54,15 +54,15 @@ class SuffocatingFumesTest extends BaseCardTest {
         Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castFumes();
-        assertThat(theirs.getEffectivePower()).isEqualTo(1);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 
     @Test
@@ -87,10 +87,10 @@ class SuffocatingFumesTest extends BaseCardTest {
         castFumes();
         Permanent later = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
 
-        assertThat(existing.getEffectivePower()).isEqualTo(1);
-        assertThat(existing.getEffectiveToughness()).isEqualTo(1);
-        assertThat(later.getEffectivePower()).isEqualTo(1);
-        assertThat(later.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Fugitive Wizard");
     }
 
@@ -111,7 +111,7 @@ class SuffocatingFumesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Fugitive Wizard");
-        assertThat(theirs.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, theirs)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, theirs)).isEqualTo(2);
     }
 }

@@ -44,7 +44,7 @@ class LightfootRogueTest extends BaseCardTest {
     void lowRollGrantsDeathtouch() {
         Permanent rogue = attackWithRoll(9);
 
-        assertThat(rogue.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rogue)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, rogue)).containsExactly(Keyword.DEATHTOUCH);
     }
 
@@ -53,8 +53,8 @@ class LightfootRogueTest extends BaseCardTest {
     void middleRollBoostsAndGrantsDeathtouch() {
         Permanent rogue = attackWithRoll(10);
 
-        assertThat(rogue.getPowerModifier()).isEqualTo(1);
-        assertThat(rogue.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rogue)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rogue)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, rogue)).containsExactly(Keyword.DEATHTOUCH);
     }
 
@@ -63,8 +63,8 @@ class LightfootRogueTest extends BaseCardTest {
     void criticalRollBoostsAndGrantsKeywords() {
         Permanent rogue = attackWithRoll(20);
 
-        assertThat(rogue.getPowerModifier()).isEqualTo(3);
-        assertThat(rogue.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rogue)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rogue)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, rogue))
                 .containsExactlyInAnyOrder(Keyword.FIRST_STRIKE, Keyword.DEATHTOUCH);
     }
@@ -75,8 +75,8 @@ class LightfootRogueTest extends BaseCardTest {
     void remainingRangeBoundaries(int result) {
         Permanent rogue = attackWithRoll(result);
 
-        assertThat(rogue.getPowerModifier()).isEqualTo(result == 1 ? 0 : 1);
-        assertThat(rogue.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rogue)).isEqualTo(result == 1 ? 0 : 1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rogue)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, rogue)).containsExactly(Keyword.DEATHTOUCH);
     }
 
@@ -90,8 +90,8 @@ class LightfootRogueTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(rogue.getPowerModifier()).isZero();
-        assertThat(rogue.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rogue)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rogue)).isZero();
         assertThat(gqs.hasKeyword(gd, rogue, Keyword.DEATHTOUCH)).isFalse();
         assertThat(gqs.hasKeyword(gd, rogue, Keyword.FIRST_STRIKE)).isFalse();
     }
@@ -106,10 +106,10 @@ class LightfootRogueTest extends BaseCardTest {
         declareAttackers(List.of(1));
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(3);
         assertThat(PermanentGrants.keywordsOf(gd, attacker))
                 .containsExactlyInAnyOrder(Keyword.FIRST_STRIKE, Keyword.DEATHTOUCH);
-        assertThat(otherRogue.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherRogue)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, otherRogue)).isEmpty();
     }
 

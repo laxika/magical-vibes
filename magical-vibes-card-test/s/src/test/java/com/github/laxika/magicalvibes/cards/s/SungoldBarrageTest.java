@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -50,7 +51,7 @@ class SungoldBarrageTest extends BaseCardTest {
     @DisplayName("Uses modified toughness when choosing a target")
     void destroysCreatureBoostedToFourToughness() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, target, 2);
         castSungoldBarrage(target);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -61,7 +62,7 @@ class SungoldBarrageTest extends BaseCardTest {
     @DisplayName("Rejects a creature reduced to three toughness")
     void rejectsCreatureReducedBelowThreshold() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        target.setToughnessModifier(-1);
+        PermanentGrants.setToughnessBoost(gd, target, -1);
         harness.setHand(player1, java.util.List.of(new SungoldBarrage()));
         addSungoldBarrageMana();
 
@@ -77,7 +78,7 @@ class SungoldBarrageTest extends BaseCardTest {
         harness.setHand(player1, java.util.List.of(new SungoldBarrage()));
         addSungoldBarrageMana();
         harness.castInstant(player1, 0, target.getId());
-        target.setToughnessModifier(-1);
+        PermanentGrants.setToughnessBoost(gd, target, -1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Air Elemental");

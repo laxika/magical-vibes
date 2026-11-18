@@ -67,8 +67,8 @@ class FishersTalentTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Fish")).isEmpty();
         Permanent shark = findPermanent(player1, "Shark");
         assertThat(shark.getCard().getSubtypes()).containsExactly(CardSubtype.SHARK);
-        assertThat(shark.getEffectivePower()).isEqualTo(3);
-        assertThat(shark.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, shark)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shark)).isEqualTo(3);
     }
 
     @Test
@@ -86,8 +86,8 @@ class FishersTalentTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Shark")).isEmpty();
         Permanent octopus = findPermanent(player1, "Octopus");
         assertThat(octopus.getCard().getSubtypes()).containsExactly(CardSubtype.OCTOPUS);
-        assertThat(octopus.getEffectivePower()).isEqualTo(8);
-        assertThat(octopus.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, octopus)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, octopus)).isEqualTo(8);
     }
 
     private void levelUpToTwo(Permanent talent) {

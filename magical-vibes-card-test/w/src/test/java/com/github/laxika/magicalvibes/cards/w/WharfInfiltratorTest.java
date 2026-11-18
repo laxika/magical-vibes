@@ -80,8 +80,8 @@ class WharfInfiltratorTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().isToken()
                         && p.getCard().getSubtypes().contains(CardSubtype.ELDRAZI)
                         && p.getCard().getSubtypes().contains(CardSubtype.HORROR)
-                        && p.getEffectivePower() == 3
-                        && p.getEffectiveToughness() == 2);
+                        && gqs.getEffectivePower(gd, p) == 3
+                        && gqs.getEffectiveToughness(gd, p) == 2);
     }
 
     @Test

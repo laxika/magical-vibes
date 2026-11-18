@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.e.EumidianTerrabotanist;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -120,7 +121,7 @@ class TheDominionBraceletTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new EumidianTerrabotanist());
-        creature.setPowerModifier(20);
+        PermanentGrants.setPowerBoost(gd, creature, 20);
         Permanent bracelet = harness.addToBattlefieldAndReturn(player1, new TheDominionBracelet());
         bracelet.setAttachedTo(creature.getId());
 

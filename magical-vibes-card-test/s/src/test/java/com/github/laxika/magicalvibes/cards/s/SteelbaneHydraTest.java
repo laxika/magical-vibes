@@ -36,8 +36,8 @@ class SteelbaneHydraTest extends BaseCardTest {
 
         Permanent hydra = findHydra(player1);
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(hydra.getEffectivePower()).isEqualTo(2);
-        assertThat(hydra.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hydra)).isEqualTo(2);
     }
 
     @Test

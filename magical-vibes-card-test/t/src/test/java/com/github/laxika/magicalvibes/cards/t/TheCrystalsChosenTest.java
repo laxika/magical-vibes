@@ -32,8 +32,8 @@ class TheCrystalsChosenTest extends BaseCardTest {
 
         assertThat(heroes).hasSize(4);
         assertThat(heroes).allSatisfy(hero -> {
-            assertThat(hero.getEffectivePower()).isEqualTo(2);
-            assertThat(hero.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(2);
             assertThat(hero.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         });
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -52,8 +52,8 @@ class TheCrystalsChosenTest extends BaseCardTest {
             assertThat(hero.getCard().getColors()).isEmpty();
             assertThat(hero.isTapped()).isFalse();
             assertThat(hero.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-            assertThat(hero.getEffectivePower()).isEqualTo(2);
-            assertThat(hero.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(2);
         });
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }

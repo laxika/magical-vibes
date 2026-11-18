@@ -78,8 +78,8 @@ class CruelAdministratorTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(soldier.getCard().hasType(CardType.CREATURE)).isTrue();
-        assertThat(soldier.getEffectivePower()).isEqualTo(2);
-        assertThat(soldier.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, soldier, Keyword.FIREBENDING)).isTrue();
     }
 

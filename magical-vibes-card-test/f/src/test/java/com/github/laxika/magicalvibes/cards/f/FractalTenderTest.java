@@ -40,8 +40,8 @@ class FractalTenderTest extends BaseCardTest {
         assertThat(fractals).hasSize(1);
         Permanent fractal = fractals.getFirst();
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(fractal.getEffectivePower()).isEqualTo(3);
-        assertThat(fractal.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(3);
     }
 
     @Test

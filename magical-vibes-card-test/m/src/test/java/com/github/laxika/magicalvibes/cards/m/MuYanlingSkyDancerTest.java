@@ -67,8 +67,8 @@ class MuYanlingSkyDancerTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getName().equals("Elemental Bird"))
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
     }
 

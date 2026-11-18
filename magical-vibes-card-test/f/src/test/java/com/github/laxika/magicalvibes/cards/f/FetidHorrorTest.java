@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class FetidHorrorTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent horror = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(horror.getEffectivePower()).isEqualTo(2);
-        assertThat(horror.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, horror)).isEqualTo(3);
     }
 
     @Test
@@ -43,8 +44,8 @@ class FetidHorrorTest extends BaseCardTest {
         }
 
         Permanent horror = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(horror.getEffectivePower()).isEqualTo(4);
-        assertThat(horror.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, horror)).isEqualTo(5);
     }
 
     @Test
@@ -56,15 +57,15 @@ class FetidHorrorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(horror.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(horror.getPowerModifier()).isEqualTo(0);
-        assertThat(horror.getEffectivePower()).isEqualTo(1);
-        assertThat(horror.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, horror)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, horror)).isEqualTo(2);
     }
 
     @Test
@@ -86,8 +87,8 @@ class FetidHorrorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(horror.getEffectivePower()).isEqualTo(2);
-        assertThat(horror.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, horror)).isEqualTo(3);
     }
 
     @Test
@@ -100,10 +101,10 @@ class FetidHorrorTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(firstHorror.getEffectivePower()).isEqualTo(1);
-        assertThat(firstHorror.getEffectiveToughness()).isEqualTo(2);
-        assertThat(secondHorror.getEffectivePower()).isEqualTo(2);
-        assertThat(secondHorror.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, firstHorror)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, firstHorror)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondHorror)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondHorror)).isEqualTo(3);
     }
 
     @Test
@@ -117,8 +118,8 @@ class FetidHorrorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(horror.isTapped()).isTrue();
-        assertThat(horror.getEffectivePower()).isEqualTo(2);
-        assertThat(horror.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, horror)).isEqualTo(3);
     }
 
     @Test
@@ -130,8 +131,8 @@ class FetidHorrorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(horror.getEffectivePower()).isEqualTo(1);
-        assertThat(horror.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, horror)).isEqualTo(2);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
@@ -139,8 +140,8 @@ class FetidHorrorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(horror.getEffectivePower()).isEqualTo(2);
-        assertThat(horror.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, horror)).isEqualTo(3);
     }
 
     @Test
@@ -154,7 +155,7 @@ class FetidHorrorTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(horror.getEffectivePower()).isEqualTo(1);
-        assertThat(horror.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, horror)).isEqualTo(2);
     }
 }

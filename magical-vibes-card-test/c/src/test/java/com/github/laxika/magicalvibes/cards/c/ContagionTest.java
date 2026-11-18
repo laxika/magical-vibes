@@ -28,8 +28,8 @@ class ContagionTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(creature.getId()));
 
         assertThat(creature.getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)).isEqualTo(2);
-        assertThat(creature.getEffectivePower()).isEqualTo(-4);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -43,11 +43,11 @@ class ContagionTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(creature1.getId(), creature2.getId()));
 
         assertThat(creature1.getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)).isEqualTo(1);
-        assertThat(creature1.getEffectivePower()).isEqualTo(-2);
-        assertThat(creature1.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, creature1)).isEqualTo(5);
         assertThat(creature2.getCounterCount(CounterType.MINUS_TWO_MINUS_ONE)).isEqualTo(1);
-        assertThat(creature2.getEffectivePower()).isEqualTo(-2);
-        assertThat(creature2.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature2)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, creature2)).isEqualTo(5);
     }
 
     @Test

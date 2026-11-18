@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,8 +26,8 @@ class FireflyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(firefly.getPowerModifier()).isEqualTo(1);
-        assertThat(firefly.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firefly)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firefly)).isZero();
         assertThat(firefly.isTapped()).isTrue();
     }
 
@@ -40,14 +41,14 @@ class FireflyTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
 
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isZero();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
     }
 
     @Test
@@ -59,8 +60,8 @@ class FireflyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(firefly.getPowerModifier()).isEqualTo(1);
-        assertThat(firefly.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, firefly)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firefly)).isEqualTo(0);
     }
 
     @Test
@@ -74,8 +75,8 @@ class FireflyTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(firefly.getPowerModifier()).isEqualTo(3);
-        assertThat(firefly.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, firefly)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firefly)).isEqualTo(0);
     }
 
     @Test
@@ -86,13 +87,13 @@ class FireflyTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(firefly.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, firefly)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(firefly.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, firefly)).isEqualTo(0);
     }
 
     @Test

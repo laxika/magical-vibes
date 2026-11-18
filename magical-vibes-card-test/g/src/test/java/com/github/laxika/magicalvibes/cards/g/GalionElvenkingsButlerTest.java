@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -25,10 +26,10 @@ class GalionElvenkingsButlerTest extends BaseCardTest {
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
 
-        galion.setPowerModifier(2);
-        galion.setToughnessModifier(1);
-        target.setPowerModifier(1);
-        target.setToughnessModifier(1);
+        PermanentGrants.setPowerBoost(gd, galion, 2);
+        PermanentGrants.setToughnessBoost(gd, galion, 1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
+        PermanentGrants.setToughnessBoost(gd, target, 1);
 
         declareAttackers(List.of(0));
 
@@ -87,15 +88,15 @@ class GalionElvenkingsButlerTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());
-        galion.setPowerModifier(2);
-        galion.setToughnessModifier(1);
+        PermanentGrants.setPowerBoost(gd, galion, 2);
+        PermanentGrants.setToughnessBoost(gd, galion, 1);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
 
-        galion.setPowerModifier(3);
-        galion.setToughnessModifier(2);
+        PermanentGrants.setPowerBoost(gd, galion, 3);
+        PermanentGrants.setToughnessBoost(gd, galion, 2);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);

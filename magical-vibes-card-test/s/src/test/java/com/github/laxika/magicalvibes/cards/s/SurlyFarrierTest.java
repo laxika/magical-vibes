@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,8 +25,8 @@ class SurlyFarrierTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
     }
 
@@ -67,8 +68,8 @@ class SurlyFarrierTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -79,13 +80,13 @@ class SurlyFarrierTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, farrier.getId());
 
         assertThat(farrier.isTapped()).isTrue();
-        assertThat(farrier.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, farrier)).isZero();
         assertThat(gqs.hasKeyword(gd, farrier, Keyword.VIGILANCE)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(farrier.getPowerModifier()).isEqualTo(1);
-        assertThat(farrier.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, farrier)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, farrier)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, farrier, Keyword.VIGILANCE)).isTrue();
         assertThat(farrier.isTapped()).isTrue();
     }
@@ -150,8 +151,8 @@ class SurlyFarrierTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, farrier.getId());
         harness.passBothPriorities();
 
-        assertThat(farrier.getPowerModifier()).isEqualTo(1);
-        assertThat(farrier.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, farrier)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, farrier)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, farrier, Keyword.VIGILANCE)).isTrue();
     }
 
@@ -165,8 +166,8 @@ class SurlyFarrierTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
     }
 
@@ -180,8 +181,8 @@ class SurlyFarrierTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }

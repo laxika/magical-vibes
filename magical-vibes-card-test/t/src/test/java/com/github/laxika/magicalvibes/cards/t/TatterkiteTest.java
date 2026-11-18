@@ -35,8 +35,8 @@ class TatterkiteTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(tatterkite.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(tatterkite.getEffectivePower()).isEqualTo(2);
-        assertThat(tatterkite.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tatterkite)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, tatterkite)).isEqualTo(1);
     }
 
     @Test

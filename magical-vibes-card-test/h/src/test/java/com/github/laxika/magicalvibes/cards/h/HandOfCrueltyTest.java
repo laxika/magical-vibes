@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CowedByWisdom;
 import com.github.laxika.magicalvibes.cards.g.GodosIrregulars;
 import com.github.laxika.magicalvibes.cards.i.InnerChamberGuard;
@@ -50,8 +51,8 @@ class HandOfCrueltyTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
         resolveCombat();
 
-        assertThat(hand.getPowerModifier()).isEqualTo(1);
-        assertThat(hand.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hand)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hand)).isEqualTo(1);
     }
 
     @Test
@@ -66,8 +67,8 @@ class HandOfCrueltyTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(hand))));
         resolveCombat();
 
-        assertThat(hand.getPowerModifier()).isEqualTo(1);
-        assertThat(hand.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hand)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hand)).isEqualTo(1);
     }
 
     @Test
@@ -156,8 +157,8 @@ class HandOfCrueltyTest extends BaseCardTest {
             resolveAllTriggers();
         });
 
-        assertThat(hand.getPowerModifier()).isEqualTo(1);
-        assertThat(hand.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hand)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hand)).isEqualTo(1);
     }
 
     @Test
@@ -171,8 +172,8 @@ class HandOfCrueltyTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
 
-        assertThat(hand.getPowerModifier()).isZero();
-        assertThat(hand.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hand)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hand)).isZero();
         harness.assertLife(player2, 18);
     }
 

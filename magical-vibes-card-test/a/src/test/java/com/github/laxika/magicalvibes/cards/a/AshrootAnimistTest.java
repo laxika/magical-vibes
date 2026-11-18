@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GoblinOriflamme;
@@ -41,7 +42,7 @@ class AshrootAnimistTest extends BaseCardTest {
     void attackBoostsAndGrantsTrampleUsingCurrentPower() {
         Permanent animist = addCreatureReady(player1, new AshrootAnimist());
         Permanent target = addCreatureReady(player1, new BearCub());
-        animist.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, animist, 2);
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());
@@ -91,7 +92,7 @@ class AshrootAnimistTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(9);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
-        animist.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, animist, 0);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(9);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(9);
     }
@@ -103,7 +104,7 @@ class AshrootAnimistTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());
-        animist.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, animist, 2);
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, animist);
         harness.passBothPriorities();
 

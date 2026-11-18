@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArgothianSprite;
 import com.github.laxika.magicalvibes.cards.h.HulkingMetamorph;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianDragonEngine;
@@ -81,8 +82,8 @@ class MishraClaimedByGixTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(opposingCreature.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isEqualTo(-1);
         assertThat(findPermanents(player1, "Powerstone")).hasSize(2);
         assertThat(findPermanents(player1, "Powerstone")).allMatch(Permanent::isTapped);
     }

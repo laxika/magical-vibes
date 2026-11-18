@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JundCharm;
 import com.github.laxika.magicalvibes.cards.n.NaturesSpiral;
@@ -51,8 +52,8 @@ class OwlinHistorianTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, card.getId());
         harness.passBothPriorities();
 
-        assertThat(historian.getPowerModifier()).isEqualTo(1);
-        assertThat(historian.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, historian)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, historian)).isEqualTo(1);
     }
 
     @Test
@@ -71,8 +72,8 @@ class OwlinHistorianTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId())).contains(card);
-        assertThat(historian.getPowerModifier()).isZero();
-        assertThat(historian.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, historian)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, historian)).isZero();
     }
 
     @Test
@@ -91,8 +92,8 @@ class OwlinHistorianTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
         Permanent historian = findPermanent(player1, "Owlin Historian");
-        assertThat(historian.getPowerModifier()).isZero();
-        assertThat(historian.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, historian)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, historian)).isZero();
     }
 
     @Test
@@ -109,8 +110,8 @@ class OwlinHistorianTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         Permanent historian = findPermanent(player1, "Owlin Historian");
-        assertThat(historian.getPowerModifier()).isZero();
-        assertThat(historian.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, historian)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, historian)).isZero();
     }
 
     @Test
@@ -127,18 +128,18 @@ class OwlinHistorianTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, 0, player1.getId());
         harness.passBothPriorities();
-        assertThat(historian.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, historian)).isZero();
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second);
         resolveAllTriggers();
 
-        assertThat(historian.getPowerModifier()).isEqualTo(1);
-        assertThat(historian.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, historian)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, historian)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(historian.getPowerModifier()).isZero();
-        assertThat(historian.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, historian)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, historian)).isZero();
     }
 
     @Test
@@ -158,8 +159,8 @@ class OwlinHistorianTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(first, second);
-        assertThat(historian.getPowerModifier()).isEqualTo(2);
-        assertThat(historian.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, historian)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, historian)).isEqualTo(2);
     }
 
     @Test
@@ -176,7 +177,7 @@ class OwlinHistorianTest extends BaseCardTest {
         harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(historian.getPowerModifier()).isZero();
-        assertThat(historian.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, historian)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, historian)).isZero();
     }
 }

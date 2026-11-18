@@ -38,8 +38,8 @@ class ImperialOathTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SAMURAI))
                 .hasSize(3)
                 .allSatisfy(samurai -> {
-                    assertThat(samurai.getEffectivePower()).isEqualTo(2);
-                    assertThat(samurai.getEffectiveToughness()).isEqualTo(2);
+                    assertThat(gqs.getEffectivePower(gd, samurai)).isEqualTo(2);
+                    assertThat(gqs.getEffectiveToughness(gd, samurai)).isEqualTo(2);
                     assertThat(samurai.getCard().getKeywords()).contains(Keyword.VIGILANCE);
                 });
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,8 +25,8 @@ class GravelHideGoblinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(2);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(2);
     }
 
     @Test
@@ -39,8 +40,8 @@ class GravelHideGoblinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(4);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(4);
     }
 
     @Test
@@ -79,8 +80,8 @@ class GravelHideGoblinTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(0);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(0);
     }
 
     @Test
@@ -105,8 +106,8 @@ class GravelHideGoblinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(2);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(2);
         assertThat(goblin.isTapped()).isFalse();
     }
 
@@ -121,11 +122,11 @@ class GravelHideGoblinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(2);
-        assertThat(source.getToughnessModifier()).isEqualTo(2);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
-        assertThat(opposing.getPowerModifier()).isZero();
-        assertThat(opposing.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposing)).isZero();
     }
 }

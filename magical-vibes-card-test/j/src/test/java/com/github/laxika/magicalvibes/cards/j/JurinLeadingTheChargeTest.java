@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -33,9 +34,9 @@ class JurinLeadingTheChargeTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(jurin.getPowerModifier()).isEqualTo(2);
-        assertThat(otherAttacker.getPowerModifier()).isEqualTo(2);
-        assertThat(nonAttacker.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, jurin)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAttacker)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonAttacker)).isEqualTo(0);
     }
 
     @Test
@@ -47,15 +48,15 @@ class JurinLeadingTheChargeTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(0);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(0);
     }
 
     @Test
@@ -90,8 +91,8 @@ class JurinLeadingTheChargeTest extends BaseCardTest {
                 Map.of(0, player2.getId(), 1, jace.getId()));
         resolveAllTriggers();
 
-        assertThat(jurin.getPowerModifier()).isEqualTo(1);
-        assertThat(otherAttacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, jurin)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAttacker)).isZero();
     }
 
     @Test
@@ -109,8 +110,8 @@ class JurinLeadingTheChargeTest extends BaseCardTest {
                 Map.of(0, jace.getId(), 1, player2.getId()));
         resolveAllTriggers();
 
-        assertThat(jurin.getPowerModifier()).isZero();
-        assertThat(otherAttacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, jurin)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAttacker)).isEqualTo(1);
     }
 
     @Test
@@ -122,8 +123,8 @@ class JurinLeadingTheChargeTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears()).tap();
         resolveAllTriggers();
 
-        assertThat(jurin.getPowerModifier()).isEqualTo(2);
-        assertThat(jurin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, jurin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, jurin)).isZero();
     }
 
     @Test
@@ -135,7 +136,7 @@ class JurinLeadingTheChargeTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -148,7 +149,7 @@ class JurinLeadingTheChargeTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(jurin.isAttacking()).isTrue();
-        assertThat(jurin.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, jurin)).isEqualTo(1);
     }
 
     @Test
@@ -162,7 +163,7 @@ class JurinLeadingTheChargeTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(jurin.getCard());
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
     }
 
     @Test
@@ -207,7 +208,7 @@ class JurinLeadingTheChargeTest extends BaseCardTest {
                 Map.of(0, player2.getId(), 1, thirdPlayer.getId()));
         resolveAllTriggers();
 
-        assertThat(jurin.getPowerModifier()).isEqualTo(1);
-        assertThat(otherAttacker.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, jurin)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAttacker)).isEqualTo(2);
     }
 }

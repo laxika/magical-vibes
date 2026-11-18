@@ -29,8 +29,8 @@ class SpiritMirrorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent token = findPermanent(player1, "Reflection");
-        assertThat(token.getEffectivePower()).isEqualTo(2);
-        assertThat(token.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
     }
 
     @Test

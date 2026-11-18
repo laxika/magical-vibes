@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
 import com.github.laxika.magicalvibes.cards.c.CloudchaserKestrel;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -73,8 +74,8 @@ class StormcloudDjinnTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(djinn.getPowerModifier()).isEqualTo(2);
-        assertThat(djinn.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, djinn)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, djinn)).isZero();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
     }
 
@@ -86,13 +87,13 @@ class StormcloudDjinnTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(djinn.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, djinn)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(djinn.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, djinn)).isZero();
     }
 
     @Test
@@ -106,12 +107,12 @@ class StormcloudDjinnTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(djinn.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, djinn)).isZero();
         harness.assertLife(player1, lifeBefore);
         resolveAllTriggers();
 
-        assertThat(djinn.getPowerModifier()).isEqualTo(4);
-        assertThat(djinn.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, djinn)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, djinn)).isZero();
         harness.assertLife(player1, lifeBefore - 2);
         harness.assertLife(player2, opponentLifeBefore);
     }
@@ -145,7 +146,7 @@ class StormcloudDjinnTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(djinn.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, djinn)).isEqualTo(2);
         assertThat(djinn.isTapped()).isTrue();
         harness.assertLife(player1, lifeBefore - 1);
     }

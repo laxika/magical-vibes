@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlexiosDeimosOfKosmos;
 import com.github.laxika.magicalvibes.cards.c.Cloudshift;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -141,7 +142,7 @@ class DiscipleOfBolasTest extends BaseCardTest {
     @DisplayName("A negative-power creature is sacrificed without gaining life or drawing")
     void negativePowerGainsNothing() {
         var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, bears, -3);
         int lifeBefore = gd.getLife(player1.getId());
 
         castDisciple();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BatheInGold;
 import com.github.laxika.magicalvibes.cards.o.Owlbear;
 import com.github.laxika.magicalvibes.cards.y.YoungRedDragon;
@@ -25,7 +26,7 @@ class ThrakkusTheButcherTest extends BaseCardTest {
         Permanent nonDragon = addCreatureReady(player1, new Owlbear());
         Permanent opponentDragon = addCreatureReady(player2, new YoungRedDragon());
 
-        dragon.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, dragon, 2);
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
@@ -62,12 +63,12 @@ class ThrakkusTheButcherTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
 
         Permanent dragon = addCreatureReady(player1, new YoungRedDragon());
-        dragon.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, dragon, 2);
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, thrakkus)).isEqualTo(6);
         assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(10);
-        dragon.setPowerModifier(dragon.getPowerModifier() + 1);
+        PermanentGrants.setPowerBoost(gd, dragon, PermanentGrants.powerBoostOf(gd, dragon) + 1);
         assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(11);
         Permanent lateDragon = addCreatureReady(player1, new YoungRedDragon());
         assertThat(gqs.getEffectivePower(gd, lateDragon)).isEqualTo(3);
@@ -94,8 +95,8 @@ class ThrakkusTheButcherTest extends BaseCardTest {
         addCreatureReady(player1, new ThrakkusTheButcher());
         Permanent zeroPowerDragon = addCreatureReady(player1, new YoungRedDragon());
         Permanent negativePowerDragon = addCreatureReady(player1, new YoungRedDragon());
-        zeroPowerDragon.setPowerModifier(-3);
-        negativePowerDragon.setPowerModifier(-5);
+        PermanentGrants.setPowerBoost(gd, zeroPowerDragon, -3);
+        PermanentGrants.setPowerBoost(gd, negativePowerDragon, -5);
 
         declareAttackers(List.of(0));
         resolveAllTriggers();

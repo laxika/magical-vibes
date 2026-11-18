@@ -110,7 +110,7 @@ class GeralfsMindcrusherTest extends BaseCardTest {
         Permanent mindcrusher = findPermanent(player1, "Geralf's Mindcrusher");
         assertThat(mindcrusher).isNotNull();
         assertThat(mindcrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(mindcrusher.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, mindcrusher)).isEqualTo(6);
     }
 
     @Test

@@ -35,15 +35,15 @@ class CuriousColossusTest extends BaseCardTest {
 
         castCuriousColossus(player2.getId());
 
-        assertThat(angel.getEffectivePower()).isEqualTo(1);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isFalse();
         assertThat(gqs.effectiveCreatureSubtypes(gd, angel))
                 .contains(CardSubtype.ANGEL, CardSubtype.COWARD);
-        assertThat(bears.getEffectivePower()).isEqualTo(1);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
         assertThat(gqs.effectiveCreatureSubtypes(gd, bears)).contains(CardSubtype.COWARD);
-        assertThat(ownAngel.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownAngel)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ownAngel, Keyword.FLYING)).isTrue();
     }
 

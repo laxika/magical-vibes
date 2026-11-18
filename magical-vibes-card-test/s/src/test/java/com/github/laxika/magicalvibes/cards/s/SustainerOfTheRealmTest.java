@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.cards.v.ValorMadeReal;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -47,8 +48,8 @@ class SustainerOfTheRealmTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(sustainer.getPowerModifier()).isEqualTo(0);
-        assertThat(sustainer.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, sustainer)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sustainer)).isEqualTo(2);
     }
 
     @Test
@@ -62,13 +63,13 @@ class SustainerOfTheRealmTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(sustainer.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sustainer)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(sustainer.getPowerModifier()).isEqualTo(0);
-        assertThat(sustainer.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, sustainer)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sustainer)).isEqualTo(0);
     }
 
     @Test
@@ -131,8 +132,8 @@ class SustainerOfTheRealmTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
-        assertThat(nonblocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonblocker)).isZero();
     }
 
     @Test
@@ -143,7 +144,7 @@ class SustainerOfTheRealmTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(sustainer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, sustainer)).isZero();
     }
 
     private Permanent addAttacker() {

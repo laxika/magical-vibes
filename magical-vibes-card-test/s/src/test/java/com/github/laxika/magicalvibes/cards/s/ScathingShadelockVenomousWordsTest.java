@@ -50,8 +50,8 @@ class ScathingShadelockVenomousWordsTest extends BaseCardTest {
 
         assertThat(shadelock.isPrepared()).isFalse();
         assertThat(shadelock.getPreparedSpellCardId()).isNull();
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
         assertThat(gd.findExiledCard(copyId)).isNull();
     }
@@ -87,8 +87,8 @@ class ScathingShadelockVenomousWordsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isFalse();
     }
 
@@ -173,8 +173,8 @@ class ScathingShadelockVenomousWordsTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, new ScathingShadelockVenomousWords());
         advanceToPrecombatMain(player1);
         resolveAllTriggers();
-        int initialPower = target.getEffectivePower();
-        int initialToughness = target.getEffectiveToughness();
+        int initialPower = gqs.getEffectivePower(gd, target);
+        int initialToughness = gqs.getEffectiveToughness(gd, target);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castFromExile(player1, shadelock.getPreparedSpellCardId(), target.getId());
         gd.playerBattlefields.get(player1.getId()).remove(target);
@@ -182,8 +182,8 @@ class ScathingShadelockVenomousWordsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(initialPower);
-        assertThat(target.getEffectiveToughness()).isEqualTo(initialToughness);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(initialPower);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(initialToughness);
         assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isFalse();
         assertThat(shadelock.isPrepared()).isFalse();
     }

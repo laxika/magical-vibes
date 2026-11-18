@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -63,10 +64,10 @@ class FeralRidgewolfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(3);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(2);
-        assertThat(wolf.getPowerModifier()).isEqualTo(2);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(0);
     }
 
     @Test
@@ -82,10 +83,10 @@ class FeralRidgewolfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(7);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(2);
-        assertThat(wolf.getPowerModifier()).isEqualTo(6);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(6);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(0);
     }
 
     @Test
@@ -99,17 +100,17 @@ class FeralRidgewolfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(5);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(0);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(0);
-        assertThat(wolf.getEffectivePower()).isEqualTo(1);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
     }
 
     @Test
@@ -134,8 +135,8 @@ class FeralRidgewolfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wolf.getEffectivePower()).isEqualTo(3);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
         assertThat(wolf.isTapped()).isTrue();
     }
 

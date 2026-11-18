@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.cards.f.FaerieHarbinger;
 import com.github.laxika.magicalvibes.cards.f.FaerieTauntings;
@@ -33,8 +34,8 @@ class SilvergillDouserTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player2, "Hillcomber Giant");
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -50,8 +51,8 @@ class SilvergillDouserTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player2, "Hillcomber Giant");
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -66,7 +67,7 @@ class SilvergillDouserTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player2, "Hillcomber Giant");
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
     }
 
     @Test
@@ -81,7 +82,7 @@ class SilvergillDouserTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player2, "Hillcomber Giant");
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
     }
 
     @Test
@@ -94,7 +95,7 @@ class SilvergillDouserTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player1, "Silvergill Douser");
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
     }
 
     @Test
@@ -111,7 +112,7 @@ class SilvergillDouserTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player2, "Hillcomber Giant");
-        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -139,7 +140,7 @@ class SilvergillDouserTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Hillcomber Giant"));
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player2, "Hillcomber Giant").getPowerModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player2, "Hillcomber Giant"))).isEqualTo(-2);
     }
 
     @Test
@@ -152,7 +153,7 @@ class SilvergillDouserTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Hillcomber Giant"));
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player2, "Hillcomber Giant").getPowerModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player2, "Hillcomber Giant"))).isEqualTo(-2);
     }
 
     @Test
@@ -166,7 +167,7 @@ class SilvergillDouserTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(douser);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player2, "Hillcomber Giant").getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player2, "Hillcomber Giant"))).isZero();
         assertThat(gd.stack).isEmpty();
         assertThat(gameLogContains("fizzles")).isFalse();
     }
@@ -183,7 +184,7 @@ class SilvergillDouserTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
 
         assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Hillcomber Giant"))).isEqualTo(1);
-        assertThat(findPermanent(player2, "Hillcomber Giant").getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, findPermanent(player2, "Hillcomber Giant"))).isZero();
     }
 
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LeoninSkyhunter;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
@@ -120,8 +121,8 @@ class HeroOfBladeholdTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Skyhunter should get +1/+0 from battle cry
-        assertThat(skyhunter.getPowerModifier()).isEqualTo(1);
-        assertThat(skyhunter.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, skyhunter)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, skyhunter)).isEqualTo(0);
     }
 
     @Test
@@ -136,7 +137,7 @@ class HeroOfBladeholdTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Hero should NOT get its own battle cry boost
-        assertThat(hero.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, hero)).isEqualTo(0);
     }
 
     @Test
@@ -200,7 +201,7 @@ class HeroOfBladeholdTest extends BaseCardTest {
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).toList();
         assertThat(tokens).hasSize(2)
-                .allSatisfy(token -> assertThat(token.getPowerModifier()).isEqualTo(1));
+                .allSatisfy(token -> assertThat(PermanentGrants.powerBoostOf(gd, token)).isEqualTo(1));
     }
 
     @Test
@@ -222,7 +223,7 @@ class HeroOfBladeholdTest extends BaseCardTest {
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).toList();
         assertThat(tokens).hasSize(2)
-                .allSatisfy(token -> assertThat(token.getPowerModifier()).isZero());
+                .allSatisfy(token -> assertThat(PermanentGrants.powerBoostOf(gd, token)).isZero());
     }
 
     @Test
@@ -248,10 +249,10 @@ class HeroOfBladeholdTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(ownNonattacker.getPowerModifier()).isZero();
-        assertThat(ownNonattacker.getToughnessModifier()).isZero();
-        assertThat(opposingCreature.getPowerModifier()).isZero();
-        assertThat(opposingCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownNonattacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownNonattacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingCreature)).isZero();
     }
 
     @Test
@@ -266,7 +267,7 @@ class HeroOfBladeholdTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(hero);
         harness.passBothPriorities();
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
-        assertThat(otherAttacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherAttacker)).isEqualTo(1);
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).toList();
@@ -276,7 +277,7 @@ class HeroOfBladeholdTest extends BaseCardTest {
             assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
             assertThat(token.isAttackedThisTurn()).isFalse();
             // The token ability resolved first, so battle cry gave the tokens +1/+0 too (Hero of Bladehold's ruling).
-            assertThat(token.getPowerModifier()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, token)).isEqualTo(1);
         });
     }
 

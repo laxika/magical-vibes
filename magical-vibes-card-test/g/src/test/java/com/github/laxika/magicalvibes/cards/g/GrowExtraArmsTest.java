@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,8 +28,8 @@ class GrowExtraArmsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, spider.getId());
 
-        assertThat(spider.getPowerModifier()).isEqualTo(4);
-        assertThat(spider.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spider)).isEqualTo(4);
     }
 
     @Test
@@ -54,8 +55,8 @@ class GrowExtraArmsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -78,8 +79,8 @@ class GrowExtraArmsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, spider.getId());
 
-        assertThat(spider.getPowerModifier()).isEqualTo(4);
-        assertThat(spider.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spider)).isEqualTo(4);
     }
 
     @Test
@@ -115,10 +116,10 @@ class GrowExtraArmsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(4);
-        assertThat(bear.getToughnessModifier()).isEqualTo(4);
-        assertThat(spider.getPowerModifier()).isZero();
-        assertThat(spider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spider)).isZero();
     }
 
     @Test
@@ -137,7 +138,7 @@ class GrowExtraArmsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Giant Spider");
         harness.assertInHand(player1, "Giant Spider");
         harness.assertInGraveyard(player1, "Grow Extra Arms");
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 }

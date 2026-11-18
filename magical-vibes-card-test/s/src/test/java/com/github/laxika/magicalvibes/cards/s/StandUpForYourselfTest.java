@@ -100,7 +100,7 @@ class StandUpForYourselfTest extends BaseCardTest {
     @Test
     void canTargetCreatureWhoseEffectivePowerIsThree() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.setHand(player1, List.of(new StandUpForYourself()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -114,7 +114,7 @@ class StandUpForYourselfTest extends BaseCardTest {
     @Test
     void cannotTargetCreatureWhoseEffectivePowerIsBelowThree() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         harness.setHand(player1, List.of(new StandUpForYourself()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -132,7 +132,7 @@ class StandUpForYourselfTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castInstant(player1, 0, target.getId());
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Hill Giant");

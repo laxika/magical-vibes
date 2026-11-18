@@ -298,7 +298,7 @@ public class ZoneChangeRequests {
         int totalPower = 0;
         for (ZoneChangeEvent moved : events) {
             if (moved.leftBattlefield() && moved.permanent() != null) {
-                totalPower = SaturatingMath.add(totalPower, CreatureDeath.of(moved).power());
+                totalPower = SaturatingMath.add(totalPower, CreatureDeath.of(moved, gameData, gameQueryService).power());
             }
         }
         int batchPower = totalPower;
@@ -316,7 +316,7 @@ public class ZoneChangeRequests {
                 entry.setTriggeringPlayerId(thatPlayerId);
             }
             if (event.leftBattlefield() && lastKnown != null) {
-                CreatureDeath death = CreatureDeath.of(event);
+                CreatureDeath death = CreatureDeath.of(event, gameData, gameQueryService);
                 entry.setTriggeringPermanentId(lastKnown.getId());
                 entry.rememberLastKnownPermanentCard(lastKnown.getId(), lastKnown.getCard());
                 entry.setTriggeringPermanent(lastKnown, event.attachments());

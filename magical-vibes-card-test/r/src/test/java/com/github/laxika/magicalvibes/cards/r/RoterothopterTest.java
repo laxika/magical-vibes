@@ -23,8 +23,8 @@ class RoterothopterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thopter.getEffectivePower()).isEqualTo(1);
-        assertThat(thopter.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(2);
     }
 
     @Test
@@ -39,8 +39,8 @@ class RoterothopterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thopter.getEffectivePower()).isEqualTo(2);
-        assertThat(thopter.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(2);
     }
 
     @Test
@@ -98,8 +98,8 @@ class RoterothopterTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(thopter.getEffectivePower()).isEqualTo(0);
-        assertThat(thopter.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(2);
     }
 
     @Test
@@ -122,7 +122,7 @@ class RoterothopterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thopter.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(1);
     }
 
     @Test
@@ -135,15 +135,15 @@ class RoterothopterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(thopter.getEffectivePower()).isZero();
+        assertThat(gqs.getEffectivePower(gd, thopter)).isZero();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no more than 2 times each turn");
 
         resolveAllTriggers();
 
-        assertThat(thopter.getEffectivePower()).isEqualTo(2);
-        assertThat(thopter.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(2);
     }
 
     @Test
@@ -157,15 +157,15 @@ class RoterothopterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(2);
-        assertThat(second.getEffectivePower()).isZero();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isZero();
 
         harness.activateAbility(player1, 1, null, null);
         harness.activateAbility(player1, 1, null, null);
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(2);
-        assertThat(second.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
     }
 
     @Test
@@ -180,8 +180,8 @@ class RoterothopterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thopter.getEffectivePower()).isEqualTo(1);
-        assertThat(thopter.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(2);
         assertThat(thopter.isTapped()).isTrue();
     }
 }

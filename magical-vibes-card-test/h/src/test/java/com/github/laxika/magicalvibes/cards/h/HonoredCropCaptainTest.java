@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PouncingCheetah;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -32,10 +33,10 @@ class HonoredCropCaptainTest extends BaseCardTest {
         gs.declareAttackers(gd, player1, List.of(0, 1));
         harness.passBothPriorities();
 
-        assertThat(cheetah.getPowerModifier()).isEqualTo(1);
-        assertThat(cheetah.getToughnessModifier()).isEqualTo(0);
-        assertThat(cheetah.getEffectivePower()).isEqualTo(4); // 3 base + 1
-        assertThat(cheetah.getEffectiveToughness()).isEqualTo(2); // unchanged
+        assertThat(PermanentGrants.powerBoostOf(gd, cheetah)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cheetah)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, cheetah)).isEqualTo(4); // 3 base + 1
+        assertThat(gqs.getEffectiveToughness(gd, cheetah)).isEqualTo(2); // unchanged
     }
 
     @Test
@@ -55,8 +56,8 @@ class HonoredCropCaptainTest extends BaseCardTest {
         gs.declareAttackers(gd, player1, List.of(0, 1));
         harness.passBothPriorities();
 
-        assertThat(captain.getPowerModifier()).isEqualTo(0);
-        assertThat(captain.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, captain)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, captain)).isEqualTo(0);
     }
 
     @Test
@@ -77,8 +78,8 @@ class HonoredCropCaptainTest extends BaseCardTest {
         gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(cheetah.getPowerModifier()).isEqualTo(0);
-        assertThat(cheetah.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, cheetah)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cheetah)).isEqualTo(0);
     }
 
     @Test
@@ -98,8 +99,8 @@ class HonoredCropCaptainTest extends BaseCardTest {
         gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(oppCheetah.getPowerModifier()).isEqualTo(0);
-        assertThat(oppCheetah.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, oppCheetah)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, oppCheetah)).isEqualTo(0);
     }
 
     @Test
@@ -116,16 +117,16 @@ class HonoredCropCaptainTest extends BaseCardTest {
         harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player1, List.of(0, 1));
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(second.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 
     @Test
@@ -147,8 +148,8 @@ class HonoredCropCaptainTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(captain);
         harness.passBothPriorities();
 
-        assertThat(cheetah.getPowerModifier()).isEqualTo(1);
-        assertThat(cheetah.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cheetah)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cheetah)).isZero();
     }
 
     @Test
@@ -168,13 +169,13 @@ class HonoredCropCaptainTest extends BaseCardTest {
         gs.declareAttackers(gd, player1, List.of(0, 1));
         harness.passBothPriorities();
 
-        assertThat(cheetah.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cheetah)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(cheetah.getPowerModifier()).isEqualTo(0);
-        assertThat(cheetah.getEffectivePower()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, cheetah)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, cheetah)).isEqualTo(3);
     }
 }

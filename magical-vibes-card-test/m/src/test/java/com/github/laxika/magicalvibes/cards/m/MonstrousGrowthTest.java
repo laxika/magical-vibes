@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,8 +28,8 @@ class MonstrousGrowthTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(4);
-        assertThat(bear.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -39,15 +40,15 @@ class MonstrousGrowthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castAndResolveSorcery(player1, 0, bear.getId());
-        assertThat(bear.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(4);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -61,10 +62,10 @@ class MonstrousGrowthTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, bear.getId());
         harness.castAndResolveSorcery(player1, 0, bear.getId());
 
-        assertThat(bear.getPowerModifier()).isEqualTo(8);
-        assertThat(bear.getToughnessModifier()).isEqualTo(8);
-        assertThat(otherBear.getPowerModifier()).isZero();
-        assertThat(otherBear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(8);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherBear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherBear)).isZero();
         harness.assertInGraveyard(player1, "Monstrous Growth");
         assertThat(gd.stack).isEmpty();
     }
@@ -78,8 +79,8 @@ class MonstrousGrowthTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, opponentBear.getId());
 
-        assertThat(opponentBear.getPowerModifier()).isEqualTo(4);
-        assertThat(opponentBear.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBear)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentBear)).isEqualTo(4);
     }
 
     @Test
@@ -95,8 +96,8 @@ class MonstrousGrowthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(gameLogContains("fizzles")).isTrue();
     }
 

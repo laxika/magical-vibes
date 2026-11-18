@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -85,10 +86,10 @@ class HonorGuardTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent guard = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(guard.getEffectivePower()).isEqualTo(1);
-        assertThat(guard.getEffectiveToughness()).isEqualTo(2);
-        assertThat(guard.getToughnessModifier()).isEqualTo(1);
-        assertThat(guard.getPowerModifier()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, guard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, guard)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, guard)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, guard)).isEqualTo(0);
     }
 
     @Test
@@ -101,8 +102,8 @@ class HonorGuardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -115,9 +116,9 @@ class HonorGuardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(activatedGuard.getEffectiveToughness()).isEqualTo(2);
-        assertThat(otherGuard.getEffectivePower()).isEqualTo(1);
-        assertThat(otherGuard.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, activatedGuard)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherGuard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, otherGuard)).isEqualTo(1);
     }
 
     @Test
@@ -135,9 +136,9 @@ class HonorGuardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent guard = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(guard.getEffectivePower()).isEqualTo(1);
-        assertThat(guard.getEffectiveToughness()).isEqualTo(4);
-        assertThat(guard.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, guard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, guard)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, guard)).isEqualTo(3);
     }
 
     @Test
@@ -193,15 +194,15 @@ class HonorGuardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent guard = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(guard.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, guard)).isEqualTo(3);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances from END to CLEANUP
 
-        assertThat(guard.getToughnessModifier()).isEqualTo(0);
-        assertThat(guard.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, guard)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, guard)).isEqualTo(1);
     }
 
     @Test
@@ -218,8 +219,8 @@ class HonorGuardTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(remainingGuard.getEffectivePower()).isEqualTo(1);
-        assertThat(remainingGuard.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, remainingGuard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, remainingGuard)).isEqualTo(1);
     }
 
     // ===== Validation errors =====
@@ -236,14 +237,14 @@ class HonorGuardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(guard.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, guard)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
 
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(guard.getEffectivePower()).isEqualTo(1);
-        assertThat(guard.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, guard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, guard)).isEqualTo(3);
         assertThat(guard.isTapped()).isFalse();
     }
 
@@ -260,8 +261,8 @@ class HonorGuardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(returned.getEffectivePower()).isEqualTo(1);
-        assertThat(returned.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(1);
     }
 
     @Test

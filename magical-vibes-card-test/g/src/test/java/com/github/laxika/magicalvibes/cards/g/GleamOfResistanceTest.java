@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AncientZiggurat;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -30,10 +31,10 @@ class GleamOfResistanceTest extends BaseCardTest {
         harness.castFromHand(player1, new GleamOfResistance(), "{4}{W}");
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isEqualTo(2);
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -43,8 +44,8 @@ class GleamOfResistanceTest extends BaseCardTest {
         harness.castFromHand(player1, new GleamOfResistance(), "{4}{W}");
         harness.passBothPriorities();
 
-        assertThat(opponentBear.getPowerModifier()).isEqualTo(0);
-        assertThat(opponentBear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentBear)).isEqualTo(0);
     }
 
     @Test
@@ -57,8 +58,8 @@ class GleamOfResistanceTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -71,8 +72,8 @@ class GleamOfResistanceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.isTapped()).isFalse();
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
     }
 
     @Test
@@ -131,8 +132,8 @@ class GleamOfResistanceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(land.isTapped()).isTrue();
-        assertThat(land.getPowerModifier()).isZero();
-        assertThat(land.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, land)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, land)).isZero();
     }
 
     @Test
@@ -142,8 +143,8 @@ class GleamOfResistanceTest extends BaseCardTest {
 
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -166,8 +167,8 @@ class GleamOfResistanceTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Plains");
         assertThat(bear.isTapped()).isTrue();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 

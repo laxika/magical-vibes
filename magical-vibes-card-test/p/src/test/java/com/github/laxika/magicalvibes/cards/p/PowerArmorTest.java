@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AshayaSoulOfTheWild;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -34,8 +35,8 @@ class PowerArmorTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Power Armor").isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         Permanent kavu = findPermanent(player1, "Raging Kavu");
-        assertThat(kavu.getPowerModifier()).isEqualTo(3);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(3);
     }
 
     @Test
@@ -47,8 +48,8 @@ class PowerArmorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, opponentKavu.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentKavu.getPowerModifier()).isEqualTo(3);
-        assertThat(opponentKavu.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentKavu)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentKavu)).isEqualTo(3);
     }
 
     @Test
@@ -63,8 +64,8 @@ class PowerArmorTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         Permanent kavu = findPermanent(player1, "Raging Kavu");
-        assertThat(kavu.getPowerModifier()).isEqualTo(0);
-        assertThat(kavu.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, kavu)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kavu)).isEqualTo(0);
     }
 
     @Test
@@ -92,8 +93,8 @@ class PowerArmorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(findPermanent(player1, "Power Armor").isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
@@ -110,14 +111,14 @@ class PowerArmorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Island());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
 
         gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Island"));
         harness.runStateBasedActions();
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -131,8 +132,8 @@ class PowerArmorTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(armor);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -176,8 +177,8 @@ class PowerArmorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(1);
     }
 
     private void setupBattlefield() {

@@ -74,8 +74,8 @@ class ThrashThreatTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Beast");
         assertThat(countPermanents(player1, "Beast")).isEqualTo(1);
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getColors()).containsExactlyInAnyOrder(CardColor.RED, CardColor.GREEN);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.BEAST);
         assertThat(token.hasKeyword(Keyword.TRAMPLE)).isTrue();

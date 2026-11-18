@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AngelfireCrusader;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -27,8 +28,8 @@ class CetaDiscipleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(disciple.isTapped()).isTrue();
     }
 
@@ -42,8 +43,8 @@ class CetaDiscipleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
 
@@ -93,8 +94,8 @@ class CetaDiscipleTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -119,11 +120,11 @@ class CetaDiscipleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, disciple.getId());
-        assertThat(disciple.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isZero();
         harness.passBothPriorities();
 
-        assertThat(disciple.getPowerModifier()).isEqualTo(2);
-        assertThat(disciple.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isZero();
         assertThat(disciple.isTapped()).isTrue();
     }
 

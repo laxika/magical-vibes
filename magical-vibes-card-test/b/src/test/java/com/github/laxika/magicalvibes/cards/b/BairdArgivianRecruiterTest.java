@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -21,7 +22,7 @@ class BairdArgivianRecruiterTest extends BaseCardTest {
     void createsSoldierWhenYouControlModifiedCreature() {
         addBaird();
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, bear, 1);
 
         resolveEndStep();
 
@@ -49,7 +50,7 @@ class BairdArgivianRecruiterTest extends BaseCardTest {
     void opponentModifiedCreatureDoesNotSatisfyCondition() {
         addBaird();
         Permanent opponentBear = addCreatureReady(player2, new GrizzlyBears());
-        opponentBear.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, opponentBear, 1);
 
         resolveEndStep();
 
@@ -60,7 +61,7 @@ class BairdArgivianRecruiterTest extends BaseCardTest {
     @Test
     void bairdCanSatisfyHisOwnCondition() {
         Permanent baird = harness.addToBattlefieldAndReturn(player1, new BairdArgivianRecruiter());
-        baird.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, baird, 1);
 
         resolveEndStep();
 
@@ -71,11 +72,11 @@ class BairdArgivianRecruiterTest extends BaseCardTest {
     @Test
     void conditionMustStillBeTrueWhenAbilityResolves() {
         Permanent baird = harness.addToBattlefieldAndReturn(player1, new BairdArgivianRecruiter());
-        baird.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, baird, 1);
         beginEndStep();
         assertThat(gd.stack).hasSize(1);
 
-        baird.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, baird, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -94,7 +95,7 @@ class BairdArgivianRecruiterTest extends BaseCardTest {
     @Test
     void doesNotTriggerDuringOpponentsEndStep() {
         Permanent baird = harness.addToBattlefieldAndReturn(player1, new BairdArgivianRecruiter());
-        baird.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, baird, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -117,9 +118,9 @@ class BairdArgivianRecruiterTest extends BaseCardTest {
     @Test
     void multipleQualifyingCreaturesStillCreateOnlyOneToken() {
         Permanent baird = harness.addToBattlefieldAndReturn(player1, new BairdArgivianRecruiter());
-        baird.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, baird, 1);
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, bear, 1);
 
         resolveEndStep();
 

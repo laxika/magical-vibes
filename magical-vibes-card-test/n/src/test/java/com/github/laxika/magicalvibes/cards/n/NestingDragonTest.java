@@ -69,14 +69,14 @@ class NestingDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent dragon = findPermanent(player1, "Dragon");
-        assertThat(dragon.getEffectivePower()).isEqualTo(3);
-        assertThat(dragon.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(dragon.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(2);
     }
 
     private Permanent createDragonEgg() {

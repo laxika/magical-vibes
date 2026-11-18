@@ -27,12 +27,12 @@ class TrumpetBlastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Attacking creature gets +2/+0
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
 
         // Non-attacking creature is unaffected
-        assertThat(nonAttacker.getEffectivePower()).isEqualTo(2);
-        assertThat(nonAttacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonAttacker)).isEqualTo(2);
     }
 
     @Test
@@ -47,14 +47,14 @@ class TrumpetBlastTest extends BaseCardTest {
         harness.castFromHand(player1, new TrumpetBlast(), "{2}{R}");
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -71,10 +71,10 @@ class TrumpetBlastTest extends BaseCardTest {
         harness.castFromHand(player1, new TrumpetBlast(), "{2}{R}");
         harness.passBothPriorities();
 
-        assertThat(opponentAttacker.getEffectivePower()).isEqualTo(4);
-        assertThat(opponentAttacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponentNonAttacker.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentNonAttacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentAttacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opponentAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentNonAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentNonAttacker)).isEqualTo(2);
     }
 
     @Test
@@ -87,13 +87,13 @@ class TrumpetBlastTest extends BaseCardTest {
         harness.castFromHand(player1, new TrumpetBlast(), "{2}{R}");
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> declareAttackers(java.util.List.of(0)));
 
         assertThat(creature.isAttacking()).isTrue();
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -110,7 +110,7 @@ class TrumpetBlastTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(attacker.isAttacking()).isFalse();
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 }

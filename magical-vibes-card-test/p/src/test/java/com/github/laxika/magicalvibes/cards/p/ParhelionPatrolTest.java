@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HuntedWitness;
 import com.github.laxika.magicalvibes.cards.o.OrneryGoblin;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -76,7 +77,7 @@ class ParhelionPatrolTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         harness.handlePermanentChosen(player1, witness.getId());
-        patrol.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, patrol, -1);
         resolveAllTriggers();
 
         assertThat(witness.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -134,7 +135,7 @@ class ParhelionPatrolTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         harness.handlePermanentChosen(player1, witness.getId());
-        patrol.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, patrol, 2);
         witness.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, patrol));
@@ -151,7 +152,7 @@ class ParhelionPatrolTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         harness.handlePermanentChosen(player1, witness.getId());
-        patrol.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, patrol, -1);
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, patrol));
         resolveAllTriggers();

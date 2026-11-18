@@ -59,8 +59,8 @@ class SafewrightCavalryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent elf = findPermanent(player1, "Llanowar Elves");
-        assertThat(elf.getEffectivePower()).isEqualTo(3);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
     }
 
     @Test
@@ -100,8 +100,8 @@ class SafewrightCavalryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent elf = findPermanent(player1, "Llanowar Elves");
-        assertThat(elf.getEffectivePower()).isEqualTo(1);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(1);
     }
 
     @Test
@@ -129,8 +129,8 @@ class SafewrightCavalryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, cavalry.getId());
         harness.passBothPriorities();
 
-        assertThat(cavalry.getEffectivePower()).isEqualTo(6);
-        assertThat(cavalry.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, cavalry)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, cavalry)).isEqualTo(6);
         assertThat(cavalry.isTapped()).isTrue();
     }
 
@@ -147,8 +147,8 @@ class SafewrightCavalryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent cavalry = findPermanent(player1, "Safewright Cavalry");
-        assertThat(cavalry.getEffectivePower()).isEqualTo(8);
-        assertThat(cavalry.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, cavalry)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, cavalry)).isEqualTo(8);
     }
 
     @Test
@@ -162,8 +162,8 @@ class SafewrightCavalryTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(elf);
         harness.passBothPriorities();
 
-        assertThat(elf.getEffectivePower()).isEqualTo(1);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -191,8 +191,8 @@ class SafewrightCavalryTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         harness.passBothPriorities();
 
-        assertThat(elf.getEffectivePower()).isEqualTo(3);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
     }
 
     private Permanent addAttacker() {

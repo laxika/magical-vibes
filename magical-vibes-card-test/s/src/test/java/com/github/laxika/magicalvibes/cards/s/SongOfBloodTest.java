@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianWalker;
 import com.github.laxika.magicalvibes.cards.t.TheWaterCrystal;
 import com.github.laxika.magicalvibes.model.Card;
@@ -61,8 +62,8 @@ class SongOfBloodTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -79,8 +80,8 @@ class SongOfBloodTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(firstAttacker.getPowerModifier()).isEqualTo(2);
-        assertThat(secondAttacker.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstAttacker)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondAttacker)).isEqualTo(2);
     }
 
     @Test
@@ -97,7 +98,7 @@ class SongOfBloodTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -113,7 +114,7 @@ class SongOfBloodTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
 
-        assertThat(oppAttacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, oppAttacker)).isEqualTo(1);
     }
 
     @Test
@@ -133,7 +134,7 @@ class SongOfBloodTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(8);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(8);
     }
 
     @Test
@@ -148,13 +149,13 @@ class SongOfBloodTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -169,7 +170,7 @@ class SongOfBloodTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 
     @Test
@@ -187,8 +188,8 @@ class SongOfBloodTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(3);
-        assertThat(nonattacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
     }
 
     @Test
@@ -203,7 +204,7 @@ class SongOfBloodTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(4);
     }
 
     @Test
@@ -216,14 +217,14 @@ class SongOfBloodTest extends BaseCardTest {
         castAndResolve();
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
 
         attacker.untap();
         attacker.setAttacking(false);
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
     }
 
     @Test
@@ -241,7 +242,7 @@ class SongOfBloodTest extends BaseCardTest {
                 () -> declareAttackers(player2, List.of(0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
     }
 
     private void castAndResolve() {

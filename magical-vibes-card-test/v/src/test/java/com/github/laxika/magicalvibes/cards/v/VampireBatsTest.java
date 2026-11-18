@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.t.TundraWolves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -44,8 +45,8 @@ class VampireBatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bats.getPowerModifier()).isEqualTo(2);
-        assertThat(bats.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bats)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bats)).isZero();
     }
 
     @Test
@@ -91,13 +92,13 @@ class VampireBatsTest extends BaseCardTest {
     @DisplayName("Activation requires black mana")
     void activationRequiresBlackMana() {
         Permanent bats = addReadyVampireBats(player1);
-        int powerModifierBefore = bats.getPowerModifier();
+        int powerModifierBefore = PermanentGrants.powerBoostOf(gd, bats);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(bats.getPowerModifier()).isEqualTo(powerModifierBefore);
+        assertThat(PermanentGrants.powerBoostOf(gd, bats)).isEqualTo(powerModifierBefore);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -110,7 +111,7 @@ class VampireBatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bats.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bats)).isEqualTo(1);
     }
 
     @Test
@@ -122,13 +123,13 @@ class VampireBatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bats.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bats)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bats.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bats)).isZero();
     }
 
     @Test
@@ -140,7 +141,7 @@ class VampireBatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(bats.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bats)).isZero();
         assertThat(gd.stack).hasSize(2);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -149,8 +150,8 @@ class VampireBatsTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(bats.getPowerModifier()).isEqualTo(2);
-        assertThat(bats.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bats)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bats)).isZero();
     }
 
     @Test
@@ -165,15 +166,15 @@ class VampireBatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(second.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no more than 2 times each turn");
@@ -193,7 +194,7 @@ class VampireBatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bats.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bats)).isEqualTo(2);
         assertThat(bats.isTapped()).isTrue();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

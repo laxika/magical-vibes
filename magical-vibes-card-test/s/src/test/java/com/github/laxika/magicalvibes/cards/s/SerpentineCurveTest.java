@@ -30,8 +30,8 @@ class SerpentineCurveTest extends BaseCardTest {
 
         Permanent fractal = findFractal();
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(fractal.getEffectivePower()).isEqualTo(4);
-        assertThat(fractal.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(4);
     }
 
     @Test
@@ -46,8 +46,8 @@ class SerpentineCurveTest extends BaseCardTest {
 
         Permanent fractal = findFractal();
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(fractal.getEffectivePower()).isEqualTo(1);
-        assertThat(fractal.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(1);
     }
 
     @Test
@@ -66,8 +66,8 @@ class SerpentineCurveTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         harness.setExile(player1, List.of());
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(fractal.getEffectivePower()).isEqualTo(3);
-        assertThat(fractal.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, fractal)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, fractal)).isEqualTo(3);
     }
 
     @Test

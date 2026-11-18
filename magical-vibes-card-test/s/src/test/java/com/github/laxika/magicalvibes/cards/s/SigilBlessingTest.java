@@ -39,10 +39,10 @@ class SigilBlessingTest extends BaseCardTest {
 
         Permanent target = bears.getFirst();
         Permanent other = bears.get(1);
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
-        assertThat(other.getEffectivePower()).isEqualTo(3);
-        assertThat(other.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
     }
 
     @Test
@@ -57,8 +57,8 @@ class SigilBlessingTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent opponentBear = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(opponentBear.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentBear)).isEqualTo(2);
     }
 
     @Test
@@ -76,10 +76,10 @@ class SigilBlessingTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getFirst().getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getFirst().getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.get(1).getEffectivePower()).isEqualTo(2);
-        assertThat(bears.get(1).getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears.getFirst())).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears.getFirst())).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears.get(1))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears.get(1))).isEqualTo(2);
     }
 
     @Test
@@ -111,8 +111,8 @@ class SigilBlessingTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
         harness.passBothPriorities();
 
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof SigilBlessing);
         assertThat(gd.stack).isEmpty();
@@ -128,10 +128,10 @@ class SigilBlessingTest extends BaseCardTest {
 
         Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new CylianElf());
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
-        assertThat(newcomer.getEffectivePower()).isEqualTo(2);
-        assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(2);
     }
 
     @Test
@@ -145,10 +145,10 @@ class SigilBlessingTest extends BaseCardTest {
         Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new CylianElf());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
-        assertThat(newcomer.getEffectivePower()).isEqualTo(3);
-        assertThat(newcomer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(3);
     }
 
     @Test

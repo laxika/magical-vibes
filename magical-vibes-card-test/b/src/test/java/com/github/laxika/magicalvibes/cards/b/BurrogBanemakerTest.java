@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -76,10 +77,10 @@ class BurrogBanemakerTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         Permanent banemaker = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(banemaker.getEffectivePower()).isEqualTo(2);
-        assertThat(banemaker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(banemaker.getPowerModifier()).isEqualTo(1);
-        assertThat(banemaker.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, banemaker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, banemaker)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, banemaker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, banemaker)).isEqualTo(1);
     }
 
     @Test
@@ -96,10 +97,10 @@ class BurrogBanemakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent banemaker = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(banemaker.getEffectivePower()).isEqualTo(4);
-        assertThat(banemaker.getEffectiveToughness()).isEqualTo(4);
-        assertThat(banemaker.getPowerModifier()).isEqualTo(3);
-        assertThat(banemaker.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, banemaker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, banemaker)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, banemaker)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, banemaker)).isEqualTo(3);
     }
 
     @Test
@@ -114,17 +115,17 @@ class BurrogBanemakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent banemaker = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(banemaker.getEffectivePower()).isEqualTo(3);
-        assertThat(banemaker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, banemaker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, banemaker)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(banemaker.getPowerModifier()).isEqualTo(0);
-        assertThat(banemaker.getToughnessModifier()).isEqualTo(0);
-        assertThat(banemaker.getEffectivePower()).isEqualTo(1);
-        assertThat(banemaker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, banemaker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, banemaker)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, banemaker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, banemaker)).isEqualTo(1);
     }
 
     @Test
@@ -149,8 +150,8 @@ class BurrogBanemakerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(banemaker.getEffectivePower()).isEqualTo(2);
-        assertThat(banemaker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, banemaker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, banemaker)).isEqualTo(2);
         assertThat(banemaker.isTapped()).isTrue();
     }
 
@@ -177,10 +178,10 @@ class BurrogBanemakerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(3);
-        assertThat(source.getEffectiveToughness()).isEqualTo(3);
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -194,7 +195,7 @@ class BurrogBanemakerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

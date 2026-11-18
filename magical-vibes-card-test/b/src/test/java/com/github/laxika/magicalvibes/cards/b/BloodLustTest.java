@@ -33,8 +33,8 @@ class BloodLustTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent(player1, "Barbary Apes");
-        assertThat(bear.getEffectivePower()).isEqualTo(6);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(1);
     }
 
     @Test
@@ -48,8 +48,8 @@ class BloodLustTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent(player2, "Barbary Apes");
-        assertThat(bear.getEffectivePower()).isEqualTo(6);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(1);
     }
 
     @Test
@@ -63,8 +63,8 @@ class BloodLustTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, wallId);
 
         Permanent wall = findPermanent(player1, "Wall of Earth");
-        assertThat(wall.getEffectivePower()).isEqualTo(4);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(2);
     }
 
     @Test
@@ -78,8 +78,8 @@ class BloodLustTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, wallId);
 
         Permanent wall = findPermanent(player1, "Wall of Wonder");
-        assertThat(wall.getEffectivePower()).isEqualTo(5);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(1);
     }
 
     @Test
@@ -93,8 +93,8 @@ class BloodLustTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, heroId);
 
         Permanent hero = findPermanent(player1, "Fire Sprites");
-        assertThat(hero.getEffectivePower()).isEqualTo(5);
-        assertThat(hero.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(1);
     }
 
     @Test
@@ -112,8 +112,8 @@ class BloodLustTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = findPermanent(player1, "Barbary Apes");
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -140,8 +140,8 @@ class BloodLustTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent creature = findPermanent(player1, "Barbary Apes");
-        assertThat(creature.getEffectivePower()).isEqualTo(10);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -157,12 +157,12 @@ class BloodLustTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent wall = findPermanent(player1, "Wall of Earth");
-        assertThat(wall.getEffectivePower()).isEqualTo(4);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(2);
 
         harness.passBothPriorities();
-        assertThat(wall.getEffectivePower()).isEqualTo(8);
-        assertThat(wall.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(1);
     }
 
 }

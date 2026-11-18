@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Colossapede;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -31,10 +32,10 @@ class LashOfTheWhipTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, colossapedeId);
 
         Permanent colossapede = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(colossapede.getPowerModifier()).isEqualTo(-4);
-        assertThat(colossapede.getToughnessModifier()).isEqualTo(-4);
-        assertThat(colossapede.getEffectivePower()).isEqualTo(1);
-        assertThat(colossapede.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, colossapede)).isEqualTo(-4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, colossapede)).isEqualTo(-4);
+        assertThat(gqs.getEffectivePower(gd, colossapede)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, colossapede)).isEqualTo(1);
     }
 
     @Test
@@ -65,8 +66,8 @@ class LashOfTheWhipTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent colossapede = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(colossapede.getPowerModifier()).isEqualTo(0);
-        assertThat(colossapede.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, colossapede)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, colossapede)).isEqualTo(0);
     }
 
     @Test

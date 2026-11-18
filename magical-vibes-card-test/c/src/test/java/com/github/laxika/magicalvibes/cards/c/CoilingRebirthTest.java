@@ -40,8 +40,8 @@ class CoilingRebirthTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(gameData.playerHands.get(player2.getId())).hasSize(opponentHandSize + 1);
     }
 
@@ -156,8 +156,8 @@ class CoilingRebirthTest extends BaseCardTest {
 
         harness.assertNotInGraveyard(player1, "Coiling Rebirth");
         assertThat(gd.playerDecks.get(player1.getId())).last().isEqualTo(spell);
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
     }
 
     @Test

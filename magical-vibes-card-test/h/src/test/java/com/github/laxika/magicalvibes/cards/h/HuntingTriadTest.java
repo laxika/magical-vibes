@@ -40,8 +40,8 @@ class HuntingTriadTest extends BaseCardTest {
         List<Permanent> tokens = elfWarriors();
         assertThat(tokens).hasSize(3);
         assertThat(tokens).allSatisfy(t -> {
-            assertThat(t.getEffectivePower()).isEqualTo(1);
-            assertThat(t.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, t)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, t)).isEqualTo(1);
         });
     }
 
@@ -78,8 +78,8 @@ class HuntingTriadTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
         harness.assertInGraveyard(player1, "Hunting Triad");
     }
 

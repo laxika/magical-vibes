@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.e.EarthshakerDreadmaw;
@@ -76,9 +77,9 @@ class TriumphantChompTest extends BaseCardTest {
     @DisplayName("Uses the greatest current Dinosaur power rather than adding their powers")
     void usesMaximumRatherThanTotalPower() {
         Permanent smaller = harness.addToBattlefieldAndReturn(player1, new EarthshakerDreadmaw());
-        smaller.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, smaller, -3);
         Permanent larger = harness.addToBattlefieldAndReturn(player1, new EarthshakerDreadmaw());
-        larger.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, larger, -1);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new EarthshakerDreadmaw());
         harness.setHand(player1, List.of(new TriumphantChomp()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -93,7 +94,7 @@ class TriumphantChompTest extends BaseCardTest {
     @DisplayName("Deals 2 damage when the only controlled Dinosaur has power below 2")
     void keepsMinimumWhenDinosaurPowerIsLow() {
         Permanent dinosaur = harness.addToBattlefieldAndReturn(player1, new EarthshakerDreadmaw());
-        dinosaur.setPowerModifier(-5);
+        PermanentGrants.setPowerBoost(gd, dinosaur, -5);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new EarthshakerDreadmaw());
         harness.setHand(player1, List.of(new TriumphantChomp()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -107,13 +108,13 @@ class TriumphantChompTest extends BaseCardTest {
     @DisplayName("Recalculates Dinosaur power when the spell resolves")
     void usesPowerAtResolution() {
         Permanent dinosaur = harness.addToBattlefieldAndReturn(player1, new EarthshakerDreadmaw());
-        dinosaur.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, dinosaur, -3);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new EarthshakerDreadmaw());
         harness.setHand(player1, List.of(new TriumphantChomp()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castSorcery(player1, 0, target.getId());
-        dinosaur.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, dinosaur, -1);
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(5);

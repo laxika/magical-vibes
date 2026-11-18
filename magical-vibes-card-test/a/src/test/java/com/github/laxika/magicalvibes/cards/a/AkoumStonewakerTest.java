@@ -34,8 +34,8 @@ class AkoumStonewakerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent elemental = findPermanent(player1, "Elemental");
-        assertThat(elemental.getEffectivePower()).isEqualTo(3);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
         assertThat(elemental.hasKeyword(Keyword.TRAMPLE)).isTrue();
         assertThat(elemental.hasKeyword(Keyword.HASTE)).isTrue();
     }

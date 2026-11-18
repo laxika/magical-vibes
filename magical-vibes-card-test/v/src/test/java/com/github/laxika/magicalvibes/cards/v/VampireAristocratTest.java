@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -62,10 +63,10 @@ class VampireAristocratTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         Permanent vamp = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(vamp.getCard().getName()).isEqualTo("Vampire Aristocrat");
-        assertThat(vamp.getPowerModifier()).isEqualTo(2);
-        assertThat(vamp.getToughnessModifier()).isEqualTo(2);
-        assertThat(vamp.getEffectivePower()).isEqualTo(4);
-        assertThat(vamp.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, vamp)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vamp)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, vamp)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, vamp)).isEqualTo(4);
     }
 
     @Test
@@ -88,10 +89,10 @@ class VampireAristocratTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         Permanent vamp = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(vamp.getCard().getName()).isEqualTo("Vampire Aristocrat");
-        assertThat(vamp.getPowerModifier()).isEqualTo(4);
-        assertThat(vamp.getToughnessModifier()).isEqualTo(4);
-        assertThat(vamp.getEffectivePower()).isEqualTo(6);
-        assertThat(vamp.getEffectiveToughness()).isEqualTo(6);
+        assertThat(PermanentGrants.powerBoostOf(gd, vamp)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vamp)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, vamp)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, vamp)).isEqualTo(6);
     }
 
     @Test
@@ -168,18 +169,18 @@ class VampireAristocratTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent vamp = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(vamp.getEffectivePower()).isEqualTo(4);
-        assertThat(vamp.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, vamp)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, vamp)).isEqualTo(4);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(vamp.getPowerModifier()).isEqualTo(0);
-        assertThat(vamp.getToughnessModifier()).isEqualTo(0);
-        assertThat(vamp.getEffectivePower()).isEqualTo(2);
-        assertThat(vamp.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, vamp)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, vamp)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, vamp)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, vamp)).isEqualTo(2);
     }
 
     @Test
@@ -210,8 +211,8 @@ class VampireAristocratTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Runeclaw Bear");
         assertThat(vamp.isTapped()).isTrue();
-        assertThat(vamp.getEffectivePower()).isEqualTo(4);
-        assertThat(vamp.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, vamp)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, vamp)).isEqualTo(4);
     }
 
     @Test
@@ -225,10 +226,10 @@ class VampireAristocratTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(4);
-        assertThat(source.getEffectiveToughness()).isEqualTo(4);
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
     }
 
     private Permanent addVampireAristocratReady(Player player) {

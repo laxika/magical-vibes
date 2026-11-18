@@ -31,8 +31,8 @@ class UndergrowthScavengerTest extends BaseCardTest {
         Permanent scavenger = findPermanent(player1, "Undergrowth Scavenger");
         assertThat(scavenger).isNotNull();
         assertThat(scavenger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(scavenger.getEffectivePower()).isEqualTo(3);
-        assertThat(scavenger.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, scavenger)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, scavenger)).isEqualTo(3);
     }
 
     @Test
@@ -89,7 +89,7 @@ class UndergrowthScavengerTest extends BaseCardTest {
 
         Permanent scavenger = findPermanent(player1, "Undergrowth Scavenger");
         assertThat(scavenger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(scavenger.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, scavenger)).isEqualTo(1);
     }
 
     @Test

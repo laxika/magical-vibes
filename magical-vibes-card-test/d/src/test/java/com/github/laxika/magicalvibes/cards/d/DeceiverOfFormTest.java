@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -128,8 +129,8 @@ class DeceiverOfFormTest extends BaseCardTest {
         addDeceiver();
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        bears.setPowerModifier(1);
-        bears.setToughnessModifier(2);
+        PermanentGrants.setPowerBoost(gd, bears, 1);
+        PermanentGrants.setToughnessBoost(gd, bears, 2);
         bears.tap();
         harness.setLibrary(player1, List.of(new HillGiant(), new Forest()));
 

@@ -32,10 +32,10 @@ class DragToTheBottomTest extends BaseCardTest {
 
         castDragToTheBottom();
 
-        assertThat(ownAvatar.getEffectivePower()).isEqualTo(4);
-        assertThat(ownAvatar.getEffectiveToughness()).isEqualTo(4);
-        assertThat(opposingAvatar.getEffectivePower()).isEqualTo(4);
-        assertThat(opposingAvatar.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownAvatar)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownAvatar)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingAvatar)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingAvatar)).isEqualTo(4);
     }
 
     @Test
@@ -50,10 +50,10 @@ class DragToTheBottomTest extends BaseCardTest {
 
         castDragToTheBottom();
 
-        assertThat(ownAvatar.getEffectivePower()).isEqualTo(6);
-        assertThat(ownAvatar.getEffectiveToughness()).isEqualTo(6);
-        assertThat(opposingAvatar.getEffectivePower()).isEqualTo(6);
-        assertThat(opposingAvatar.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, ownAvatar)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, ownAvatar)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opposingAvatar)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, opposingAvatar)).isEqualTo(6);
     }
 
     @Test
@@ -76,12 +76,12 @@ class DragToTheBottomTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         castDragToTheBottom();
-        assertThat(avatar.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(6);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(avatar.getEffectivePower()).isEqualTo(8);
-        assertThat(avatar.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, avatar)).isEqualTo(8);
     }
 
     private void castDragToTheBottom() {
@@ -97,8 +97,8 @@ class DragToTheBottomTest extends BaseCardTest {
 
         castDragToTheBottom();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(1);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
 
     @Test
@@ -110,8 +110,8 @@ class DragToTheBottomTest extends BaseCardTest {
 
         castDragToTheBottom();
 
-        assertThat(avatar.getEffectivePower()).isEqualTo(5);
-        assertThat(avatar.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, avatar)).isEqualTo(5);
     }
 
     @Test
@@ -126,8 +126,8 @@ class DragToTheBottomTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(avatar.getEffectivePower()).isEqualTo(5);
-        assertThat(avatar.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, avatar)).isEqualTo(5);
     }
 
     @Test
@@ -140,9 +140,9 @@ class DragToTheBottomTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Island());
         Permanent laterBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThat(avatar.getEffectivePower()).isEqualTo(6);
-        assertThat(avatar.getEffectiveToughness()).isEqualTo(6);
-        assertThat(laterBears.getEffectivePower()).isEqualTo(2);
-        assertThat(laterBears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, avatar)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, laterBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterBears)).isEqualTo(2);
     }
 }

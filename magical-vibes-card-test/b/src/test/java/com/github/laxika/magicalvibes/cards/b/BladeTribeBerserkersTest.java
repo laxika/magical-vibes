@@ -38,8 +38,8 @@ class BladeTribeBerserkersTest extends BaseCardTest {
 
         Permanent berserkers = findBerserkers();
 
-        assertThat(berserkers.getPowerModifier()).isEqualTo(3);
-        assertThat(berserkers.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isEqualTo(3);
         assertThat(PermanentGrants.keywordsOf(gd, berserkers)).contains(Keyword.HASTE);
     }
 
@@ -54,8 +54,8 @@ class BladeTribeBerserkersTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Blade-Tribe Berserkers");
 
         Permanent berserkers = findBerserkers();
-        assertThat(berserkers.getPowerModifier()).isEqualTo(0);
-        assertThat(berserkers.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, berserkers)).doesNotContain(Keyword.HASTE);
     }
 
@@ -71,8 +71,8 @@ class BladeTribeBerserkersTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         Permanent berserkers = findBerserkers();
-        assertThat(berserkers.getPowerModifier()).isEqualTo(0);
-        assertThat(berserkers.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, berserkers)).doesNotContain(Keyword.HASTE);
     }
 
@@ -89,7 +89,7 @@ class BladeTribeBerserkersTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         Permanent berserkers = findBerserkers();
-        assertThat(berserkers.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, berserkers)).doesNotContain(Keyword.HASTE);
     }
 
@@ -107,8 +107,8 @@ class BladeTribeBerserkersTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger - metalcraft no longer met
 
         Permanent berserkers = findBerserkers();
-        assertThat(berserkers.getPowerModifier()).isEqualTo(0);
-        assertThat(berserkers.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isEqualTo(0);
         assertThat(PermanentGrants.keywordsOf(gd, berserkers)).doesNotContain(Keyword.HASTE);
     }
 
@@ -124,8 +124,8 @@ class BladeTribeBerserkersTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Memnite"));
 
         Permanent berserkers = findBerserkers();
-        assertThat(berserkers.getPowerModifier()).isEqualTo(3);
-        assertThat(berserkers.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isEqualTo(3);
         assertThat(PermanentGrants.keywordsOf(gd, berserkers)).contains(Keyword.HASTE);
     }
 
@@ -158,15 +158,15 @@ class BladeTribeBerserkersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent berserkers = findBerserkers();
-        assertThat(berserkers.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, berserkers, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(berserkers.getPowerModifier()).isZero();
-        assertThat(berserkers.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isZero();
         assertThat(gqs.hasKeyword(gd, berserkers, Keyword.HASTE)).isFalse();
     }
 
@@ -182,8 +182,8 @@ class BladeTribeBerserkersTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         Permanent berserkers = findBerserkers();
-        assertThat(berserkers.getPowerModifier()).isZero();
-        assertThat(berserkers.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isZero();
         assertThat(gqs.hasKeyword(gd, berserkers, Keyword.HASTE)).isFalse();
     }
 
@@ -199,8 +199,8 @@ class BladeTribeBerserkersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent berserkers = findBerserkers();
-        assertThat(berserkers.getPowerModifier()).isEqualTo(3);
-        assertThat(berserkers.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, berserkers, Keyword.HASTE)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
@@ -218,8 +218,8 @@ class BladeTribeBerserkersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent berserkers = findBerserkers();
-        assertThat(berserkers.getPowerModifier()).isEqualTo(3);
-        assertThat(berserkers.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, berserkers)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserkers)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, berserkers, Keyword.HASTE)).isTrue();
     }
 

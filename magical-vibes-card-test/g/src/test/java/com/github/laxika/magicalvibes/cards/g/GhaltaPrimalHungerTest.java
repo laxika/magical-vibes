@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -62,7 +63,7 @@ class GhaltaPrimalHungerTest extends BaseCardTest {
     @DisplayName("Negative power subtracts from the total power")
     void negativePowerSubtractsFromTotal() {
         Permanent weakened = harness.addToBattlefieldAndReturn(player1, new BearCub());
-        weakened.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, weakened, -3);
         harness.addToBattlefield(player1, new BearCub());
         harness.setHand(player1, List.of(new GhaltaPrimalHunger()));
         harness.addMana(player1, ManaColor.GREEN, 11);
@@ -75,7 +76,7 @@ class GhaltaPrimalHungerTest extends BaseCardTest {
     @Test
     void negativeTotalPowerDoesNotIncreaseCost() {
         Permanent weakened = harness.addToBattlefieldAndReturn(player1, new BearCub());
-        weakened.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, weakened, -3);
         harness.setHand(player1, List.of(new GhaltaPrimalHunger()));
         harness.addMana(player1, ManaColor.GREEN, 12);
 
@@ -112,7 +113,7 @@ class GhaltaPrimalHungerTest extends BaseCardTest {
     @Test
     void countsModifiedPowerOfTappedCreatures() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new BearCub());
-        creature.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, creature, 3);
         creature.tap();
         harness.setHand(player1, List.of(new GhaltaPrimalHunger()));
         harness.addMana(player1, ManaColor.GREEN, 7);

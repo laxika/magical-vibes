@@ -27,8 +27,8 @@ class ShadowRiderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(5);
     }
 
     @Test
@@ -42,8 +42,8 @@ class ShadowRiderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(blocker.getEffectivePower()).isEqualTo(3);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
     }
 
     @Test
@@ -60,10 +60,10 @@ class ShadowRiderTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(firstBlocker.getEffectivePower()).isEqualTo(2);
-        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(5);
-        assertThat(secondBlocker.getEffectivePower()).isEqualTo(2);
-        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, firstBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstBlocker)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, secondBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondBlocker)).isEqualTo(5);
     }
 
     @Test
@@ -77,15 +77,15 @@ class ShadowRiderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(2);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.getEffectivePower()).isEqualTo(3);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(6);
     }
 
     @Test
@@ -113,12 +113,12 @@ class ShadowRiderTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(ordinaryBlocker.getEffectivePower()).isEqualTo(2);
-        assertThat(ordinaryBlocker.getEffectiveToughness()).isEqualTo(5);
-        assertThat(flankingBlocker.getEffectivePower()).isEqualTo(3);
-        assertThat(flankingBlocker.getEffectiveToughness()).isEqualTo(3);
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ordinaryBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ordinaryBlocker)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, flankingBlocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, flankingBlocker)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
     }
 
     @Test
@@ -132,9 +132,9 @@ class ShadowRiderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(6);
-        assertThat(blocker.getEffectivePower()).isEqualTo(3);
-        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
     }
 }

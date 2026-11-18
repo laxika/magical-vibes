@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HeartsDesire;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
@@ -33,8 +34,8 @@ class LovestruckBeastTest extends BaseCardTest {
         assertThat(human.getCard().isToken()).isTrue();
         assertThat(human.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(human.getCard().getColor()).isEqualTo(CardColor.WHITE);
-        assertThat(human.getEffectivePower()).isEqualTo(1);
-        assertThat(human.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(1);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
     }
@@ -107,7 +108,7 @@ class LovestruckBeastTest extends BaseCardTest {
     void creatureWithOnlyPowerEqualToOneDoesNotEnableAttack() {
         addCreatureReady(player1, new LovestruckBeast());
         Permanent goblin = addCreatureReady(player1, new RagingGoblin());
-        goblin.setToughnessModifier(1);
+        PermanentGrants.setToughnessBoost(gd, goblin, 1);
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
@@ -117,7 +118,7 @@ class LovestruckBeastTest extends BaseCardTest {
     void creatureWithOnlyToughnessEqualToOneDoesNotEnableAttack() {
         addCreatureReady(player1, new LovestruckBeast());
         Permanent goblin = addCreatureReady(player1, new RagingGoblin());
-        goblin.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, goblin, 1);
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
@@ -126,8 +127,8 @@ class LovestruckBeastTest extends BaseCardTest {
     @Test
     void beastCanEnableItsOwnAttackWhenItsCurrentPowerAndToughnessAreOne() {
         Permanent beast = addCreatureReady(player1, new LovestruckBeast());
-        beast.setPowerModifier(-4);
-        beast.setToughnessModifier(-4);
+        PermanentGrants.setPowerBoost(gd, beast, -4);
+        PermanentGrants.setToughnessBoost(gd, beast, -4);
 
         assertThatCode(() -> declareAttackers(player1, List.of(0)))
                 .doesNotThrowAnyException();

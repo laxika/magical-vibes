@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class GraniteGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getEffectivePower()).isEqualTo(2);
-        assertThat(gargoyle.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, gargoyle)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gargoyle)).isEqualTo(3);
     }
 
     @Test
@@ -40,8 +41,8 @@ class GraniteGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getEffectivePower()).isEqualTo(2);
-        assertThat(gargoyle.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, gargoyle)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gargoyle)).isEqualTo(5);
     }
 
     @Test
@@ -54,7 +55,7 @@ class GraniteGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, gargoyle)).isEqualTo(3);
     }
 
     @Test
@@ -66,7 +67,7 @@ class GraniteGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, gargoyle)).isEqualTo(3);
     }
 
     @Test
@@ -78,15 +79,15 @@ class GraniteGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getPowerModifier()).isEqualTo(0);
-        assertThat(gargoyle.getToughnessModifier()).isEqualTo(0);
-        assertThat(gargoyle.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gargoyle)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, gargoyle)).isEqualTo(2);
     }
 
     @Test
@@ -109,15 +110,15 @@ class GraniteGargoyleTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(source.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(source.getEffectivePower()).isEqualTo(2);
-        assertThat(source.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(3);
         assertThat(source.isTapped()).isFalse();
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
     }
 
     @Test
@@ -130,7 +131,7 @@ class GraniteGargoyleTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
 
-        assertThat(gargoyle.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gargoyle)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 

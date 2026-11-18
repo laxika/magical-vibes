@@ -54,8 +54,8 @@ class IvyGleefulSpellthiefTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(ivy.getEffectivePower()).isEqualTo(5);
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ivy)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -88,7 +88,7 @@ class IvyGleefulSpellthiefTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(ivy.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ivy)).isEqualTo(5);
     }
 
     @Test
@@ -142,10 +142,10 @@ class IvyGleefulSpellthiefTest extends BaseCardTest {
         });
         harness.passBothPriorities();
 
-        assertThat(ivy.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ivy)).isEqualTo(3);
         assertThat(ivy.isTapped()).isFalse();
         assertThat(gqs.hasKeyword(gd, ivy, Keyword.HEXPROOF)).isTrue();
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -162,8 +162,8 @@ class IvyGleefulSpellthiefTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(StackEntry::isCopy);
         harness.passBothPriorities();
 
-        assertThat(ivy.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ivy)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
     }
 
     @Test
@@ -186,8 +186,8 @@ class IvyGleefulSpellthiefTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(StackEntry::isCopy);
         harness.passBothPriorities();
 
-        assertThat(ivy.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ivy)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
     }
 
     @Test
@@ -225,12 +225,12 @@ class IvyGleefulSpellthiefTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(ivy.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, ivy)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, ivy, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, ivy, Keyword.HASTE)).isTrue();
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         harness.passBothPriorities();
-        assertThat(creature.getEffectivePower()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
     }
 
     @Test
@@ -262,9 +262,9 @@ class IvyGleefulSpellthiefTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(ivy.getEffectivePower()).isEqualTo(5);
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ivy)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         harness.passBothPriorities();
-        assertThat(creature.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
     }
 }

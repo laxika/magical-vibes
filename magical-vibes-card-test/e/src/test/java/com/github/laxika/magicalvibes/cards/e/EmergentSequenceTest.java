@@ -40,8 +40,8 @@ class EmergentSequenceTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(forest.isTapped()).isTrue();
         assertThat(gqs.isCreature(gd, forest)).isTrue();
-        assertThat(forest.getEffectivePower()).isEqualTo(2);
-        assertThat(forest.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(2);
         assertThat(forest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.FRACTAL);
         assertThat(gqs.getEffectiveColors(gd, forest))
@@ -74,8 +74,8 @@ class EmergentSequenceTest extends BaseCardTest {
         Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(forest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.isCreature(gd, forest)).isTrue();
-        assertThat(forest.getEffectivePower()).isEqualTo(1);
-        assertThat(forest.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
@@ -148,8 +148,8 @@ class EmergentSequenceTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.isCreature(gd, forest)).isTrue();
-        assertThat(forest.getEffectivePower()).isEqualTo(1);
-        assertThat(forest.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(1);
         assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.FRACTAL);
         assertThat(gqs.getEffectiveColors(gd, forest))
                 .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLUE);

@@ -27,8 +27,8 @@ class CripplingFatigueTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -40,14 +40,14 @@ class CripplingFatigueTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -59,8 +59,8 @@ class CripplingFatigueTest extends BaseCardTest {
 
         harness.castAndResolveFlashback(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
         harness.assertNotInGraveyard(player1, "Crippling Fatigue");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -79,7 +79,7 @@ class CripplingFatigueTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -120,7 +120,7 @@ class CripplingFatigueTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Crippling Fatigue");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -137,7 +137,7 @@ class CripplingFatigueTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Crippling Fatigue");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     private void addNormalMana() {

@@ -80,7 +80,8 @@ public class ShrinkEnchantedCreatureEffectHandler implements StaticEffectHandler
             for (CardEffect cardEffect : enchanted.getCard().getStaticEffects()) {
                 if (cardEffect instanceof SetPowerToughnessToAmountEffect characteristic) {
                     return amountEvaluationService.evaluate(context.gameData(), characteristic.toughness(), ctx)
-                            + enchanted.getToughnessModifiers();
+                            + enchanted.getToughnessModifiers()
+                            + context.gameData().floatingToughnessBoost(enchanted.getId());
                 }
             }
         }

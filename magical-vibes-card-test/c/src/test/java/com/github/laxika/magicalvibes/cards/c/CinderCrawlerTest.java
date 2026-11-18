@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DazzlingBeauty;
 import com.github.laxika.magicalvibes.cards.s.SonicBurst;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,8 +31,8 @@ class CinderCrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(crawler), null, null);
         harness.passBothPriorities();
 
-        assertThat(crawler.getPowerModifier()).isEqualTo(1);
-        assertThat(crawler.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, crawler)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crawler)).isEqualTo(0);
     }
 
     @Test
@@ -47,7 +48,7 @@ class CinderCrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(crawler), null, null);
         harness.passBothPriorities();
 
-        assertThat(crawler.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, crawler)).isEqualTo(2);
     }
 
     @Test
@@ -89,7 +90,7 @@ class CinderCrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(crawler), null, null);
         harness.passBothPriorities();
 
-        assertThat(crawler.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, crawler)).isEqualTo(1);
     }
 
     @Test
@@ -107,7 +108,7 @@ class CinderCrawlerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(crawler.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, crawler)).isEqualTo(0);
     }
 
     @Test
@@ -122,7 +123,7 @@ class CinderCrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(crawler), null, null);
         harness.passBothPriorities();
 
-        assertThat(crawler.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, crawler)).isEqualTo(1);
     }
 
     private int battlefieldIndex(Permanent permanent) {
@@ -160,8 +161,8 @@ class CinderCrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(crawler), null, null);
         harness.passBothPriorities();
 
-        assertThat(crawler.getPowerModifier()).isEqualTo(1);
-        assertThat(crawler.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, crawler)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, crawler)).isZero();
     }
 
     @Test
@@ -175,7 +176,7 @@ class CinderCrawlerTest extends BaseCardTest {
         crawler.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(crawler.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, crawler)).isEqualTo(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(crawler), null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("this creature is blocked");

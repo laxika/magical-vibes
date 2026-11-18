@@ -34,8 +34,8 @@ class DeadBeforeSunriseTest extends BaseCardTest {
 
         castDeadBeforeSunrise();
 
-        assertThat(outlaw.getEffectivePower()).isEqualTo(3);
-        assertThat(nonOutlaw.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, outlaw)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, nonOutlaw)).isEqualTo(2);
 
         int outlawIndex = gd.playerBattlefields.get(player1.getId()).indexOf(outlaw);
         harness.activateAbility(player1, outlawIndex, null, target.getId());
@@ -51,13 +51,13 @@ class DeadBeforeSunriseTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new HillGiant());
 
         castDeadBeforeSunrise();
-        assertThat(outlaw.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, outlaw)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(outlaw.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, outlaw)).isEqualTo(2);
         int outlawIndex = gd.playerBattlefields.get(player1.getId()).indexOf(outlaw);
         assertThatThrownBy(() -> harness.activateAbility(player1, outlawIndex, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -91,10 +91,10 @@ class DeadBeforeSunriseTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent lateOutlaw = addCreatureReady(player1, new GhostlyPilferer());
 
-        assertThat(presentAtResolution.getEffectivePower()).isEqualTo(3);
-        assertThat(opponentOutlaw.getEffectivePower()).isEqualTo(2);
-        assertThat(nonOutlaw.getEffectivePower()).isEqualTo(2);
-        assertThat(lateOutlaw.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, presentAtResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentOutlaw)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonOutlaw)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, lateOutlaw)).isEqualTo(2);
         int lateIndex = gd.playerBattlefields.get(player1.getId()).indexOf(lateOutlaw);
         assertThatThrownBy(() -> harness.activateAbility(player1, lateIndex, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -117,7 +117,7 @@ class DeadBeforeSunriseTest extends BaseCardTest {
 
         castDeadBeforeSunrise();
 
-        assertThat(outlaw.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, outlaw)).isEqualTo(3);
         int outlawIndex = gd.playerBattlefields.get(player1.getId()).indexOf(outlaw);
         assertThatThrownBy(() -> harness.activateAbility(player1, outlawIndex, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -137,7 +137,7 @@ class DeadBeforeSunriseTest extends BaseCardTest {
         assertThat(outlaw.isTapped()).isTrue();
 
         castDeadBeforeSunrise();
-        assertThat(outlaw.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, outlaw)).isEqualTo(4);
         harness.passBothPriorities();
 
         assertThat(gd.damageDealtThisTurnBySource.get(outlaw.getId())).isEqualTo(4);

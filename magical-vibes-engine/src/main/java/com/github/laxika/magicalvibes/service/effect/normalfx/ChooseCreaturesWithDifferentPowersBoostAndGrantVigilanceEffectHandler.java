@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreaturesWithDifferentPowersBoostAndGrantVigilanceEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -82,8 +82,8 @@ public class ChooseCreaturesWithDifferentPowersBoostAndGrantVigilanceEffectHandl
             }
         }
 
-        BuffTargetCreatureIndefinitelyEffect boost =
-                new BuffTargetCreatureIndefinitelyEffect(sourcePower, sourcePower);
+        PowerToughnessBoostEffect boost =
+                new PowerToughnessBoostEffect(sourcePower, sourcePower);
         GrantKeywordEffect vigilance = new GrantKeywordEffect(VIGILANCE, GrantScope.TARGET);
         for (UUID permanentId : permanentIds) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);

@@ -4776,6 +4776,68 @@ public class GameData {
     }
 
     /**
+     * "It gets +{@code power}/+{@code toughness} until end of turn", made by the resolving {@code entry}: a layer-7c
+     * floating effect on the permanent {@code permanentId} (CR 613.4c, 611.2a) carrying the amounts as the effect
+     * begins (CR 608.2h). Returns the effect, or {@code null} when it changes nothing (+0/+0).
+     */
+    public FloatingContinuousEffect addPowerToughnessBoost(StackEntry entry, UUID permanentId, int power,
+                                                           int toughness) {
+        return addPowerToughnessBoost(entry.getCard() == null ? null : entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), permanentId, power, toughness,
+                Duration.UNTIL_END_OF_TURN);
+    }
+
+    /**
+     * "This creature gets +{@code power}/+{@code toughness} until end of turn" from {@code permanent}'s own ability,
+     * where no resolving stack entry is at hand (a choice's continuation): see
+     * {@link #addPowerToughnessBoost(StackEntry, UUID, int, int)}.
+     */
+    public FloatingContinuousEffect addPowerToughnessBoost(Permanent permanent, int power, int toughness) {
+        return addPowerToughnessBoost(permanent.getCard().getName(), permanent.getId(), findControllerOf(permanent),
+                permanent.getId(), power, toughness, Duration.UNTIL_END_OF_TURN);
+    }
+
+    /**
+     * A layer-7c "+{@code power}/+{@code toughness}" effect on the permanent {@code permanentId} for
+     * {@code duration} (CR 613.4c, 611.2a), made where no resolving stack entry is at hand. The amounts are fixed as
+     * it begins (CR 608.2h); several add up in any order (CR 613.4c). Returns the effect, or {@code null} for +0/+0.
+     */
+    public FloatingContinuousEffect addPowerToughnessBoost(String sourceCardName, UUID sourcePermanentId,
+                                                           UUID controllerId, UUID permanentId, int power,
+                                                           int toughness, Duration duration) {
+        if (power == 0 && toughness == 0) {
+            return null;
+        }
+        return addEffectOnPermanent(sourceCardName, sourcePermanentId, controllerId,
+                new com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect(power, toughness),
+                permanentId, duration);
+    }
+
+    /** The sum of the power the floating layer-7c boosts on the permanent {@code permanentId} give it. */
+    public int floatingPowerBoost(UUID permanentId) {
+        int total = 0;
+        for (FloatingContinuousEffect fe : floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect.class)) {
+            total = SaturatingMath.add(total,
+                    ((com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect) fe.effect())
+                            .powerBoost());
+        }
+        return total;
+    }
+
+    /** The sum of the toughness the floating layer-7c boosts on the permanent {@code permanentId} give it. */
+    public int floatingToughnessBoost(UUID permanentId) {
+        int total = 0;
+        for (FloatingContinuousEffect fe : floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect.class)) {
+            total = SaturatingMath.add(total,
+                    ((com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect) fe.effect())
+                            .toughnessBoost());
+        }
+        return total;
+    }
+
+    /**
      * The player the newest "attacks that player if able" requirement on {@code permanentId} names
      * ({@link com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect#defenderId()}), or {@code null} when
      * none names one.

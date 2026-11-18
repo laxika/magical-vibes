@@ -32,8 +32,8 @@ class DeathpactAngelTest extends BaseCardTest {
 
         Permanent cleric = clerics.getFirst();
         assertThat(cleric.getCard().isToken()).isTrue();
-        assertThat(cleric.getEffectivePower()).isEqualTo(1);
-        assertThat(cleric.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, cleric)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, cleric)).isEqualTo(1);
     }
 
     @Test

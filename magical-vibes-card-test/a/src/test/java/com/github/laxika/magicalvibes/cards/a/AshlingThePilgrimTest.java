@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.n.NamelessInversion;
 import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -59,7 +60,7 @@ class AshlingThePilgrimTest extends BaseCardTest {
     @DisplayName("Bonus fires only on the exact third resolution, not on later ones")
     void bonusOnlyOnThirdResolution() {
         Permanent ashling = addAshling(player1);
-        ashling.setToughnessModifier(30); // survive its own blast so we can keep activating
+        PermanentGrants.setToughnessBoost(gd, ashling, 30); // survive its own blast so we can keep activating
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.RED, 12);

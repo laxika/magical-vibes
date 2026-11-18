@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -31,8 +32,8 @@ class SwellOfGrowthTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
@@ -54,7 +55,7 @@ class SwellOfGrowthTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(
                 permanent -> permanent.getCard().getId().equals(forest.getId()));
@@ -83,8 +84,8 @@ class SwellOfGrowthTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test
@@ -112,8 +113,8 @@ class SwellOfGrowthTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player1, "Swell of Growth");
@@ -140,8 +141,8 @@ class SwellOfGrowthTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(remaining);
         assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test

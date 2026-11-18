@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BorealGriffin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class SteamSpitterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(spider.getPowerModifier()).isEqualTo(1);
-        assertThat(spider.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spider)).isEqualTo(0);
     }
 
     @Test
@@ -42,8 +43,8 @@ class SteamSpitterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(spider.getPowerModifier()).isEqualTo(2);
-        assertThat(spider.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spider)).isEqualTo(0);
     }
 
     @Test
@@ -69,8 +70,8 @@ class SteamSpitterTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(spider.getPowerModifier()).isEqualTo(0);
-        assertThat(spider.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spider)).isEqualTo(0);
     }
 
     @Test
@@ -82,7 +83,7 @@ class SteamSpitterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(spider.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isEqualTo(1);
         assertThat(spider.isTapped()).isFalse();
     }
 
@@ -111,14 +112,14 @@ class SteamSpitterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
 
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
         assertThat(source.isTapped()).isTrue();
-        assertThat(otherSpider.getPowerModifier()).isZero();
-        assertThat(otherSpider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherSpider)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherSpider)).isZero();
     }
 
     @Test
@@ -130,12 +131,12 @@ class SteamSpitterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(spider.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isZero();
         harness.passBothPriorities();
-        assertThat(spider.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isEqualTo(1);
         harness.passBothPriorities();
-        assertThat(spider.getPowerModifier()).isEqualTo(2);
-        assertThat(spider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, spider)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, spider)).isZero();
     }
 
 }

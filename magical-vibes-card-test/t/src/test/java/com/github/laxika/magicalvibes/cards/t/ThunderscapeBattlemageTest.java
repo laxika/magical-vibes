@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BloodstoneGoblin;
 import com.github.laxika.magicalvibes.cards.m.MaggotCarrier;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianTyranny;
@@ -123,8 +124,8 @@ class ThunderscapeBattlemageTest extends BaseCardTest {
         castWithAdditionalCosts(List.of("{G}"));
         harness.passBothPriorities();
 
-        assertThat(goblin.getPowerModifier()).isEqualTo(1);
-        assertThat(goblin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.MENACE)).isTrue();
     }
 

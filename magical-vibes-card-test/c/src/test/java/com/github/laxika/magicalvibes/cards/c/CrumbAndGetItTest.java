@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BarkformHarvester;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -26,8 +27,8 @@ class CrumbAndGetItTest extends BaseCardTest {
         cast(bear.getId(), false);
 
         Permanent resolvedBear = findPermanent(player1, "Barkform Harvester");
-        assertThat(resolvedBear.getPowerModifier()).isEqualTo(2);
-        assertThat(resolvedBear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, resolvedBear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, resolvedBear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, resolvedBear, Keyword.INDESTRUCTIBLE)).isFalse();
         harness.assertNotOnBattlefield(player2, "Food");
     }
@@ -39,8 +40,8 @@ class CrumbAndGetItTest extends BaseCardTest {
         cast(bear.getId(), true);
 
         Permanent resolvedBear = findPermanent(player1, "Barkform Harvester");
-        assertThat(resolvedBear.getPowerModifier()).isEqualTo(2);
-        assertThat(resolvedBear.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, resolvedBear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, resolvedBear)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, resolvedBear, Keyword.INDESTRUCTIBLE)).isTrue();
         harness.assertOnBattlefield(player2, "Food");
     }
@@ -63,14 +64,14 @@ class CrumbAndGetItTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new BarkformHarvester());
         cast(creature.getId(), true);
 
-        assertThat(creature.getPowerModifier()).isEqualTo(2);
-        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
         harness.assertOnBattlefield(player2, "Food");
     }

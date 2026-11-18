@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ElvishRanger;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -33,8 +34,8 @@ class SwornDefenderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker is 2/5 -> Sworn Defender becomes 4/3
-        assertThat(defender.getEffectivePower()).isEqualTo(4);
-        assertThat(defender.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(3);
     }
 
     @Test
@@ -50,8 +51,8 @@ class SwornDefenderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Attacker is 4/2 -> Sworn Defender becomes 1/5
-        assertThat(defender.getEffectivePower()).isEqualTo(1);
-        assertThat(defender.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(5);
     }
 
     @Test
@@ -67,8 +68,8 @@ class SwornDefenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(defender.getEffectivePower()).isEqualTo(3);
-        assertThat(defender.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(5);
     }
 
     @Test
@@ -81,12 +82,12 @@ class SwornDefenderTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateAbility(player1, 0, null, blocker.getId());
-        blocker.setPowerModifier(2);
-        blocker.setToughnessModifier(3);
+        PermanentGrants.setPowerBoost(gd, blocker, 2);
+        PermanentGrants.setToughnessBoost(gd, blocker, 3);
         harness.passBothPriorities();
 
-        assertThat(defender.getEffectivePower()).isEqualTo(4);
-        assertThat(defender.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(5);
     }
 
     @Test
@@ -103,8 +104,8 @@ class SwornDefenderTest extends BaseCardTest {
 
         blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
-        assertThat(defender.getEffectivePower()).isEqualTo(1);
-        assertThat(defender.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(3);
     }
 
     @Test
@@ -135,8 +136,8 @@ class SwornDefenderTest extends BaseCardTest {
         blocker.getBlockingTargetIds().clear();
         harness.passBothPriorities();
 
-        assertThat(defender.getEffectivePower()).isEqualTo(1);
-        assertThat(defender.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(3);
     }
 
     @Test
@@ -151,15 +152,15 @@ class SwornDefenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(defender.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(defender.isBasePowerToughnessOverriddenUntilEndOfTurn()).isFalse();
-        assertThat(defender.getEffectivePower()).isEqualTo(1);
-        assertThat(defender.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.hasBasePowerToughnessSet(gd, defender)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, defender)).isEqualTo(3);
     }
 
     @Test
@@ -204,7 +205,7 @@ class SwornDefenderTest extends BaseCardTest {
     void negativeTargetPowerIsNotClampedBeforeAddingOne() {
         Permanent defender = addCreatureReady(player1, new SwornDefender());
         Permanent blocker = addCreatureReady(player2, new ElvishRanger());
-        blocker.setPowerModifier(-5);
+        PermanentGrants.setPowerBoost(gd, blocker, -5);
         setupDefenderAttackingBlockedBy(defender, blocker);
 
         harness.addMana(player1, ManaColor.WHITE, 1);

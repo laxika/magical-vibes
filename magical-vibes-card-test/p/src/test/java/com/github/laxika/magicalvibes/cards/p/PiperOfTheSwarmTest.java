@@ -47,8 +47,8 @@ class PiperOfTheSwarmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent rat = findPermanent(player1, "Rat");
-        assertThat(rat.getEffectivePower()).isEqualTo(1);
-        assertThat(rat.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, rat)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, rat)).isEqualTo(1);
         assertThat(rat.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(rat.getCard().getSubtypes()).contains(CardSubtype.RAT);
         assertThat(rat.getCard().getColor()).isEqualTo(CardColor.BLACK);

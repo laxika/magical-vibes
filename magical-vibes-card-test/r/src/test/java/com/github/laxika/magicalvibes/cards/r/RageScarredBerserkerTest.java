@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DragToTheUnderworld;
 import com.github.laxika.magicalvibes.cards.f.FinalDeath;
 import com.github.laxika.magicalvibes.cards.n.NyxbornColossus;
@@ -27,8 +28,8 @@ class RageScarredBerserkerTest extends BaseCardTest {
 
         castResolve(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
@@ -54,8 +55,8 @@ class RageScarredBerserkerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -71,8 +72,8 @@ class RageScarredBerserkerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, berserker.getId());
         resolveAllTriggers();
 
-        assertThat(berserker.getPowerModifier()).isEqualTo(1);
-        assertThat(berserker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, berserker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, berserker)).isZero();
         assertThat(gqs.hasKeyword(gd, berserker, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
@@ -92,7 +93,7 @@ class RageScarredBerserkerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(target);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(source.getCard());
-        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
@@ -111,8 +112,8 @@ class RageScarredBerserkerTest extends BaseCardTest {
 
         Permanent source = findPermanent(player1, "Rage-Scarred Berserker");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target.getCard());
-        assertThat(source.getPowerModifier()).isZero();
-        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, source)).isZero();
         assertThat(gqs.hasKeyword(gd, source, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
@@ -150,13 +151,13 @@ class RageScarredBerserkerTest extends BaseCardTest {
         castResolve(target);
         castResolve(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.INDESTRUCTIBLE)).isFalse();
         for (Permanent source : findPermanents(player1, "Rage-Scarred Berserker")) {
-            assertThat(source.getPowerModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
             assertThat(gqs.hasKeyword(gd, source, Keyword.INDESTRUCTIBLE)).isFalse();
         }
         assertThat(gd.stack).isEmpty();

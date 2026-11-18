@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.Card;
@@ -32,17 +33,17 @@ class WailOfWarTest extends BaseCardTest {
         harness.castInstant(player1, 0, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getToughnessModifier()).isZero();
-        assertThat(opponentCreature.getPowerModifier()).isEqualTo(-1);
-        assertThat(opponentCreature.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.getPowerModifier()).isZero();
-        assertThat(opponentCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isZero();
     }
 
     @Test
@@ -204,12 +205,12 @@ class WailOfWarTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent laterCreature = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(-1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(-1);
-        assertThat(artifact.getPowerModifier()).isZero();
-        assertThat(artifact.getToughnessModifier()).isZero();
-        assertThat(laterCreature.getPowerModifier()).isZero();
-        assertThat(laterCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, artifact)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, artifact)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, laterCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterCreature)).isZero();
     }
 
     @Test

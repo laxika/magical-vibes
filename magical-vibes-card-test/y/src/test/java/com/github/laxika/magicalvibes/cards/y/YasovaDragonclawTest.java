@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -102,7 +103,7 @@ class YasovaDragonclawTest extends BaseCardTest {
     void rejectsCreatureWithTooMuchPower() {
         harness.addToBattlefield(player1, new YasovaDragonclaw());
         Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        giant.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, giant, 1);
 
         advanceToCombat(player1);
 
@@ -163,7 +164,7 @@ class YasovaDragonclawTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, bears.getId());
-        bears.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, bears, 2);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -180,7 +181,7 @@ class YasovaDragonclawTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, giant.getId());
-        yasova.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, yasova, -1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

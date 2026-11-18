@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CylianElf;
 import com.github.laxika.magicalvibes.cards.m.MagmaSpray;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -31,8 +32,8 @@ class ResoundingRoarTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent elf = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(elf.getEffectivePower()).isEqualTo(5);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(5);
     }
 
     @Test
@@ -51,8 +52,8 @@ class ResoundingRoarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent elf = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(elf.getPowerModifier()).isEqualTo(0);
-        assertThat(elf.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isEqualTo(0);
     }
 
     @Test
@@ -70,8 +71,8 @@ class ResoundingRoarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent elf = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(elf.getEffectivePower()).isEqualTo(8);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(8);
         // Resolve the separate cycling draw after the boost trigger.
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Resounding Roar");
@@ -107,8 +108,8 @@ class ResoundingRoarTest extends BaseCardTest {
         harness.withAutoStop(gd.currentStep, () -> harness.passBothPriorities());
 
         Permanent elf = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(elf.getEffectivePower()).isEqualTo(8);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(8);
         harness.assertNotInHand(player1, "Cylian Elf");
         harness.passBothPriorities();
         harness.assertInHand(player1, "Cylian Elf");
@@ -116,8 +117,8 @@ class ResoundingRoarTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(elf.getPowerModifier()).isZero();
-        assertThat(elf.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elf)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, elf)).isZero();
     }
 
     @Test
@@ -154,8 +155,8 @@ class ResoundingRoarTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Cylian Elf"));
 
         Permanent elf = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(elf.getEffectivePower()).isEqualTo(5);
-        assertThat(elf.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(5);
     }
 
     private void addCyclingMana(Player player) {

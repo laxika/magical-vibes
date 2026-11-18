@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianWalker;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -28,8 +29,8 @@ class RagingGorillaTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(gorilla.getPowerModifier()).isEqualTo(2);
-        assertThat(gorilla.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gorilla)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gorilla)).isEqualTo(-2);
     }
 
     @Test
@@ -46,8 +47,8 @@ class RagingGorillaTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(gorilla.getPowerModifier()).isEqualTo(2);
-        assertThat(gorilla.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gorilla)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gorilla)).isEqualTo(-2);
     }
 
     @Test
@@ -61,8 +62,8 @@ class RagingGorillaTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(gorilla.getPowerModifier()).isEqualTo(2);
-        assertThat(gorilla.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gorilla)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gorilla)).isEqualTo(-2);
     }
 
     @Test
@@ -84,8 +85,8 @@ class RagingGorillaTest extends BaseCardTest {
                 new BlockerAssignment(gorillaIndex, 1)));
         resolveAllTriggers();
 
-        assertThat(gorilla.getPowerModifier()).isEqualTo(2);
-        assertThat(gorilla.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gorilla)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gorilla)).isEqualTo(-2);
     }
 
     @Test
@@ -98,8 +99,8 @@ class RagingGorillaTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gorilla.getPowerModifier()).isZero();
-        assertThat(gorilla.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gorilla)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gorilla)).isZero();
     }
 
     @Test
@@ -117,8 +118,8 @@ class RagingGorillaTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gorilla.getPowerModifier()).isZero();
-        assertThat(gorilla.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gorilla)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gorilla)).isZero();
     }
     @Test
     @DisplayName("The toughness reduction makes previously marked damage lethal when the trigger resolves")
@@ -132,8 +133,8 @@ class RagingGorillaTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gorilla.getPowerModifier()).isZero();
-        assertThat(gorilla.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, gorilla)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gorilla)).isZero();
         harness.assertOnBattlefield(player1, "Raging Gorilla");
 
         resolveAllTriggers();
@@ -154,15 +155,15 @@ class RagingGorillaTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(-2);
-        assertThat(blocker.getPowerModifier()).isEqualTo(2);
-        assertThat(blocker.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isEqualTo(-2);
         harness.assertOnBattlefield(player1, "Raging Gorilla");
         harness.assertOnBattlefield(player2, "Raging Gorilla");
 

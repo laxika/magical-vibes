@@ -135,8 +135,8 @@ class FuneralCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, target.getId());
             harness.passBothPriorities();
 
-            assertThat(target.getEffectivePower()).isEqualTo(4);
-            assertThat(target.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         }
 
         @Test
@@ -149,8 +149,8 @@ class FuneralCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, target.getId());
             harness.passBothPriorities();
 
-            assertThat(target.getEffectivePower()).isEqualTo(4);
-            assertThat(target.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         }
 
         @Test
@@ -165,8 +165,8 @@ class FuneralCharmTest extends BaseCardTest {
 
             harness.passUntil(TurnStep.CLEANUP);
 
-            assertThat(target.getEffectivePower()).isEqualTo(2);
-            assertThat(target.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         }
 
         @Test

@@ -34,17 +34,17 @@ class TriumphOfTheHordesTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(p1a.getEffectivePower()).isEqualTo(3);
-        assertThat(p1a.getEffectiveToughness()).isEqualTo(3);
-        assertThat(p1b.getEffectivePower()).isEqualTo(3);
-        assertThat(p1b.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, p1a)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, p1a)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, p1b)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, p1b)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, p1a, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, p1b, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, p1a, Keyword.INFECT)).isTrue();
         assertThat(gqs.hasKeyword(gd, p1b, Keyword.INFECT)).isTrue();
 
-        assertThat(p2.getEffectivePower()).isEqualTo(2);
-        assertThat(p2.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, p2)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, p2)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, p2, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, p2, Keyword.INFECT)).isFalse();
     }
@@ -59,7 +59,7 @@ class TriumphOfTheHordesTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INFECT)).isTrue();
 
@@ -67,8 +67,8 @@ class TriumphOfTheHordesTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INFECT)).isFalse();
     }
@@ -127,9 +127,9 @@ class TriumphOfTheHordesTest extends BaseCardTest {
 
         Permanent newcomer = addCreatureReady(player1, new GrizzlyBears());
 
-        assertThat(original.getEffectivePower()).isEqualTo(3);
-        assertThat(newcomer.getEffectivePower()).isEqualTo(2);
-        assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, newcomer, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, newcomer, Keyword.INFECT)).isFalse();
     }
@@ -144,8 +144,8 @@ class TriumphOfTheHordesTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INFECT)).isTrue();
     }

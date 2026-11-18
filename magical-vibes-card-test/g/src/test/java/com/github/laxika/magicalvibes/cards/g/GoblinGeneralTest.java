@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -31,12 +32,12 @@ class GoblinGeneralTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Goblin General is a Goblin, so it boosts itself too
-        assertThat(general.getPowerModifier()).isEqualTo(1);
-        assertThat(general.getToughnessModifier()).isEqualTo(1);
-        assertThat(otherGoblin.getPowerModifier()).isEqualTo(1);
-        assertThat(otherGoblin.getToughnessModifier()).isEqualTo(1);
-        assertThat(opponentGoblin.getPowerModifier()).isEqualTo(0);
-        assertThat(opponentGoblin.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, general)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, general)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherGoblin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherGoblin)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentGoblin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentGoblin)).isEqualTo(0);
     }
 
     @Test
@@ -52,8 +53,8 @@ class GoblinGeneralTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(0);
-        assertThat(bear.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(0);
     }
 
     @Test
@@ -68,10 +69,10 @@ class GoblinGeneralTest extends BaseCardTest {
         declareAttackers(List.of(1));
         harness.passBothPriorities();
 
-        assertThat(general.getPowerModifier()).isEqualTo(0);
-        assertThat(general.getToughnessModifier()).isEqualTo(0);
-        assertThat(otherGoblin.getPowerModifier()).isEqualTo(0);
-        assertThat(otherGoblin.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, general)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, general)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherGoblin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherGoblin)).isEqualTo(0);
     }
 
     @Test
@@ -81,16 +82,16 @@ class GoblinGeneralTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
             assertThat(gd.stack).hasSize(1);
-            assertThat(general.getPowerModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, general)).isZero();
             Permanent before = harness.addToBattlefieldAndReturn(player1, new GoblinPiker());
             resolveAllTriggers();
             for (Permanent goblin : List.of(general, before)) {
-                assertThat(goblin.getPowerModifier()).isEqualTo(1);
-                assertThat(goblin.getToughnessModifier()).isEqualTo(1);
+                assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(1);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(1);
             }
             Permanent after = harness.addToBattlefieldAndReturn(player1, new GoblinPiker());
-            assertThat(after.getPowerModifier()).isZero();
-            assertThat(after.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, after)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, after)).isZero();
         });
     }
 
@@ -105,8 +106,8 @@ class GoblinGeneralTest extends BaseCardTest {
             assertThat(gd.stack).hasSize(2);
             resolveAllTriggers();
             for (Permanent goblin : List.of(first, second, piker)) {
-                assertThat(goblin.getPowerModifier()).isEqualTo(2);
-                assertThat(goblin.getToughnessModifier()).isEqualTo(2);
+                assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(2);
+                assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(2);
             }
         });
     }
@@ -122,13 +123,13 @@ class GoblinGeneralTest extends BaseCardTest {
         });
         harness.passUntil(TurnStep.END_STEP);
         for (Permanent goblin : List.of(general, piker)) {
-            assertThat(goblin.getPowerModifier()).isEqualTo(1);
-            assertThat(goblin.getToughnessModifier()).isEqualTo(1);
+            assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isEqualTo(1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isEqualTo(1);
         }
         harness.passUntil(player2, TurnStep.UPKEEP);
         for (Permanent goblin : List.of(general, piker)) {
-            assertThat(goblin.getPowerModifier()).isZero();
-            assertThat(goblin.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, goblin)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, goblin)).isZero();
         }
     }
 }

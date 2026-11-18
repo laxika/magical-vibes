@@ -73,8 +73,8 @@ class SpiderSlayerHatredHonedTest extends BaseCardTest {
         List<Permanent> robots = findPermanents(player1, "Robot");
         assertThat(robots).hasSize(2);
         assertThat(robots).allSatisfy(robot -> {
-            assertThat(robot.getEffectivePower()).isEqualTo(1);
-            assertThat(robot.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, robot)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, robot)).isEqualTo(1);
             assertThat(robot.getCard().getColor()).isNull();
             assertThat(gqs.isArtifact(robot)).isTrue();
             assertThat(robot.getCard().getSubtypes()).contains(CardSubtype.ROBOT);

@@ -44,8 +44,8 @@ class ViviensStampedeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
-        assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeAfterCasting);
 
         harness.passBothPriorities();
@@ -56,8 +56,8 @@ class ViviensStampedeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.MELEE)).isFalse();
     }
 

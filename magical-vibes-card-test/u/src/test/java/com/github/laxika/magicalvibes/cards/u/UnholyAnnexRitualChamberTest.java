@@ -69,8 +69,8 @@ class UnholyAnnexRitualChamberTest extends BaseCardTest {
         castRoom(1);
 
         Permanent demon = findPermanent(player1, "Demon");
-        assertThat(demon.getEffectivePower()).isEqualTo(6);
-        assertThat(demon.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(6);
         assertThat(demon.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(demon.getCard().getSubtypes()).containsExactly(CardSubtype.DEMON);
         assertThat(demon.hasKeyword(Keyword.FLYING)).isTrue();
@@ -123,8 +123,8 @@ class UnholyAnnexRitualChamberTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Demon")).isEqualTo(1);
         Permanent demon = findPermanent(player1, "Demon");
-        assertThat(demon.getEffectivePower()).isEqualTo(6);
-        assertThat(demon.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(6);
         assertThat(demon.hasKeyword(Keyword.FLYING)).isTrue();
     }
 

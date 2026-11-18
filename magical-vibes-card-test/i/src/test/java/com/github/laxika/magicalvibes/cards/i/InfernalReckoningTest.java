@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BronzeSable;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -49,7 +50,7 @@ class InfernalReckoningTest extends BaseCardTest {
     void lifeGainReadsModifiedPower() {
         harness.setLife(player1, 20);
         Permanent sable = harness.addToBattlefieldAndReturn(player2, new BronzeSable());
-        sable.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, sable, 3);
 
         prepareCast();
         harness.castAndResolveInstant(player1, 0, sable.getId());
@@ -97,7 +98,7 @@ class InfernalReckoningTest extends BaseCardTest {
     void negativePowerDoesNotCauseLifeLoss() {
         harness.setLife(player1, 20);
         Permanent sable = harness.addToBattlefieldAndReturn(player2, new BronzeSable());
-        sable.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, sable, -3);
 
         prepareCast();
         harness.castAndResolveInstant(player1, 0, sable.getId());

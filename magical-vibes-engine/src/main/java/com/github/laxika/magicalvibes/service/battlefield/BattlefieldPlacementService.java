@@ -136,6 +136,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
 /**
  * Puts one permanent onto the battlefield, behind the {@code BattlefieldEntryService} facade.
@@ -2467,18 +2468,11 @@ public class BattlefieldPlacementService {
                 new GrantColorEffect(color, GrantScope.TARGET), permanent.getId(), Duration.PERMANENT));
         sourceStackEntry.getGrantedSubtypesOnEntry().forEach(subtype -> gameData.addEffectOnPermanent(sourceStackEntry,
                 new GrantSubtypeEffect(subtype, GrantScope.TARGET), permanent.getId(), Duration.PERMANENT));
-        long timestamp = (sourceStackEntry.getBasePowerOverrideOnEntry() != null
-                || sourceStackEntry.getBaseToughnessOverrideOnEntry() != null)
-                ? gameData.nextTimestamp() : 0;
-        if (sourceStackEntry.getBasePowerOverrideOnEntry() != null) {
-            permanent.setBasePowerOverriddenPermanently(true);
-            permanent.setPermanentBasePowerOverride(sourceStackEntry.getBasePowerOverrideOnEntry());
-            permanent.setPermanentBasePowerOverrideTimestamp(timestamp);
-        }
-        if (sourceStackEntry.getBaseToughnessOverrideOnEntry() != null) {
-            permanent.setBaseToughnessOverriddenPermanently(true);
-            permanent.setPermanentBaseToughnessOverride(sourceStackEntry.getBaseToughnessOverrideOnEntry());
-            permanent.setPermanentBaseToughnessOverrideTimestamp(timestamp);
+        if (sourceStackEntry.getBasePowerOverrideOnEntry() != null
+                || sourceStackEntry.getBaseToughnessOverrideOnEntry() != null) {
+            gameData.addEffectOnPermanent(sourceStackEntry, new SetBasePowerToughnessEffect(
+                    sourceStackEntry.getBasePowerOverrideOnEntry(), sourceStackEntry.getBaseToughnessOverrideOnEntry(),
+                    GrantScope.TARGET, Duration.PERMANENT), permanent.getId(), Duration.PERMANENT);
         }
     }
 
@@ -2801,16 +2795,10 @@ public class BattlefieldPlacementService {
             characteristics.addedSubtypes().forEach(subtype -> grantOnEntry(gameData, controllerId, permanent,
                     new GrantSubtypeEffect(subtype, GrantScope.TARGET)));
 
-            long timestamp = gameData.nextTimestamp();
-            if (characteristics.basePower() != null) {
-                permanent.setBasePowerOverriddenPermanently(true);
-                permanent.setPermanentBasePowerOverride(characteristics.basePower());
-                permanent.setPermanentBasePowerOverrideTimestamp(timestamp);
-            }
-            if (characteristics.baseToughness() != null) {
-                permanent.setBaseToughnessOverriddenPermanently(true);
-                permanent.setPermanentBaseToughnessOverride(characteristics.baseToughness());
-                permanent.setPermanentBaseToughnessOverrideTimestamp(timestamp);
+            if (characteristics.basePower() != null || characteristics.baseToughness() != null) {
+                grantOnEntry(gameData, controllerId, permanent, new SetBasePowerToughnessEffect(
+                        characteristics.basePower(), characteristics.baseToughness(), GrantScope.TARGET,
+                        Duration.PERMANENT));
             }
         }
     }

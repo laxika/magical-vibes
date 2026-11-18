@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.r.RotWolf;
@@ -50,10 +51,10 @@ class UnnaturalPredationTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent wolf = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(wolf.getPowerModifier()).isEqualTo(1);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(1);
-        assertThat(wolf.getEffectivePower()).isEqualTo(3);
-        assertThat(wolf.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, wolf, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -72,8 +73,8 @@ class UnnaturalPredationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent wolf = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(wolf.getPowerModifier()).isEqualTo(0);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, wolf)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolf)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, wolf, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -107,11 +108,11 @@ class UnnaturalPredationTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Unnatural Predation");
     }
@@ -126,16 +127,16 @@ class UnnaturalPredationTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -150,7 +151,7 @@ class UnnaturalPredationTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(artifact.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, artifact)).isZero();
         assertThat(gqs.hasKeyword(gd, artifact, Keyword.TRAMPLE)).isFalse();
     }
 }

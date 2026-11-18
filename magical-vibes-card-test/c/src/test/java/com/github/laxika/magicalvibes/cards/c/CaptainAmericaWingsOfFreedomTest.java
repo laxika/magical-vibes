@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AgentMariaHill;
 import com.github.laxika.magicalvibes.cards.h.HydraulicHelper;
 import com.github.laxika.magicalvibes.cards.h.HourOfDefeat;
@@ -26,7 +27,7 @@ class CaptainAmericaWingsOfFreedomTest extends BaseCardTest {
         Permanent ownHero = addCreatureReady(player1, new AgentMariaHill());
         Permanent ownNonHero = addCreatureReady(player1, new HydraulicHelper());
         Permanent opponentHero = addCreatureReady(player2, new AgentMariaHill());
-        captain.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, captain, 2);
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -65,7 +66,7 @@ class CaptainAmericaWingsOfFreedomTest extends BaseCardTest {
         Permanent ownHero = addCreatureReady(player1, new AgentMariaHill());
 
         declareAttackers(List.of(0));
-        captain.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, captain, 3);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, ownHero)).isEqualTo(6);

@@ -24,8 +24,8 @@ class MakindiSliderunnerTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(sliderunner.getEffectivePower()).isEqualTo(3);
-        assertThat(sliderunner.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, sliderunner)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sliderunner)).isEqualTo(2);
     }
 
     @Test
@@ -38,8 +38,8 @@ class MakindiSliderunnerTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(sliderunner.getEffectivePower()).isEqualTo(2);
-        assertThat(sliderunner.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sliderunner)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sliderunner)).isEqualTo(1);
     }
 
     @Test
@@ -50,13 +50,13 @@ class MakindiSliderunnerTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
-        assertThat(sliderunner.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sliderunner)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(sliderunner.getEffectivePower()).isEqualTo(2);
-        assertThat(sliderunner.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sliderunner)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sliderunner)).isEqualTo(1);
     }
 
     @Test
@@ -68,22 +68,22 @@ class MakindiSliderunnerTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(sliderunner.getEffectivePower()).isEqualTo(2);
-        assertThat(sliderunner.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sliderunner)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sliderunner)).isEqualTo(1);
 
         harness.passBothPriorities();
-        assertThat(sliderunner.getEffectivePower()).isEqualTo(3);
-        assertThat(sliderunner.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, sliderunner)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sliderunner)).isEqualTo(2);
 
         harness.passBothPriorities();
-        assertThat(sliderunner.getEffectivePower()).isEqualTo(4);
-        assertThat(sliderunner.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sliderunner)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, sliderunner)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(sliderunner.getEffectivePower()).isEqualTo(2);
-        assertThat(sliderunner.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sliderunner)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sliderunner)).isEqualTo(1);
     }
 
     @Test
@@ -94,7 +94,7 @@ class MakindiSliderunnerTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new MakindiSliderunner());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(sliderunner.getEffectivePower()).isEqualTo(2);
-        assertThat(sliderunner.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, sliderunner)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sliderunner)).isEqualTo(1);
     }
 }

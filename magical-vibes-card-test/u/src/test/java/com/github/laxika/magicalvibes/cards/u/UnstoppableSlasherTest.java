@@ -48,7 +48,7 @@ class UnstoppableSlasherTest extends BaseCardTest {
     @DisplayName("Returns from its first death tapped with two stun counters")
     void returnsFromFirstDeathTappedWithStunCounters() {
         Permanent slasher = harness.addToBattlefieldAndReturn(player1, new UnstoppableSlasher());
-        slasher.setMarkedDamage(slasher.getEffectiveToughness());
+        slasher.setMarkedDamage(gqs.getEffectiveToughness(gd, slasher));
 
         harness.runStateBasedActions();
         harness.passBothPriorities();
@@ -64,7 +64,7 @@ class UnstoppableSlasherTest extends BaseCardTest {
     void staysInGraveyardWhenItDiesWithACounter() {
         Permanent slasher = harness.addToBattlefieldAndReturn(player1, new UnstoppableSlasher());
         slasher.setCounterCount(CounterType.STUN, 1);
-        slasher.setMarkedDamage(slasher.getEffectiveToughness());
+        slasher.setMarkedDamage(gqs.getEffectiveToughness(gd, slasher));
 
         harness.runStateBasedActions();
         harness.passBothPriorities();
@@ -112,7 +112,7 @@ class UnstoppableSlasherTest extends BaseCardTest {
     void doesNotTriggerWithPlusOneCounter() {
         Permanent slasher = harness.addToBattlefieldAndReturn(player1, new UnstoppableSlasher());
         slasher.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        slasher.setMarkedDamage(slasher.getEffectiveToughness());
+        slasher.setMarkedDamage(gqs.getEffectiveToughness(gd, slasher));
 
         harness.runStateBasedActions();
 
@@ -126,7 +126,7 @@ class UnstoppableSlasherTest extends BaseCardTest {
     void doesNotTriggerWithKeywordCounter() {
         Permanent slasher = harness.addToBattlefieldAndReturn(player1, new UnstoppableSlasher());
         slasher.setCounterCount(CounterType.DEATHTOUCH, 1);
-        slasher.setMarkedDamage(slasher.getEffectiveToughness());
+        slasher.setMarkedDamage(gqs.getEffectiveToughness(gd, slasher));
 
         harness.runStateBasedActions();
 
@@ -141,7 +141,7 @@ class UnstoppableSlasherTest extends BaseCardTest {
         UnstoppableSlasher card = new UnstoppableSlasher();
         card.setOwnerId(player1.getId());
         Permanent stolen = harness.addToBattlefieldAndReturn(player2, card);
-        stolen.setMarkedDamage(stolen.getEffectiveToughness());
+        stolen.setMarkedDamage(gqs.getEffectiveToughness(gd, stolen));
 
         harness.runStateBasedActions();
         harness.passBothPriorities();
@@ -162,7 +162,7 @@ class UnstoppableSlasherTest extends BaseCardTest {
         harness.setGraveyard(player1, java.util.List.of(other));
         UnstoppableSlasher card = new UnstoppableSlasher();
         Permanent slasher = harness.addToBattlefieldAndReturn(player1, card);
-        slasher.setMarkedDamage(slasher.getEffectiveToughness());
+        slasher.setMarkedDamage(gqs.getEffectiveToughness(gd, slasher));
 
         harness.runStateBasedActions();
         harness.passBothPriorities();
@@ -176,7 +176,7 @@ class UnstoppableSlasherTest extends BaseCardTest {
     @DisplayName("After both stun counters are consumed, Slasher can return from another death")
     void returnsAgainAfterStunCountersAreConsumed() {
         Permanent slasher = harness.addToBattlefieldAndReturn(player1, new UnstoppableSlasher());
-        slasher.setMarkedDamage(slasher.getEffectiveToughness());
+        slasher.setMarkedDamage(gqs.getEffectiveToughness(gd, slasher));
         harness.runStateBasedActions();
         harness.passBothPriorities();
         Permanent returned = findPermanent(player1, "Unstoppable Slasher");
@@ -190,7 +190,7 @@ class UnstoppableSlasherTest extends BaseCardTest {
         harness.performUntapStep(player1);
         assertThat(returned.isTapped()).isFalse();
 
-        returned.setMarkedDamage(returned.getEffectiveToughness());
+        returned.setMarkedDamage(gqs.getEffectiveToughness(gd, returned));
         harness.runStateBasedActions();
         harness.passBothPriorities();
 
@@ -207,7 +207,7 @@ class UnstoppableSlasherTest extends BaseCardTest {
     void returningWithStunCountersTriggersCounterPlacementAbilities() {
         harness.addToBattlefield(player1, new AllWillBeOne());
         Permanent slasher = harness.addToBattlefieldAndReturn(player1, new UnstoppableSlasher());
-        slasher.setMarkedDamage(slasher.getEffectiveToughness());
+        slasher.setMarkedDamage(gqs.getEffectiveToughness(gd, slasher));
 
         harness.runStateBasedActions();
         harness.passBothPriorities();

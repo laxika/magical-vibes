@@ -33,8 +33,8 @@ class OmnathLocusOfRageTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getName().equals("Elemental"))
                 .findFirst()
                 .orElseThrow();
-        assertThat(elemental.getEffectivePower()).isEqualTo(5);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(5);
         assertThat(elemental.getCard().getColors()).containsExactlyInAnyOrder(CardColor.RED, CardColor.GREEN);
         assertThat(elemental.getCard().getSubtypes()).contains(CardSubtype.ELEMENTAL);
     }

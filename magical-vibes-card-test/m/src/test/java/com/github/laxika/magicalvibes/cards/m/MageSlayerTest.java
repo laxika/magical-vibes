@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.b.BehemothSledge;
 import com.github.laxika.magicalvibes.cards.n.NicolBolasPlaneswalker;
@@ -43,7 +44,7 @@ class MageSlayerTest extends BaseCardTest {
     void damageScalesWithPower() {
         harness.setLife(player2, 20);
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        creature.setPowerModifier(3); // 2/2 -> 5 power
+        PermanentGrants.setPowerBoost(gd, creature, 3); // 2/2 -> 5 power
         Permanent slayer = addMageSlayer(player1);
         slayer.setAttachedTo(creature.getId());
 
@@ -131,7 +132,7 @@ class MageSlayerTest extends BaseCardTest {
         slayer.setAttachedTo(creature.getId());
         declareAttackers(player1, List.of(0));
 
-        creature.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, creature, 3);
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);

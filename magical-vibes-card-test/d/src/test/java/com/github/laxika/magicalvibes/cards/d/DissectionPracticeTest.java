@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -29,10 +30,10 @@ class DissectionPracticeTest extends BaseCardTest {
 
         harness.assertLife(player1, 21);
         harness.assertLife(player2, 19);
-        assertThat(boosted.getPowerModifier()).isEqualTo(1);
-        assertThat(boosted.getToughnessModifier()).isEqualTo(1);
-        assertThat(weakened.getPowerModifier()).isEqualTo(-1);
-        assertThat(weakened.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, boosted)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, boosted)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weakened)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weakened)).isEqualTo(-1);
     }
 
     @Test
@@ -42,8 +43,8 @@ class DissectionPracticeTest extends BaseCardTest {
 
         cast(List.of(player2.getId(), creature.getId(), creature.getId()));
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -62,13 +63,13 @@ class DissectionPracticeTest extends BaseCardTest {
 
         cast(List.of(player2.getId(), creature.getId()));
 
-        assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
     }
 
     @Test
@@ -107,8 +108,8 @@ class DissectionPracticeTest extends BaseCardTest {
 
         harness.assertLife(player1, 21);
         harness.assertLife(player2, 19);
-        assertThat(weakened.getPowerModifier()).isEqualTo(-1);
-        assertThat(weakened.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, weakened)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, weakened)).isEqualTo(-1);
     }
 
     @Test

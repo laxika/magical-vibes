@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -36,8 +37,8 @@ class PyreChargerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(charger.getPowerModifier()).isEqualTo(1);
-        assertThat(charger.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, charger)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, charger)).isEqualTo(0);
     }
 
     @Test
@@ -51,8 +52,8 @@ class PyreChargerTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(charger.getPowerModifier()).isEqualTo(3);
-        assertThat(charger.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, charger)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, charger)).isEqualTo(0);
     }
 
     @Test
@@ -63,13 +64,13 @@ class PyreChargerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(charger.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, charger)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(charger.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, charger)).isEqualTo(0);
     }
 
     @Test
@@ -83,15 +84,15 @@ class PyreChargerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(charger.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, charger)).isZero();
         harness.passBothPriorities();
-        assertThat(charger.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, charger)).isEqualTo(1);
         harness.passBothPriorities();
 
-        assertThat(charger.getPowerModifier()).isEqualTo(2);
-        assertThat(charger.getToughnessModifier()).isZero();
-        assertThat(otherCharger.getPowerModifier()).isZero();
-        assertThat(opposingCharger.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, charger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, charger)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCharger)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCharger)).isZero();
     }
 
     @Test
@@ -104,8 +105,8 @@ class PyreChargerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(charger.getPowerModifier()).isEqualTo(1);
-        assertThat(charger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, charger)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, charger)).isZero();
         assertThat(charger.isTapped()).isTrue();
     }
 }

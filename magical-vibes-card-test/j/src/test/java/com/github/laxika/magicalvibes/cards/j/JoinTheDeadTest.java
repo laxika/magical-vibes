@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EarthshakerDreadmaw;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,10 +23,10 @@ class JoinTheDeadTest extends BaseCardTest {
         Permanent target = addTarget();
         castJoinTheDead(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(-5);
-        assertThat(target.getToughnessModifier()).isEqualTo(-5);
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -49,8 +50,8 @@ class JoinTheDeadTest extends BaseCardTest {
 
         castJoinTheDead(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(-5);
-        assertThat(target.getToughnessModifier()).isEqualTo(-5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-5);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 
@@ -79,8 +80,8 @@ class JoinTheDeadTest extends BaseCardTest {
 
         castJoinTheDead(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(-5);
-        assertThat(target.getToughnessModifier()).isEqualTo(-5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-5);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 
@@ -99,8 +100,8 @@ class JoinTheDeadTest extends BaseCardTest {
                 new EarthshakerDreadmaw(), new EarthshakerDreadmaw(), new EarthshakerDreadmaw()));
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-5);
-        assertThat(target.getToughnessModifier()).isEqualTo(-5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-5);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 
@@ -112,8 +113,8 @@ class JoinTheDeadTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 
@@ -124,8 +125,8 @@ class JoinTheDeadTest extends BaseCardTest {
 
         castJoinTheDead(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(-5);
-        assertThat(target.getToughnessModifier()).isEqualTo(-5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-5);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
     }
 

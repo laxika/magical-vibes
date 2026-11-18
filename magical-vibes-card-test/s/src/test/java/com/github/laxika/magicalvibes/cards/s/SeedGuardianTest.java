@@ -29,8 +29,8 @@ class SeedGuardianTest extends BaseCardTest {
         Permanent elemental = findPermanent(player1, "Elemental");
         assertThat(elemental.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(elemental.getCard().getSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
-        assertThat(elemental.getEffectivePower()).isEqualTo(2);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(2);
     }
 
     @Test
@@ -43,8 +43,8 @@ class SeedGuardianTest extends BaseCardTest {
         destroyAllCreatures();
 
         Permanent elemental = findPermanent(player1, "Elemental");
-        assertThat(elemental.getEffectivePower()).isEqualTo(1);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
     }
 
     @Test
@@ -57,8 +57,8 @@ class SeedGuardianTest extends BaseCardTest {
         destroyAllCreatures();
 
         Permanent elemental = findPermanent(player1, "Elemental");
-        assertThat(elemental.getEffectivePower()).isEqualTo(2);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(elemental);
         harness.assertNotOnBattlefield(player2, "Elemental");
     }
@@ -76,12 +76,12 @@ class SeedGuardianTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent elemental = findPermanent(player1, "Elemental");
-        assertThat(elemental.getEffectivePower()).isEqualTo(2);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(2);
 
         harness.setGraveyard(player1, List.of());
-        assertThat(elemental.getEffectivePower()).isEqualTo(2);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(2);
     }
 
     @Test

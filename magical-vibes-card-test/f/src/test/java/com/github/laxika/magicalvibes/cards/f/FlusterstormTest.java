@@ -56,7 +56,7 @@ class FlusterstormTest extends BaseCardTest {
         harness.castInstant(player2, 0, might.getId());
         resolveFlusterstorm(true);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(9);
         harness.assertInGraveyard(player1, "Might of Oaks");
     }
 
@@ -154,7 +154,7 @@ class FlusterstormTest extends BaseCardTest {
         harness.castInstant(player2, 0, might.getId());
         resolveFlusterstorm(true);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Might of Oaks");
         harness.assertInGraveyard(player2, "Flusterstorm");
         assertThat(gd.stack).isEmpty();
@@ -179,7 +179,7 @@ class FlusterstormTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, flusterstorm.getId());
         resolveFlusterstorm(false);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(9);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(9);
         harness.assertInGraveyard(player2, "Flusterstorm");
         assertThat(gd.stack).isEmpty();
     }

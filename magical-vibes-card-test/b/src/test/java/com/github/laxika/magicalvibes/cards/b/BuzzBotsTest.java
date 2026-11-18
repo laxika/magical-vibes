@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -49,7 +50,7 @@ class BuzzBotsTest extends BaseCardTest {
         BuzzBots bots = new BuzzBots();
         bots.setOwnerId(player1.getId());
         Permanent permanent = harness.addToBattlefieldAndReturn(player2, bots);
-        permanent.setToughnessModifier(-1);
+        PermanentGrants.setToughnessBoost(gd, permanent, -1);
 
         harness.runStateBasedActions();
 

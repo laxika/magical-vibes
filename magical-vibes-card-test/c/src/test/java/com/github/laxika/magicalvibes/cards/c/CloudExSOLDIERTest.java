@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -59,7 +60,7 @@ class CloudExSOLDIERTest extends BaseCardTest {
     void createsTreasuresAtHighPower() {
         Permanent cloud = addCreatureReady(player1, new CloudExSOLDIER());
         attachEquipment(cloud);
-        cloud.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, cloud, 3);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
@@ -165,7 +166,7 @@ class CloudExSOLDIERTest extends BaseCardTest {
         Permanent cloud = addCreatureReady(player1, new CloudExSOLDIER());
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
         equipment.setAttachedTo(cloud.getId());
-        cloud.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, cloud, 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
@@ -185,7 +186,7 @@ class CloudExSOLDIERTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(cloud)));
-        cloud.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, cloud, 3);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

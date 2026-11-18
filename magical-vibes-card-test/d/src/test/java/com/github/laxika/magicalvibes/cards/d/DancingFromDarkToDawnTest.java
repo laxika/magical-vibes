@@ -43,8 +43,8 @@ class DancingFromDarkToDawnTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).anySatisfy(permanent -> {
             assertThat(permanent.getCard().isToken()).isTrue();
             assertThat(permanent.getCard().getName()).isEqualTo("Bear");
-            assertThat(permanent.getEffectivePower()).isEqualTo(2);
-            assertThat(permanent.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(2);
         });
     }
 

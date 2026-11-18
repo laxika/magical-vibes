@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -30,7 +31,7 @@ class TemurCharmTest extends BaseCardTest {
 
         castMode(0, List.of(own.getId(), opposing.getId()));
 
-        assertThat(own.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(3);
         assertThat(own.getMarkedDamage()).isEqualTo(2);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
@@ -102,8 +103,8 @@ class TemurCharmTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, opposing.getId());
         harness.passBothPriorities();
 
-        assertThat(own.getEffectivePower()).isEqualTo(3);
-        assertThat(own.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(3);
         assertThat(own.getMarkedDamage()).isZero();
         harness.assertInHand(player2, "Grizzly Bears");
     }
@@ -121,8 +122,8 @@ class TemurCharmTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, own.getId());
         harness.passBothPriorities();
 
-        assertThat(opposing.getEffectivePower()).isEqualTo(2);
-        assertThat(opposing.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(2);
         assertThat(opposing.getMarkedDamage()).isZero();
         harness.assertInHand(player1, "Grizzly Bears");
     }
@@ -192,10 +193,10 @@ class TemurCharmTest extends BaseCardTest {
 
         assertThat(bls.canBlockAttacker(gd, blocker, attacker,
                 gd.playerBattlefields.get(player2.getId()))).isTrue();
-        blocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
         assertThat(bls.canBlockAttacker(gd, blocker, attacker,
                 gd.playerBattlefields.get(player2.getId()))).isFalse();
-        blocker.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, blocker, 0);
         assertThat(bls.canBlockAttacker(gd, blocker, attacker,
                 gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
@@ -206,7 +207,7 @@ class TemurCharmTest extends BaseCardTest {
         Permanent opposingAttacker = addCreatureReady(player2, new GrizzlyBears());
         castMode(2, List.of());
         Permanent lateBlocker = addCreatureReady(player2, new AirElemental());
-        lateBlocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, lateBlocker, -1);
         Permanent ownBlocker = addCreatureReady(player1, new GrizzlyBears());
 
         assertThat(bls.canBlockAttacker(gd, lateBlocker, attacker,

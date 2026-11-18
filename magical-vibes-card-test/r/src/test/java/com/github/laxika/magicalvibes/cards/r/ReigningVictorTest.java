@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -30,15 +31,15 @@ class ReigningVictorTest extends BaseCardTest {
         harness.castCreature(player1, 0, List.of(bears.getId()));
         resolveAllTriggers();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
@@ -109,8 +110,8 @@ class ReigningVictorTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, victor.getId());
         resolveAllTriggers();
 
-        assertThat(victor.getPowerModifier()).isEqualTo(1);
-        assertThat(victor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, victor)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, victor)).isZero();
         assertThat(gqs.hasKeyword(gd, victor, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(findPermanents(player1, "Warrior")).isEmpty();
     }
@@ -129,7 +130,7 @@ class ReigningVictorTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent victor = findPermanent(player1, "Reigning Victor");
-        assertThat(victor.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, victor)).isZero();
         assertThat(gqs.hasKeyword(gd, victor, Keyword.INDESTRUCTIBLE)).isFalse();
         harness.assertInHand(player2, "Reigning Victor");
         assertThat(gd.stack).isEmpty();

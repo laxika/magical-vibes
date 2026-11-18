@@ -25,8 +25,8 @@ class DevourerOfMemoryTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         activateMillAbility();
 
-        assertThat(devourer.getEffectivePower()).isEqualTo(3);
-        assertThat(devourer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, devourer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, devourer)).isEqualTo(2);
         assertThat(gqs.hasCantBeBlocked(gd, devourer)).isTrue();
     }
 
@@ -43,8 +43,8 @@ class DevourerOfMemoryTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, player1.getId());
         resolveAllTriggers();
 
-        assertThat(devourer.getEffectivePower()).isEqualTo(3);
-        assertThat(devourer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, devourer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, devourer)).isEqualTo(2);
     }
 
     @Test
@@ -58,8 +58,8 @@ class DevourerOfMemoryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(devourer.getEffectivePower()).isEqualTo(2);
-        assertThat(devourer.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, devourer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, devourer)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, devourer)).isFalse();
     }
 
@@ -72,8 +72,8 @@ class DevourerOfMemoryTest extends BaseCardTest {
         activateMillAbility();
         activateMillAbility();
 
-        assertThat(devourer.getEffectivePower()).isEqualTo(4);
-        assertThat(devourer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, devourer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, devourer)).isEqualTo(3);
         assertThat(gqs.hasCantBeBlocked(gd, devourer)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -87,8 +87,8 @@ class DevourerOfMemoryTest extends BaseCardTest {
 
         activateMillAbility();
 
-        assertThat(devourer.getEffectivePower()).isEqualTo(2);
-        assertThat(devourer.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, devourer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, devourer)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, devourer)).isFalse();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
@@ -109,11 +109,11 @@ class DevourerOfMemoryTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         resolveAllTriggers();
 
-        assertThat(ownDevourer.getEffectivePower()).isEqualTo(2);
-        assertThat(ownDevourer.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownDevourer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownDevourer)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, ownDevourer)).isFalse();
-        assertThat(opposingDevourer.getEffectivePower()).isEqualTo(3);
-        assertThat(opposingDevourer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingDevourer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingDevourer)).isEqualTo(2);
         assertThat(gqs.hasCantBeBlocked(gd, opposingDevourer)).isTrue();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
@@ -134,8 +134,8 @@ class DevourerOfMemoryTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
-        assertThat(devourer.getEffectivePower()).isEqualTo(3);
-        assertThat(devourer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, devourer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, devourer)).isEqualTo(2);
         assertThat(gqs.hasCantBeBlocked(gd, devourer)).isTrue();
         assertThat(devourer.isTapped()).isTrue();
     }

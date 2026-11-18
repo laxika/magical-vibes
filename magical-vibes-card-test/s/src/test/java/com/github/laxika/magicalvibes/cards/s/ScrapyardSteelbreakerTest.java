@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.j.JukaiTrainee;
 import com.github.laxika.magicalvibes.cards.p.PatchworkAutomaton;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -34,8 +35,8 @@ class ScrapyardSteelbreakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());
-        assertThat(steelbreaker.getPowerModifier()).isEqualTo(2);
-        assertThat(steelbreaker.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, steelbreaker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, steelbreaker)).isEqualTo(1);
     }
 
     @Test
@@ -52,8 +53,8 @@ class ScrapyardSteelbreakerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(steelbreaker.getPowerModifier()).isZero();
-        assertThat(steelbreaker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, steelbreaker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, steelbreaker)).isZero();
     }
 
     @Test
@@ -88,8 +89,8 @@ class ScrapyardSteelbreakerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstArtifact);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstArtifact.getCard());
-        assertThat(steelbreaker.getPowerModifier()).isZero();
-        assertThat(steelbreaker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, steelbreaker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, steelbreaker)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
@@ -97,8 +98,8 @@ class ScrapyardSteelbreakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstArtifact.getCard(), secondArtifact.getCard());
-        assertThat(steelbreaker.getPowerModifier()).isEqualTo(4);
-        assertThat(steelbreaker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, steelbreaker)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, steelbreaker)).isEqualTo(2);
         assertThat(steelbreaker.isTapped()).isTrue();
     }
 

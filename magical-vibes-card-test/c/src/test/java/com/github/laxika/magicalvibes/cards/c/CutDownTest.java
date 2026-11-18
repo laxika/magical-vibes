@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -22,7 +23,7 @@ class CutDownTest extends BaseCardTest {
     @DisplayName("Destroys a creature with total power and toughness of exactly 5")
     void destroysCreatureAtThreshold() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinPiker());
-        target.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, 2);
         harness.setHand(player1, List.of(new CutDown()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         UUID targetId = target.getId();

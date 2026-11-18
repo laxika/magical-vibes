@@ -33,8 +33,8 @@ class SnakeformTest extends BaseCardTest {
 
         castSnakeform(elemental.getId());
 
-        assertThat(elemental.getEffectivePower()).isEqualTo(1);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
     }
 
     @Test
@@ -87,14 +87,14 @@ class SnakeformTest extends BaseCardTest {
         Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         castSnakeform(elemental.getId());
 
-        assertThat(elemental.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elemental.getEffectivePower()).isEqualTo(4);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasColor(gd, elemental, CardColor.BLUE)).isTrue();
         assertThat(gd.floatingEffectsOnPermanent(elemental.getId(), GrantSubtypeEffect.class)).isEmpty();

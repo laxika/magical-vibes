@@ -31,9 +31,9 @@ class AuronsInspirationTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(ownAttacker.getEffectivePower()).isEqualTo(4);
-        assertThat(ownAttacker.getEffectiveToughness()).isEqualTo(1);
-        assertThat(nonAttacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownAttacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownAttacker)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, nonAttacker)).isEqualTo(2);
     }
 
     @Test
@@ -49,8 +49,8 @@ class AuronsInspirationTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(defender.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, defender)).isEqualTo(2);
     }
 
     @Test
@@ -69,12 +69,12 @@ class AuronsInspirationTest extends BaseCardTest {
         lateAttacker.setAttacking(true);
         harness.passBothPriorities();
 
-        assertThat(removedFromCombat.getEffectivePower()).isEqualTo(2);
-        assertThat(lateAttacker.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, removedFromCombat)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, lateAttacker)).isEqualTo(4);
         lateAttacker.setAttacking(false);
         removedFromCombat.setAttacking(true);
-        assertThat(lateAttacker.getEffectivePower()).isEqualTo(4);
-        assertThat(removedFromCombat.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, lateAttacker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, removedFromCombat)).isEqualTo(2);
     }
 
     @Test
@@ -88,7 +88,7 @@ class AuronsInspirationTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Auron's Inspiration");
         creature.setAttacking(true);
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -105,7 +105,7 @@ class AuronsInspirationTest extends BaseCardTest {
 
         harness.castAndResolveFlashback(player1, 0, null);
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
         harness.assertNotInGraveyard(player1, "Auron's Inspiration");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Auron's Inspiration"));
@@ -124,12 +124,12 @@ class AuronsInspirationTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         harness.castAndResolveInstant(player1, 0);
-        assertThat(attacker.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
     }
 }

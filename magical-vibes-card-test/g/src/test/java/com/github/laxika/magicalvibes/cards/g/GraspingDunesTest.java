@@ -43,8 +43,8 @@ class GraspingDunesTest extends BaseCardTest {
 
         // Air Elemental (4/4) with one -1/-1 counter → 3/3.
         assertThat(elemental.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(elemental.getEffectivePower()).isEqualTo(3);
-        assertThat(elemental.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(3);
 
         // Grasping Dunes is sacrificed as a cost.
         harness.assertNotOnBattlefield(player1, "Grasping Dunes");

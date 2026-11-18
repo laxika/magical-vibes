@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -35,8 +36,8 @@ class BenalishVeteranTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(veteran.getPowerModifier()).isEqualTo(1);
-        assertThat(veteran.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, veteran)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, veteran)).isEqualTo(1);
     }
 
     @Test
@@ -47,14 +48,14 @@ class BenalishVeteranTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(veteran.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, veteran)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(veteran.getPowerModifier()).isEqualTo(0);
-        assertThat(veteran.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, veteran)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, veteran)).isEqualTo(0);
     }
 
     @Test
@@ -65,16 +66,16 @@ class BenalishVeteranTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
-        assertThat(idleVeteran.getPowerModifier()).isZero();
-        assertThat(idleVeteran.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, idleVeteran)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, idleVeteran)).isZero();
     }
 
     @Test
@@ -87,10 +88,10 @@ class BenalishVeteranTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(1);
     }
 
     @Test
@@ -101,7 +102,7 @@ class BenalishVeteranTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
 
-        assertThat(veteran.getPowerModifier()).isEqualTo(1);
-        assertThat(veteran.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, veteran)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, veteran)).isEqualTo(1);
     }
 }

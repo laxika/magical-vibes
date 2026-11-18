@@ -46,7 +46,7 @@ class RashidaScalebaneTest extends BaseCardTest {
         addCreatureReady(player1, new RashidaScalebane());
         Permanent dragon = addCreatureReady(player2, new ShivanDragon());
         dragon.setAttacking(true);
-        dragon.setPowerModifier(-6);
+        PermanentGrants.setPowerBoost(gd, dragon, -6);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -73,7 +73,7 @@ class RashidaScalebaneTest extends BaseCardTest {
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
         harness.activateAbility(player1, 0, null, dragon.getId());
-        dragon.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, dragon, 2);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Shivan Dragon");
@@ -152,7 +152,7 @@ class RashidaScalebaneTest extends BaseCardTest {
         addCreatureReady(player1, new RashidaScalebane());
         Permanent dragon = addCreatureReady(player2, new ShivanDragon());
         dragon.setAttacking(true);
-        dragon.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, dragon, 3);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

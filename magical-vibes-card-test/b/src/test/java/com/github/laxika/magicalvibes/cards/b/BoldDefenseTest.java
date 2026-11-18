@@ -28,10 +28,10 @@ class BoldDefenseTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(findCreature(player1).getEffectivePower()).isEqualTo(3);
-        assertThat(findCreature(player1).getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, findCreature(player1))).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, findCreature(player1))).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, findCreature(player1), Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(findCreature(player2).getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findCreature(player2))).isEqualTo(2);
     }
 
     @Test
@@ -47,10 +47,10 @@ class BoldDefenseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent ownCreature = findCreature(player1);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(findCreature(player2).getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, findCreature(player2))).isEqualTo(2);
     }
 
     @Test
@@ -69,8 +69,8 @@ class BoldDefenseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent ownCreature = findCreature(player1);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -84,14 +84,14 @@ class BoldDefenseTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -108,12 +108,12 @@ class BoldDefenseTest extends BaseCardTest {
         Permanent afterResolution = harness.enterBattlefieldAndReturn(player1, new StoneworkPuma());
 
         for (Permanent affected : List.of(original, beforeResolution)) {
-            assertThat(affected.getEffectivePower()).isEqualTo(4);
-            assertThat(affected.getEffectiveToughness()).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, affected)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, affected)).isEqualTo(4);
             assertThat(gqs.hasKeyword(gd, affected, Keyword.FIRST_STRIKE)).isTrue();
         }
-        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -130,8 +130,8 @@ class BoldDefenseTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Bold Defense");
         Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new StoneworkPuma());
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.FIRST_STRIKE)).isFalse();
     }
 

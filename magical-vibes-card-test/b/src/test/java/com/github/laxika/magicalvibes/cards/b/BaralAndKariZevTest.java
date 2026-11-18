@@ -60,8 +60,8 @@ class BaralAndKariZevTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getName().equals("First Mate Ragavan"))
                 .findFirst()
                 .orElseThrow();
-        assertThat(ragavan.getEffectivePower()).isEqualTo(2);
-        assertThat(ragavan.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ragavan)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ragavan)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ragavan, Keyword.HASTE)).isTrue();
     }
 

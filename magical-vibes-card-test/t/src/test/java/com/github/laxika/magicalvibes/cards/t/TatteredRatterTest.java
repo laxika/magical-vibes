@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.v.VoraciousVermin;
 import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
@@ -31,8 +32,8 @@ class TatteredRatterTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(rat.getPowerModifier()).isEqualTo(2);
-        assertThat(rat.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rat)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rat)).isZero();
     }
 
     @Test
@@ -51,8 +52,8 @@ class TatteredRatterTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(rat.getPowerModifier()).isZero();
-        assertThat(rat.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rat)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rat)).isZero();
     }
 
     @Test
@@ -67,7 +68,7 @@ class TatteredRatterTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -83,7 +84,7 @@ class TatteredRatterTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(opponentRat.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentRat)).isZero();
     }
 
     @Test
@@ -101,9 +102,9 @@ class TatteredRatterTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
-        assertThat(rat.getPowerModifier()).isEqualTo(2);
-        assertThat(rat.getToughnessModifier()).isZero();
-        assertThat(ratter.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rat)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, rat)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ratter)).isZero();
     }
 
     @Test
@@ -126,9 +127,9 @@ class TatteredRatterTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(4);
         resolveAllTriggers();
-        assertThat(firstRat.getPowerModifier()).isEqualTo(4);
-        assertThat(secondRat.getPowerModifier()).isEqualTo(4);
-        assertThat(unblockedRat.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstRat)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondRat)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, unblockedRat)).isZero();
     }
 
     @Test
@@ -146,8 +147,8 @@ class TatteredRatterTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
-        assertThat(ratter.getPowerModifier()).isEqualTo(2);
-        assertThat(ratter.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ratter)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ratter)).isZero();
     }
 
     @Test
@@ -165,6 +166,6 @@ class TatteredRatterTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(rat.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rat)).isZero();
     }
 }

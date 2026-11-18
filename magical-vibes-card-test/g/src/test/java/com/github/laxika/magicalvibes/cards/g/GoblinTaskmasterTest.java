@@ -25,13 +25,13 @@ class GoblinTaskmasterTest extends BaseCardTest {
     void boostsTargetGoblin() {
         addTaskmaster();
         Permanent goblin = addGoblin(player1);
-        int originalPower = goblin.getEffectivePower();
-        int originalToughness = goblin.getEffectiveToughness();
+        int originalPower = gqs.getEffectivePower(gd, goblin);
+        int originalToughness = gqs.getEffectiveToughness(gd, goblin);
 
         activateTaskmaster(goblin.getId());
 
-        assertThat(goblin.getEffectivePower()).isEqualTo(originalPower + 1);
-        assertThat(goblin.getEffectiveToughness()).isEqualTo(originalToughness);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(originalPower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(originalToughness);
     }
 
     @Test
@@ -39,11 +39,11 @@ class GoblinTaskmasterTest extends BaseCardTest {
     void boostsOpponentsGoblin() {
         addTaskmaster();
         Permanent goblin = addGoblin(player2);
-        int originalPower = goblin.getEffectivePower();
+        int originalPower = gqs.getEffectivePower(gd, goblin);
 
         activateTaskmaster(goblin.getId());
 
-        assertThat(goblin.getEffectivePower()).isEqualTo(originalPower + 1);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(originalPower + 1);
     }
 
     @Test
@@ -51,13 +51,13 @@ class GoblinTaskmasterTest extends BaseCardTest {
     void boostWearsOff() {
         addTaskmaster();
         Permanent goblin = addGoblin(player1);
-        int originalPower = goblin.getEffectivePower();
+        int originalPower = gqs.getEffectivePower(gd, goblin);
 
         activateTaskmaster(goblin.getId());
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(goblin.getEffectivePower()).isEqualTo(originalPower);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(originalPower);
     }
 
     @Test
@@ -97,15 +97,15 @@ class GoblinTaskmasterTest extends BaseCardTest {
         Permanent taskmaster = harness.addToBattlefieldAndReturn(player1, new GoblinTaskmaster());
         taskmaster.tap();
         taskmaster.setSummoningSick(true);
-        int originalPower = taskmaster.getEffectivePower();
-        int originalToughness = taskmaster.getEffectiveToughness();
+        int originalPower = gqs.getEffectivePower(gd, taskmaster);
+        int originalToughness = gqs.getEffectiveToughness(gd, taskmaster);
         harness.addMana(player1, ManaColor.RED, 4);
 
         activateTaskmaster(taskmaster.getId());
         activateTaskmaster(taskmaster.getId());
 
-        assertThat(taskmaster.getEffectivePower()).isEqualTo(originalPower + 2);
-        assertThat(taskmaster.getEffectiveToughness()).isEqualTo(originalToughness);
+        assertThat(gqs.getEffectivePower(gd, taskmaster)).isEqualTo(originalPower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, taskmaster)).isEqualTo(originalToughness);
         assertThat(taskmaster.isTapped()).isTrue();
     }
 

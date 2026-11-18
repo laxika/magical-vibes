@@ -40,8 +40,8 @@ class VoraciousHatchlingTest extends BaseCardTest {
 
         Permanent hatchling = findHatchling(player1);
         assertThat(hatchling.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(4);
-        assertThat(hatchling.getEffectivePower()).isEqualTo(2);
-        assertThat(hatchling.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hatchling)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hatchling)).isEqualTo(2);
     }
 
     @Test
@@ -57,7 +57,7 @@ class VoraciousHatchlingTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(hatchling.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
-        assertThat(hatchling.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hatchling)).isEqualTo(3);
     }
 
     @Test
@@ -109,7 +109,7 @@ class VoraciousHatchlingTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(hatchling.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
-        assertThat(hatchling.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, hatchling)).isEqualTo(6);
     }
 
     @Test

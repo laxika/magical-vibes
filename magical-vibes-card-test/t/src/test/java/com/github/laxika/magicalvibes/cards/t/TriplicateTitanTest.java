@@ -31,8 +31,8 @@ class TriplicateTitanTest extends BaseCardTest {
         List<Permanent> tokens = findPermanents(player1, "Golem");
         assertThat(tokens).hasSize(3);
         assertThat(tokens).allSatisfy(token -> {
-            assertThat(token.getEffectivePower()).isEqualTo(3);
-            assertThat(token.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
             assertThat(token.getCard().getColor()).isNull();
             assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(token.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);

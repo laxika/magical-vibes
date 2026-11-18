@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.DayNight;
@@ -26,7 +27,7 @@ class WolfStrikeTest extends BaseCardTest {
 
         cast(source, target);
 
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Air Elemental");
     }
@@ -39,7 +40,7 @@ class WolfStrikeTest extends BaseCardTest {
 
         cast(source, target);
 
-        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
         harness.assertInGraveyard(player2, "Air Elemental");
     }
 
@@ -50,13 +51,13 @@ class WolfStrikeTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
 
         cast(source, target);
-        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
     }
 
     @Test
@@ -85,7 +86,7 @@ class WolfStrikeTest extends BaseCardTest {
 
         cast(source, target);
 
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
         assertThat(source.getMarkedDamage()).isZero();
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         assertThat(gd.dayNight).isEqualTo(DayNight.NEITHER);
@@ -102,7 +103,7 @@ class WolfStrikeTest extends BaseCardTest {
                 .removePermanentToHand(gd, target));
         harness.passBothPriorities();
 
-        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isEqualTo(2);
         assertThat(source.getMarkedDamage()).isZero();
         harness.assertInHand(player2, "Air Elemental");
         harness.assertInGraveyard(player1, "Wolf Strike");
@@ -120,7 +121,7 @@ class WolfStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         harness.assertOnBattlefield(player2, "Air Elemental");
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Wolf Strike");

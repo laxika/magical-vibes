@@ -32,8 +32,8 @@ class SeedTheLandTest extends BaseCardTest {
         assertThat(snake.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(snake.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(snake.getCard().getSubtypes()).containsExactly(CardSubtype.SNAKE);
-        assertThat(snake.getEffectivePower()).isEqualTo(1);
-        assertThat(snake.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, snake)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, snake)).isEqualTo(1);
     }
 
     @Test
@@ -52,8 +52,8 @@ class SeedTheLandTest extends BaseCardTest {
                     assertThat(snake.getCard().getType()).isEqualTo(CardType.CREATURE);
                     assertThat(snake.getCard().getColor()).isEqualTo(CardColor.GREEN);
                     assertThat(snake.getCard().getSubtypes()).containsExactly(CardSubtype.SNAKE);
-                    assertThat(snake.getEffectivePower()).isEqualTo(1);
-                    assertThat(snake.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, snake)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, snake)).isEqualTo(1);
                 });
         assertThat(findPermanents(player1, "Snake")).isEmpty();
     }

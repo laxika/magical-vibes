@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.y.YavimayaWurm;
@@ -93,7 +94,7 @@ class ZilorthaStrengthIncarnateTest extends BaseCardTest {
     void zeroPowerNeedsAtLeastOneMarkedDamage() {
         addCreatureReady(player1, new ZilorthaStrengthIncarnate());
         Permanent spider = addCreatureReady(player1, new GiantSpider());
-        spider.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, spider, -2);
 
         harness.runStateBasedActions();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(spider);
@@ -107,7 +108,7 @@ class ZilorthaStrengthIncarnateTest extends BaseCardTest {
     void zeroToughnessStillPutsCreatureIntoGraveyard() {
         addCreatureReady(player1, new ZilorthaStrengthIncarnate());
         Permanent piker = addCreatureReady(player1, new GoblinPiker());
-        piker.setToughnessModifier(-1);
+        PermanentGrants.setToughnessBoost(gd, piker, -1);
 
         harness.runStateBasedActions();
 

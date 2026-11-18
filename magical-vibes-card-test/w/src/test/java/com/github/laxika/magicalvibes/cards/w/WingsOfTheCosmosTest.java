@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FearlessPup;
 import com.github.laxika.magicalvibes.cards.f.FrostBite;
 import com.github.laxika.magicalvibes.cards.g.GoldveinPick;
@@ -33,8 +34,8 @@ class WingsOfTheCosmosTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(pup.getPowerModifier()).isEqualTo(1);
-        assertThat(pup.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, pup)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pup)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, pup, Keyword.FLYING)).isTrue();
         assertThat(pup.isTapped()).isFalse();
     }
@@ -53,8 +54,8 @@ class WingsOfTheCosmosTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(pup.getPowerModifier()).isZero();
-        assertThat(pup.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, pup)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, pup)).isZero();
         assertThat(gqs.hasKeyword(gd, pup, Keyword.FLYING)).isFalse();
     }
 
@@ -84,12 +85,12 @@ class WingsOfTheCosmosTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(target.isTapped()).isFalse();
-        assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
         assertThat(other.isTapped()).isTrue();
     }
@@ -104,8 +105,8 @@ class WingsOfTheCosmosTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(target.isTapped()).isFalse();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -166,7 +167,7 @@ class EscapeTunnelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EscapeTunnel());
         Permanent target = addReadyPermanent(player1, new GrizzlyBears());
         harness.activateAbility(player1, 0, 1, null, target.getId());
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         harness.passBothPriorities();
 
         assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
@@ -182,7 +183,7 @@ class EscapeTunnelTest extends BaseCardTest {
         addReadyPermanent(player2, new HillGiant());
         harness.activateAbility(player1, 0, 1, null, attacker.getId());
         harness.passBothPriorities();
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         attacker.setAttacking(true);
         prepareDeclareBlockers();
 

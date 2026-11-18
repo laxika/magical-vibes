@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
@@ -46,11 +47,11 @@ class AleatoryTest extends BaseCardTest {
         boolean won = gameLogContains("wins the coin flip");
 
         if (won) {
-            assertThat(target.getEffectivePower()).isEqualTo(2);
-            assertThat(target.getEffectiveToughness()).isEqualTo(5);
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         } else {
-            assertThat(target.getEffectivePower()).isEqualTo(1);
-            assertThat(target.getEffectiveToughness()).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         }
     }
 
@@ -63,8 +64,8 @@ class AleatoryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
     }
 
     @Test
@@ -126,8 +127,8 @@ class AleatoryTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).hasSize(1);
         int boost = gameLogContains("wins the coin flip") ? 1 : 0;
-        assertThat(target.getEffectivePower()).isEqualTo(1 + boost);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4 + boost);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1 + boost);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4 + boost);
     }
 
     @Test

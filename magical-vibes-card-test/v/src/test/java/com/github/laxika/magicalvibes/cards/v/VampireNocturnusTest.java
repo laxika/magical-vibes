@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -209,11 +212,11 @@ class VampireNocturnusTest extends BaseCardTest {
         Permanent aristocrat = findPermanent(player1, "Vampire Aristocrat");
 
         // Add temporary boost
-        aristocrat.setPowerModifier(aristocrat.getPowerModifier() + 5);
+        PermanentGrants.setPowerBoost(gd, aristocrat, PermanentGrants.powerBoostOf(gd, aristocrat) + 5);
         assertThat(gqs.getEffectivePower(gd, aristocrat)).isEqualTo(9); // 2 base + 5 spell + 2 static
 
-        // Reset end-of-turn modifiers
-        aristocrat.resetModifiers();
+        // The cleanup step ends the until-end-of-turn effects
+        gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
         // Static bonus still applied
         assertThat(gqs.getEffectivePower(gd, aristocrat)).isEqualTo(4); // 2 base + 2 static

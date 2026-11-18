@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -179,8 +180,8 @@ class MortivoreTest extends BaseCardTest {
         Permanent perm = addCreatureReady(player1, new Mortivore());
         harness.setGraveyard(player1, createCreatureCards(3));
 
-        perm.setPowerModifier(2);
-        perm.setToughnessModifier(2);
+        PermanentGrants.setPowerBoost(gd, perm, 2);
+        PermanentGrants.setToughnessBoost(gd, perm, 2);
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(5);

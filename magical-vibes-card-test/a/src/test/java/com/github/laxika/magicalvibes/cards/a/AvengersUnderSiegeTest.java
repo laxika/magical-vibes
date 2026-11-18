@@ -41,8 +41,8 @@ class AvengersUnderSiegeTest extends BaseCardTest {
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
-            assertThat(token.getEffectivePower()).isEqualTo(2);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.VILLAIN);
             assertThat(token.hasKeyword(Keyword.MENACE)).isTrue();
         });

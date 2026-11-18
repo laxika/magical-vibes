@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -47,10 +48,10 @@ class DeeprootWarriorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(warriorPerm.getPowerModifier()).isEqualTo(1);
-        assertThat(warriorPerm.getToughnessModifier()).isEqualTo(1);
-        assertThat(warriorPerm.getEffectivePower()).isEqualTo(3);
-        assertThat(warriorPerm.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, warriorPerm)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warriorPerm)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, warriorPerm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, warriorPerm)).isEqualTo(3);
     }
 
     @Test
@@ -78,8 +79,8 @@ class DeeprootWarriorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only +1/+1, not +2/+2
-        assertThat(warriorPerm.getPowerModifier()).isEqualTo(1);
-        assertThat(warriorPerm.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, warriorPerm)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warriorPerm)).isEqualTo(1);
     }
 
     @Test
@@ -96,16 +97,16 @@ class DeeprootWarriorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(warriorPerm.getPowerModifier()).isEqualTo(1);
-        assertThat(warriorPerm.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, warriorPerm)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warriorPerm)).isEqualTo(1);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(warriorPerm.getPowerModifier()).isEqualTo(0);
-        assertThat(warriorPerm.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, warriorPerm)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warriorPerm)).isEqualTo(0);
     }
 
     @Test
@@ -119,8 +120,8 @@ class DeeprootWarriorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(warrior.getPowerModifier()).isZero();
-        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isZero();
     }
 
     @Test
@@ -134,10 +135,10 @@ class DeeprootWarriorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(1);
-        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
     }
 
     private Permanent addWarriorReady(Player player) {

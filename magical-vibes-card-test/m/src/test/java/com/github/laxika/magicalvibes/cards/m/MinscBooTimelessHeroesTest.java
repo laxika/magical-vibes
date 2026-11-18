@@ -32,8 +32,8 @@ class MinscBooTimelessHeroesTest extends BaseCardTest {
         Permanent boo = findPermanent(player1, "Boo");
         assertThat(boo.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
         assertThat(boo.getCard().getSubtypes()).contains(CardSubtype.HAMSTER);
-        assertThat(boo.getEffectivePower()).isEqualTo(1);
-        assertThat(boo.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, boo)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, boo)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, boo, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, boo, Keyword.HASTE)).isTrue();
     }

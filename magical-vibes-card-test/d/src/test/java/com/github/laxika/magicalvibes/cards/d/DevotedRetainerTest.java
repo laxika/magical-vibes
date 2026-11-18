@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -27,8 +28,8 @@ class DevotedRetainerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(retainer.getPowerModifier()).isEqualTo(1);
-        assertThat(retainer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isEqualTo(1);
     }
 
     @Test
@@ -42,8 +43,8 @@ class DevotedRetainerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(retainer.getPowerModifier()).isEqualTo(1);
-        assertThat(retainer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isEqualTo(1);
     }
 
     @Test
@@ -59,8 +60,8 @@ class DevotedRetainerTest extends BaseCardTest {
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
-        assertThat(retainer.getPowerModifier()).isEqualTo(1);
-        assertThat(retainer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isEqualTo(1);
     }
 
     @Test
@@ -72,8 +73,8 @@ class DevotedRetainerTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(retainer.getPowerModifier()).isZero();
-        assertThat(retainer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isZero();
     }
 
     @Test
@@ -88,13 +89,13 @@ class DevotedRetainerTest extends BaseCardTest {
                 () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(retainer.getPowerModifier()).isZero();
-        assertThat(retainer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isZero();
 
         resolveAllTriggers();
 
-        assertThat(retainer.getPowerModifier()).isEqualTo(1);
-        assertThat(retainer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isEqualTo(1);
     }
 
     @Test
@@ -111,8 +112,8 @@ class DevotedRetainerTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(retainer.getPowerModifier()).isEqualTo(1);
-        assertThat(retainer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isEqualTo(1);
     }
 
     @Test
@@ -126,14 +127,14 @@ class DevotedRetainerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(retainer.getPowerModifier()).isEqualTo(1);
-        assertThat(retainer.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(retainer.getPowerModifier()).isZero();
-        assertThat(retainer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, retainer)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, retainer)).isZero();
     }
 }

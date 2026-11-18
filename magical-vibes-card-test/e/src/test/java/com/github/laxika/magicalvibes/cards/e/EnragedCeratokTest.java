@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SauroformHybrid;
 import com.github.laxika.magicalvibes.cards.a.AxebaneBeast;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -48,7 +49,7 @@ class EnragedCeratokTest extends BaseCardTest {
     void boostedBlockerCanBlock() {
         attackingCeratok();
         Permanent blocker = addCreatureReady(player2, new SauroformHybrid());
-        blocker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, blocker, 1);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -61,7 +62,7 @@ class EnragedCeratokTest extends BaseCardTest {
     void reducedBlockerCannotBlock() {
         attackingCeratok();
         Permanent blocker = addCreatureReady(player2, new AxebaneBeast());
-        blocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
 
         prepareDeclareBlockers();
 
@@ -74,7 +75,7 @@ class EnragedCeratokTest extends BaseCardTest {
     void negativePowerBlockerCannotBlock() {
         attackingCeratok();
         Permanent blocker = addCreatureReady(player2, new SauroformHybrid());
-        blocker.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, blocker, -3);
 
         prepareDeclareBlockers();
 

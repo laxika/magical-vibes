@@ -47,7 +47,7 @@ class AspiringChampionTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard() == demon)
                 .findFirst()
                 .orElseThrow();
-        assertThat(gd.getLife(player2.getId())).isEqualTo(17 - enteredDemon.getEffectivePower());
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17 - gqs.getEffectivePower(gd, enteredDemon));
     }
 
     @Test

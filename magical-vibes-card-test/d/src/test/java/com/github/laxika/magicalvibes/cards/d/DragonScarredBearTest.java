@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GuardianShieldBearer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -34,7 +35,7 @@ class DragonScarredBearTest extends BaseCardTest {
     void canActivateAtExactThreshold() {
         Permanent bear = addCreatureReady(player1, new DragonScarredBear());
         addSupportCreatures(player1, 3);
-        bear.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, bear, -1);
         addRegenerationMana();
 
         harness.activateAbility(player1, 0, null, null);
@@ -63,7 +64,7 @@ class DragonScarredBearTest extends BaseCardTest {
         addRegenerationMana();
 
         harness.activateAbility(player1, 0, null, null);
-        bear.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, bear, -2);
         harness.passBothPriorities();
 
         assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
@@ -87,7 +88,7 @@ class DragonScarredBearTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player1, new DragonScarredBear());
         addSupportCreatures(player1, 3);
         Permanent weakenedCreature = addCreatureReady(player1, new GuardianShieldBearer());
-        weakenedCreature.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, weakenedCreature, -4);
         addRegenerationMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

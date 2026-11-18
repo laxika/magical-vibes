@@ -39,8 +39,8 @@ class HellionEruptionTest extends BaseCardTest {
                 .toList();
         assertThat(hellions).hasSize(2);
         assertThat(hellions).allSatisfy(hellion -> {
-            assertThat(hellion.getEffectivePower()).isEqualTo(4);
-            assertThat(hellion.getEffectiveToughness()).isEqualTo(4);
+            assertThat(gqs.getEffectivePower(gd, hellion)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, hellion)).isEqualTo(4);
             assertThat(hellion.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(hellion.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(hellion.getCard().getSubtypes()).containsExactly(CardSubtype.HELLION);

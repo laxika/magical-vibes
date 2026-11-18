@@ -35,8 +35,8 @@ class GiftOfTusksTest extends BaseCardTest {
 
         castGiftOfTusks(angel.getId());
 
-        assertThat(angel.getEffectivePower()).isEqualTo(3);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(3);
         assertThat(gqs.hasColor(gd, angel, CardColor.GREEN)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isFalse();
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isFalse();
@@ -53,8 +53,8 @@ class GiftOfTusksTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(angel.getEffectivePower()).isEqualTo(4);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isTrue();
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
         assertThat(gd.floatingEffectsOnPermanent(angel.getId(), GrantSubtypeEffect.class)).isEmpty();

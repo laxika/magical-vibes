@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
@@ -30,8 +31,8 @@ class BulkUpTest extends BaseCardTest {
         UUID bearId = bear.getId();
         harness.castAndResolveInstant(player1, 0, bearId);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -47,8 +48,8 @@ class BulkUpTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
     }
 
     @Test
@@ -61,7 +62,7 @@ class BulkUpTest extends BaseCardTest {
         UUID bearId = bear.getId();
         harness.castAndResolveFlashback(player1, 0, bearId);
 
-        assertThat(bear.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
         harness.assertNotInGraveyard(player1, "Bulk Up");
         assertThat(harness.getGameData().getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Bulk Up"));
@@ -84,7 +85,7 @@ class BulkUpTest extends BaseCardTest {
     @DisplayName("Doubles negative power rather than treating it as zero")
     void doublesNegativePower() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bear.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, bear, -3);
         harness.setHand(player1, List.of(new BulkUp()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -99,7 +100,7 @@ class BulkUpTest extends BaseCardTest {
     @DisplayName("Doubling zero power leaves it at zero")
     void doublesZeroPower() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bear.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, bear, -2);
         harness.setHand(player1, List.of(new BulkUp()));
         harness.addMana(player1, ManaColor.RED, 2);
 

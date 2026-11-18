@@ -73,15 +73,15 @@ class DromarsCharmTest extends BaseCardTest {
         harness.castInstant(player1, 0, 2, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -153,8 +153,8 @@ class DromarsCharmTest extends BaseCardTest {
         harness.castInstant(player1, 0, 2, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         harness.assertLife(player1, 10);
         harness.assertOnBattlefield(player1, "Stone Kavu");
     }
@@ -178,8 +178,8 @@ class DromarsCharmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(survivor.getEffectivePower()).isEqualTo(3);
-        assertThat(survivor.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(3);
         harness.assertLife(player1, 10);
         harness.assertLife(player2, 10);
         harness.assertInGraveyard(player1, "Dromar's Charm");

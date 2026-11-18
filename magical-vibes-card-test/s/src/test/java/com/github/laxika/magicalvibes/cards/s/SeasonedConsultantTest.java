@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,8 +24,8 @@ class SeasonedConsultantTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(consultant.getPowerModifier()).isZero();
-        assertThat(consultant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, consultant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, consultant)).isZero();
     }
 
     @Test
@@ -37,8 +38,8 @@ class SeasonedConsultantTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(consultant.getPowerModifier()).isEqualTo(2);
-        assertThat(consultant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, consultant)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, consultant)).isZero();
     }
 
     @Test
@@ -51,7 +52,7 @@ class SeasonedConsultantTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(consultant.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, consultant)).isZero();
     }
 
     @Test
@@ -63,13 +64,13 @@ class SeasonedConsultantTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
-        assertThat(consultant.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, consultant)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(consultant.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, consultant)).isZero();
     }
 
     @Test
@@ -83,8 +84,8 @@ class SeasonedConsultantTest extends BaseCardTest {
         declareAttackers(player1, List.of(1, 2, 3));
         resolveAllTriggers();
 
-        assertThat(consultant.getPowerModifier()).isEqualTo(2);
-        assertThat(consultant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, consultant)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, consultant)).isZero();
     }
 
     @Test
@@ -98,8 +99,8 @@ class SeasonedConsultantTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2, 3));
         resolveAllTriggers();
 
-        assertThat(consultant.getPowerModifier()).isEqualTo(2);
-        assertThat(consultant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, consultant)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, consultant)).isZero();
     }
 
     @Test
@@ -113,7 +114,7 @@ class SeasonedConsultantTest extends BaseCardTest {
         declareAttackers(player2, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(consultant.getPowerModifier()).isZero();
-        assertThat(consultant.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, consultant)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, consultant)).isZero();
     }
 }

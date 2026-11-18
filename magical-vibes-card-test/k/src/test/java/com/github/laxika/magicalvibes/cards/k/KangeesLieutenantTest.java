@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -34,12 +35,12 @@ class KangeesLieutenantTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(lieutenant.getPowerModifier()).isEqualTo(1);
-        assertThat(lieutenant.getToughnessModifier()).isEqualTo(1);
-        assertThat(drake.getPowerModifier()).isEqualTo(1);
-        assertThat(drake.getToughnessModifier()).isEqualTo(1);
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, lieutenant)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lieutenant)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, drake)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, drake)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(0);
     }
 
     @Test

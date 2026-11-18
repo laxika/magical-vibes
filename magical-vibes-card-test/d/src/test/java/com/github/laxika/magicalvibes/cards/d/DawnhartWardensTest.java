@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -39,10 +40,10 @@ class DawnhartWardensTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.passBothPriorities();
 
-        assertThat(wardens.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(elves.getPowerModifier()).isEqualTo(1);
-        assertThat(opponentCreature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wardens)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, elves)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
     }
 
     @Test
@@ -55,8 +56,8 @@ class DawnhartWardensTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.passBothPriorities();
 
-        assertThat(wardens.getPowerModifier()).isZero();
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wardens)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -68,11 +69,11 @@ class DawnhartWardensTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.passBothPriorities();
-        assertThat(wardens.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wardens)).isEqualTo(1);
 
         endTurn();
 
-        assertThat(wardens.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wardens)).isZero();
     }
 
     @Test
@@ -85,7 +86,7 @@ class DawnhartWardensTest extends BaseCardTest {
         advanceToCombat(player2);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(wardens.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wardens)).isZero();
     }
 
     @Test
@@ -97,12 +98,12 @@ class DawnhartWardensTest extends BaseCardTest {
 
         advanceToCombat(player1);
         assertThat(gd.stack).hasSize(1);
-        elves.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, elves, 1);
         harness.passBothPriorities();
 
-        assertThat(wardens.getPowerModifier()).isZero();
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(elves.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, wardens)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, elves)).isEqualTo(1);
     }
 
     @Test
@@ -115,7 +116,7 @@ class DawnhartWardensTest extends BaseCardTest {
         advanceToCombat(player1);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(wardens.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wardens)).isZero();
     }
 
     @Test
@@ -131,10 +132,10 @@ class DawnhartWardensTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(wardens.getPowerModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getToughnessModifier()).isZero();
-        assertThat(afterResolution.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wardens)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
     }
 
     @Test
@@ -149,7 +150,7 @@ class DawnhartWardensTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(wardens.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wardens)).isZero();
     }
 
     @Test
@@ -158,14 +159,14 @@ class DawnhartWardensTest extends BaseCardTest {
         Permanent wardens = harness.addToBattlefieldAndReturn(player1, new DawnhartWardens());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent smallerBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        smallerBears.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, smallerBears, -1);
 
         advanceToCombat(player1);
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(wardens.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(smallerBears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wardens)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, smallerBears)).isZero();
     }
 }

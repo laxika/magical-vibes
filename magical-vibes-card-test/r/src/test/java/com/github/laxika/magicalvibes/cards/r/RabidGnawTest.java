@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -28,7 +29,7 @@ class RabidGnawTest extends BaseCardTest {
         cast();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
 
@@ -40,7 +41,7 @@ class RabidGnawTest extends BaseCardTest {
         cast();
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Air Elemental");
     }
 
@@ -86,7 +87,7 @@ class RabidGnawTest extends BaseCardTest {
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears").getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(1);
     }
 
     @Test
@@ -128,7 +129,7 @@ class RabidGnawTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(bear);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(elemental.getMarkedDamage()).isZero();
     }
 
@@ -144,7 +145,7 @@ class RabidGnawTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(elemental);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
         assertThat(elemental.getMarkedDamage()).isZero();
     }
 
@@ -157,7 +158,7 @@ class RabidGnawTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
     }
 

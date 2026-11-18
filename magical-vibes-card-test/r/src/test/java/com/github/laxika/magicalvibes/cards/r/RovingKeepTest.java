@@ -38,8 +38,8 @@ class RovingKeepTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(keep.getPowerModifier()).isEqualTo(2);
-        assertThat(keep.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, keep)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, keep)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, keep)).contains(Keyword.TRAMPLE);
 
         beginAttackers();
@@ -61,8 +61,8 @@ class RovingKeepTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(keep.getPowerModifier()).isZero();
-        assertThat(keep.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, keep)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, keep)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, keep)).doesNotContain(Keyword.TRAMPLE);
 
         beginAttackers();
@@ -92,8 +92,8 @@ class RovingKeepTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(keep.getPowerModifier()).isEqualTo(4);
-        assertThat(keep.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, keep)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, keep)).isZero();
         assertThat(keep.isTapped()).isFalse();
         assertThat(gqs.hasKeyword(gd, keep, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, keep, Keyword.DEFENDER)).isTrue();
@@ -113,7 +113,7 @@ class RovingKeepTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(keep.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, keep)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, keep, Keyword.TRAMPLE)).isTrue();
         beginAttackers();
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
@@ -130,13 +130,13 @@ class RovingKeepTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(keep.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, keep)).isZero();
         assertThat(gqs.hasKeyword(gd, keep, Keyword.TRAMPLE)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(keep.getPowerModifier()).isEqualTo(2);
-        assertThat(otherKeep.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, keep)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherKeep)).isZero();
         assertThat(gqs.hasKeyword(gd, otherKeep, Keyword.TRAMPLE)).isFalse();
         beginAttackers();
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(1)))

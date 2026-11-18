@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class FlailingOgreTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ogre.getPowerModifier()).isEqualTo(1);
-        assertThat(ogre.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ogre)).isEqualTo(1);
     }
 
     @Test
@@ -36,8 +37,8 @@ class FlailingOgreTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(ogre.getPowerModifier()).isEqualTo(-1);
-        assertThat(ogre.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ogre)).isEqualTo(-1);
     }
 
     @Test
@@ -49,14 +50,14 @@ class FlailingOgreTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ogre.getPowerModifier()).isEqualTo(1);
-        assertThat(ogre.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ogre)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ogre.getPowerModifier()).isZero();
-        assertThat(ogre.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ogre)).isZero();
     }
 
     @Test
@@ -70,8 +71,8 @@ class FlailingOgreTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ogre.getPowerModifier()).isEqualTo(2);
-        assertThat(ogre.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ogre)).isEqualTo(2);
     }
 
     @Test
@@ -100,13 +101,13 @@ class FlailingOgreTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ogre.getPowerModifier()).isEqualTo(1);
-        assertThat(ogre.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ogre)).isEqualTo(1);
 
         harness.passBothPriorities();
 
-        assertThat(ogre.getPowerModifier()).isZero();
-        assertThat(ogre.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ogre)).isZero();
         harness.assertOnBattlefield(player1, "Flailing Ogre");
     }
 
@@ -120,7 +121,7 @@ class FlailingOgreTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(ogre.getPowerModifier()).isZero();
-        assertThat(ogre.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ogre)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ogre)).isZero();
     }
 }

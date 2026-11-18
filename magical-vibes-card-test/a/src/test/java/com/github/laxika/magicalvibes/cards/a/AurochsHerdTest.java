@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BorealDruid;
 import com.github.laxika.magicalvibes.cards.b.BullAurochs;
 import com.github.laxika.magicalvibes.model.Card;
@@ -63,8 +64,8 @@ class AurochsHerdTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(herd.getPowerModifier()).isZero();
-        assertThat(herd.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, herd)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, herd)).isZero();
     }
 
     @Test
@@ -76,8 +77,8 @@ class AurochsHerdTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(herd.getPowerModifier()).isEqualTo(1);
-        assertThat(herd.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, herd)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, herd)).isEqualTo(0);
     }
 
     @Test
@@ -90,8 +91,8 @@ class AurochsHerdTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(herd.getPowerModifier()).isEqualTo(2);
-        assertThat(herd.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, herd)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, herd)).isZero();
     }
 
     @Test
@@ -103,8 +104,8 @@ class AurochsHerdTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(herd.getPowerModifier()).isZero();
-        assertThat(herd.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, herd)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, herd)).isZero();
     }
 
     @Test
@@ -115,14 +116,14 @@ class AurochsHerdTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
-        assertThat(herd.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, herd)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(herd.getPowerModifier()).isZero();
-        assertThat(herd.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, herd)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, herd)).isZero();
     }
 
     @Test
@@ -182,7 +183,7 @@ class AurochsHerdTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(herd.getPowerModifier()).isZero();
-        assertThat(herd.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, herd)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, herd)).isZero();
     }
 }

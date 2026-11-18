@@ -85,7 +85,7 @@ class GeralfsMessengerTest extends BaseCardTest {
         Permanent messenger = messengerOnBattlefield();
         assertThat(messenger).isNotNull();
         assertThat(messenger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(messenger.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, messenger)).isEqualTo(4);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AinokTracker;
 import com.github.laxika.magicalvibes.cards.a.AlpineGrizzly;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -70,8 +71,8 @@ class TrailOfMysteryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(tracker.isFaceDown()).isFalse();
-        assertThat(tracker.getPowerModifier()).isEqualTo(2);
-        assertThat(tracker.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, tracker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tracker)).isEqualTo(2);
     }
 
     @Test
@@ -153,8 +154,8 @@ class TrailOfMysteryTest extends BaseCardTest {
 
         assertThat(tracker.isFaceDown()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(tracker.getPowerModifier()).isZero();
-        assertThat(tracker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tracker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tracker)).isZero();
     }
 
     @Test
@@ -230,8 +231,8 @@ class TrailOfMysteryTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, tracker)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(tracker.getPowerModifier()).isZero();
-        assertThat(tracker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, tracker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, tracker)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrenellatedWall;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,10 +28,10 @@ class DeepwoodWolverineTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(wolverine.getPowerModifier()).isEqualTo(2);
-        assertThat(wolverine.getToughnessModifier()).isZero();
-        assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverine)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolverine)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocker)).isZero();
     }
 
     @Test
@@ -41,8 +42,8 @@ class DeepwoodWolverineTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
-        assertThat(wolverine.getPowerModifier()).isZero();
-        assertThat(wolverine.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverine)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolverine)).isZero();
     }
 
     @Test
@@ -54,8 +55,8 @@ class DeepwoodWolverineTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(wolverine.getPowerModifier()).isZero();
-        assertThat(wolverine.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverine)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolverine)).isZero();
     }
 
     @Test
@@ -72,8 +73,8 @@ class DeepwoodWolverineTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(wolverine.getPowerModifier()).isEqualTo(2);
-        assertThat(wolverine.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverine)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolverine)).isZero();
     }
 
     @Test
@@ -90,8 +91,8 @@ class DeepwoodWolverineTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wolverine.getPowerModifier()).isZero();
-        assertThat(wolverine.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, wolverine)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wolverine)).isZero();
     }
 
     @Test
@@ -104,14 +105,14 @@ class DeepwoodWolverineTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(blocked.getPowerModifier()).isZero();
-        assertThat(unblocked.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocked)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, unblocked)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(blocked.getPowerModifier()).isEqualTo(2);
-        assertThat(blocked.getToughnessModifier()).isZero();
-        assertThat(unblocked.getPowerModifier()).isZero();
-        assertThat(unblocked.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, blocked)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, blocked)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, unblocked)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, unblocked)).isZero();
     }
 }

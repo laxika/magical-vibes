@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.j.JovensFerrets;
 import com.github.laxika.magicalvibes.cards.r.RevengeOfRavens;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,7 +26,7 @@ class WulfgarOfIcewindDaleTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(ferrets.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ferrets)).isEqualTo(4);
     }
 
     @Test
@@ -36,8 +37,8 @@ class WulfgarOfIcewindDaleTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(wulfgar.getPowerModifier()).isEqualTo(2);
-        assertThat(wulfgar.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, wulfgar)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wulfgar)).isEqualTo(2);
     }
 
     @Test
@@ -50,10 +51,10 @@ class WulfgarOfIcewindDaleTest extends BaseCardTest {
         declareAttackers(player1, List.of(1, 2));
         resolveAllTriggers();
 
-        assertThat(firstFerrets.getToughnessModifier()).isEqualTo(4);
-        assertThat(secondFerrets.getToughnessModifier()).isEqualTo(4);
-        assertThat(wulfgar.getPowerModifier()).isZero();
-        assertThat(wulfgar.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstFerrets)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondFerrets)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, wulfgar)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wulfgar)).isZero();
     }
 
     @Test
@@ -65,7 +66,7 @@ class WulfgarOfIcewindDaleTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
 
-        assertThat(ferrets.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ferrets)).isEqualTo(2);
     }
 
     @Test

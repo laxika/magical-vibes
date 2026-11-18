@@ -33,7 +33,7 @@ class HexgoldSlashTest extends BaseCardTest {
     @DisplayName("Deals 4 damage to a creature with toxic instead")
     void dealsFourDamageToCreatureWithToxicInstead() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new CrawlingChorus());
-        target.setToughnessModifier(2);
+        PermanentGrants.setToughnessBoost(gd, target, 2);
         castHexgoldSlash(target);
 
         harness.assertNotOnBattlefield(player2, "Crawling Chorus");

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SpinelessThug;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -127,7 +128,7 @@ class EyeOfYawgmothTest extends BaseCardTest {
     void nonpositivePowerLeavesLibraryUnchanged(int powerModifier) {
         addReadyEye();
         Permanent creature = addCreatureReady(player1, new SpinelessThug());
-        creature.setPowerModifier(powerModifier);
+        PermanentGrants.setPowerBoost(gd, creature, powerModifier);
         Card first = new EyeOfYawgmoth();
         Card second = new SpinelessThug();
         harness.setHand(player1, List.of());

@@ -33,20 +33,20 @@ class PolymorphistsJestTest extends BaseCardTest {
 
         castPolymorphistsJest(player2.getId());
 
-        assertThat(targetAngel.getEffectivePower()).isEqualTo(1);
-        assertThat(targetAngel.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, targetAngel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, targetAngel)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, targetAngel, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasColor(gd, targetAngel, CardColor.BLUE)).isTrue();
         assertThat(gqs.hasColor(gd, targetAngel, CardColor.WHITE)).isFalse();
         assertThat(gqs.hasEffectiveSubtype(gd, targetAngel, CardSubtype.FROG)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, targetAngel, CardSubtype.ANGEL)).isFalse();
 
-        assertThat(targetBears.getEffectivePower()).isEqualTo(1);
-        assertThat(targetBears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, targetBears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, targetBears)).isEqualTo(1);
         assertThat(gqs.hasEffectiveSubtype(gd, targetBears, CardSubtype.FROG)).isTrue();
 
         assertThat(targetFountain.getEffectiveColor()).isNull();
-        assertThat(ownAngel.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownAngel)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ownAngel, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasColor(gd, ownAngel, CardColor.WHITE)).isTrue();
     }
@@ -57,13 +57,13 @@ class PolymorphistsJestTest extends BaseCardTest {
         Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
 
         castPolymorphistsJest(player2.getId());
-        assertThat(angel.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(angel.getEffectivePower()).isEqualTo(4);
-        assertThat(angel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, angel, CardSubtype.ANGEL)).isTrue();
@@ -78,12 +78,12 @@ class PolymorphistsJestTest extends BaseCardTest {
 
         castPolymorphistsJest(player1.getId());
 
-        assertThat(ownAngel.getEffectivePower()).isEqualTo(1);
-        assertThat(ownAngel.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownAngel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownAngel)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ownAngel, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasColor(gd, ownAngel, CardColor.BLUE)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, ownAngel, CardSubtype.FROG)).isTrue();
-        assertThat(opposingAngel.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingAngel)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, opposingAngel, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasColor(gd, opposingAngel, CardColor.WHITE)).isTrue();
     }
@@ -96,9 +96,9 @@ class PolymorphistsJestTest extends BaseCardTest {
         castPolymorphistsJest(player2.getId());
         Permanent laterAngel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
 
-        assertThat(originalAngel.getEffectivePower()).isEqualTo(1);
-        assertThat(laterAngel.getEffectivePower()).isEqualTo(4);
-        assertThat(laterAngel.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, originalAngel)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, laterAngel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, laterAngel)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, laterAngel, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasColor(gd, laterAngel, CardColor.WHITE)).isTrue();
         assertThat(gqs.hasColor(gd, laterAngel, CardColor.BLUE)).isFalse();

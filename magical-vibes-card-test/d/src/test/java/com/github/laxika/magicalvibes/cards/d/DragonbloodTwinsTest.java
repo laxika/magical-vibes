@@ -33,14 +33,14 @@ class DragonbloodTwinsTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(twins.getEffectivePower()).isEqualTo(4);
-        assertThat(twins.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, twins)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, twins)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, twins)).contains(Keyword.FLYING);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(twins.getEffectivePower()).isEqualTo(4);
-        assertThat(twins.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, twins)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, twins)).isEqualTo(4);
     }
 
     @Test
@@ -56,16 +56,16 @@ class DragonbloodTwinsTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(twins.getEffectivePower()).isEqualTo(4);
-        assertThat(twins.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, twins)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, twins)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, twins)).contains(Keyword.FLYING);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(twins.getEffectivePower()).isEqualTo(2);
-        assertThat(twins.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, twins)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, twins)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, twins)).doesNotContain(Keyword.FLYING);
     }
 }

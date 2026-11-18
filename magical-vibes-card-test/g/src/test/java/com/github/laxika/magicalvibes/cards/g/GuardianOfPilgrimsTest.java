@@ -27,13 +27,13 @@ class GuardianOfPilgrimsTest extends BaseCardTest {
 
         Permanent guardian = findPermanent(player1, "Guardian of Pilgrims");
         harness.handlePermanentChosen(player1, guardian.getId());
-        assertThat(guardian.getEffectivePower()).isEqualTo(2);
-        assertThat(guardian.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, guardian)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, guardian)).isEqualTo(2);
 
         harness.passBothPriorities();
 
-        assertThat(guardian.getEffectivePower()).isEqualTo(3);
-        assertThat(guardian.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, guardian)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, guardian)).isEqualTo(3);
     }
 
     @Test
@@ -46,8 +46,8 @@ class GuardianOfPilgrimsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -65,8 +65,8 @@ class GuardianOfPilgrimsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         Permanent target = findPermanent(player2, "Guardian of Pilgrims");
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -85,8 +85,8 @@ class GuardianOfPilgrimsTest extends BaseCardTest {
         harness.passUntil(TurnStep.CLEANUP);
 
         Permanent target = findPermanent(player2, "Guardian of Pilgrims");
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -103,8 +103,8 @@ class GuardianOfPilgrimsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player1, "Guardian of Pilgrims");
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test

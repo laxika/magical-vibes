@@ -51,7 +51,7 @@ class IzzetCharmTest extends BaseCardTest {
 
             assertThat(gd.stack).isEmpty();
             harness.assertInGraveyard(player2, "Giant Growth");
-            assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectivePower()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, gd.playerBattlefields.get(player2.getId()).getFirst())).isEqualTo(2);
         }
 
         @Test
@@ -97,7 +97,7 @@ class IzzetCharmTest extends BaseCardTest {
 
             harness.passBothPriorities();
             harness.assertOnBattlefield(player2, "Grizzly Bears");
-            assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getEffectivePower()).isEqualTo(5);
+            assertThat(gqs.getEffectivePower(gd, gd.playerBattlefields.get(player2.getId()).getFirst())).isEqualTo(5);
             harness.assertInGraveyard(player2, "Giant Growth");
             harness.assertInGraveyard(player1, "Izzet Charm");
         }

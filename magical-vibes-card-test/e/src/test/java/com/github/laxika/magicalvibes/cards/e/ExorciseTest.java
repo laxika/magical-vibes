@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FoundFootage;
 import com.github.laxika.magicalvibes.cards.f.FriendlyTeddy;
@@ -118,7 +119,7 @@ class ExorciseTest extends BaseCardTest {
     @Test
     void usesModifiedPowerWhenChoosingTarget() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new InnocuousRat());
-        target.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, target, 3);
 
         castExorcise(target);
 
@@ -130,7 +131,7 @@ class ExorciseTest extends BaseCardTest {
     @Test
     void cannotTargetCreatureWithPowerExactlyThree() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new KonaRescueBeastie());
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         prepareToCast();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
@@ -141,11 +142,11 @@ class ExorciseTest extends BaseCardTest {
     @Test
     void stillExilesArtifactCreatureWhosePowerDropsBelowFourBeforeResolution() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FriendlyTeddy());
-        target.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, target, 2);
         prepareToCast();
         harness.castSorcery(player1, 0, target.getId());
 
-        target.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, target, 0);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Friendly Teddy");
@@ -159,7 +160,7 @@ class ExorciseTest extends BaseCardTest {
         prepareToCast();
         harness.castSorcery(player1, 0, target.getId());
 
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Kona, Rescue Beastie");

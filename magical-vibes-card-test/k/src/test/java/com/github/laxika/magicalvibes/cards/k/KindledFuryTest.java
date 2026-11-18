@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
@@ -49,8 +50,8 @@ class KindledFuryTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent warrior = findPermanent(player1, "Elvish Warrior");
-        assertThat(warrior.getPowerModifier()).isEqualTo(1);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -65,8 +66,8 @@ class KindledFuryTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent warrior = findPermanent(player2, "Elvish Warrior");
-        assertThat(warrior.getPowerModifier()).isEqualTo(1);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isTrue();
     }
 
@@ -87,8 +88,8 @@ class KindledFuryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent warrior = findPermanent(player1, "Elvish Warrior");
-        assertThat(warrior.getPowerModifier()).isEqualTo(0);
-        assertThat(warrior.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -124,16 +125,16 @@ class KindledFuryTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, warrior.getId());
         harness.castAndResolveInstant(player1, 0, warrior.getId());
 
-        assertThat(warrior.getPowerModifier()).isEqualTo(2);
-        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isZero();
         assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(warrior.getPowerModifier()).isZero();
-        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, warrior)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, warrior)).isZero();
         assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -148,11 +149,11 @@ class KindledFuryTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
         for (Permanent unaffected : List.of(other, opponent)) {
-            assertThat(unaffected.getPowerModifier()).isZero();
-            assertThat(unaffected.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, unaffected)).isZero();
+            assertThat(PermanentGrants.toughnessBoostOf(gd, unaffected)).isZero();
             assertThat(gqs.hasKeyword(gd, unaffected, Keyword.FIRST_STRIKE)).isFalse();
         }
     }

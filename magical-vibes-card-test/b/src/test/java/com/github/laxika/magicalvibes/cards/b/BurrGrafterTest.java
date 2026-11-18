@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
 import com.github.laxika.magicalvibes.cards.l.LanternKami;
 import com.github.laxika.magicalvibes.cards.r.RiverKaijin;
@@ -32,8 +33,8 @@ class BurrGrafterTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Burr Grafter");
 
         Permanent target = findPermanent(player2, "Devoted Retainer");
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     @Test
@@ -50,8 +51,8 @@ class BurrGrafterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player2, "Devoted Retainer");
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
     }
 
     @Test

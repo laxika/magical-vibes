@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -81,8 +82,8 @@ class EngulfTheShoreTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         castEngulfTheShore();
-        bears.setToughnessModifier(1);
-        giant.setToughnessModifier(-1);
+        PermanentGrants.setToughnessBoost(gd, bears, 1);
+        PermanentGrants.setToughnessBoost(gd, giant, -1);
 
         harness.passBothPriorities();
 

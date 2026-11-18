@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
 import com.github.laxika.magicalvibes.cards.e.EdgewallPack;
 import com.github.laxika.magicalvibes.cards.g.Gingerbrute;
@@ -24,18 +25,18 @@ class CandyGrappleTest extends BaseCardTest {
     @Test
     void givesTargetCreatureMinusThreeMinusThreeWithoutBargain() {
         Permanent target = addCreatureReady(player2, new EdgewallPack());
-        target.setToughnessModifier(5);
+        PermanentGrants.setToughnessBoost(gd, target, 5);
         castCandyGrapple(target.getId());
 
-        assertThat(target.getPowerModifier()).isEqualTo(-3);
-        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
     }
 
     @Test
     void givesTargetCreatureMinusFiveMinusFiveWithBargain() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new PropheticPrism());
         Permanent target = addCreatureReady(player2, new EdgewallPack());
-        target.setToughnessModifier(5);
+        PermanentGrants.setToughnessBoost(gd, target, 5);
         harness.setHand(player1, List.of(new CandyGrapple()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -43,8 +44,8 @@ class CandyGrappleTest extends BaseCardTest {
         harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-5);
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         harness.assertInGraveyard(player1, "Prophetic Prism");
     }
 
@@ -64,18 +65,18 @@ class CandyGrappleTest extends BaseCardTest {
     void canBargainWithANontokenEnchantmentAndPaysBeforeResolution() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new UpTheBeanstalk());
         Permanent target = addCreatureReady(player2, new EdgewallPack());
-        target.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, target, 3);
         prepareCandyGrapple();
 
         harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
 
         harness.assertNotOnBattlefield(player1, "Up the Beanstalk");
         harness.assertInGraveyard(player1, "Up the Beanstalk");
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isEqualTo(-5);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
         harness.assertOnBattlefield(player2, "Edgewall Pack");
     }
 
@@ -88,15 +89,15 @@ class CandyGrappleTest extends BaseCardTest {
                 .filter(p -> p.getCard().isToken())
                 .findFirst().orElseThrow();
         Permanent target = addCreatureReady(player2, new EdgewallPack());
-        target.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, target, 3);
         prepareCandyGrapple();
 
         harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), token.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(token.getId()));
-        assertThat(target.getPowerModifier()).isEqualTo(-5);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
     }
 
     @Test
@@ -169,13 +170,13 @@ class CandyGrappleTest extends BaseCardTest {
     @Test
     void unbargainedReductionExpiresAtEndOfTurn() {
         Permanent target = addCreatureReady(player2, new EdgewallPack());
-        target.setToughnessModifier(5);
+        PermanentGrants.setToughnessBoost(gd, target, 5);
         castCandyGrapple(target.getId());
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         harness.assertOnBattlefield(player2, "Edgewall Pack");
     }
 
@@ -183,15 +184,15 @@ class CandyGrappleTest extends BaseCardTest {
     void bargainedReductionExpiresAtEndOfTurn() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new PropheticPrism());
         Permanent target = addCreatureReady(player2, new EdgewallPack());
-        target.setToughnessModifier(5);
+        PermanentGrants.setToughnessBoost(gd, target, 5);
         prepareCandyGrapple();
         harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
         harness.passBothPriorities();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         harness.assertOnBattlefield(player2, "Edgewall Pack");
     }
 
@@ -206,7 +207,7 @@ class CandyGrappleTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new PropheticPrism());
         Permanent target = addCreatureReady(player2, new EdgewallPack());
-        target.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, target, 3);
         prepareCandyGrapple();
 
         harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
@@ -215,8 +216,8 @@ class CandyGrappleTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(target.getPowerModifier()).isEqualTo(-5);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
     }
 
     private void prepareCandyGrapple() {

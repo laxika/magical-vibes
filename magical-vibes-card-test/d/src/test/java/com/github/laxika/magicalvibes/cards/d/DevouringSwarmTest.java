@@ -25,8 +25,8 @@ class DevouringSwarmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Runeclaw Bear");
-        assertThat(swarm.getEffectivePower()).isEqualTo(3);
-        assertThat(swarm.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(2);
     }
 
     @Test
@@ -44,8 +44,8 @@ class DevouringSwarmTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears2.getId());
         harness.passBothPriorities();
 
-        assertThat(swarm.getEffectivePower()).isEqualTo(4);
-        assertThat(swarm.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(3);
     }
 
     @Test
@@ -58,14 +58,14 @@ class DevouringSwarmTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(swarm.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(3);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(swarm.getEffectivePower()).isEqualTo(2);
-        assertThat(swarm.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(1);
     }
 
     @Test
@@ -92,13 +92,13 @@ class DevouringSwarmTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Runeclaw Bear");
         harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
         assertThat(gd.stack).hasSize(1);
-        assertThat(swarm.getEffectivePower()).isEqualTo(2);
-        assertThat(swarm.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(1);
 
         harness.passBothPriorities();
 
-        assertThat(swarm.getEffectivePower()).isEqualTo(3);
-        assertThat(swarm.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(2);
     }
 
     @Test
@@ -115,8 +115,8 @@ class DevouringSwarmTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Runeclaw Bear");
         assertThat(swarm.isTapped()).isTrue();
-        assertThat(swarm.getEffectivePower()).isEqualTo(3);
-        assertThat(swarm.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(2);
     }
 
     @Test
@@ -131,8 +131,8 @@ class DevouringSwarmTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Devouring Swarm");
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(other);
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 }

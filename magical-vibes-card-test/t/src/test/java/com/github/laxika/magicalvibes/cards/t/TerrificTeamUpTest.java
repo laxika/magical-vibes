@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -30,7 +31,7 @@ class TerrificTeamUpTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, List.of(harness.getPermanentId(player2, "Llanowar Elves"), bear.getId()));
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
     }
 
@@ -45,8 +46,8 @@ class TerrificTeamUpTest extends BaseCardTest {
         UUID victimId = harness.getPermanentId(player2, "Colossal Dreadmaw");
         harness.castAndResolveInstant(player1, 0, List.of(victimId, firstBear.getId(), secondBear.getId()));
 
-        assertThat(firstBear.getPowerModifier()).isEqualTo(1);
-        assertThat(secondBear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstBear)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondBear)).isEqualTo(1);
         harness.assertInGraveyard(player2, "Colossal Dreadmaw");
     }
 
@@ -88,7 +89,7 @@ class TerrificTeamUpTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(firstBear);
         harness.passBothPriorities();
 
-        assertThat(secondBear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondBear)).isEqualTo(1);
         harness.assertInGraveyard(player2, "Llanowar Elves");
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
@@ -104,7 +105,7 @@ class TerrificTeamUpTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(victim);
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Terrific Team-Up");
     }
 
@@ -119,7 +120,7 @@ class TerrificTeamUpTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(bear);
         harness.passBothPriorities();
 
-        assertThat(victim.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, victim)).isZero();
         harness.assertOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player1, "Terrific Team-Up");
     }
@@ -143,10 +144,10 @@ class TerrificTeamUpTest extends BaseCardTest {
         prepareSpell(4);
 
         harness.castAndResolveInstant(player1, 0, List.of(victim.getId(), bear.getId()));
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
     private void prepareSpell(int greenMana) {

@@ -80,8 +80,8 @@ class LawlessBrokerTest extends BaseCardTest {
 
             Permanent bearsPerm = findPermanent(player1, "Grizzly Bears");
             assertThat(bearsPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-            assertThat(bearsPerm.getEffectivePower()).isEqualTo(3);
-            assertThat(bearsPerm.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(3);
         }
 
         @Test

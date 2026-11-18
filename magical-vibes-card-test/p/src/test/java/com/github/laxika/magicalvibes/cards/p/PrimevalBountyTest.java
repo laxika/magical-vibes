@@ -31,8 +31,8 @@ class PrimevalBountyTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the trigger
 
         Permanent beast = findPermanent(player1, "Beast");
-        assertThat(beast.getEffectivePower()).isEqualTo(3);
-        assertThat(beast.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(3);
     }
 
     @Test
@@ -50,8 +50,8 @@ class PrimevalBountyTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the trigger
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(bears.getEffectivePower()).isEqualTo(5);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
     }
 
     @Test

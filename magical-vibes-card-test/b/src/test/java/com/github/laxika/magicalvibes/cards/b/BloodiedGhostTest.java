@@ -27,8 +27,8 @@ class BloodiedGhostTest extends BaseCardTest {
         Permanent ghost = findPermanent(player1, "Bloodied Ghost");
         assertThat(ghost).isNotNull();
         assertThat(ghost.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(ghost.getEffectivePower()).isEqualTo(2);
-        assertThat(ghost.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ghost)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ghost)).isEqualTo(2);
     }
 
     @Test
@@ -38,8 +38,8 @@ class BloodiedGhostTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(ghost);
         assertThat(ghost.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(ghost.getEffectivePower()).isEqualTo(2);
-        assertThat(ghost.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ghost)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ghost)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 }

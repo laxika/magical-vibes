@@ -34,8 +34,8 @@ class GolgariGraveTrollTest extends BaseCardTest {
 
         Permanent troll = findPermanent(player1, "Golgari Grave-Troll");
         assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(troll.getEffectivePower()).isEqualTo(2);
-        assertThat(troll.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, troll)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, troll)).isEqualTo(2);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrafRats;
 import com.github.laxika.magicalvibes.cards.m.MidnightScavengers;
 import com.github.laxika.magicalvibes.cards.s.Smother;
@@ -31,15 +32,15 @@ class ChitteringHostTest extends BaseCardTest {
         Permanent later = harness.addToBattlefieldAndReturn(player1, new GrafRats());
 
         for (Permanent affected : List.of(existing, beforeResolution)) {
-            assertThat(affected.getPowerModifier()).isEqualTo(1);
-            assertThat(affected.getToughnessModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, affected)).isEqualTo(1);
+            assertThat(PermanentGrants.toughnessBoostOf(gd, affected)).isZero();
             assertThat(gqs.hasKeyword(gd, affected, Keyword.MENACE)).isTrue();
         }
         for (Permanent unaffected : List.of(opponent, later)) {
-            assertThat(unaffected.getPowerModifier()).isZero();
+            assertThat(PermanentGrants.powerBoostOf(gd, unaffected)).isZero();
             assertThat(gqs.hasKeyword(gd, unaffected, Keyword.MENACE)).isFalse();
         }
-        assertThat(host.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, host)).isZero();
     }
 
     @Test
@@ -50,7 +51,7 @@ class ChitteringHostTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(rats.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, rats)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, rats, Keyword.MENACE)).isTrue();
     }
 
@@ -59,13 +60,13 @@ class ChitteringHostTest extends BaseCardTest {
         Permanent rats = harness.addToBattlefieldAndReturn(player1, new GrafRats());
         harness.enterBattlefieldAndReturn(player1, new ChitteringHost());
         harness.passBothPriorities();
-        assertThat(rats.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, rats)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, rats, Keyword.MENACE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(rats.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, rats)).isZero();
         assertThat(gqs.hasKeyword(gd, rats, Keyword.MENACE)).isFalse();
     }
 

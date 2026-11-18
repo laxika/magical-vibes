@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PrismaticLens;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +22,7 @@ class CrookclawTransmuterTest extends BaseCardTest {
     @DisplayName("Its enters-the-battlefield ability switches a target creature's power and toughness")
     void switchesTargetCreaturePowerAndToughness() {
         Permanent trickster = harness.addToBattlefieldAndReturn(player1, new CoralTrickster());
-        trickster.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, trickster, 1);
         harness.setHand(player1, List.of(new CrookclawTransmuter()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -54,7 +55,7 @@ class CrookclawTransmuterTest extends BaseCardTest {
     @DisplayName("Its power-and-toughness switch wears off at cleanup")
     void switchWearsOffAtCleanup() {
         Permanent trickster = harness.addToBattlefieldAndReturn(player1, new CoralTrickster());
-        trickster.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, trickster, 1);
         harness.setHand(player1, List.of(new CrookclawTransmuter()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -105,7 +106,7 @@ class ReignOfThePitTest extends BaseCardTest {
     @DisplayName("The Demon uses modified battlefield power rather than printed power")
     void includesPowerModifiers() {
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, bear, 3);
         addCreatureReady(player2, new HillGiant());
 
         castReignOfThePit();
@@ -121,7 +122,7 @@ class ReignOfThePitTest extends BaseCardTest {
     @DisplayName("Negative sacrificed power reduces the total")
     void negativePowerReducesTotal() {
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, bear, -3);
         addCreatureReady(player2, new HillGiant());
 
         castReignOfThePit();

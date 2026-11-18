@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HitchclawRecluse;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -68,7 +69,7 @@ class TopanFreebladeTest extends BaseCardTest {
     @DisplayName("Zero combat damage does not trigger renown")
     void zeroCombatDamageDoesNotMakeRenowned() {
         Permanent freeblade = addCreatureReady(player1, new TopanFreeblade());
-        freeblade.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, freeblade, -2);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         attackUnblocked();

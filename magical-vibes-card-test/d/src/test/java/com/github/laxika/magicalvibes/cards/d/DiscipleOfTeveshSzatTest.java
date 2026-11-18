@@ -28,8 +28,8 @@ class DiscipleOfTeveshSzatTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 
     @Test
@@ -45,8 +45,8 @@ class DiscipleOfTeveshSzatTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -104,20 +104,20 @@ class DiscipleOfTeveshSzatTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Disciple of Tevesh Szat");
         harness.assertNotOnBattlefield(player1, "Disciple of Tevesh Szat");
-        assertThat(target.getEffectivePower()).isEqualTo(12);
-        assertThat(target.getEffectiveToughness()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(12);
 
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(6);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(12);
-        assertThat(target.getEffectiveToughness()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(12);
     }
 
     @Test
@@ -179,8 +179,8 @@ class DiscipleOfTeveshSzatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(otherCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(otherCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
     }
 
     private Permanent addReadyDisciple() {

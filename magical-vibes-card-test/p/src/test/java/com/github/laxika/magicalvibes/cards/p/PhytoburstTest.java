@@ -30,8 +30,8 @@ class PhytoburstTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(7);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(7);
     }
 
     @Test
@@ -49,8 +49,8 @@ class PhytoburstTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test
@@ -64,11 +64,11 @@ class PhytoburstTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Kraul Warrior"));
 
         Permanent target = findPermanent(player2, "Kraul Warrior");
-        assertThat(target.getEffectivePower()).isEqualTo(7);
-        assertThat(target.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
         Permanent other = findPermanent(player1, "Kraul Warrior");
-        assertThat(other.getEffectivePower()).isEqualTo(2);
-        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
     }
 
     @Test
@@ -83,15 +83,15 @@ class PhytoburstTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, targetId);
 
         Permanent target = findPermanent(player1, "Kraul Warrior");
-        assertThat(target.getEffectivePower()).isEqualTo(12);
-        assertThat(target.getEffectiveToughness()).isEqualTo(12);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(12);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(12);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test

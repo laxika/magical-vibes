@@ -24,8 +24,8 @@ class AttendedSocialiteTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(socialite.getEffectivePower()).isEqualTo(3);
-        assertThat(socialite.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, socialite)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, socialite)).isEqualTo(2);
     }
 
     @Test
@@ -37,8 +37,8 @@ class AttendedSocialiteTest extends BaseCardTest {
         castGrizzlyBears(player2);
         harness.passBothPriorities();
 
-        assertThat(socialite.getEffectivePower()).isEqualTo(2);
-        assertThat(socialite.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, socialite)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, socialite)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -49,8 +49,8 @@ class AttendedSocialiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent socialite = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(socialite.getEffectivePower()).isEqualTo(2);
-        assertThat(socialite.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, socialite)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, socialite)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -87,13 +87,13 @@ class AttendedSocialiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(socialite.getEffectivePower()).isEqualTo(3);
-        assertThat(socialite.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, socialite)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, socialite)).isEqualTo(2);
 
         resolveAllTriggers();
 
-        assertThat(socialite.getEffectivePower()).isEqualTo(4);
-        assertThat(socialite.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, socialite)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, socialite)).isEqualTo(3);
     }
 
     @Test
@@ -106,13 +106,13 @@ class AttendedSocialiteTest extends BaseCardTest {
 
         Permanent second = gd.playerBattlefields.get(player1.getId()).getLast();
         assertThat(gd.stack).hasSize(1);
-        assertThat(first.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
 
         resolveAllTriggers();
 
-        assertThat(first.getEffectivePower()).isEqualTo(3);
-        assertThat(first.getEffectiveToughness()).isEqualTo(2);
-        assertThat(second.getEffectivePower()).isEqualTo(2);
-        assertThat(second.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(1);
     }
 }

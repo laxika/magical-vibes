@@ -25,12 +25,12 @@ class HolyLightTest extends BaseCardTest {
 
         castHolyLight();
 
-        assertThat(ownColorless.getEffectivePower()).isEqualTo(1);
-        assertThat(ownColorless.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponentMulticoloredNonwhite.getEffectivePower()).isEqualTo(1);
-        assertThat(opponentMulticoloredNonwhite.getEffectiveToughness()).isEqualTo(1);
-        assertThat(white.getEffectivePower()).isEqualTo(1);
-        assertThat(white.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownColorless)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownColorless)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentMulticoloredNonwhite)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentMulticoloredNonwhite)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, white)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, white)).isEqualTo(2);
     }
 
     @Test
@@ -49,15 +49,15 @@ class HolyLightTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new Scarecrow());
 
         castHolyLight();
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -67,8 +67,8 @@ class HolyLightTest extends BaseCardTest {
 
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new Scarecrow());
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     @Test
@@ -79,8 +79,8 @@ class HolyLightTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -96,8 +96,8 @@ class HolyLightTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Scarecrow");
         harness.assertInGraveyard(player2, "Scarwood Goblins");
         harness.assertOnBattlefield(player2, "Squire");
-        assertThat(white.getEffectivePower()).isEqualTo(1);
-        assertThat(white.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, white)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, white)).isEqualTo(2);
     }
 
     private void castHolyLight() {

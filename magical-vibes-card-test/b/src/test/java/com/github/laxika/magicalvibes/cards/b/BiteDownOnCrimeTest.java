@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
@@ -27,7 +28,7 @@ class BiteDownOnCrimeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(attacker.getId(), victim.getId()));
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
         harness.assertInGraveyard(player2, "Hill Giant");
     }
 
@@ -46,7 +47,7 @@ class BiteDownOnCrimeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrderElementsOf(evidence);
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
         harness.assertInGraveyard(player2, "Hill Giant");
     }
 
@@ -74,8 +75,8 @@ class BiteDownOnCrimeTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToHand(gd, victim);
         harness.passBothPriorities();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         assertThat(attacker.getMarkedDamage()).isZero();
         harness.assertInHand(player2, "Hill Giant");
         harness.assertInGraveyard(player1, "Bite Down on Crime");
@@ -125,13 +126,13 @@ class BiteDownOnCrimeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castAndResolveSorcery(player1, 0, List.of(attacker.getId(), victim.getId()));
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
         assertThat(attacker.getMarkedDamage()).isZero();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }

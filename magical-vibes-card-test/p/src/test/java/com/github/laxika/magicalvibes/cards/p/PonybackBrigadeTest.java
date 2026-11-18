@@ -24,8 +24,8 @@ class PonybackBrigadeTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Goblin")).hasSize(3)
                 .allSatisfy(goblin -> {
-                    assertThat(goblin.getEffectivePower()).isEqualTo(1);
-                    assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
                     assertThat(goblin.getCard().getColor()).isEqualTo(CardColor.RED);
                     assertThat(goblin.getCard().getSubtypes()).containsExactly(CardSubtype.GOBLIN);
                 });

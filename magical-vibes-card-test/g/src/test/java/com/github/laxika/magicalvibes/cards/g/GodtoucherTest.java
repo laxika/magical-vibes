@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -56,7 +57,7 @@ class GodtoucherTest extends BaseCardTest {
     void protectsOpponentsCreatureWithExactlyFivePowerAgainstRepeatedDamage() {
         Permanent godtoucher = addCreatureReady(player1, new Godtoucher());
         Permanent avatar = addCreatureReady(player2, new AvatarOfMight());
-        avatar.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, avatar, -3);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateAbility(player1, 0, null, avatar.getId());
         harness.passBothPriorities();
@@ -76,7 +77,7 @@ class GodtoucherTest extends BaseCardTest {
         Permanent avatar = addCreatureReady(player1, new AvatarOfMight());
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateAbility(player1, 0, null, avatar.getId());
-        avatar.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, avatar, -4);
         harness.passBothPriorities();
 
         harness.setHand(player1, List.of(new Shock()));
@@ -93,7 +94,7 @@ class GodtoucherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateAbility(player1, 0, null, avatar.getId());
         harness.passBothPriorities();
-        avatar.setPowerModifier(-4);
+        PermanentGrants.setPowerBoost(gd, avatar, -4);
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);

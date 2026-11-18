@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Clue;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -34,7 +35,7 @@ class SzarelGenesisShepherdTest extends BaseCardTest {
         Permanent szarel = harness.addToBattlefieldAndReturn(player1, new SzarelGenesisShepherd());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Clue());
-        szarel.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, szarel, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 2, null, null);
@@ -52,7 +53,7 @@ class SzarelGenesisShepherdTest extends BaseCardTest {
         Treasure treasure = new Treasure();
         treasure.setToken(true);
         harness.addToBattlefield(player1, treasure);
-        szarel.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, szarel, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 2, 0, null, null);

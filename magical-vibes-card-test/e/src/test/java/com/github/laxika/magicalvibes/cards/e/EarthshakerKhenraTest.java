@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 import com.github.laxika.magicalvibes.cards.k.KhenraEternal;
@@ -71,8 +72,8 @@ class EarthshakerKhenraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent token = findPermanent(player1, "Earthshaker Khenra");
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.ZOMBIE, CardSubtype.JACKAL, CardSubtype.WARRIOR);
         assertThat(token.getCard().getManaCost()).isEmpty();
@@ -132,7 +133,7 @@ class EarthshakerKhenraTest extends BaseCardTest {
     void sourcePowerIsRecheckedWhenTriggerResolves() {
         Permanent blocker = addCreatureReady(player2, new KhenraEternal());
         castKhenraAndPutTriggerOnStack(blocker.getId());
-        findPermanent(player1, "Earthshaker Khenra").setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, findPermanent(player1, "Earthshaker Khenra"), -1);
         resolveAllTriggers();
 
         assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isFalse();
@@ -144,7 +145,7 @@ class EarthshakerKhenraTest extends BaseCardTest {
         castKhenraAndPutTriggerOnStack(blocker.getId());
         resolveAllTriggers();
         blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        findPermanent(player1, "Earthshaker Khenra").setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, findPermanent(player1, "Earthshaker Khenra"), -1);
 
         assertThat(gd.hasFloatingEffectOnPermanent(blocker.getId(), CantBlockEffect.class)).isTrue();
     }

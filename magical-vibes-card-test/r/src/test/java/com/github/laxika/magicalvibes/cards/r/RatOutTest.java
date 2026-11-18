@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -32,8 +33,8 @@ class RatOutTest extends BaseCardTest {
         harness.passBothPriorities();
 
         target = findPermanent(player2, "Grizzly Bears");
-        assertThat(target.getPowerModifier()).isEqualTo(-1);
-        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-1);
 
         Permanent rat = findPermanents(player1, "Rat").getFirst();
         assertThat(bls.canBlock(gd, rat)).isFalse();
@@ -43,8 +44,8 @@ class RatOutTest extends BaseCardTest {
         harness.passBothPriorities();
 
         target = findPermanent(player2, "Grizzly Bears");
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test

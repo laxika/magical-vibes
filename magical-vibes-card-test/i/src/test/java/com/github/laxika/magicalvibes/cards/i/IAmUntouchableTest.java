@@ -43,8 +43,8 @@ class IAmUntouchableTest extends BaseCardTest {
         List<Permanent> tokens = findPermanents(player2, "Scarecrow");
         assertThat(tokens).hasSize(1);
         Permanent token = tokens.getFirst();
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.SCARECROW);

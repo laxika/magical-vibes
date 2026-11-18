@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ContagiousVorrac;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -54,7 +55,7 @@ class PaladinOfPredationTest extends BaseCardTest {
     @Test
     void boostedTwoPowerCreatureCanBlock() {
         Permanent blocker = addCreatureReady(player2, new PredationSteward());
-        blocker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, blocker, 1);
         Permanent paladin = addCreatureReady(player1, new PaladinOfPredation());
         paladin.setAttacking(true);
         prepareDeclareBlockers();
@@ -67,7 +68,7 @@ class PaladinOfPredationTest extends BaseCardTest {
     @Test
     void reducedThreePowerCreatureCannotBlock() {
         Permanent blocker = addCreatureReady(player2, new ContagiousVorrac());
-        blocker.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, blocker, -1);
         Permanent paladin = addCreatureReady(player1, new PaladinOfPredation());
         paladin.setAttacking(true);
         prepareDeclareBlockers();
@@ -81,7 +82,7 @@ class PaladinOfPredationTest extends BaseCardTest {
     void combatDamageGivesSixPoisonRegardlessOfDamageAmount(int power) {
         harness.setLife(player2, 20);
         Permanent paladin = addCreatureReady(player1, new PaladinOfPredation());
-        paladin.setPowerModifier(power - 6);
+        PermanentGrants.setPowerBoost(gd, paladin, power - 6);
         paladin.setAttacking(true);
 
         resolveCombat();
@@ -96,7 +97,7 @@ class PaladinOfPredationTest extends BaseCardTest {
     void zeroPowerDoesNotGivePoisonCounters() {
         harness.setLife(player2, 20);
         Permanent paladin = addCreatureReady(player1, new PaladinOfPredation());
-        paladin.setPowerModifier(-6);
+        PermanentGrants.setPowerBoost(gd, paladin, -6);
         paladin.setAttacking(true);
 
         resolveCombat();

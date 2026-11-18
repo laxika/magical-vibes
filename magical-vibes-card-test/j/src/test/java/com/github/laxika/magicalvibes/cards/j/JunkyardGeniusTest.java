@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArgothianSprite;
 import com.github.laxika.magicalvibes.cards.e.EnergyRefractor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -58,19 +59,19 @@ class JunkyardGeniusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificed.getCard());
-        assertThat(ally.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ally, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
-        assertThat(genius.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, genius)).isZero();
         assertThat(gqs.hasKeyword(gd, genius, Keyword.MENACE)).isFalse();
         assertThat(gqs.hasKeyword(gd, genius, Keyword.HASTE)).isFalse();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ally.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isZero();
         assertThat(gqs.hasKeyword(gd, ally, Keyword.MENACE)).isFalse();
         assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isFalse();
     }
@@ -88,7 +89,7 @@ class JunkyardGeniusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());
-        assertThat(ally.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ally, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
     }
@@ -121,11 +122,11 @@ class JunkyardGeniusTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(ally.getPowerModifier()).isEqualTo(2);
-        assertThat(ally.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ally)).isZero();
         assertThat(gqs.hasKeyword(gd, ally, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
-        assertThat(secondGenius.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondGenius)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, secondGenius, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, secondGenius, Keyword.HASTE)).isTrue();
     }
@@ -143,11 +144,11 @@ class JunkyardGeniusTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new ArgothianSprite());
 
-        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
-        assertThat(beforeResolution.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, beforeResolution)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beforeResolution)).isZero();
         assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.HASTE)).isTrue();
-        assertThat(afterResolution.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, afterResolution)).isZero();
         assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.MENACE)).isFalse();
         assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.HASTE)).isFalse();
     }
@@ -170,7 +171,7 @@ class JunkyardGeniusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Powerstone");
-        assertThat(ally.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, ally)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ally, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
     }

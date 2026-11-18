@@ -28,11 +28,11 @@ class IntrepidRabbitTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, rabbit.getId());
         harness.passBothPriorities();
 
-        assertThat(rabbit.getEffectivePower()).isEqualTo(4);
-        assertThat(rabbit.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rabbit)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rabbit)).isEqualTo(3);
         harness.passUntil(TurnStep.UPKEEP);
-        assertThat(rabbit.getEffectivePower()).isEqualTo(3);
-        assertThat(rabbit.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, rabbit)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, rabbit)).isEqualTo(2);
     }
 
     @Test
@@ -74,8 +74,8 @@ class IntrepidRabbitTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(duo.getEffectivePower()).isEqualTo(2);
-        assertThat(duo.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, duo)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, duo)).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken());
     }
@@ -100,10 +100,10 @@ class IntrepidRabbitTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(1);
-        assertThat(tokens.getFirst().getEffectivePower()).isEqualTo(1);
-        assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tokens.getFirst())).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tokens.getFirst())).isEqualTo(1);
         Permanent currentDuo = findPermanent(player1, "Brave-Kin Duo");
-        assertThat(currentDuo.getEffectivePower()).isEqualTo(3);
-        assertThat(currentDuo.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, currentDuo)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, currentDuo)).isEqualTo(3);
     }
 }

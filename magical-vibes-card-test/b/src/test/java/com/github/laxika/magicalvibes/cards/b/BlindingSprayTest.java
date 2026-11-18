@@ -28,9 +28,9 @@ class BlindingSprayTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(own.getEffectivePower()).isEqualTo(2);
-        assertThat(opponent.getEffectivePower()).isEqualTo(-2);
-        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
@@ -44,11 +44,11 @@ class BlindingSprayTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(opponent.getEffectivePower()).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(-2);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(opponent.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
     }
 
     @Test
@@ -79,10 +79,10 @@ class BlindingSprayTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.passBothPriorities();
 
-        assertThat(first.getEffectivePower()).isEqualTo(-2);
-        assertThat(second.getEffectivePower()).isEqualTo(-2);
-        assertThat(first.getEffectiveToughness()).isEqualTo(2);
-        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
     }
 
     @Test
@@ -97,8 +97,8 @@ class BlindingSprayTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         Permanent later = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        assertThat(existing.getEffectivePower()).isEqualTo(-2);
-        assertThat(later.getEffectivePower()).isEqualTo(2);
-        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
     }
 }

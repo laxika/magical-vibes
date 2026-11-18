@@ -80,7 +80,7 @@ class SeverSoulTest extends BaseCardTest {
     void gainsLifeEqualToEffectiveToughness() {
         harness.setLife(player1, 10);
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setToughnessModifier(3); // 2 + 3 = 5 effective toughness
+        PermanentGrants.setToughnessBoost(gd, bears, 3); // 2 + 3 = 5 effective toughness
 
         giveSpell();
         harness.castAndResolveSorcery(player1, 0, bears.getId());

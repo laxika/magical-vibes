@@ -53,8 +53,8 @@ class QuintoriusLoremasterTest extends BaseCardTest {
                 com.github.laxika.magicalvibes.model.CardColor.RED,
                 com.github.laxika.magicalvibes.model.CardColor.WHITE);
         assertThat(spirit.getCard().hasType(CardType.CREATURE)).isTrue();
-        assertThat(spirit.getEffectivePower()).isEqualTo(3);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(2);
     }
 
     @Test

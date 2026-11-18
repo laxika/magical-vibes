@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GoreSwine;
 import com.github.laxika.magicalvibes.cards.s.ShockmawDragon;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -28,11 +29,11 @@ class KolaghanTheStormsFuryTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(kolaghan.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(kolaghan.getToughnessModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kolaghan)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, kolaghan)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -44,7 +45,7 @@ class KolaghanTheStormsFuryTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -56,14 +57,14 @@ class KolaghanTheStormsFuryTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -99,11 +100,11 @@ class KolaghanTheStormsFuryTest extends BaseCardTest {
         declareAttackers(List.of(1, 2));
         resolveAllTriggers();
 
-        assertThat(kolaghan.getPowerModifier()).isEqualTo(2);
-        assertThat(firstDragon.getPowerModifier()).isEqualTo(2);
-        assertThat(secondDragon.getPowerModifier()).isEqualTo(2);
-        assertThat(swine.getPowerModifier()).isEqualTo(2);
-        assertThat(swine.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kolaghan)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstDragon)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondDragon)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, swine)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, swine)).isZero();
     }
 
     @Test
@@ -115,8 +116,8 @@ class KolaghanTheStormsFuryTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
 
-        assertThat(kolaghan.getPowerModifier()).isZero();
-        assertThat(swine.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, kolaghan)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, swine)).isZero();
     }
 
     @Test

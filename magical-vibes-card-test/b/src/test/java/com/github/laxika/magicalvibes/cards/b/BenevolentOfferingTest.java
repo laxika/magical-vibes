@@ -85,8 +85,8 @@ class BenevolentOfferingTest extends BaseCardTest {
     private void assertSpirit(Permanent spirit) {
         assertThat(spirit.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(spirit.getCard().getSubtypes()).contains(CardSubtype.SPIRIT);
-        assertThat(spirit.getEffectivePower()).isEqualTo(1);
-        assertThat(spirit.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, spirit, Keyword.FLYING)).isTrue();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Disentomb;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -31,8 +32,8 @@ class RotFarmMortipedeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(mortipede.getPowerModifier()).isEqualTo(1);
-        assertThat(mortipede.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mortipede)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mortipede)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, mortipede, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, mortipede, Keyword.LIFELINK)).isTrue();
     }
@@ -47,8 +48,8 @@ class RotFarmMortipedeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, shock.getId());
 
-        assertThat(mortipede.getPowerModifier()).isEqualTo(0);
-        assertThat(mortipede.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mortipede)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mortipede)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, mortipede, Keyword.MENACE)).isFalse();
         assertThat(gqs.hasKeyword(gd, mortipede, Keyword.LIFELINK)).isFalse();
     }
@@ -63,8 +64,8 @@ class RotFarmMortipedeTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(mortipede.getPowerModifier()).isEqualTo(1);
-        assertThat(mortipede.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mortipede)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mortipede)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, mortipede, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, mortipede, Keyword.LIFELINK)).isTrue();
     }
@@ -84,8 +85,8 @@ class RotFarmMortipedeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mortipede.getPowerModifier()).isEqualTo(0);
-        assertThat(mortipede.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, mortipede)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mortipede)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, mortipede, Keyword.MENACE)).isFalse();
         assertThat(gqs.hasKeyword(gd, mortipede, Keyword.LIFELINK)).isFalse();
     }
@@ -101,7 +102,7 @@ class RotFarmMortipedeTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
-        assertThat(mortipede.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mortipede)).isZero();
         assertThat(gqs.hasKeyword(gd, mortipede, Keyword.MENACE)).isFalse();
         assertThat(gqs.hasKeyword(gd, mortipede, Keyword.LIFELINK)).isFalse();
     }
@@ -122,8 +123,8 @@ class RotFarmMortipedeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(mortipede.getPowerModifier()).isEqualTo(2);
-        assertThat(mortipede.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mortipede)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mortipede)).isZero();
         assertThat(gqs.hasKeyword(gd, mortipede, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, mortipede, Keyword.LIFELINK)).isTrue();
     }

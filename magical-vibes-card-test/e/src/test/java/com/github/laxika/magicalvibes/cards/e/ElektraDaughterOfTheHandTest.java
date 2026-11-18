@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -103,7 +104,7 @@ class ElektraDaughterOfTheHandTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
-        target.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, target, 1);
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Hill Giant");
@@ -113,7 +114,7 @@ class ElektraDaughterOfTheHandTest extends BaseCardTest {
     @Test
     void canDestroyCreatureWhoseEffectivePowerIsReducedToThree() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        target.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, target, -1);
         harness.setHand(player1, List.of(new ElektraDaughterOfTheHand()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 2);

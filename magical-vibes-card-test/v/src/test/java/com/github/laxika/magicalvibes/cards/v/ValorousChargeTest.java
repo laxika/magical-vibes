@@ -22,11 +22,11 @@ class ValorousChargeTest extends BaseCardTest {
 
         castValorousCharge();
 
-        assertThat(whiteCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(whiteCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, whiteCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, whiteCreature)).isEqualTo(2);
 
-        assertThat(greenCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(greenCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, greenCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, greenCreature)).isEqualTo(2);
     }
 
     @Test
@@ -37,8 +37,8 @@ class ValorousChargeTest extends BaseCardTest {
 
         castValorousCharge();
 
-        assertThat(ownWhite.getEffectivePower()).isEqualTo(4);
-        assertThat(opponentWhite.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownWhite)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponentWhite)).isEqualTo(4);
     }
 
     @Test
@@ -48,14 +48,14 @@ class ValorousChargeTest extends BaseCardTest {
 
         castValorousCharge();
 
-        assertThat(whiteCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, whiteCreature)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(whiteCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(whiteCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, whiteCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, whiteCreature)).isEqualTo(2);
     }
 
     @Test
@@ -65,8 +65,8 @@ class ValorousChargeTest extends BaseCardTest {
 
         Permanent whiteCreature = addCreatureReady(player1, new KnightErrant());
 
-        assertThat(whiteCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(whiteCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, whiteCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, whiteCreature)).isEqualTo(2);
     }
 
     @Test
@@ -78,17 +78,17 @@ class ValorousChargeTest extends BaseCardTest {
         castValorousCharge();
         castValorousCharge();
 
-        assertThat(whiteCreature.getEffectivePower()).isEqualTo(6);
-        assertThat(whiteCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(greenCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(greenCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, whiteCreature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, whiteCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, greenCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, greenCreature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(whiteCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(whiteCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, whiteCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, whiteCreature)).isEqualTo(2);
     }
 
     @Test
@@ -101,8 +101,8 @@ class ValorousChargeTest extends BaseCardTest {
         Permanent whiteCreature = addCreatureReady(player2, new KnightErrant());
         harness.passBothPriorities();
 
-        assertThat(whiteCreature.getEffectivePower()).isEqualTo(4);
-        assertThat(whiteCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, whiteCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, whiteCreature)).isEqualTo(2);
     }
     private void castValorousCharge() {
         harness.forceActivePlayer(player1);

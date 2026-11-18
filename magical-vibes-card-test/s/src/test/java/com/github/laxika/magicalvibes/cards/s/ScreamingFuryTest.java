@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.Arachnoid;
 import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -29,8 +30,8 @@ class ScreamingFuryTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(5);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
 
@@ -46,8 +47,8 @@ class ScreamingFuryTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
     }
 
@@ -60,8 +61,8 @@ class ScreamingFuryTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(5);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
 
@@ -109,16 +110,16 @@ class ScreamingFuryTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, creature.getId());
         harness.castAndResolveSorcery(player1, 0, creature.getId());
 
-        assertThat(creature.getPowerModifier()).isEqualTo(10);
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(10);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
-        assertThat(other.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, other)).isZero();
         assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
     }
 
@@ -134,7 +135,7 @@ class ScreamingFuryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("fizzles"));

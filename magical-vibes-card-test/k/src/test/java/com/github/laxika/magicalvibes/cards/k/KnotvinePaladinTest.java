@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FieldmistBorderpost;
 import com.github.laxika.magicalvibes.cards.g.GrizzledLeotau;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -37,8 +38,8 @@ class KnotvinePaladinTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(0);
-        assertThat(paladin.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(0);
     }
 
     @Test
@@ -52,8 +53,8 @@ class KnotvinePaladinTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(2);
-        assertThat(paladin.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(2);
     }
 
     @Test
@@ -67,8 +68,8 @@ class KnotvinePaladinTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(1);
-        assertThat(paladin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(1);
     }
 
     @Test
@@ -80,8 +81,8 @@ class KnotvinePaladinTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(0);
-        assertThat(paladin.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(0);
     }
 
     @Test
@@ -98,15 +99,15 @@ class KnotvinePaladinTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzledLeotau());
         resolveAllTriggers();
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(2);
-        assertThat(paladin.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(2);
 
         second.tap();
         first.untap();
         harness.addToBattlefield(player1, new GrizzledLeotau());
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(2);
-        assertThat(paladin.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(2);
     }
 
     @Test
@@ -119,8 +120,8 @@ class KnotvinePaladinTest extends BaseCardTest {
         support.tap();
         resolveAllTriggers();
 
-        assertThat(paladin.getPowerModifier()).isZero();
-        assertThat(paladin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isZero();
     }
 
     @Test
@@ -132,8 +133,8 @@ class KnotvinePaladinTest extends BaseCardTest {
         paladin.untap();
         resolveAllTriggers();
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(1);
-        assertThat(paladin.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(1);
     }
 
     @Test
@@ -144,8 +145,8 @@ class KnotvinePaladinTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(paladin.getPowerModifier()).isZero();
-        assertThat(paladin.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isZero();
     }
 
     @Test
@@ -158,10 +159,10 @@ class KnotvinePaladinTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getToughnessModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(1);
     }
 
     @Test
@@ -173,14 +174,14 @@ class KnotvinePaladinTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(paladin.getPowerModifier()).isEqualTo(0);
-        assertThat(paladin.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, paladin)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, paladin)).isEqualTo(0);
     }
 
 }

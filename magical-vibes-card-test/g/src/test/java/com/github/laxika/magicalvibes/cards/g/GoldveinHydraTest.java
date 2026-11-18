@@ -28,7 +28,7 @@ class GoldveinHydraTest extends BaseCardTest {
 
         Permanent hydra = findPermanent(player1, "Goldvein Hydra");
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(hydra.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(3);
     }
 
     @Test

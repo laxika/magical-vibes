@@ -56,15 +56,15 @@ class AmbrosiaWhiteheartTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(ambrosia.getEffectivePower()).isEqualTo(3);
-        assertThat(ambrosia.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ambrosia)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ambrosia)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ambrosia.getEffectivePower()).isEqualTo(2);
-        assertThat(ambrosia.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ambrosia)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ambrosia)).isEqualTo(2);
     }
 
     @Test
@@ -77,8 +77,8 @@ class AmbrosiaWhiteheartTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(ambrosia.getEffectivePower()).isEqualTo(2);
-        assertThat(ambrosia.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ambrosia)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ambrosia)).isEqualTo(2);
     }
 
     @Test
@@ -138,8 +138,8 @@ class AmbrosiaWhiteheartTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(ambrosia.getEffectivePower()).isEqualTo(4);
-        assertThat(ambrosia.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ambrosia)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ambrosia)).isEqualTo(2);
     }
 
     private void castAmbrosia() {

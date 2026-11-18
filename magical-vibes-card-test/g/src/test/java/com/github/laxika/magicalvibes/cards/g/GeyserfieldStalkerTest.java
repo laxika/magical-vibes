@@ -25,15 +25,15 @@ class GeyserfieldStalkerTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.enterBattlefieldAndReturn(player1, new Forest());
 
-        assertThat(stalker.getEffectivePower()).isEqualTo(3);
-        assertThat(stalker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, stalker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, stalker)).isEqualTo(2);
 
         resolveAllTriggers();
 
-        assertThat(stalker.getEffectivePower()).isEqualTo(7);
-        assertThat(stalker.getEffectiveToughness()).isEqualTo(6);
-        assertThat(opposingStalker.getEffectivePower()).isEqualTo(3);
-        assertThat(opposingStalker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, stalker)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, stalker)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opposingStalker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingStalker)).isEqualTo(2);
     }
 
     @Test
@@ -74,8 +74,8 @@ class GeyserfieldStalkerTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(stalker.getEffectivePower()).isEqualTo(5);
-        assertThat(stalker.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, stalker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, stalker)).isEqualTo(4);
     }
 
     @Test
@@ -90,8 +90,8 @@ class GeyserfieldStalkerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(stalker.getEffectivePower()).isEqualTo(3);
-        assertThat(stalker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, stalker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, stalker)).isEqualTo(2);
     }
 
     @Test
@@ -104,7 +104,7 @@ class GeyserfieldStalkerTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(stalker.getEffectivePower()).isEqualTo(3);
-        assertThat(stalker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, stalker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, stalker)).isEqualTo(2);
     }
 }

@@ -29,8 +29,8 @@ class CoordinatedAssaultTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new SatyrRambler());
         cast(List.of(first.getId(), second.getId()));
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, first)).contains(Keyword.FIRST_STRIKE);
         assertThat(PermanentGrants.keywordsOf(gd, second)).contains(Keyword.FIRST_STRIKE);
     }
@@ -41,7 +41,7 @@ class CoordinatedAssaultTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SatyrRambler());
         cast(List.of(target.getId()));
 
-        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(1);
         assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FIRST_STRIKE);
     }
 
@@ -55,7 +55,7 @@ class CoordinatedAssaultTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
@@ -75,8 +75,8 @@ class CoordinatedAssaultTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new SatyrRambler());
         cast(List.of());
 
-        assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, creature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.FIRST_STRIKE);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Coordinated Assault");
@@ -88,10 +88,10 @@ class CoordinatedAssaultTest extends BaseCardTest {
         Permanent opposing = harness.addToBattlefieldAndReturn(player2, new SatyrRambler());
         cast(List.of(own.getId(), opposing.getId()));
 
-        assertThat(own.getPowerModifier()).isEqualTo(1);
-        assertThat(opposing.getPowerModifier()).isEqualTo(1);
-        assertThat(own.getToughnessModifier()).isZero();
-        assertThat(opposing.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, own)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposing)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, own)).contains(Keyword.FIRST_STRIKE);
         assertThat(PermanentGrants.keywordsOf(gd, opposing)).contains(Keyword.FIRST_STRIKE);
     }
@@ -130,10 +130,10 @@ class CoordinatedAssaultTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first).contains(second);
-        assertThat(first.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, first)).doesNotContain(Keyword.FIRST_STRIKE);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, second)).contains(Keyword.FIRST_STRIKE);
         harness.assertInGraveyard(player1, "Coordinated Assault");
     }
@@ -149,8 +149,8 @@ class CoordinatedAssaultTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
-        assertThat(untargeted.getPowerModifier()).isZero();
-        assertThat(untargeted.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, untargeted)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, untargeted)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, untargeted)).doesNotContain(Keyword.FIRST_STRIKE);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Coordinated Assault");

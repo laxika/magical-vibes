@@ -33,8 +33,8 @@ class HauntedDeadTest extends BaseCardTest {
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken())
                 .findFirst().orElseThrow();
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.SPIRIT);
         assertThat(token.getCard().getColors()).containsExactly(CardColor.WHITE);
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();

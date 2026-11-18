@@ -142,10 +142,10 @@ class JeskaiCharmTest extends BaseCardTest {
             harness.passBothPriorities();
             Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new SmokeTeller());
 
-            assertThat(original.getEffectivePower()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
             assertThat(gqs.hasKeyword(gd, original, Keyword.LIFELINK)).isTrue();
-            assertThat(newcomer.getEffectivePower()).isEqualTo(2);
-            assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(2);
             assertThat(gqs.hasKeyword(gd, newcomer, Keyword.LIFELINK)).isFalse();
         }
 
@@ -175,10 +175,10 @@ class JeskaiCharmTest extends BaseCardTest {
 
             Permanent ownBear = findPermanent(player1, "Smoke Teller");
             Permanent opponentBear = findPermanent(player2, "Smoke Teller");
-            assertThat(ownBear.getEffectivePower()).isEqualTo(3);
-            assertThat(ownBear.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, ownBear)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, ownBear)).isEqualTo(3);
             assertThat(gqs.hasKeyword(gd, ownBear, Keyword.LIFELINK)).isTrue();
-            assertThat(opponentBear.getEffectivePower()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, opponentBear)).isEqualTo(2);
             assertThat(gqs.hasKeyword(gd, opponentBear, Keyword.LIFELINK)).isFalse();
         }
 
@@ -196,8 +196,8 @@ class JeskaiCharmTest extends BaseCardTest {
             harness.passBothPriorities();
 
             Permanent bear = findPermanent(player1, "Smoke Teller");
-            assertThat(bear.getEffectivePower()).isEqualTo(2);
-            assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
             assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isFalse();
         }
     }

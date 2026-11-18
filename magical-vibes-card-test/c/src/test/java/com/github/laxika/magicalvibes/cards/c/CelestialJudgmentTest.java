@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -109,9 +110,9 @@ class CelestialJudgmentTest extends BaseCardTest {
     @Test
     void distinguishesNegativePowerFromZeroPower() {
         Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
-        elf.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, elf, -2);
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bear.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, bear, -2);
 
         castCelestialJudgment();
 

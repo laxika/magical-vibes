@@ -29,8 +29,8 @@ class GideonsPhalanxTest extends BaseCardTest {
         List<Permanent> knights = knightsOf(player1);
         assertThat(knights).hasSize(4);
         for (Permanent knight : knights) {
-            assertThat(knight.getEffectivePower()).isEqualTo(2);
-            assertThat(knight.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
             assertThat(knight.hasKeyword(Keyword.VIGILANCE)).isTrue();
         }
     }

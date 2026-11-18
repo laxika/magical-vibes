@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.Aeolipile;
 import com.github.laxika.magicalvibes.cards.t.Thallid;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -198,8 +199,8 @@ class ElvishScoutTest extends BaseCardTest {
 
     private Permanent addAttacker(Player owner, Player defender, int power, int toughness) {
         Permanent perm = addCreatureReady(owner, new Thallid());
-        perm.setPowerModifier(power - 1);
-        perm.setToughnessModifier(toughness - 1);
+        PermanentGrants.setPowerBoost(gd, perm, power - 1);
+        PermanentGrants.setToughnessBoost(gd, perm, toughness - 1);
         perm.setAttacking(true);
         perm.setAttackTarget(defender.getId());
         return perm;
@@ -207,8 +208,8 @@ class ElvishScoutTest extends BaseCardTest {
 
     private Permanent addBlocker(Player owner, int power, int toughness, int blockedAttackerIndex) {
         Permanent perm = addCreatureReady(owner, new Thallid());
-        perm.setPowerModifier(power - 1);
-        perm.setToughnessModifier(toughness - 1);
+        PermanentGrants.setPowerBoost(gd, perm, power - 1);
+        PermanentGrants.setToughnessBoost(gd, perm, toughness - 1);
         perm.setBlocking(true);
         perm.addBlockingTarget(blockedAttackerIndex);
         return perm;

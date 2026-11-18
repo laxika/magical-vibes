@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -78,7 +79,7 @@ class MayAbilityTargetTimingTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(bears.getPowerModifier()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(3);
         assertThat(abilitiesOnStack()).isEmpty();
     }
 
@@ -96,7 +97,7 @@ class MayAbilityTargetTimingTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(otherBears.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherBears)).isZero();
         assertThat(abilitiesOnStack()).isEmpty();
     }
 
@@ -116,8 +117,8 @@ class MayAbilityTargetTimingTest extends BaseCardTest {
         }
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(source.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, source)).isZero();
         assertThat(abilitiesOnStack()).isEmpty();
     }
 }

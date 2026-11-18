@@ -68,8 +68,8 @@ class TemurMonumentTest extends BaseCardTest {
                         && permanent.getCard().getName().equals("Elephant"))
                 .singleElement()
                 .satisfies(token -> {
-                    assertThat(token.getEffectivePower()).isEqualTo(5);
-                    assertThat(token.getEffectiveToughness()).isEqualTo(5);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(5);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(5);
                     assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ELEPHANT);
                 });
     }

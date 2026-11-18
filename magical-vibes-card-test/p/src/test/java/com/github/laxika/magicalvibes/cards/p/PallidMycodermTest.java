@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Stingscourger;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -63,17 +64,17 @@ class PallidMycodermTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
-        assertThat(mycoderm.getPowerModifier()).isOne();
-        assertThat(mycoderm.getToughnessModifier()).isOne();
-        assertThat(otherCreature.getPowerModifier()).isZero();
-        assertThat(otherCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mycoderm)).isOne();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mycoderm)).isOne();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreature)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(mycoderm.getPowerModifier()).isZero();
-        assertThat(mycoderm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mycoderm)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mycoderm)).isZero();
     }
 
     @Test
@@ -104,16 +105,16 @@ class PallidMycodermTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Saproling")).containsExactly(remainingSaproling);
-        assertThat(mycoderm.getPowerModifier()).isOne();
-        assertThat(mycoderm.getToughnessModifier()).isOne();
-        assertThat(otherFungus.getPowerModifier()).isOne();
-        assertThat(otherFungus.getToughnessModifier()).isOne();
-        assertThat(remainingSaproling.getPowerModifier()).isOne();
-        assertThat(remainingSaproling.getToughnessModifier()).isOne();
-        assertThat(otherCreature.getPowerModifier()).isZero();
-        assertThat(otherCreature.getToughnessModifier()).isZero();
-        assertThat(opponentFungus.getPowerModifier()).isZero();
-        assertThat(opponentFungus.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mycoderm)).isOne();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mycoderm)).isOne();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherFungus)).isOne();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherFungus)).isOne();
+        assertThat(PermanentGrants.powerBoostOf(gd, remainingSaproling)).isOne();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, remainingSaproling)).isOne();
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreature)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentFungus)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentFungus)).isZero();
     }
 
     @Test
@@ -182,11 +183,11 @@ class PallidMycodermTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
-        assertThat(mycoderm.getPowerModifier()).isZero();
-        assertThat(mycoderm.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, mycoderm)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mycoderm)).isZero();
         harness.passBothPriorities();
-        assertThat(mycoderm.getPowerModifier()).isOne();
-        assertThat(mycoderm.getToughnessModifier()).isOne();
+        assertThat(PermanentGrants.powerBoostOf(gd, mycoderm)).isOne();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, mycoderm)).isOne();
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();

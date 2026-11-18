@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.ForestBear;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.s.ShuCavalry;
@@ -51,10 +52,10 @@ class ZhaoZilongTigerGeneralTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(zhao.getPowerModifier()).isEqualTo(1);
-        assertThat(zhao.getToughnessModifier()).isEqualTo(1);
-        assertThat(zhao.getEffectivePower()).isEqualTo(4);
-        assertThat(zhao.getEffectiveToughness()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, zhao)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, zhao)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, zhao)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, zhao)).isEqualTo(4);
     }
 
     @Test
@@ -69,16 +70,16 @@ class ZhaoZilongTigerGeneralTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(zhao.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, zhao)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(zhao.getPowerModifier()).isEqualTo(0);
-        assertThat(zhao.getToughnessModifier()).isEqualTo(0);
-        assertThat(zhao.getEffectivePower()).isEqualTo(3);
-        assertThat(zhao.getEffectiveToughness()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, zhao)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, zhao)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, zhao)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, zhao)).isEqualTo(3);
     }
 
     @Test
@@ -112,7 +113,7 @@ class ZhaoZilongTigerGeneralTest extends BaseCardTest {
                 .hasSize(1);
         resolveAllTriggers();
 
-        assertThat(zhao.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, zhao)).isEqualTo(1);
     }
 
     @Test
@@ -146,8 +147,8 @@ class ZhaoZilongTigerGeneralTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
         assertThat(gd.stack).isEmpty();
-        assertThat(zhao.getPowerModifier()).isZero();
-        assertThat(zhao.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, zhao)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, zhao)).isZero();
     }
 
     @Test
@@ -163,8 +164,8 @@ class ZhaoZilongTigerGeneralTest extends BaseCardTest {
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
-        assertThat(zhao.getPowerModifier()).isEqualTo(1);
-        assertThat(zhao.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, zhao)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, zhao)).isEqualTo(1);
     }
 
     private Permanent addZhaoReady(Player player) {

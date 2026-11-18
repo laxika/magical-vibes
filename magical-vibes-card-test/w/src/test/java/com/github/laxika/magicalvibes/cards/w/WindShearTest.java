@@ -33,16 +33,16 @@ class WindShearTest extends BaseCardTest {
         harness.castFromHand(player1, new WindShear(), "{2}{G}");
         harness.passBothPriorities();
 
-        assertThat(attackingFlyer.getEffectivePower()).isEqualTo(3);
-        assertThat(attackingFlyer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attackingFlyer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attackingFlyer)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, attackingFlyer, Keyword.FLYING)).isFalse();
 
-        assertThat(nonAttackingFlyer.getEffectivePower()).isEqualTo(2);
-        assertThat(nonAttackingFlyer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonAttackingFlyer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonAttackingFlyer)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, nonAttackingFlyer, Keyword.FLYING)).isTrue();
 
-        assertThat(attackingGround.getEffectivePower()).isEqualTo(2);
-        assertThat(attackingGround.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attackingGround)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attackingGround)).isEqualTo(2);
     }
 
     @Test
@@ -72,8 +72,8 @@ class WindShearTest extends BaseCardTest {
         Permanent laterAttackingFlyer = addCreatureReady(player2, new Archangel());
         laterAttackingFlyer.setAttacking(true);
 
-        assertThat(laterAttackingFlyer.getEffectivePower()).isEqualTo(5);
-        assertThat(laterAttackingFlyer.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, laterAttackingFlyer)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, laterAttackingFlyer)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, laterAttackingFlyer, Keyword.FLYING)).isTrue();
     }
 
@@ -89,16 +89,16 @@ class WindShearTest extends BaseCardTest {
         harness.castFromHand(player1, new WindShear(), "{2}{G}");
         harness.passBothPriorities();
 
-        assertThat(attackingFlyer.getEffectivePower()).isEqualTo(3);
-        assertThat(attackingFlyer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attackingFlyer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attackingFlyer)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, attackingFlyer, Keyword.FLYING)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attackingFlyer.getEffectivePower()).isEqualTo(5);
-        assertThat(attackingFlyer.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, attackingFlyer)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, attackingFlyer)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, attackingFlyer, Keyword.FLYING)).isTrue();
     }
 
@@ -118,8 +118,8 @@ class WindShearTest extends BaseCardTest {
         harness.passBothPriorities();
 
         for (Permanent flyer : new Permanent[]{firstFlyer, secondFlyer}) {
-            assertThat(flyer.getEffectivePower()).isEqualTo(3);
-            assertThat(flyer.getEffectiveToughness()).isEqualTo(3);
+            assertThat(gqs.getEffectivePower(gd, flyer)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, flyer)).isEqualTo(3);
             assertThat(gqs.hasKeyword(gd, flyer, Keyword.FLYING)).isFalse();
         }
     }
@@ -136,8 +136,8 @@ class WindShearTest extends BaseCardTest {
         harness.passBothPriorities();
         flyer.setAttacking(false);
 
-        assertThat(flyer.getEffectivePower()).isEqualTo(3);
-        assertThat(flyer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, flyer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, flyer)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, flyer, Keyword.FLYING)).isFalse();
     }
 }

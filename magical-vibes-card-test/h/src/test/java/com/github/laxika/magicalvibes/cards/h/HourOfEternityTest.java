@@ -208,8 +208,8 @@ class HourOfEternityTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(token.getEffectivePower()).isEqualTo(6);
-        assertThat(token.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(6);
     }
 
     @Test
@@ -244,8 +244,8 @@ class HourOfEternityTest extends BaseCardTest {
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken()).findFirst().orElseThrow();
         assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
     }
 
     @Test

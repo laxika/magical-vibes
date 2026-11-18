@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.h.Hushbringer;
 import com.github.laxika.magicalvibes.cards.n.NevinyrralsDisk;
@@ -56,7 +57,7 @@ class FruitOfTheFirstTreeTest extends BaseCardTest {
     @DisplayName("Uses modified toughness immediately before death rather than printed toughness")
     void usesLastKnownModifiedToughness() {
         Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
-        spider.setToughnessModifier(3);
+        PermanentGrants.setToughnessBoost(gd, spider, 3);
         harness.setHand(player1, List.of(new FruitOfTheFirstTree()));
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castEnchantment(player1, 0, spider.getId());
@@ -81,7 +82,7 @@ class FruitOfTheFirstTreeTest extends BaseCardTest {
         fruit.setAttachedTo(spider.getId());
         int lifeBefore = gd.getLife(player1.getId());
         int handBefore = gd.playerHands.get(player1.getId()).size();
-        spider.setToughnessModifier(-4);
+        PermanentGrants.setToughnessBoost(gd, spider, -4);
         harness.runStateBasedActions();
         resolveAllTriggers();
 

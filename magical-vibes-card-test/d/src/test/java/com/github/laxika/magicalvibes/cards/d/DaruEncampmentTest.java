@@ -31,15 +31,15 @@ class DaruEncampmentTest extends BaseCardTest {
     void boostsTargetSoldier() {
         addEncampmentReady(player1);
         Permanent soldier = addCreatureReady(player1, new GlorySeeker());
-        int power = soldier.getEffectivePower();
-        int toughness = soldier.getEffectiveToughness();
+        int power = gqs.getEffectivePower(gd, soldier);
+        int toughness = gqs.getEffectiveToughness(gd, soldier);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 1, null, soldier.getId());
         harness.passBothPriorities();
 
-        assertThat(soldier.getEffectivePower()).isEqualTo(power + 1);
-        assertThat(soldier.getEffectiveToughness()).isEqualTo(toughness + 1);
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(power + 1);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(toughness + 1);
     }
 
     @Test
@@ -47,15 +47,15 @@ class DaruEncampmentTest extends BaseCardTest {
     void boostsOpponentSoldier() {
         addEncampmentReady(player1);
         Permanent soldier = addCreatureReady(player2, new GlorySeeker());
-        int power = soldier.getEffectivePower();
-        int toughness = soldier.getEffectiveToughness();
+        int power = gqs.getEffectivePower(gd, soldier);
+        int toughness = gqs.getEffectiveToughness(gd, soldier);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 1, null, soldier.getId());
         harness.passBothPriorities();
 
-        assertThat(soldier.getEffectivePower()).isEqualTo(power + 1);
-        assertThat(soldier.getEffectiveToughness()).isEqualTo(toughness + 1);
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(power + 1);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(toughness + 1);
     }
 
     @Test
@@ -111,21 +111,21 @@ class DaruEncampmentTest extends BaseCardTest {
     void boostWearsOff() {
         addEncampmentReady(player1);
         Permanent soldier = addCreatureReady(player1, new GlorySeeker());
-        int power = soldier.getEffectivePower();
-        int toughness = soldier.getEffectiveToughness();
+        int power = gqs.getEffectivePower(gd, soldier);
+        int toughness = gqs.getEffectiveToughness(gd, soldier);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 1, null, soldier.getId());
         harness.passBothPriorities();
-        assertThat(soldier.getEffectivePower()).isEqualTo(power + 1);
-        assertThat(soldier.getEffectiveToughness()).isEqualTo(toughness + 1);
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(power + 1);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(toughness + 1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(soldier.getEffectivePower()).isEqualTo(power);
-        assertThat(soldier.getEffectiveToughness()).isEqualTo(toughness);
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(toughness);
     }
 
     @Test
@@ -150,16 +150,16 @@ class DaruEncampmentTest extends BaseCardTest {
     void resolvesWithoutSource() {
         Permanent encampment = addEncampmentReady(player1);
         Permanent soldier = addCreatureReady(player1, new GlorySeeker());
-        int power = soldier.getEffectivePower();
-        int toughness = soldier.getEffectiveToughness();
+        int power = gqs.getEffectivePower(gd, soldier);
+        int toughness = gqs.getEffectiveToughness(gd, soldier);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 1, null, soldier.getId());
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, encampment);
         harness.passBothPriorities();
 
-        assertThat(soldier.getEffectivePower()).isEqualTo(power + 1);
-        assertThat(soldier.getEffectiveToughness()).isEqualTo(toughness + 1);
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(power + 1);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(toughness + 1);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -175,12 +175,12 @@ class DaruEncampmentTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToHand(gd, soldier);
         gd.playerHands.get(player1.getId()).remove(card);
         Permanent returned = harness.addToBattlefieldAndReturn(player1, card);
-        int power = returned.getEffectivePower();
-        int toughness = returned.getEffectiveToughness();
+        int power = gqs.getEffectivePower(gd, returned);
+        int toughness = gqs.getEffectiveToughness(gd, returned);
         harness.passBothPriorities();
 
-        assertThat(returned.getEffectivePower()).isEqualTo(power);
-        assertThat(returned.getEffectiveToughness()).isEqualTo(toughness);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(toughness);
         assertThat(gd.stack).isEmpty();
     }
 

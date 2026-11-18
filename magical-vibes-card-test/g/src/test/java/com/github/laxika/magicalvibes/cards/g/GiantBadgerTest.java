@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -31,8 +32,8 @@ class GiantBadgerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(badger.getPowerModifier()).isEqualTo(2);
-        assertThat(badger.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, badger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, badger)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, badger)).isEqualTo(4);   // 2 base + 2
         assertThat(gqs.getEffectiveToughness(gd, badger)).isEqualTo(4); // 2 base + 2
     }
@@ -46,13 +47,13 @@ class GiantBadgerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(badger.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, badger)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(badger.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, badger)).isEqualTo(0);
         assertThat(gqs.getEffectivePower(gd, badger)).isEqualTo(2);
     }
 
@@ -65,8 +66,8 @@ class GiantBadgerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        assertThat(badger.getPowerModifier()).isZero();
-        assertThat(badger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, badger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, badger)).isZero();
     }
 
     @Test
@@ -85,8 +86,8 @@ class GiantBadgerTest extends BaseCardTest {
                 .hasSize(1);
         resolveAllTriggers();
 
-        assertThat(badger.getPowerModifier()).isEqualTo(2);
-        assertThat(badger.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, badger)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, badger)).isEqualTo(2);
     }
 
     @Test
@@ -99,8 +100,8 @@ class GiantBadgerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(badger.getPowerModifier()).isZero();
-        assertThat(badger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, badger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, badger)).isZero();
 
         resolveAllTriggers();
 
@@ -118,8 +119,8 @@ class GiantBadgerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(badger.getPowerModifier()).isZero();
-        assertThat(badger.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, badger)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, badger)).isZero();
     }
 
     @Test
@@ -135,9 +136,9 @@ class GiantBadgerTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
-        assertThat(nonBlocker.getPowerModifier()).isZero();
-        assertThat(nonBlocker.getToughnessModifier()).isZero();
-        assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonBlocker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonBlocker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
     }
 }

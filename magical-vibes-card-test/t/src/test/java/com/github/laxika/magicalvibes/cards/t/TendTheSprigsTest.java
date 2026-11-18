@@ -56,8 +56,8 @@ class TendTheSprigsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.TREEFOLK)
-                        && permanent.getEffectivePower() == 3
-                        && permanent.getEffectiveToughness() == 4
+                        && gqs.getEffectivePower(gd, permanent) == 3
+                        && gqs.getEffectiveToughness(gd, permanent) == 4
                         && permanent.hasKeyword(Keyword.REACH));
     }
 
@@ -94,8 +94,8 @@ class TendTheSprigsTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.hasKeyword(Keyword.REACH))
                 .singleElement()
                 .satisfies(permanent -> {
-                    assertThat(permanent.getEffectivePower()).isEqualTo(3);
-                    assertThat(permanent.getEffectiveToughness()).isEqualTo(4);
+                    assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(3);
+                    assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(4);
                 });
     }
 

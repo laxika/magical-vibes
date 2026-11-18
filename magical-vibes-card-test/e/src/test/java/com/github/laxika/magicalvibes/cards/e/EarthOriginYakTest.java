@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -28,10 +29,10 @@ class EarthOriginYakTest extends BaseCardTest {
 
         Permanent yak = findPermanent(player1, "Earth-Origin Yak");
 
-        assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.getToughnessModifier()).isEqualTo(1);
-        assertThat(yak.getPowerModifier()).isEqualTo(1);
-        assertThat(yak.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, yak)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, yak)).isEqualTo(1);
     }
 
     @Test
@@ -41,8 +42,8 @@ class EarthOriginYakTest extends BaseCardTest {
 
         castYak();
 
-        assertThat(opponentBears.getPowerModifier()).isZero();
-        assertThat(opponentBears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentBears)).isZero();
     }
 
     @Test
@@ -56,8 +57,8 @@ class EarthOriginYakTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -67,9 +68,9 @@ class EarthOriginYakTest extends BaseCardTest {
 
         Permanent laterYak = harness.enterBattlefieldAndReturn(player1, new EarthOriginYak());
 
-        assertThat(laterYak.getPowerModifier()).isZero();
-        assertThat(laterYak.getToughnessModifier()).isZero();
-        assertThat(findPermanent(player1, "Earth-Origin Yak").getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, laterYak)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, laterYak)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player1, "Earth-Origin Yak"))).isEqualTo(1);
     }
 
     @Test
@@ -78,21 +79,21 @@ class EarthOriginYakTest extends BaseCardTest {
         Permanent firstYak = harness.enterBattlefieldAndReturn(player1, new EarthOriginYak());
         Permanent secondYak = harness.enterBattlefieldAndReturn(player1, new EarthOriginYak());
 
-        assertThat(firstYak.getPowerModifier()).isZero();
-        assertThat(secondYak.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, firstYak)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, secondYak)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(firstYak.getPowerModifier()).isEqualTo(1);
-        assertThat(firstYak.getToughnessModifier()).isEqualTo(1);
-        assertThat(secondYak.getPowerModifier()).isEqualTo(1);
-        assertThat(secondYak.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstYak)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstYak)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondYak)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondYak)).isEqualTo(1);
 
         harness.passBothPriorities();
 
-        assertThat(firstYak.getPowerModifier()).isEqualTo(2);
-        assertThat(firstYak.getToughnessModifier()).isEqualTo(2);
-        assertThat(secondYak.getPowerModifier()).isEqualTo(2);
-        assertThat(secondYak.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, firstYak)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, firstYak)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, secondYak)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, secondYak)).isEqualTo(2);
     }
 }

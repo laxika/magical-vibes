@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.StripedRiverwinder;
 import com.github.laxika.magicalvibes.cards.t.TormentOfVenom;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -30,8 +31,8 @@ class GrislySurvivorTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the boost trigger
 
         Permanent survivor = getGrislySurvivor();
-        assertThat(survivor.getPowerModifier()).isEqualTo(2);
-        assertThat(survivor.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isEqualTo(0);
     }
 
     @Test
@@ -48,8 +49,8 @@ class GrislySurvivorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent survivor = getGrislySurvivor();
-        assertThat(survivor.getPowerModifier()).isEqualTo(4);
-        assertThat(survivor.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isEqualTo(0);
     }
 
     @Test
@@ -64,12 +65,12 @@ class GrislySurvivorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent survivor = getGrislySurvivor();
-        assertThat(survivor.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(2);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(survivor.getPowerModifier()).isEqualTo(0);
-        assertThat(survivor.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isEqualTo(0);
     }
 
     @Test
@@ -86,12 +87,12 @@ class GrislySurvivorTest extends BaseCardTest {
         harness.handleListChoice(player1, ChoiceContext.TormentPenaltyChoice.DISCARD);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(getGrislySurvivor().getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, getGrislySurvivor())).isZero();
         harness.passBothPriorities();
 
-        assertThat(getGrislySurvivor().getPowerModifier()).isEqualTo(2);
-        assertThat(getGrislySurvivor().getToughnessModifier()).isZero();
-        assertThat(findPermanent(player2, "Grisly Survivor").getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, getGrislySurvivor())).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, getGrislySurvivor())).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, findPermanent(player2, "Grisly Survivor"))).isZero();
         harness.assertInGraveyard(player1, "Striped Riverwinder");
     }
 
@@ -106,8 +107,8 @@ class GrislySurvivorTest extends BaseCardTest {
         harness.activateHandAbility(player2, 0, null);
         harness.passBothPriorities();
 
-        assertThat(getGrislySurvivor().getPowerModifier()).isZero();
-        assertThat(getGrislySurvivor().getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, getGrislySurvivor())).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, getGrislySurvivor())).isZero();
         harness.assertInGraveyard(player2, "Striped Riverwinder");
         harness.assertInHand(player2, "Grisly Survivor");
     }

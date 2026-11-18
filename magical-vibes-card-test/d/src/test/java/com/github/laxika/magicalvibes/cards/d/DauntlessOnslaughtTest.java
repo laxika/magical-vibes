@@ -129,10 +129,10 @@ class DauntlessOnslaughtTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Dauntless Onslaught");
-        assertThat(a.getPowerModifier()).isZero();
-        assertThat(a.getToughnessModifier()).isZero();
-        assertThat(b.getPowerModifier()).isZero();
-        assertThat(b.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, a)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, a)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, b)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, b)).isZero();
     }
 
     @Test

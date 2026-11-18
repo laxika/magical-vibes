@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.UnlicensedDisintegration;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -59,7 +60,7 @@ class CultivatorOfBladesTest extends BaseCardTest {
         Permanent cultivator = addCreatureReady(player1, new CultivatorOfBlades());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent homeBody = addCreatureReady(player1, new GrizzlyBears());
-        cultivator.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, cultivator, 2);
 
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
@@ -128,13 +129,13 @@ class CultivatorOfBladesTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0, 1));
-        cultivator.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, cultivator, 3);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
-        cultivator.setPowerModifier(0);
+        PermanentGrants.setPowerBoost(gd, cultivator, 0);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
     }
@@ -147,7 +148,7 @@ class CultivatorOfBladesTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0, 1));
-        cultivator.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, cultivator, 3);
         harness.ensurePriority(player2);
         harness.castAndResolveInstant(player2, 0, cultivator.getId());
         resolveAllTriggers();
@@ -163,7 +164,7 @@ class CultivatorOfBladesTest extends BaseCardTest {
     void negativePowerReducesOtherAttackers() {
         Permanent cultivator = addCreatureReady(player1, new CultivatorOfBlades());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        cultivator.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, cultivator, -2);
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();

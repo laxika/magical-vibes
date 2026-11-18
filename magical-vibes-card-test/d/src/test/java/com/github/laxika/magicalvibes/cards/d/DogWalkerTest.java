@@ -100,8 +100,8 @@ class DogWalkerTest extends BaseCardTest {
             assertThat(dog.isTapped()).isTrue();
             assertThat(dog.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(dog.getCard().getSubtypes()).containsExactly(CardSubtype.DOG);
-            assertThat(dog.getEffectivePower()).isEqualTo(1);
-            assertThat(dog.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, dog)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, dog)).isEqualTo(1);
         });
     }
 }

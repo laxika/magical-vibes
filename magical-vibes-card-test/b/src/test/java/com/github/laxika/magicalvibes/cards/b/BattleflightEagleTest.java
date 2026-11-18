@@ -56,8 +56,8 @@ class BattleflightEagleTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         Permanent bears = gqs.findPermanentById(gd, targetId);
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FLYING);
     }
 
@@ -75,7 +75,7 @@ class BattleflightEagleTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve ETB
 
         Permanent bears = gqs.findPermanentById(gd, targetId);
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FLYING);
     }
 
@@ -97,8 +97,8 @@ class BattleflightEagleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gqs.findPermanentById(gd, targetId);
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.FLYING);
     }
 
@@ -132,15 +132,15 @@ class BattleflightEagleTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, eagle.getId());
         resolveAllTriggers();
 
-        assertThat(eagle.getEffectivePower()).isEqualTo(4);
-        assertThat(eagle.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, eagle)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, eagle)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(eagle.getEffectivePower()).isEqualTo(2);
-        assertThat(eagle.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, eagle)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, eagle)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, eagle, Keyword.FLYING)).isTrue();
     }
 
@@ -152,8 +152,8 @@ class BattleflightEagleTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
@@ -170,8 +170,8 @@ class BattleflightEagleTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, eagle));
         resolveAllTriggers();
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         harness.assertInGraveyard(player1, "Battleflight Eagle");
     }

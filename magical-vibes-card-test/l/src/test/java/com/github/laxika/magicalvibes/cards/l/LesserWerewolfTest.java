@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RagingBull;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -41,7 +42,7 @@ class LesserWerewolfTest extends BaseCardTest {
     @DisplayName("Checks the power condition once before applying both effects")
     void stillCountersTargetWhenThePowerBecomesZero() {
         Permanent werewolf = addCreatureReady(player1, new LesserWerewolf());
-        werewolf.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, werewolf, -1);
         Permanent blocker = addCreatureReady(player2, new RagingBull());
 
         declareAttackersAndPrepareBlockers(List.of(indexOf(player1, werewolf)));
@@ -58,7 +59,7 @@ class LesserWerewolfTest extends BaseCardTest {
     @DisplayName("Does nothing when its power is zero")
     void doesNothingAtZeroPower() {
         Permanent werewolf = addCreatureReady(player1, new LesserWerewolf());
-        werewolf.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, werewolf, -2);
         Permanent blocker = addCreatureReady(player2, new RagingBull());
 
         declareAttackersAndPrepareBlockers(List.of(indexOf(player1, werewolf)));

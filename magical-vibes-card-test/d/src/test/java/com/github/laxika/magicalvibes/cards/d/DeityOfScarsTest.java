@@ -31,8 +31,8 @@ class DeityOfScarsTest extends BaseCardTest {
 
         Permanent deity = deity(player1);
         assertThat(deity.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
-        assertThat(deity.getEffectivePower()).isEqualTo(5);
-        assertThat(deity.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, deity)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, deity)).isEqualTo(5);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -49,8 +49,8 @@ class DeityOfScarsTest extends BaseCardTest {
 
         assertThat(gd.regenerationShieldCount(deity.getId())).isEqualTo(1);
         assertThat(deity.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(deity.getEffectivePower()).isEqualTo(6);
-        assertThat(deity.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, deity)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, deity)).isEqualTo(6);
     }
 
     @Test
@@ -114,7 +114,7 @@ class DeityOfScarsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.regenerationShieldCount(deity.getId())).isEqualTo(2);
-        assertThat(deity.getEffectiveToughness()).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, deity)).isEqualTo(7);
     }
 
     @Test

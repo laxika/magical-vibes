@@ -38,8 +38,8 @@ class NahiriHeirOfTheAncientsTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Kor Warrior");
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.KOR, CardSubtype.WARRIOR);
-        assertThat(token.getEffectivePower()).isEqualTo(1);
-        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         harness.handlePermanentChosen(player1, bonesplitter.getId());

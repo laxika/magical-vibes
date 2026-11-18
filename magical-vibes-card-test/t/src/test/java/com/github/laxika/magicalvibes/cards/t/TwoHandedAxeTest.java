@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SweepingCleave;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -24,7 +25,7 @@ class TwoHandedAxeTest extends BaseCardTest {
         Permanent axe = addAxeReady(player1);
         axe.setAttachedTo(creature.getId());
 
-        creature.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, creature, 1);
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
@@ -110,11 +111,11 @@ class TwoHandedAxeTest extends BaseCardTest {
         axe.setAttachedTo(attacker.getId());
         declareAttackers(List.of(0));
 
-        attacker.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, attacker, 1);
         resolveAllTriggers();
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(6);
 
-        attacker.setPowerModifier(attacker.getPowerModifier() + 1);
+        PermanentGrants.setPowerBoost(gd, attacker, PermanentGrants.powerBoostOf(gd, attacker) + 1);
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(7);
     }
 
@@ -123,7 +124,7 @@ class TwoHandedAxeTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1);
         Permanent axe = addAxeReady(player1);
         axe.setAttachedTo(attacker.getId());
-        attacker.setPowerModifier(-3);
+        PermanentGrants.setPowerBoost(gd, attacker, -3);
         declareAttackers(List.of(0));
         resolveAllTriggers();
 

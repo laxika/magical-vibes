@@ -202,7 +202,7 @@ class BlazeCommandoTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, 0, commando.getId());
         harness.passBothPriorities();
-        assertThat(commando.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, commando)).isEqualTo(1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 

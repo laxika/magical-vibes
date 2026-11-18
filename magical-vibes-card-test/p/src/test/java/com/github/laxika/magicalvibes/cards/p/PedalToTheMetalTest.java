@@ -30,8 +30,8 @@ class PedalToTheMetalTest extends BaseCardTest {
         harness.castInstant(player1, 0, 3, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE);
     }
 
@@ -49,7 +49,7 @@ class PedalToTheMetalTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
@@ -75,8 +75,8 @@ class PedalToTheMetalTest extends BaseCardTest {
         harness.castInstant(player1, 0, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE);
     }
 
@@ -91,10 +91,10 @@ class PedalToTheMetalTest extends BaseCardTest {
         harness.castInstant(player1, 0, 2, opponentBear.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentBear.getPowerModifier()).isEqualTo(2);
-        assertThat(opponentBear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentBear)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentBear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, opponentBear)).contains(Keyword.FIRST_STRIKE);
-        assertThat(ownBear.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, ownBear)).isZero();
         assertThat(PermanentGrants.keywordsOf(gd, ownBear)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 }

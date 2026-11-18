@@ -31,6 +31,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
 @Slf4j
 @Component
@@ -231,15 +232,9 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
     private void applyPermanentCharacteristics(GameData gameData, StackEntry entry, UUID controllerId,
                                                Permanent permanent,
                                                ReturnAllCardsExiledWithSourceEffect effect) {
-        if (effect.basePower() != null) {
-            permanent.setBasePowerOverriddenPermanently(true);
-            permanent.setPermanentBasePowerOverride(effect.basePower());
-            permanent.setPermanentBasePowerOverrideTimestamp(gameData.nextTimestamp());
-        }
-        if (effect.baseToughness() != null) {
-            permanent.setBaseToughnessOverriddenPermanently(true);
-            permanent.setPermanentBaseToughnessOverride(effect.baseToughness());
-            permanent.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
+        if (effect.basePower() != null || effect.baseToughness() != null) {
+            gameData.addEffectOnPermanent(entry, new SetBasePowerToughnessEffect(effect.basePower(),
+                    effect.baseToughness(), GrantScope.TARGET, Duration.PERMANENT), permanent.getId(), Duration.PERMANENT);
         }
         if (effect.grantedSubtype() != null) {
             gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(effect.grantedSubtype(), GrantScope.TARGET),

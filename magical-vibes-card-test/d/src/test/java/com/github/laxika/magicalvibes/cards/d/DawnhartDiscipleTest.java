@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GatherTheTownsfolk;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -30,8 +31,8 @@ class DawnhartDiscipleTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(disciple.getPowerModifier()).isEqualTo(1);
-        assertThat(disciple.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, disciple)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, disciple)).isEqualTo(3);
     }
@@ -47,8 +48,8 @@ class DawnhartDiscipleTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(disciple.getPowerModifier()).isEqualTo(0);
-        assertThat(disciple.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isEqualTo(0);
     }
 
     @Test
@@ -66,8 +67,8 @@ class DawnhartDiscipleTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(disciple.getPowerModifier()).isEqualTo(0);
-        assertThat(disciple.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isEqualTo(0);
     }
 
     @Test
@@ -80,15 +81,15 @@ class DawnhartDiscipleTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
-        assertThat(disciple.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(1);
 
         harness.setHand(player1, new ArrayList<>());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(disciple.getPowerModifier()).isEqualTo(0);
-        assertThat(disciple.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isEqualTo(0);
         assertThat(gqs.getEffectivePower(gd, disciple)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, disciple)).isEqualTo(2);
     }
@@ -102,15 +103,15 @@ class DawnhartDiscipleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0);
         resolveAllTriggers();
-        assertThat(disciple.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(1);
 
         harness.setHand(player1, List.of(new EliteVanguard()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(disciple.getPowerModifier()).isEqualTo(2);
-        assertThat(disciple.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, disciple)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, disciple)).isEqualTo(4);
     }
@@ -126,8 +127,8 @@ class DawnhartDiscipleTest extends BaseCardTest {
 
         Permanent disciple = findPermanent(player1, "Dawnhart Disciple");
         assertThat(gd.stack).isEmpty();
-        assertThat(disciple.getPowerModifier()).isZero();
-        assertThat(disciple.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isZero();
     }
 
     @Test
@@ -144,13 +145,13 @@ class DawnhartDiscipleTest extends BaseCardTest {
                 .filter(permanent -> !permanent.getId().equals(original.getId()))
                 .findFirst().orElseThrow();
         assertThat(gd.stack).hasSize(1);
-        assertThat(original.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, original)).isZero();
         resolveAllTriggers();
 
-        assertThat(original.getPowerModifier()).isEqualTo(1);
-        assertThat(original.getToughnessModifier()).isEqualTo(1);
-        assertThat(entering.getPowerModifier()).isZero();
-        assertThat(entering.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, original)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, original)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, entering)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, entering)).isZero();
     }
 
     @Test
@@ -165,12 +166,12 @@ class DawnhartDiscipleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(disciple.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isZero();
         harness.passBothPriorities();
-        assertThat(disciple.getPowerModifier()).isEqualTo(1);
-        assertThat(disciple.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isEqualTo(1);
         resolveAllTriggers();
-        assertThat(disciple.getPowerModifier()).isEqualTo(2);
-        assertThat(disciple.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, disciple)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, disciple)).isEqualTo(2);
     }
 }

@@ -64,8 +64,8 @@ class VivienMonstersAdvocateTest extends BaseCardTest {
         assertThat(beast.getCounterCount(CounterType.REACH)).isEqualTo(1);
         assertThat(beast.getCounterCount(CounterType.VIGILANCE)).isZero();
         assertThat(beast.getCounterCount(CounterType.TRAMPLE)).isZero();
-        assertThat(beast.getEffectivePower()).isEqualTo(3);
-        assertThat(beast.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(3);
         assertThat(vivien.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
     }
 

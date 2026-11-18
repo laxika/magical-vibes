@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
+
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,14 +25,14 @@ class BasaltGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getPowerModifiers()).isZero();
-        assertThat(gargoyle.getToughnessModifiers()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, gargoyle)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getToughnessModifiers()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isZero();
     }
 
     @Test
@@ -44,8 +46,8 @@ class BasaltGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getPowerModifiers()).isZero();
-        assertThat(gargoyle.getToughnessModifiers()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, gargoyle)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isEqualTo(2);
     }
 
     @Test
@@ -110,11 +112,11 @@ class BasaltGargoyleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        assertThat(gargoyle.getToughnessModifiers()).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isZero();
         harness.passBothPriorities();
 
-        assertThat(gargoyle.getPowerModifiers()).isZero();
-        assertThat(gargoyle.getToughnessModifiers()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, gargoyle)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, gargoyle)).isEqualTo(1);
         assertThat(gargoyle.isTapped()).isTrue();
     }
     @Test

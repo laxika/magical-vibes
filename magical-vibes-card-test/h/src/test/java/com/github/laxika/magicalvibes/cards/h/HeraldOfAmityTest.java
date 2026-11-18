@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -88,14 +89,14 @@ class HeraldOfAmityTest extends BaseCardTest {
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(herald)));
         resolveAllTriggers();
 
-        assertThat(herald.getPowerModifier()).isEqualTo(1);
-        assertThat(herald.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, herald)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, herald)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(herald.getPowerModifier()).isZero();
-        assertThat(herald.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, herald)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, herald)).isZero();
     }
 
     @Test
@@ -172,11 +173,11 @@ class HeraldOfAmityTest extends BaseCardTest {
         addAttachedAura(player1, herald);
         resolveAllTriggers();
 
-        assertThat(herald.getPowerModifier()).isEqualTo(2);
-        assertThat(herald.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, herald)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, herald)).isEqualTo(2);
         addAttachedAura(player1, herald);
-        assertThat(herald.getPowerModifier()).isEqualTo(2);
-        assertThat(herald.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, herald)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, herald)).isEqualTo(2);
     }
 
     private void castHerald(List<Card> library, int whiteMana) {

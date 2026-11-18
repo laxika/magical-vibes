@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HamletGlutton;
 import com.github.laxika.magicalvibes.model.Card;
@@ -114,7 +115,7 @@ class BoundaryLandsRangerTest extends BaseCardTest {
     @Test
     void rangerItselfWithExactlyFourPowerQualifies() {
         Permanent ranger = harness.addToBattlefieldAndReturn(player1, new BoundaryLandsRanger());
-        ranger.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, ranger, 2);
         Card discarded = new Forest();
         Card drawn = new BoundaryLandsRanger();
         harness.setHand(player1, List.of(discarded));
@@ -133,7 +134,7 @@ class BoundaryLandsRangerTest extends BaseCardTest {
     @Test
     void threePowerDoesNotQualify() {
         Permanent ranger = harness.addToBattlefieldAndReturn(player1, new BoundaryLandsRanger());
-        ranger.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, ranger, 1);
 
         advanceToCombat(player1);
 
@@ -155,7 +156,7 @@ class BoundaryLandsRangerTest extends BaseCardTest {
     @Test
     void losingPowerBeforeResolutionPreventsDiscardAndDraw() {
         Permanent ranger = harness.addToBattlefieldAndReturn(player1, new BoundaryLandsRanger());
-        ranger.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, ranger, 2);
         Card inHand = new Forest();
         Card inLibrary = new BoundaryLandsRanger();
         harness.setHand(player1, List.of(inHand));
@@ -163,7 +164,7 @@ class BoundaryLandsRangerTest extends BaseCardTest {
 
         advanceToCombat(player1);
         assertThat(gd.stack).hasSize(1);
-        ranger.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, ranger, 1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

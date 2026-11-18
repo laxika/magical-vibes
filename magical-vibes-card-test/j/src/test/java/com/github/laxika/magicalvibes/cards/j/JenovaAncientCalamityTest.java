@@ -81,7 +81,7 @@ class JenovaAncientCalamityTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, bear.getId());
-        jenova.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, jenova, 3);
         harness.passBothPriorities();
 
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
@@ -91,7 +91,7 @@ class JenovaAncientCalamityTest extends BaseCardTest {
     @Test
     void zeroPowerStillMakesTargetAMutant() {
         Permanent jenova = addCreatureReady(player1, new JenovaAncientCalamity());
-        jenova.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, jenova, -1);
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
 
         advanceToCombat(player1);
@@ -124,7 +124,7 @@ class JenovaAncientCalamityTest extends BaseCardTest {
     void drawsForJenovasOwnDeathWhenItIsAMutant() {
         Permanent jenova = addCreatureReady(player1, new JenovaAncientCalamity());
         PermanentGrants.subtype(gd, jenova, CardSubtype.MUTANT);
-        jenova.setPowerModifier(3);
+        PermanentGrants.setPowerBoost(gd, jenova, 3);
         harness.setHand(player1, List.of(new BattleMenu()));
         harness.setLibrary(player1, List.of(new JenovaAncientCalamity(), new JenovaAncientCalamity(),
                 new JenovaAncientCalamity(), new JenovaAncientCalamity(), new JenovaAncientCalamity()));
@@ -177,7 +177,7 @@ class JenovaAncientCalamityTest extends BaseCardTest {
         addCreatureReady(player1, new JenovaAncientCalamity());
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
         PermanentGrants.subtype(gd, bear, CardSubtype.MUTANT);
-        bear.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, bear, 2);
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(),
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));

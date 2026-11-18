@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrayscaledGharial;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -54,15 +55,15 @@ class SunhomeEnforcerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(enforcer.getPowerModifier()).isEqualTo(1);
-        assertThat(enforcer.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, enforcer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enforcer)).isEqualTo(0);
         assertThat(enforcer.isTapped()).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(enforcer.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, enforcer)).isEqualTo(0);
     }
 
     @Test
@@ -131,8 +132,8 @@ class SunhomeEnforcerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(enforcer.getPowerModifier()).isEqualTo(1);
-        assertThat(enforcer.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, enforcer)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, enforcer)).isZero();
         assertThat(enforcer.isTapped()).isTrue();
     }
 

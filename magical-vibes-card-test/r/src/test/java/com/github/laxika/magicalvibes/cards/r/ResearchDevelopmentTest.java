@@ -157,8 +157,8 @@ class ResearchDevelopmentTest extends BaseCardTest {
             assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
-            assertThat(token.getEffectivePower()).isEqualTo(3);
-            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         });
         assertThat(findPermanents(player2, "Elemental")).isEmpty();
     }

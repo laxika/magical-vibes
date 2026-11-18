@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlabornTrooper;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,8 +24,8 @@ class LurkingNightstalkerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(nightstalker.getPowerModifier()).isEqualTo(2);
-        assertThat(nightstalker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, nightstalker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nightstalker)).isEqualTo(0);
     }
 
     @Test
@@ -36,10 +37,10 @@ class LurkingNightstalkerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(nightstalker.getPowerModifier()).isEqualTo(2);
-        assertThat(nightstalker.getToughnessModifier()).isEqualTo(0);
-        assertThat(otherCreature.getPowerModifier()).isEqualTo(0);
-        assertThat(otherCreature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, nightstalker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nightstalker)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreature)).isEqualTo(0);
     }
 
     @Test
@@ -50,13 +51,13 @@ class LurkingNightstalkerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(nightstalker.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, nightstalker)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(nightstalker.getPowerModifier()).isEqualTo(0);
-        assertThat(nightstalker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, nightstalker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nightstalker)).isEqualTo(0);
     }
 
     @Test
@@ -64,8 +65,8 @@ class LurkingNightstalkerTest extends BaseCardTest {
     void noBoostWithoutAttacking() {
         Permanent nightstalker = addCreatureReady(player1, new LurkingNightstalker());
 
-        assertThat(nightstalker.getPowerModifier()).isEqualTo(0);
-        assertThat(nightstalker.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, nightstalker)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nightstalker)).isEqualTo(0);
     }
 
     @Test
@@ -77,10 +78,10 @@ class LurkingNightstalkerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getPowerModifier()).isEqualTo(2);
-        assertThat(attacker.getToughnessModifier()).isZero();
-        assertThat(nonattacker.getPowerModifier()).isZero();
-        assertThat(nonattacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, attacker)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, attacker)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonattacker)).isZero();
     }
 
     @Test
@@ -92,9 +93,9 @@ class LurkingNightstalkerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 }

@@ -84,7 +84,7 @@ class DwarvenNomadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
 
         harness.passBothPriorities();
 

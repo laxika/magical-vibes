@@ -30,10 +30,10 @@ class OverwhelmingVictoryTest extends BaseCardTest {
         castOverwhelmingVictory(target);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(5);
-        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
@@ -48,7 +48,7 @@ class OverwhelmingVictoryTest extends BaseCardTest {
         castOverwhelmingVictory(target);
 
         assertThat(target.getMarkedDamage()).isEqualTo(5);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -59,14 +59,14 @@ class OverwhelmingVictoryTest extends BaseCardTest {
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
 
         castOverwhelmingVictory(target);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -89,7 +89,7 @@ class OverwhelmingVictoryTest extends BaseCardTest {
 
         castOverwhelmingVictory(target);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
         harness.assertInGraveyard(player2, "Hill Giant");
     }
@@ -105,7 +105,7 @@ class OverwhelmingVictoryTest extends BaseCardTest {
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -122,7 +122,7 @@ class OverwhelmingVictoryTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Overwhelming Victory");
     }
@@ -135,7 +135,7 @@ class OverwhelmingVictoryTest extends BaseCardTest {
 
         Permanent laterCreature = addCreatureReady(player1, new GrizzlyBears());
 
-        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.TRAMPLE)).isFalse();
     }
 

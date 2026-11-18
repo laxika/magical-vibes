@@ -42,10 +42,9 @@ public class DoubleTargetCreaturePowerToughnessEffectHandler implements NormalEf
 
         int currentPower = gameQueryService.getEffectivePower(gameData, target);
         int currentToughness = gameQueryService.getEffectiveToughness(gameData, target);
-        target.setPowerModifier(target.getPowerModifier()
-                + MaroGoneNutsSupport.doublingIncrease(gameData, effect, currentPower));
-        target.setToughnessModifier(target.getToughnessModifier()
-                + MaroGoneNutsSupport.doublingIncrease(gameData, effect, currentToughness));
+        gameData.addPowerToughnessBoost(entry, target.getId(),
+                MaroGoneNutsSupport.doublingIncrease(gameData, effect, currentPower),
+                MaroGoneNutsSupport.doublingIncrease(gameData, effect, currentToughness));
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -25,10 +26,10 @@ class ScareTacticsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(firstCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(firstCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(secondCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(secondCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(1);
     }
 
     @Test
@@ -40,8 +41,8 @@ class ScareTacticsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(1);
     }
 
     @Test
@@ -54,8 +55,8 @@ class ScareTacticsTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -67,8 +68,8 @@ class ScareTacticsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(noncreature.getPowerModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, noncreature)).isZero();
     }
 
     @Test
@@ -80,8 +81,8 @@ class ScareTacticsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         Permanent creatureAfterResolution = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
 
-        assertThat(creatureBeforeResolution.getEffectivePower()).isEqualTo(2);
-        assertThat(creatureAfterResolution.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creatureBeforeResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creatureAfterResolution)).isEqualTo(1);
     }
 
     @Test
@@ -93,8 +94,8 @@ class ScareTacticsTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
         harness.passBothPriorities();
 
-        assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -107,7 +108,7 @@ class ScareTacticsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Scare Tactics");
         assertThat(gd.stack).isEmpty();
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
     }
 
     @Test
@@ -119,13 +120,13 @@ class ScareTacticsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(creature.getEffectivePower()).isEqualTo(1);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 }

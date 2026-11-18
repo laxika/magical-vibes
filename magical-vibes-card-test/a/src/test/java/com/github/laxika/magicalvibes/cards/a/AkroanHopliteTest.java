@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,8 +27,8 @@ class AkroanHopliteTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(hoplite.getPowerModifier()).isEqualTo(2);
-        assertThat(hoplite.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hoplite)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, hoplite)).isZero();
     }
 
     @Test
@@ -37,13 +38,13 @@ class AkroanHopliteTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
-        assertThat(hoplite.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, hoplite)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(hoplite.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, hoplite)).isZero();
     }
 
     @Test
@@ -57,11 +58,11 @@ class AkroanHopliteTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
-        assertThat(nonattacker.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
     }
 
     @Test
@@ -79,8 +80,8 @@ class AkroanHopliteTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(survivor).doesNotContain(removed);
-        assertThat(survivor.getPowerModifier()).isEqualTo(1);
-        assertThat(survivor.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, survivor)).isZero();
     }
 
     @Test
@@ -98,8 +99,8 @@ class AkroanHopliteTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(nonattacker).doesNotContain(attacker);
-        assertThat(nonattacker.getPowerModifier()).isZero();
-        assertThat(nonattacker.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, nonattacker)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, nonattacker)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

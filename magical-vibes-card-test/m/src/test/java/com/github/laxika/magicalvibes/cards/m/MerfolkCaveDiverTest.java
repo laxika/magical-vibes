@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CenoteScout;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +28,8 @@ class MerfolkCaveDiverTest extends BaseCardTest {
         castExplorerAndResolveExplore();
         harness.passBothPriorities();
 
-        assertThat(caveDiver.getPowerModifier()).isEqualTo(1);
-        assertThat(caveDiver.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, caveDiver)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, caveDiver)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isTrue();
     }
 
@@ -44,7 +45,7 @@ class MerfolkCaveDiverTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
-        assertThat(caveDiver.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, caveDiver)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isTrue();
     }
 
@@ -61,8 +62,8 @@ class MerfolkCaveDiverTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(caveDiver.getPowerModifier()).isZero();
-        assertThat(caveDiver.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, caveDiver)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, caveDiver)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isFalse();
     }
 
@@ -77,8 +78,8 @@ class MerfolkCaveDiverTest extends BaseCardTest {
         castExplorerAndResolveExplore();
         harness.passBothPriorities();
 
-        assertThat(caveDiver.getPowerModifier()).isEqualTo(2);
-        assertThat(caveDiver.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, caveDiver)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, caveDiver)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isTrue();
     }
 
@@ -93,8 +94,8 @@ class MerfolkCaveDiverTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
         assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
     }
@@ -111,9 +112,9 @@ class MerfolkCaveDiverTest extends BaseCardTest {
         castExplorerAndResolveExplore(player2);
         harness.passBothPriorities();
 
-        assertThat(caveDiver.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, caveDiver)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isFalse();
-        assertThat(opposingDiver.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingDiver)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, opposingDiver)).isTrue();
     }
 
@@ -126,7 +127,7 @@ class MerfolkCaveDiverTest extends BaseCardTest {
         castExplorerAndResolveExplore();
         harness.passBothPriorities();
 
-        assertThat(caveDiver.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, caveDiver)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isTrue();
     }
 
@@ -140,13 +141,13 @@ class MerfolkCaveDiverTest extends BaseCardTest {
         castExplorerAndResolveExplore();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        assertThat(caveDiver.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, caveDiver)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isFalse();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(revealedCard);
-        assertThat(caveDiver.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, caveDiver)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, caveDiver)).isTrue();
     }
 

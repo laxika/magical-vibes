@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PygmyAllosaurus;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,8 +27,8 @@ class BurningSunCavalryTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(cavalry.getPowerModifier()).isEqualTo(1);
-        assertThat(cavalry.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalry)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cavalry)).isEqualTo(1);
     }
 
     @Test
@@ -42,8 +43,8 @@ class BurningSunCavalryTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(cavalry.getPowerModifier()).isEqualTo(1);
-        assertThat(cavalry.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalry)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cavalry)).isEqualTo(1);
     }
 
     @Test
@@ -54,8 +55,8 @@ class BurningSunCavalryTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(cavalry.getPowerModifier()).isZero();
-        assertThat(cavalry.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalry)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cavalry)).isZero();
     }
 
     @Test
@@ -67,8 +68,8 @@ class BurningSunCavalryTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(cavalry.getPowerModifier()).isZero();
-        assertThat(cavalry.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalry)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cavalry)).isZero();
     }
 
     @Test
@@ -84,8 +85,8 @@ class BurningSunCavalryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(cavalry.getPowerModifier()).isZero();
-        assertThat(cavalry.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalry)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cavalry)).isZero();
     }
 
     @Test
@@ -100,8 +101,8 @@ class BurningSunCavalryTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(dinosaur.getCard());
         resolveAllTriggers();
 
-        assertThat(cavalry.getPowerModifier()).isEqualTo(1);
-        assertThat(cavalry.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalry)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cavalry)).isEqualTo(1);
     }
 
     @Test
@@ -119,8 +120,8 @@ class BurningSunCavalryTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(dinosaur.getCard());
         resolveAllTriggers();
 
-        assertThat(cavalry.getPowerModifier()).isEqualTo(1);
-        assertThat(cavalry.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalry)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cavalry)).isEqualTo(1);
     }
 
     @Test
@@ -134,7 +135,7 @@ class BurningSunCavalryTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(cavalry.getPowerModifier()).isZero();
-        assertThat(cavalry.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, cavalry)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, cavalry)).isZero();
     }
 }

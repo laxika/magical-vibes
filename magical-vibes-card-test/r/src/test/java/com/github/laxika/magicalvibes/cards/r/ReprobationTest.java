@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -86,8 +87,8 @@ class ReprobationTest extends BaseCardTest {
         Permanent enchanted = harness.addToBattlefieldAndReturn(player2, new UniversalAutomaton());
         Permanent other = harness.addToBattlefieldAndReturn(player2, new UniversalAutomaton());
         enchanted.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        enchanted.setPowerModifier(3);
-        enchanted.setToughnessModifier(3);
+        PermanentGrants.setPowerBoost(gd, enchanted, 3);
+        PermanentGrants.setToughnessBoost(gd, enchanted, 3);
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new Reprobation());
         aura.setAttachedTo(enchanted.getId());
 

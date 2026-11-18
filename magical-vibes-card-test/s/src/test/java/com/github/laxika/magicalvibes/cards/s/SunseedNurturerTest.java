@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.Mosstodon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -143,7 +144,7 @@ class SunseedNurturerTest extends BaseCardTest {
 
         advanceToEndStep(player1);
         assertThat(gd.stack).hasSize(1);
-        creature.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, creature, -1);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);

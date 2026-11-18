@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.m.MoriokReaver;
@@ -79,10 +80,10 @@ class VulshokHeartstokerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         Permanent target = gqs.findPermanentById(gd, targetId);
-        assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -100,15 +101,15 @@ class VulshokHeartstokerTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve ETB
 
         Permanent target = gqs.findPermanentById(gd, targetId);
-        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
 
         // Advance through cleanup to the next turn.
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.getToughnessModifier()).isEqualTo(0);
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -126,8 +127,8 @@ class VulshokHeartstokerTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve ETB
 
         Permanent target = gqs.findPermanentById(gd, targetId);
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -182,8 +183,8 @@ class VulshokHeartstokerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, selfId);
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(gqs.findPermanentById(gd, selfId).getEffectivePower()).isEqualTo(4);
-        assertThat(gqs.findPermanentById(gd, selfId).getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, gqs.findPermanentById(gd, selfId))).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, gqs.findPermanentById(gd, selfId))).isEqualTo(2);
     }
 
     @Test
@@ -203,7 +204,7 @@ class VulshokHeartstokerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, selfId);
         harness.passBothPriorities();
 
-        assertThat(gqs.findPermanentById(gd, selfId).getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, gqs.findPermanentById(gd, selfId))).isEqualTo(4);
     }
 
     @Test
@@ -215,8 +216,8 @@ class VulshokHeartstokerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
@@ -232,8 +233,8 @@ class VulshokHeartstokerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(5);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 }

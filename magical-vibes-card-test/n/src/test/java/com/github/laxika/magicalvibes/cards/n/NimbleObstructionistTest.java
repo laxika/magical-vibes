@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CunningSurvivor;
 import com.github.laxika.magicalvibes.cards.d.DesertOfTheMindful;
 import com.github.laxika.magicalvibes.cards.f.FumeSpitter;
@@ -148,7 +149,7 @@ class NimbleObstructionistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, triggerId);
         harness.passBothPriorities();
 
-        assertThat(survivor.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, survivor)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, survivor)).isFalse();
         harness.assertNotInHand(player1, "Desert of the Mindful");
         harness.passBothPriorities();

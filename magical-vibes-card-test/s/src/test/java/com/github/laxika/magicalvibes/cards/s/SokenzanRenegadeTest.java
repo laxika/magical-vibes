@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -26,8 +27,8 @@ class SokenzanRenegadeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(renegade.getPowerModifier()).isEqualTo(1);
-        assertThat(renegade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, renegade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, renegade)).isEqualTo(1);
     }
 
     @Test
@@ -40,8 +41,8 @@ class SokenzanRenegadeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(renegade.getPowerModifier()).isEqualTo(1);
-        assertThat(renegade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, renegade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, renegade)).isEqualTo(1);
     }
 
     @Test
@@ -97,13 +98,13 @@ class SokenzanRenegadeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(renegade.getPowerModifier()).isEqualTo(1);
-        assertThat(renegade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, renegade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, renegade)).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(renegade.getPowerModifier()).isZero();
-        assertThat(renegade.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, renegade)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, renegade)).isZero();
     }
 
     @Test
@@ -117,8 +118,8 @@ class SokenzanRenegadeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
 
-        assertThat(renegade.getPowerModifier()).isEqualTo(1);
-        assertThat(renegade.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, renegade)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, renegade)).isEqualTo(1);
     }
 
     @Test

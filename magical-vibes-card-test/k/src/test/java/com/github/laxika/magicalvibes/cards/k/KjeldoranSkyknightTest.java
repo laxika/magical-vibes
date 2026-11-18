@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.s.ShamblingStrider;
 import com.github.laxika.magicalvibes.cards.s.SilverErne;
@@ -39,7 +40,7 @@ class KjeldoranSkyknightTest extends BaseCardTest {
     void firstStrikeKillsBlockerBeforeReciprocalDamage() {
         Permanent skyknight = addCreatureReady(player1, new KjeldoranSkyknight());
         addCreatureReady(player2, new SilverErne());
-        skyknight.setPowerModifier(1);
+        PermanentGrants.setPowerBoost(gd, skyknight, 1);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

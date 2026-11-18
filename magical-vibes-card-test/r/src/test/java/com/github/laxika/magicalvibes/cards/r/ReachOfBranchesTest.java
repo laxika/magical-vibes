@@ -36,8 +36,8 @@ class ReachOfBranchesTest extends BaseCardTest {
 
         List<Permanent> tokens = findPermanents(player1, "Treefolk Shaman");
         assertThat(tokens).hasSize(1);
-        assertThat(tokens.getFirst().getEffectivePower()).isEqualTo(2);
-        assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, tokens.getFirst())).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, tokens.getFirst())).isEqualTo(5);
     }
 
     @Test

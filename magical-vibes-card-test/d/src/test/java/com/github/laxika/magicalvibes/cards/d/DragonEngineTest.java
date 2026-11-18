@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -24,8 +25,8 @@ class DragonEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(engine.getPowerModifier()).isEqualTo(1);
-        assertThat(engine.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, engine)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, engine)).isEqualTo(0);
     }
 
     @Test
@@ -39,8 +40,8 @@ class DragonEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(engine.getPowerModifier()).isEqualTo(2);
-        assertThat(engine.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, engine)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, engine)).isEqualTo(0);
     }
 
     @Test
@@ -53,7 +54,7 @@ class DragonEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(engine.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, engine)).isEqualTo(1);
     }
 
     @Test
@@ -76,14 +77,14 @@ class DragonEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(engine.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, engine)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(engine.getPowerModifier()).isEqualTo(0);
-        assertThat(engine.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, engine)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, engine)).isEqualTo(0);
     }
 
     private Permanent addEngine(Player player) {
@@ -100,7 +101,7 @@ class DragonEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(engine.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, engine)).isEqualTo(1);
         assertThat(engine.isTapped()).isFalse();
     }
 
@@ -114,7 +115,7 @@ class DragonEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(engine.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, engine)).isEqualTo(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
@@ -130,15 +131,15 @@ class DragonEngineTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
 
-        assertThat(second.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(0);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(first.getPowerModifier()).isEqualTo(0);
-        assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(second.getToughnessModifier()).isEqualTo(0);
-        assertThat(opposing.getPowerModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, opposing)).isEqualTo(0);
         assertThat(gd.stack).isEmpty();
     }
 }

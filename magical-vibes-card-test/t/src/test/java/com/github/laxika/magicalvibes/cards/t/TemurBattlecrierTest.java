@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.Anticipate;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -129,7 +130,7 @@ class TemurBattlecrierTest extends BaseCardTest {
     @DisplayName("Battlecrier stops counting itself when its power falls below four")
     void usesBattlecriersCurrentPower() {
         var battlecrier = harness.addToBattlefieldAndReturn(player1, new TemurBattlecrier());
-        battlecrier.setPowerModifier(-1);
+        PermanentGrants.setPowerBoost(gd, battlecrier, -1);
         harness.setHand(player1, List.of(new Anticipate()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -143,7 +144,7 @@ class TemurBattlecrierTest extends BaseCardTest {
     void countsCreaturesWithIncreasedPower() {
         harness.addToBattlefield(player1, new TemurBattlecrier());
         var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setPowerModifier(2);
+        PermanentGrants.setPowerBoost(gd, bears, 2);
         harness.setHand(player1, List.of(new AirElemental()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

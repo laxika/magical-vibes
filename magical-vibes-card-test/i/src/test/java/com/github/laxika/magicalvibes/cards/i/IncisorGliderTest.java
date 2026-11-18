@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -31,10 +32,10 @@ class IncisorGliderTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(glider.getPowerModifier()).isEqualTo(1);
-        assertThat(glider.getToughnessModifier()).isEqualTo(1);
-        assertThat(otherCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(otherCreature.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, glider)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, glider)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreature)).isEqualTo(1);
     }
 
     @Test
@@ -51,10 +52,10 @@ class IncisorGliderTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(glider.getPowerModifier()).isEqualTo(0);
-        assertThat(glider.getToughnessModifier()).isEqualTo(0);
-        assertThat(otherCreature.getPowerModifier()).isEqualTo(0);
-        assertThat(otherCreature.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, glider)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, glider)).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, otherCreature)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, otherCreature)).isEqualTo(0);
     }
 
     @Test
@@ -68,8 +69,8 @@ class IncisorGliderTest extends BaseCardTest {
         gd.playerPoisonCounters.put(player2.getId(), 2);
         harness.passBothPriorities();
 
-        assertThat(glider.getPowerModifier()).isZero();
-        assertThat(glider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, glider)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, glider)).isZero();
     }
 
     @Test
@@ -83,8 +84,8 @@ class IncisorGliderTest extends BaseCardTest {
         gd.playerPoisonCounters.put(player2.getId(), 3);
         harness.passBothPriorities();
 
-        assertThat(glider.getPowerModifier()).isZero();
-        assertThat(glider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, glider)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, glider)).isZero();
     }
 
     @Test
@@ -97,8 +98,8 @@ class IncisorGliderTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.passBothPriorities();
 
-        assertThat(glider.getPowerModifier()).isZero();
-        assertThat(glider.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, glider)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, glider)).isZero();
     }
 
     @Test
@@ -116,12 +117,12 @@ class IncisorGliderTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new IncisorGlider());
 
-        assertThat(earlyCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(earlyCreature.getToughnessModifier()).isEqualTo(1);
-        assertThat(opponentCreature.getPowerModifier()).isZero();
-        assertThat(opponentCreature.getToughnessModifier()).isZero();
-        assertThat(lateCreature.getPowerModifier()).isZero();
-        assertThat(lateCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, earlyCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, earlyCreature)).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, opponentCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opponentCreature)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, lateCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, lateCreature)).isZero();
     }
 
     @Test
@@ -135,16 +136,16 @@ class IncisorGliderTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
-        assertThat(first.getPowerModifier()).isEqualTo(2);
-        assertThat(first.getToughnessModifier()).isEqualTo(2);
-        assertThat(second.getPowerModifier()).isEqualTo(2);
-        assertThat(second.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isEqualTo(2);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(first.getPowerModifier()).isZero();
-        assertThat(first.getToughnessModifier()).isZero();
-        assertThat(second.getPowerModifier()).isZero();
-        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, first)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, second)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, second)).isZero();
     }
 }

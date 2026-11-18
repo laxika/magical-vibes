@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.k.KhenraEternal;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -28,10 +29,10 @@ class ResilientKhenraTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new KhenraEternal());
         castAndAcceptMay(bears.getId());
 
-        assertThat(bears.getEffectivePower()).isEqualTo(4); // 2 + 2
-        assertThat(bears.getEffectiveToughness()).isEqualTo(4);
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4); // 2 + 2
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -50,8 +51,8 @@ class ResilientKhenraTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
     }
 
     @Test
@@ -64,9 +65,9 @@ class ResilientKhenraTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isZero();
-        assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isZero();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
     }
 
     @Test
@@ -88,13 +89,13 @@ class ResilientKhenraTest extends BaseCardTest {
         Permanent token = findPermanent(player1, "Resilient Khenra");
         assertThat(token.getCard().isToken()).isTrue();
 
-        assertThat(token.getEffectivePower()).isEqualTo(4);
-        assertThat(token.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
         assertThat(token.getCard().getManaCost()).isEmpty();
-        assertThat(bears.getPowerModifier()).isEqualTo(4);
-        assertThat(bears.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, bears)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bears)).isEqualTo(4);
     }
 
     @Test
@@ -121,8 +122,8 @@ class ResilientKhenraTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(khenra.getPowerModifier()).isEqualTo(2);
-        assertThat(khenra.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, khenra)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, khenra)).isEqualTo(2);
     }
 
     @Test
@@ -134,8 +135,8 @@ class ResilientKhenraTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(target.getPowerModifier()).isEqualTo(5);
-        assertThat(target.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -152,8 +153,8 @@ class ResilientKhenraTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(target.getPowerModifier()).isEqualTo(5);
-        assertThat(target.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(5);
     }
 
     @Test
@@ -171,8 +172,8 @@ class ResilientKhenraTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(target.getPowerModifier()).isEqualTo(4);
-        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(4);
     }
 
     @Test
@@ -187,8 +188,8 @@ class ResilientKhenraTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
     }
 
     @Test

@@ -23,12 +23,12 @@ class StenchOfDecayTest extends BaseCardTest {
 
         castStench();
 
-        assertThat(ownCrow.getEffectivePower()).isEqualTo(0);
-        assertThat(ownCrow.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponentCrow.getEffectivePower()).isEqualTo(0);
-        assertThat(opponentCrow.getEffectiveToughness()).isEqualTo(1);
-        assertThat(glider.getEffectivePower()).isEqualTo(2);
-        assertThat(glider.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCrow)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, ownCrow)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentCrow)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCrow)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, glider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, glider)).isEqualTo(1);
     }
 
     @Test
@@ -49,13 +49,13 @@ class StenchOfDecayTest extends BaseCardTest {
 
         castStench();
 
-        assertThat(crow.getEffectivePower()).isEqualTo(0);
+        assertThat(gqs.getEffectivePower(gd, crow)).isEqualTo(0);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(crow.getEffectivePower()).isEqualTo(1);
-        assertThat(crow.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, crow)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, crow)).isEqualTo(2);
     }
 
     @Test
@@ -65,8 +65,8 @@ class StenchOfDecayTest extends BaseCardTest {
 
         Permanent laterCrow = addCreatureReady(player1, new StormCrow());
 
-        assertThat(laterCrow.getEffectivePower()).isEqualTo(1);
-        assertThat(laterCrow.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterCrow)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, laterCrow)).isEqualTo(2);
     }
 
     @Test
@@ -80,10 +80,10 @@ class StenchOfDecayTest extends BaseCardTest {
         Permanent glider = addCreatureReady(player2, new AesthirGlider());
         harness.passBothPriorities();
 
-        assertThat(crow.getEffectivePower()).isEqualTo(0);
-        assertThat(crow.getEffectiveToughness()).isEqualTo(1);
-        assertThat(glider.getEffectivePower()).isEqualTo(2);
-        assertThat(glider.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, crow)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, crow)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, glider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, glider)).isEqualTo(1);
     }
 
     @Test
@@ -101,8 +101,8 @@ class StenchOfDecayTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCrow);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentCrow.getCard());
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(glider);
-        assertThat(glider.getEffectivePower()).isEqualTo(2);
-        assertThat(glider.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, glider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, glider)).isEqualTo(1);
     }
 
     private void castStench() {

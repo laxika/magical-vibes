@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,8 +29,8 @@ class JukaiTraineeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(trainee.getPowerModifier()).isEqualTo(1);
-        assertThat(trainee.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, trainee)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, trainee)).isEqualTo(1);
     }
 
     @Test
@@ -43,8 +44,8 @@ class JukaiTraineeTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(trainee.getPowerModifier()).isEqualTo(1);
-        assertThat(trainee.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, trainee)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, trainee)).isEqualTo(1);
     }
 
     @Test
@@ -62,8 +63,8 @@ class JukaiTraineeTest extends BaseCardTest {
         ));
         harness.passBothPriorities();
 
-        assertThat(trainee.getPowerModifier()).isEqualTo(1);
-        assertThat(trainee.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, trainee)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, trainee)).isEqualTo(1);
     }
 
     @Test
@@ -80,8 +81,8 @@ class JukaiTraineeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(trainee.getPowerModifier()).isZero();
-        assertThat(trainee.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, trainee)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, trainee)).isZero();
     }
 
     private Permanent addReadyTrainee(Player player) {
@@ -108,7 +109,7 @@ class JukaiTraineeTest extends BaseCardTest {
         ));
         resolveAllTriggers();
 
-        assertThat(trainee.getPowerModifier()).isEqualTo(1);
-        assertThat(trainee.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, trainee)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, trainee)).isEqualTo(1);
     }
 }

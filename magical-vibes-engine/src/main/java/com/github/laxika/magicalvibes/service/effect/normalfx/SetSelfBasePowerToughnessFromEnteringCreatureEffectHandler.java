@@ -61,9 +61,6 @@ public class SetSelfBasePowerToughnessFromEnteringCreatureEffectHandler implemen
             toughness = departed.getLastKnownToughness();
         }
 
-        source.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
-        source.setBasePowerOverride(power);
-        source.setBaseToughnessOverride(toughness);
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(),

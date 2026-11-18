@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ElvishHandservant;
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowStalwart;
 import com.github.laxika.magicalvibes.cards.n.NamelessInversion;
@@ -41,8 +42,8 @@ class CennsHeirTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(heir.getPowerModifier()).isEqualTo(0);
-        assertThat(heir.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isEqualTo(0);
     }
 
     @Test
@@ -54,8 +55,8 @@ class CennsHeirTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(heir.getPowerModifier()).isEqualTo(1);
-        assertThat(heir.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isEqualTo(1);
     }
 
     @Test
@@ -68,8 +69,8 @@ class CennsHeirTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(heir.getPowerModifier()).isEqualTo(2);
-        assertThat(heir.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isEqualTo(2);
     }
 
     @Test
@@ -81,8 +82,8 @@ class CennsHeirTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(heir.getPowerModifier()).isEqualTo(0);
-        assertThat(heir.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isEqualTo(0);
     }
 
     @Test
@@ -95,8 +96,8 @@ class CennsHeirTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(heir.getPowerModifier()).isEqualTo(1);
-        assertThat(heir.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isEqualTo(1);
     }
 
     @Test
@@ -108,14 +109,14 @@ class CennsHeirTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(heir.getPowerModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(heir.getPowerModifier()).isEqualTo(0);
-        assertThat(heir.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isEqualTo(0);
     }
 
     @Test
@@ -137,8 +138,8 @@ class CennsHeirTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(heir.getPowerModifier()).isEqualTo(0);
-        assertThat(heir.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isEqualTo(0);
     }
 
     @Test
@@ -155,8 +156,8 @@ class CennsHeirTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Goldmeadow Stalwart");
         resolveAllTriggers();
 
-        assertThat(heir.getPowerModifier()).isEqualTo(0);
-        assertThat(heir.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isEqualTo(0);
     }
 
     @Test
@@ -173,7 +174,7 @@ class CennsHeirTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, kithkin.getId());
         harness.assertInGraveyard(player1, "Goldmeadow Stalwart");
 
-        assertThat(heir.getPowerModifier()).isEqualTo(1);
-        assertThat(heir.getToughnessModifier()).isEqualTo(1);
+        assertThat(PermanentGrants.powerBoostOf(gd, heir)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, heir)).isEqualTo(1);
     }
 }

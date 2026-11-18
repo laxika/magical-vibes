@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -144,7 +145,7 @@ class WallOfReverenceTest extends BaseCardTest {
     @DisplayName("Zero or negative target power gains no life and does not cause life loss")
     void nonpositivePowerGainsNoLife(int powerModifier) {
         Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfReverence());
-        wall.setPowerModifier(powerModifier);
+        PermanentGrants.setPowerBoost(gd, wall, powerModifier);
         harness.setLife(player1, 20);
 
         advanceToEndStepTargetPrompt();

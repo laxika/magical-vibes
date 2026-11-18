@@ -31,8 +31,8 @@ class LoreholdPledgemageTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(pledgemage.getEffectivePower()).isEqualTo(3);
-        assertThat(pledgemage.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, pledgemage)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, pledgemage)).isEqualTo(2);
     }
 
     @Test
@@ -50,8 +50,8 @@ class LoreholdPledgemageTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        assertThat(pledgemage.getEffectivePower()).isEqualTo(4);
-        assertThat(pledgemage.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, pledgemage)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, pledgemage)).isEqualTo(2);
     }
 
     @Test
@@ -63,7 +63,7 @@ class LoreholdPledgemageTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        assertThat(pledgemage.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, pledgemage)).isEqualTo(2);
     }
 
     @Test
@@ -79,8 +79,8 @@ class LoreholdPledgemageTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(pledgemage.getEffectivePower()).isEqualTo(2);
-        assertThat(pledgemage.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, pledgemage)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pledgemage)).isEqualTo(2);
     }
 
     @Test
@@ -93,12 +93,12 @@ class LoreholdPledgemageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, target.getId());
 
-        assertThat(pledgemage.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, pledgemage)).isEqualTo(2);
         harness.passBothPriorities();
 
-        assertThat(pledgemage.getEffectivePower()).isEqualTo(3);
-        assertThat(pledgemage.getEffectiveToughness()).isEqualTo(2);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, pledgemage)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, pledgemage)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
     }
@@ -115,10 +115,10 @@ class LoreholdPledgemageTest extends BaseCardTest {
         harness.castSorcery(player2, 0, opponentPledgemage.getId());
         resolveAllTriggers();
 
-        assertThat(pledgemage.getEffectivePower()).isEqualTo(2);
-        assertThat(pledgemage.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponentPledgemage.getEffectivePower()).isEqualTo(5);
-        assertThat(opponentPledgemage.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, pledgemage)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pledgemage)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentPledgemage)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opponentPledgemage)).isEqualTo(4);
     }
 
     @Test
@@ -134,8 +134,8 @@ class LoreholdPledgemageTest extends BaseCardTest {
         harness.castSorcery(player1, 0, target.getId());
         resolveAllTriggers();
 
-        assertThat(pledgemage.getEffectivePower()).isEqualTo(4);
-        assertThat(pledgemage.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, pledgemage)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, pledgemage)).isEqualTo(2);
     }
 
     @Test

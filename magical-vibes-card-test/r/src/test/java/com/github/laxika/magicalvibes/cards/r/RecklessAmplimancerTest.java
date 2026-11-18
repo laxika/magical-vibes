@@ -25,8 +25,8 @@ class RecklessAmplimancerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(amplimancer.getEffectivePower()).isEqualTo(4);
-        assertThat(amplimancer.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, amplimancer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, amplimancer)).isEqualTo(4);
     }
 
     @Test
@@ -39,8 +39,8 @@ class RecklessAmplimancerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(amplimancer.getEffectivePower()).isEqualTo(8);
-        assertThat(amplimancer.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, amplimancer)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, amplimancer)).isEqualTo(8);
     }
 
     @Test
@@ -54,8 +54,8 @@ class RecklessAmplimancerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(amplimancer.getEffectivePower()).isEqualTo(2);
-        assertThat(amplimancer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, amplimancer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, amplimancer)).isEqualTo(2);
     }
 
     @Test
@@ -69,8 +69,8 @@ class RecklessAmplimancerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(amplimancer.getEffectivePower()).isEqualTo(4);
-        assertThat(amplimancer.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, amplimancer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, amplimancer)).isEqualTo(4);
         assertThat(amplimancer.isTapped()).isTrue();
     }
 
@@ -82,8 +82,8 @@ class RecklessAmplimancerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(amplimancer.getEffectivePower()).isEqualTo(2);
-        assertThat(amplimancer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, amplimancer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, amplimancer)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -95,19 +95,19 @@ class RecklessAmplimancerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.castAndResolveInstant(player1, 0, amplimancer.getId());
-        assertThat(amplimancer.getEffectivePower()).isEqualTo(5);
-        assertThat(amplimancer.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, amplimancer)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, amplimancer)).isEqualTo(5);
         harness.passBothPriorities();
 
-        assertThat(amplimancer.getEffectivePower()).isEqualTo(10);
-        assertThat(amplimancer.getEffectiveToughness()).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, amplimancer)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, amplimancer)).isEqualTo(10);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(amplimancer.getEffectivePower()).isEqualTo(3);
-        assertThat(amplimancer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, amplimancer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, amplimancer)).isEqualTo(3);
     }
 
     private Permanent addAmplimancerReady(Player player) {

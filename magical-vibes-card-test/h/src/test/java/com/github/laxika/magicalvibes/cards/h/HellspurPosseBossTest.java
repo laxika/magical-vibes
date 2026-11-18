@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SterlingHound;
 import com.github.laxika.magicalvibes.cards.v.VaultPlunderer;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -67,8 +68,8 @@ class HellspurPosseBossTest extends BaseCardTest {
         harness.activateAbility(player1, mercenaryIndex, 0, null, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(mercenary.isTapped()).isTrue();
     }
 
@@ -102,14 +103,14 @@ class HellspurPosseBossTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(mercenary.isTapped()).isTrue();
-        assertThat(boss.getPowerModifier()).isEqualTo(1);
-        assertThat(boss.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, boss)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, boss)).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(boss.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, boss)).isZero();
     }
 
     @Test
@@ -122,7 +123,7 @@ class HellspurPosseBossTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(mercenary), 0, null, opponent.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(mercenary.isTapped()).isFalse();
-        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opponent)).isZero();
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.d.DuneBeetle;
@@ -47,11 +48,11 @@ class BruteStrengthTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
-        assertThat(own.getPowerModifier()).isZero();
-        assertThat(own.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, own)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, own)).isZero();
         assertThat(gqs.hasKeyword(gd, own, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Brute Strength");
     }
@@ -66,16 +67,16 @@ class BruteStrengthTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getEffectivePower()).isEqualTo(7);
-        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -105,10 +106,10 @@ class BruteStrengthTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent beetle = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(beetle.getPowerModifier()).isEqualTo(3);
-        assertThat(beetle.getToughnessModifier()).isEqualTo(1);
-        assertThat(beetle.getEffectivePower()).isEqualTo(4);
-        assertThat(beetle.getEffectiveToughness()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, beetle)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beetle)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, beetle)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beetle)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, beetle, Keyword.TRAMPLE)).isTrue();
     }
 
@@ -127,8 +128,8 @@ class BruteStrengthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent beetle = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(beetle.getPowerModifier()).isEqualTo(0);
-        assertThat(beetle.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, beetle)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, beetle)).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, beetle, Keyword.TRAMPLE)).isFalse();
     }
 

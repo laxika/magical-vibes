@@ -36,8 +36,8 @@ class OctomancerTest extends BaseCardTest {
         Permanent octopus = findPermanent(player2, "Octopus");
         assertThat(octopus.getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(octopus.getCard().getSubtypes()).containsExactly(CardSubtype.OCTOPUS);
-        assertThat(octopus.getEffectivePower()).isEqualTo(8);
-        assertThat(octopus.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, octopus)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, octopus)).isEqualTo(8);
     }
 
     @Test
@@ -73,8 +73,8 @@ class OctomancerTest extends BaseCardTest {
         assertThat(bears).hasSize(2);
         assertThat(bears).allSatisfy(bear -> {
             assertThat(bear.getCard().isToken()).isTrue();
-            assertThat(bear.getEffectivePower()).isEqualTo(2);
-            assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         });
     }
 

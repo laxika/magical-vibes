@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AdNauseam;
 import com.github.laxika.magicalvibes.cards.c.CylianElf;
 import com.github.laxika.magicalvibes.cards.s.SigilOfDistinction;
@@ -29,8 +30,8 @@ class ManaplasmTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the boost trigger
 
         Permanent manaplasm = getManaplasm();
-        assertThat(manaplasm.getPowerModifier()).isEqualTo(2);
-        assertThat(manaplasm.getToughnessModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, manaplasm)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manaplasm)).isEqualTo(2);
     }
 
     @Test
@@ -44,8 +45,8 @@ class ManaplasmTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the boost trigger
 
         Permanent manaplasm = getManaplasm();
-        assertThat(manaplasm.getPowerModifier()).isEqualTo(5);
-        assertThat(manaplasm.getToughnessModifier()).isEqualTo(5);
+        assertThat(PermanentGrants.powerBoostOf(gd, manaplasm)).isEqualTo(5);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manaplasm)).isEqualTo(5);
     }
 
     @Test
@@ -59,13 +60,13 @@ class ManaplasmTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent manaplasm = getManaplasm();
-        assertThat(manaplasm.getPowerModifier()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, manaplasm)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(manaplasm.getPowerModifier()).isEqualTo(0);
-        assertThat(manaplasm.getToughnessModifier()).isEqualTo(0);
+        assertThat(PermanentGrants.powerBoostOf(gd, manaplasm)).isEqualTo(0);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, manaplasm)).isEqualTo(0);
     }
 
     @Test
@@ -78,8 +79,8 @@ class ManaplasmTest extends BaseCardTest {
         harness.castArtifact(player1, 0, 4);
         harness.passBothPriorities();
 
-        assertThat(getManaplasm().getPowerModifier()).isEqualTo(4);
-        assertThat(getManaplasm().getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, getManaplasm())).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, getManaplasm())).isEqualTo(4);
     }
 
     @Test
@@ -91,8 +92,8 @@ class ManaplasmTest extends BaseCardTest {
         harness.castArtifact(player1, 0, 0);
         resolveAllTriggers();
 
-        assertThat(getManaplasm().getPowerModifier()).isZero();
-        assertThat(getManaplasm().getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, getManaplasm())).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, getManaplasm())).isZero();
         harness.assertOnBattlefield(player1, "Sigil of Distinction");
     }
 
@@ -107,8 +108,8 @@ class ManaplasmTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         resolveAllTriggers();
 
-        assertThat(getManaplasm().getPowerModifier()).isZero();
-        assertThat(getManaplasm().getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, getManaplasm())).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, getManaplasm())).isZero();
         harness.assertOnBattlefield(player2, "Cylian Elf");
     }
 
@@ -124,8 +125,8 @@ class ManaplasmTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(getManaplasm().getPowerModifier()).isEqualTo(4);
-        assertThat(getManaplasm().getToughnessModifier()).isEqualTo(4);
+        assertThat(PermanentGrants.powerBoostOf(gd, getManaplasm())).isEqualTo(4);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, getManaplasm())).isEqualTo(4);
     }
 
     private Permanent getManaplasm() {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TapestryWarden;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -219,7 +220,7 @@ class SusurianDirgecraftTest extends BaseCardTest {
     void zeroPowerCreatureStationsWithoutAddingCounters() {
         Permanent dirgecraft = harness.addToBattlefieldAndReturn(player1, new SusurianDirgecraft());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setPowerModifier(-2);
+        PermanentGrants.setPowerBoost(gd, bears, -2);
 
         harness.activateAbility(player1, battlefieldIndex(dirgecraft), null, null);
         harness.passBothPriorities();

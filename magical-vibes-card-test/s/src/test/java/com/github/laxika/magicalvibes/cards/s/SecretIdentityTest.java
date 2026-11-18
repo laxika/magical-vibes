@@ -27,8 +27,8 @@ class SecretIdentityTest extends BaseCardTest {
 
         cast(0, target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.CITIZEN);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
@@ -42,8 +42,8 @@ class SecretIdentityTest extends BaseCardTest {
 
         cast(1, target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.HERO);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
@@ -60,8 +60,8 @@ class SecretIdentityTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gd.floatingEffectsOnPermanent(target.getId(), GrantSubtypeEffect.class)).isEmpty();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
@@ -88,8 +88,8 @@ class SecretIdentityTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
         assertThat(gd.floatingEffectsOnPermanent(target.getId(), GrantSubtypeEffect.class)).isEmpty();
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
     }
@@ -102,8 +102,8 @@ class SecretIdentityTest extends BaseCardTest {
         cast(0, target);
         cast(1, target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.HERO);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
@@ -118,8 +118,8 @@ class SecretIdentityTest extends BaseCardTest {
         cast(1, target);
         cast(0, target);
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.CITIZEN);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();

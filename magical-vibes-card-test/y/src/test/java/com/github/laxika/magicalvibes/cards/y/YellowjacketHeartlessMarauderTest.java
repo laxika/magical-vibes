@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.k.KreeCommandos;
 import com.github.laxika.magicalvibes.cards.h.HydraulicHelper;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -28,8 +29,8 @@ class YellowjacketHeartlessMarauderTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(yellowjacket.getPowerModifier()).isEqualTo(1);
-        assertThat(yellowjacket.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, yellowjacket)).isEqualTo(1);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, yellowjacket)).isZero();
         assertThat(gqs.hasKeyword(gd, yellowjacket, Keyword.LIFELINK)).isTrue();
     }
 
@@ -43,7 +44,7 @@ class YellowjacketHeartlessMarauderTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(yellowjacket.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, yellowjacket)).isZero();
         assertThat(gqs.hasKeyword(gd, yellowjacket, Keyword.LIFELINK)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
@@ -59,7 +60,7 @@ class YellowjacketHeartlessMarauderTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(yellowjacket.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, yellowjacket)).isZero();
         assertThat(gqs.hasKeyword(gd, yellowjacket, Keyword.LIFELINK)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
@@ -78,7 +79,7 @@ class YellowjacketHeartlessMarauderTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(yellowjacket.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, yellowjacket)).isZero();
         assertThat(gqs.hasKeyword(gd, yellowjacket, Keyword.LIFELINK)).isFalse();
     }
 
@@ -93,7 +94,7 @@ class YellowjacketHeartlessMarauderTest extends BaseCardTest {
 
         Permanent yellowjacket = findPermanent(player1, "Yellowjacket, Heartless Marauder");
         assertThat(gd.stack).isEmpty();
-        assertThat(yellowjacket.getPowerModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, yellowjacket)).isZero();
         assertThat(gqs.hasKeyword(gd, yellowjacket, Keyword.LIFELINK)).isFalse();
     }
 
@@ -106,8 +107,8 @@ class YellowjacketHeartlessMarauderTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new KreeCommandos());
         resolveAllTriggers();
 
-        assertThat(yellowjacket.getPowerModifier()).isEqualTo(2);
-        assertThat(yellowjacket.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, yellowjacket)).isEqualTo(2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, yellowjacket)).isZero();
         assertThat(gqs.hasKeyword(gd, yellowjacket, Keyword.LIFELINK)).isTrue();
     }
 

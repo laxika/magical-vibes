@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CandlelitCavalry;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.w.WorldspineWurm;
@@ -26,10 +27,10 @@ class OliviasMidnightAmbushTest extends BaseCardTest {
 
         cast(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(-2);
-        assertThat(target.getToughnessModifier()).isEqualTo(-2);
-        assertThat(target.getEffectivePower()).isEqualTo(13);
-        assertThat(target.getEffectiveToughness()).isEqualTo(13);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(13);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(13);
     }
 
     @Test
@@ -39,10 +40,10 @@ class OliviasMidnightAmbushTest extends BaseCardTest {
 
         cast(target);
 
-        assertThat(target.getPowerModifier()).isEqualTo(-13);
-        assertThat(target.getToughnessModifier()).isEqualTo(-13);
-        assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(-13);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(-13);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test

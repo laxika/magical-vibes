@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,16 +32,16 @@ class PhyresisOutbreakTest extends BaseCardTest {
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(2);
-        assertThat(ownCreature.getPowerModifier()).isZero();
-        assertThat(ownCreature.getToughnessModifier()).isZero();
-        assertThat(opposingCreature.getPowerModifier()).isEqualTo(-2);
-        assertThat(opposingCreature.getToughnessModifier()).isEqualTo(-2);
+        assertThat(PermanentGrants.powerBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, ownCreature)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isEqualTo(-2);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingCreature)).isEqualTo(-2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(opposingCreature.getPowerModifier()).isZero();
-        assertThat(opposingCreature.getToughnessModifier()).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, opposingCreature)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, opposingCreature)).isZero();
     }
 }
