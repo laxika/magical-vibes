@@ -35,7 +35,8 @@ class ShallowGraveTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Iron Tusk Elephant");
 
         Permanent returned = findPermanent(player1, "Feral Shadow");
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, returned, gd.findControllerOf(returned))).isTrue();
     }
 
     @Test
@@ -148,12 +149,12 @@ class ShallowGraveTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new IronTuskElephant()));
         harness.castFromHand(player1, new ShallowGrave(), "{1}{B}");
         harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
-        assertThat(findPermanent(player1, "Iron Tusk Elephant").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Iron Tusk Elephant"), Keyword.HASTE)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player1, "Iron Tusk Elephant");
-        assertThat(findPermanent(player1, "Iron Tusk Elephant").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Iron Tusk Elephant"), Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -186,6 +187,6 @@ class ShallowGraveTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Feral Shadow");
         harness.assertInGraveyard(player1, "Iron Tusk Elephant");
         harness.assertNotOnBattlefield(player1, "Iron Tusk Elephant");
-        assertThat(findPermanent(player1, "Feral Shadow").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Feral Shadow"), Keyword.HASTE)).isTrue();
     }
 }

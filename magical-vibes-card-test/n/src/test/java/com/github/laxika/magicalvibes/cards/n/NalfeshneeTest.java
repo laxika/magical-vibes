@@ -40,7 +40,8 @@ class NalfeshneeTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, token, gd.findControllerOf(token))).isTrue();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

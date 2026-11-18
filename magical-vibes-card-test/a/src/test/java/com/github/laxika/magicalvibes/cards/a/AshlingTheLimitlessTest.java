@@ -34,7 +34,8 @@ class AshlingTheLimitlessTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Air Elemental")).hasSize(1);
         Permanent token = findPermanents(player1, "Air Elemental").getFirst();
         assertThat(token.getCard().isToken()).isTrue();
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, token, gd.findControllerOf(token))).isTrue();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP))
                 .hasSize(1);
     }
@@ -83,7 +84,7 @@ class AshlingTheLimitlessTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Air Elemental").getId()).isEqualTo(token.getId());
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(token.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
         advanceToEndStep(player1);
         resolveAllTriggers();
         assertThat(findPermanent(player1, "Air Elemental").getId()).isEqualTo(token.getId());
@@ -165,7 +166,8 @@ class AshlingTheLimitlessTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Ashling, the Limitless");
         assertThat(token.getCard().isToken()).isTrue();
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, token, gd.findControllerOf(token))).isTrue();
         advanceToEndStep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -213,9 +215,9 @@ class AshlingTheLimitlessTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Air Elemental")).hasSize(2)
-                .allSatisfy(token -> assertThat(token.hasKeyword(Keyword.HASTE)).isTrue());
+                .allSatisfy(token -> assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue());
         assertThat(findPermanents(player1, "Soldier")).hasSize(2)
-                .allSatisfy(token -> assertThat(token.hasKeyword(Keyword.HASTE)).isTrue());
+                .allSatisfy(token -> assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue());
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).hasSize(4);
     }
 

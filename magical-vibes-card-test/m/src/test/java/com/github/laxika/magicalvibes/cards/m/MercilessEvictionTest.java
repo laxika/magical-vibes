@@ -135,7 +135,7 @@ class MercilessEvictionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castModalInstant(player1, 0, 1, List.of());
         harness.passBothPriorities();
-        assertThat(gargoyle.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.INDESTRUCTIBLE)).isTrue();
 
         castMode(modeIndex);
 

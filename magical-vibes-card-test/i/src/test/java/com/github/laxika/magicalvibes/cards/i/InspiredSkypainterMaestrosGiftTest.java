@@ -52,7 +52,8 @@ class InspiredSkypainterMaestrosGiftTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, com.github.laxika.magicalvibes.model.Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, token, player1.getId())).isTrue();
     }
 
     @Test
@@ -134,14 +135,15 @@ class InspiredSkypainterMaestrosGiftTest extends BaseCardTest {
         Permanent token = findPermanents(player1, "Inspired Skypainter").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst().orElseThrow();
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, token, gd.findControllerOf(token))).isTrue();
         assertThat(token.isPrepared()).isTrue();
         assertThat(skypainter.isPrepared()).isFalse();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
-        assertThat(token.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
     }
 
     @Test

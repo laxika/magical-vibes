@@ -78,7 +78,8 @@ class ObzedatGhostCouncilTest extends BaseCardTest {
 
         Permanent returned = findObzedat(player1);
         assertThat(returned).isNotNull();
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, returned, gd.findControllerOf(returned))).isTrue();
         assertThat(returned.isTapped()).isFalse();
     }
 
@@ -114,7 +115,8 @@ class ObzedatGhostCouncilTest extends BaseCardTest {
         assertThat(findObzedat(player1)).isNull();
         Permanent returned = findObzedat(player2);
         assertThat(returned).isNotNull();
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, returned, gd.findControllerOf(returned))).isTrue();
         harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
         harness.assertLife(player1, 18);

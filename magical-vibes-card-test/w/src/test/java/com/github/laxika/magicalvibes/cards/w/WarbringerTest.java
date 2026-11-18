@@ -30,7 +30,7 @@ class WarbringerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent brawler = findPermanent(player1, "Screamreach Brawler");
-        assertThat(brawler.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, brawler, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -44,7 +44,7 @@ class WarbringerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent warbringer = findPermanent(player1, "Warbringer");
-        assertThat(warbringer.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warbringer, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -143,7 +143,7 @@ class WarbringerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Warbringer").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Warbringer"), Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);

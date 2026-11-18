@@ -53,7 +53,7 @@ class ReliveThePastTest extends BaseCardTest {
             assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(5);
             assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(5);
         }
-        assertThat(gqs.isArtifact(returnedArtifact)).isTrue();
+        assertThat(gqs.isArtifact(gd, returnedArtifact)).isTrue();
         assertThat(gqs.isLand(gd, returnedLand)).isTrue();
         assertThat(gqs.isEnchantment(gd, returnedEnchantment)).isTrue();
         harness.assertInGraveyard(player1, "Pacifism");

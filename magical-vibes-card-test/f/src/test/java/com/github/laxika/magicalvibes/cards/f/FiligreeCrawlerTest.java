@@ -40,7 +40,7 @@ class FiligreeCrawlerTest extends BaseCardTest {
         assertThat(thopter.getCard().getColors()).isEmpty();
         assertThat(thopter.getCard().getSubtypes()).contains(CardSubtype.THOPTER);
         assertThat(thopter.getCard().hasType(CardType.ARTIFACT)).isTrue();
-        assertThat(thopter.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, thopter, Keyword.FLYING)).isTrue();
         assertThat(thopter.getCard().isToken()).isTrue();
     }
 

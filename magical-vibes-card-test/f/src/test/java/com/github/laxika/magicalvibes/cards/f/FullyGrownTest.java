@@ -34,7 +34,7 @@ class FullyGrownTest extends BaseCardTest {
         assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
         assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(3);
         assertThat(bear.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -53,7 +53,7 @@ class FullyGrownTest extends BaseCardTest {
         assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(bear.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -68,7 +68,7 @@ class FullyGrownTest extends BaseCardTest {
         assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(3);
         assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(3);
         assertThat(bear.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -84,7 +84,7 @@ class FullyGrownTest extends BaseCardTest {
         assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(6);
         assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(6);
         assertThat(bear.getCounterCount(CounterType.TRAMPLE)).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test

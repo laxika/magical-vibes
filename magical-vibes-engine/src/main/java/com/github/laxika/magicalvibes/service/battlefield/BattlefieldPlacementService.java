@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.Ability;
-import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -657,10 +656,9 @@ public class BattlefieldPlacementService {
                         permanent.getId(), Duration.PERMANENT);
             }
         }
-        // CR 702.152a — a spell cast for its printed blitz cost creates the delayed "sacrifice at the
-        // beginning of the next end step" trigger as it resolves, independent of any ETB trigger.
-        if (permanent.isAlternateCost() && permanent.getCard().getCastingOption(AlternateHandCast.class)
-                .filter(AlternateHandCast::blitz).isPresent()) {
+        // CR 702.152a — a spell cast for a blitz cost creates the delayed "sacrifice at the beginning of the next
+        // end step" trigger as it resolves, independent of any ETB trigger.
+        if (permanent.isBlitzCostPaid()) {
             DelayedPermanentActions.scheduleOwn(gameData, controllerId, permanent,
                     new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
                     ActivePlayer.ANY);

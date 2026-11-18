@@ -31,7 +31,7 @@ class MadameHydraTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(token.getCard().getPower()).isEqualTo(2);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
-        assertThat(token.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.MENACE)).isTrue();
     }
 
     @Test

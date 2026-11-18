@@ -34,7 +34,7 @@ class DeeprootPilgrimageTest extends BaseCardTest {
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.MERFOLK);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
-        assertThat(token.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HEXPROOF)).isTrue();
     }
 
     @Test

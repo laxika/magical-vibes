@@ -49,7 +49,8 @@ class SneakAttackTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         Permanent creature = findPermanent(player1, "Guma");
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, creature, gd.findControllerOf(creature))).isTrue();
         harness.assertOnBattlefield(player1, "Guma");
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
@@ -109,7 +110,7 @@ class SneakAttackTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.assertOnBattlefield(player1, "Guma");
-        assertThat(findPermanent(player1, "Guma").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Guma"), Keyword.HASTE)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         harness.assertOnBattlefield(player1, "Guma");
@@ -152,7 +153,7 @@ class SneakAttackTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Guma");
-        assertThat(findPermanent(player1, "Guma").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Guma"), Keyword.HASTE)).isTrue();
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 

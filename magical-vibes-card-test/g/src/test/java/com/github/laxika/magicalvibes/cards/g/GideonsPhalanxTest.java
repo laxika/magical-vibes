@@ -31,7 +31,7 @@ class GideonsPhalanxTest extends BaseCardTest {
         for (Permanent knight : knights) {
             assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
             assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
-            assertThat(knight.hasKeyword(Keyword.VIGILANCE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, knight, Keyword.VIGILANCE)).isTrue();
         }
     }
 

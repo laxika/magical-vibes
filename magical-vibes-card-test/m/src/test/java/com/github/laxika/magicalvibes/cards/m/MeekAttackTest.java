@@ -50,7 +50,8 @@ class MeekAttackTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, bears, gd.findControllerOf(bears))).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
@@ -125,7 +126,7 @@ class MeekAttackTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.assertOnBattlefield(player1, "Meanders Guide");
-        assertThat(findPermanent(player1, "Meanders Guide").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Meanders Guide"), Keyword.HASTE)).isTrue();
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         resolveAllTriggers();
 

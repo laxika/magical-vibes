@@ -33,7 +33,8 @@ class TheNiptonLotteryTest extends BaseCardTest {
         assertThat(survivingCreatures).hasSize(1);
         Permanent chosen = survivingCreatures.getFirst();
         assertThat(chosen.isTapped()).isFalse();
-        assertThat(chosen.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, chosen, gd.findControllerOf(chosen))).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(chosen.getId())).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(first.getId())
@@ -63,7 +64,7 @@ class TheNiptonLotteryTest extends BaseCardTest {
                 .filter(permanent -> permanent.getId().equals(chosenId))
                 .findFirst()
                 .orElseThrow();
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(chosenId)).isFalse();
     }
 
@@ -92,7 +93,8 @@ class TheNiptonLotteryTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(creature);
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(ring);
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, creature, gd.findControllerOf(creature))).isTrue();
         assertThat(ring.isTapped()).isTrue();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
@@ -106,14 +108,15 @@ class TheNiptonLotteryTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(creature);
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, creature, gd.findControllerOf(creature))).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
@@ -131,7 +134,8 @@ class TheNiptonLotteryTest extends BaseCardTest {
         Permanent chosen = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(candidates).contains(chosen);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-        assertThat(chosen.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, chosen, gd.findControllerOf(chosen))).isTrue();
         for (Permanent candidate : candidates) {
             var owner = candidate == first || candidate == second ? player1 : player2;
             if (candidate == chosen) {

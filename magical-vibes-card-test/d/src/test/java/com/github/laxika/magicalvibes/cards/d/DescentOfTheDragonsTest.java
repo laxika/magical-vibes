@@ -218,6 +218,6 @@ class DescentOfTheDragonsTest extends BaseCardTest {
         assertThat(dragon.getCard().getToughness()).isEqualTo(4);
         assertThat(dragon.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(dragon.getCard().getSubtypes()).containsExactly(CardSubtype.DRAGON);
-        assertThat(dragon.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isTrue();
     }
 }

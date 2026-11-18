@@ -30,7 +30,7 @@ class FeralLightningTest extends BaseCardTest {
             if (elemental.getCard().isToken() && elemental.getCard().getName().equals("Elemental")) {
                 assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(3);
                 assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
-                assertThat(elemental.hasKeyword(Keyword.HASTE)).isTrue();
+                assertThat(gqs.hasKeyword(gd, elemental, Keyword.HASTE)).isTrue();
             }
         }
     }

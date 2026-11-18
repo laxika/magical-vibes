@@ -33,7 +33,7 @@ class VrestinMenoptraLeaderTest extends BaseCardTest {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
             assertThat(token.getCard().getColors()).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ALIEN, CardSubtype.INSECT);
-            assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
             assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
             assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         });

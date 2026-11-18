@@ -29,13 +29,13 @@ class TwoHeadedHunterTest extends BaseCardTest {
         harness.castAdventure(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -80,7 +80,7 @@ class TwoHeadedHunterTest extends BaseCardTest {
         harness.castAdventure(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test

@@ -39,9 +39,9 @@ class TriplicateTitanTest extends BaseCardTest {
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.GOLEM);
             assertThat(token.getCard().isToken()).isTrue();
         });
-        assertThat(tokens).anyMatch(token -> token.hasKeyword(Keyword.FLYING));
-        assertThat(tokens).anyMatch(token -> token.hasKeyword(Keyword.VIGILANCE));
-        assertThat(tokens).anyMatch(token -> token.hasKeyword(Keyword.TRAMPLE));
+        assertThat(tokens).anyMatch(token -> gqs.hasKeyword(gd, token, Keyword.FLYING));
+        assertThat(tokens).anyMatch(token -> gqs.hasKeyword(gd, token, Keyword.VIGILANCE));
+        assertThat(tokens).anyMatch(token -> gqs.hasKeyword(gd, token, Keyword.TRAMPLE));
     }
 
     @Test

@@ -33,7 +33,7 @@ class TheSeaDevilsTest extends BaseCardTest {
             assertThat(token.getCard().getPower()).isEqualTo(2);
             assertThat(token.getCard().getToughness()).isEqualTo(2);
             assertThat(token.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.ALIEN, CardSubtype.SALAMANDER);
-            assertThat(token.hasKeyword(Keyword.ISLANDWALK)).isTrue();
+            assertThat(gqs.hasKeyword(gd, token, Keyword.ISLANDWALK)).isTrue();
         });
     }
 
@@ -49,7 +49,7 @@ class TheSeaDevilsTest extends BaseCardTest {
             assertThat(token.getCard().getPower()).isEqualTo(2);
             assertThat(token.getCard().getToughness()).isEqualTo(2);
             assertThat(token.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.ALIEN, CardSubtype.SALAMANDER);
-            assertThat(token.hasKeyword(Keyword.ISLANDWALK)).isTrue();
+            assertThat(gqs.hasKeyword(gd, token, Keyword.ISLANDWALK)).isTrue();
         });
     }
 

@@ -94,8 +94,8 @@ class PlazaOfHeroesDmuTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Plaza of Heroes")).isEmpty();
-        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test

@@ -26,7 +26,7 @@ class RecyclaBirdTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.FLYING)).isEqualTo(1);
-        assertThat(target.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, com.github.laxika.magicalvibes.model.Keyword.FLYING)).isTrue();
     }
 
     @Test

@@ -32,7 +32,7 @@ class DarksteelBruteTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.isCreature(gd, brute)).isTrue();
-        assertThat(gqs.isArtifact(brute)).isTrue();
+        assertThat(gqs.isArtifact(gd, brute)).isTrue();
         assertThat(gqs.getEffectivePower(gd, brute)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, brute)).isEqualTo(2);
         assertThat(gqs.hasEffectiveSubtype(gd, brute, CardSubtype.BEAST)).isTrue();

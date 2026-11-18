@@ -59,7 +59,7 @@ class StridingShotcallerRunThePlayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(shotcaller.isPrepared()).isFalse();
         assertThat(shotcaller.getPreparedSpellCardId()).isNull();
@@ -123,7 +123,7 @@ class StridingShotcallerRunThePlayTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(shotcaller.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(shotcaller.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, shotcaller, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -152,11 +152,11 @@ class StridingShotcallerRunThePlayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(shotcaller.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(shotcaller.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, shotcaller, Keyword.FLYING)).isTrue();
         assertThat(shotcaller.isPrepared()).isFalse();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(shotcaller.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, shotcaller, Keyword.FLYING)).isFalse();
         assertThat(shotcaller.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
@@ -186,10 +186,10 @@ class StridingShotcallerRunThePlayTest extends BaseCardTest {
 
         assertThat(shotcaller.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(shotcaller.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(other.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, shotcaller, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isTrue();
         assertThat(unchosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(unchosen.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, unchosen, Keyword.FLYING)).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(shotcaller.isPrepared()).isFalse();
     }

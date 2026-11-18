@@ -97,7 +97,7 @@ class FlamerushRiderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent rider = findPermanent(player1, "Flamerush Rider");
-        assertThat(rider.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, rider, Keyword.HASTE)).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
@@ -258,7 +258,7 @@ class FlamerushRiderTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent rider = findPermanent(player1, "Flamerush Rider");
-        assertThat(rider.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, rider, Keyword.HASTE)).isFalse();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

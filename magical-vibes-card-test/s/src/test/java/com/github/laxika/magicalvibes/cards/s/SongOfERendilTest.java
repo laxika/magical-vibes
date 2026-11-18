@@ -73,7 +73,7 @@ class SongOfERendilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.FLYING)).isEqualTo(1);
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
         assertThat(crow.getCounterCount(CounterType.FLYING)).isZero();
         assertThat(opponentBears.getCounterCount(CounterType.FLYING)).isZero();
     }

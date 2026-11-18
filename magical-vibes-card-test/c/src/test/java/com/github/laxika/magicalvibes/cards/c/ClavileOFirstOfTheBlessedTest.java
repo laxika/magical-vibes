@@ -81,7 +81,7 @@ class ClavileOFirstOfTheBlessedTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Vampire Demon");
         assertThat(token.isTapped()).isTrue();
-        assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
         assertThat(token.getEffectiveColors()).containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
         assertThat(countPermanents(player1, "Vampire Demon")).isEqualTo(1);
         harness.assertInHand(player1, "Clavileño, First of the Blessed");

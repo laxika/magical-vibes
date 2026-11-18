@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,6 +22,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({EsikasChariot.class, SerraAngel.class, GrizzlyBears.class, GoldveinPick.class})
 class EsikasChariotTest extends BaseCardTest {
+
+    /**
+     * Empties both opening hands: a random hand Condemn is castable with a Treasure's mana, which stops auto-pass in
+     * the combat damage step instead of postcombat main and changes when later actions happen.
+     */
+    @BeforeEach
+    void emptyHands() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+    }
 
     @Test
     void entersWithTwoCatTokens() {

@@ -32,7 +32,7 @@ class ShiftyDoppelgangerTest extends BaseCardTest {
         activateAndChooseCreature();
 
         Permanent duskImp = findPermanent(player1, "Dusk Imp");
-        assertThat(duskImp.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, duskImp, Keyword.HASTE)).isTrue();
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getName().equals("Shifty Doppelganger"));
 
         advanceToEndStep();
@@ -141,12 +141,12 @@ class ShiftyDoppelgangerTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         addActivationMana();
         harness.withAutoStop(TurnStep.END_STEP, this::activateAndChooseCreature);
-        assertThat(findPermanent(player1, "Dusk Imp").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Dusk Imp"), Keyword.HASTE)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player1, "Dusk Imp");
-        assertThat(findPermanent(player1, "Dusk Imp").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Dusk Imp"), Keyword.HASTE)).isFalse();
         harness.assertNotOnBattlefield(player1, "Shifty Doppelganger");
 
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);

@@ -37,7 +37,7 @@ class MischievousMysticTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
-        assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
         assertThat(token.getCard().getColors()).containsExactly(CardColor.BLUE);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.FAERIE);
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);

@@ -35,7 +35,7 @@ class DoubleJumpFlyingKickTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.FLYING)).isEqualTo(1);
-        assertThat(creature.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, com.github.laxika.magicalvibes.model.Keyword.FLYING)).isTrue();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
@@ -53,7 +53,7 @@ class DoubleJumpFlyingKickTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.FLYING)).isEqualTo(1);
-        assertThat(creature.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, com.github.laxika.magicalvibes.model.Keyword.FLYING)).isTrue();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }

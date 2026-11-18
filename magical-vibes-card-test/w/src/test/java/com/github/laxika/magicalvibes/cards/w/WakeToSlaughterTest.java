@@ -42,7 +42,8 @@ class WakeToSlaughterTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().equals(battlefieldCard))
                 .findFirst()
                 .orElseThrow();
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, returned, gd.findControllerOf(returned))).isTrue();
         assertThat(DelayedPermanentMoves.waiting(gd))
                 .anyMatch(action -> action.permanentId().equals(returned.getId()));
 
@@ -85,7 +86,8 @@ class WakeToSlaughterTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Candlegrove Witch");
         harness.assertNotOnBattlefield(player2, "Candlegrove Witch");
         Permanent returned = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, returned, gd.findControllerOf(returned))).isTrue();
     }
 
     @Test
@@ -146,7 +148,7 @@ class WakeToSlaughterTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Unruly Mob");
         harness.assertNotInGraveyard(player1, "Wake to Slaughter");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gd.playerBattlefields.get(player1.getId()).getFirst(), Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);

@@ -64,7 +64,7 @@ class MadameMasqueTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.VILLAIN);
-        assertThat(token.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.MENACE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
 

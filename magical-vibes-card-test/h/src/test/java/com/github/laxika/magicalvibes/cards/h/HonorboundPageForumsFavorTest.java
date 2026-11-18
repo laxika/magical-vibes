@@ -49,7 +49,7 @@ class HonorboundPageForumsFavorTest extends BaseCardTest {
         assertThat(page.getPreparedSpellCardId()).isNull();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(gd.findExiledCard(copyId)).isNull();
         assertThat(gd.exilePlayPermissionHolders()).doesNotContainKey(copyId);
     }
@@ -108,7 +108,7 @@ class HonorboundPageForumsFavorTest extends BaseCardTest {
 
         assertThat(page.isPrepared()).isFalse();
         assertThat(gqs.getEffectivePower(gd, page)).isEqualTo(4);
-        assertThat(page.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, page, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -124,7 +124,7 @@ class HonorboundPageForumsFavorTest extends BaseCardTest {
         assertThat(page.getPreparedSpellCardId()).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
 
         page.setMarkedDamage(3);
         harness.runStateBasedActions();
@@ -132,7 +132,7 @@ class HonorboundPageForumsFavorTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         harness.assertNotInGraveyard(player1, "Forum's Favor");
     }
 
@@ -145,13 +145,13 @@ class HonorboundPageForumsFavorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, page)).isEqualTo(4);
-        assertThat(page.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, page, Keyword.FLYING)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.getEffectivePower(gd, page)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, page)).isEqualTo(3);
-        assertThat(page.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, page, Keyword.FLYING)).isFalse();
         assertThat(page.isPrepared()).isFalse();
     }
 

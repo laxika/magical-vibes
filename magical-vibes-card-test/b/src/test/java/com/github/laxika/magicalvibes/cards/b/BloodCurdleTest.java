@@ -34,7 +34,7 @@ class BloodCurdleTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(ownCreature.getCounterCount(CounterType.MENACE)).isEqualTo(1);
-        assertThat(ownCreature.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.MENACE)).isTrue();
     }
 
     @Test
@@ -142,7 +142,7 @@ class BloodCurdleTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Darksteel Myr");
         assertThat(target.getCounterCount(CounterType.MENACE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
         harness.assertInGraveyard(player1, "Blood Curdle");
     }
 

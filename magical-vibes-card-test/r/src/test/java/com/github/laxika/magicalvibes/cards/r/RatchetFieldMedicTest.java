@@ -26,7 +26,7 @@ class RatchetFieldMedicTest extends BaseCardTest {
         assertThat(ratchet.isTransformed()).isTrue();
         assertThat(ratchet.getCard()).isInstanceOf(RatchetRescueRacer.class);
         assertThat(gqs.isCreature(gd, ratchet)).isTrue();
-        assertThat(gqs.isArtifact(ratchet)).isTrue();
+        assertThat(gqs.isArtifact(gd, ratchet)).isTrue();
     }
 
     @Test
@@ -82,7 +82,7 @@ class RatchetFieldMedicTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
 
         assertThat(gqs.isCreature(gd, ratchet)).isFalse();
-        assertThat(gqs.isArtifact(ratchet)).isTrue();
+        assertThat(gqs.isArtifact(gd, ratchet)).isTrue();
     }
 
     @Test

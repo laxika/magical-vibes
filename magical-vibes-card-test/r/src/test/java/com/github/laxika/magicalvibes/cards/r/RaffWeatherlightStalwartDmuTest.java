@@ -84,8 +84,8 @@ class RaffWeatherlightStalwartDmuTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, raff)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
-        assertThat(raff.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, raff, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -95,8 +95,8 @@ class RaffWeatherlightStalwartDmuTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, raff)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
-        assertThat(raff.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(bear.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, raff, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.VIGILANCE)).isFalse();
     }
 
     private void addRaffAndTwoCreatures() {

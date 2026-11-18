@@ -42,7 +42,7 @@ class UrsineGuideRangersMeritTest extends BaseCardTest {
         assertThat(bears).hasSize(3);
         assertThat(guide.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(existingBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears).allSatisfy(bear -> assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue());
+        assertThat(bears).allSatisfy(bear -> assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue());
         assertThat(guide.isPrepared()).isTrue();
         assertThat(guide.getPreparedSpellCardId()).isNotNull();
     }

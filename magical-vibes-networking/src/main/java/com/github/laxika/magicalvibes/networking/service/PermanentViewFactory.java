@@ -100,6 +100,20 @@ public class PermanentViewFactory {
     }
 
     /**
+     * Whether the permanent has haste for the summoning-sickness display. With no layered input (no continuous effect
+     * touched the permanent) its own keywords decide; otherwise the layered keyword set does, so a removed or lost
+     * printed haste no longer hides summoning sickness.
+     */
+    private static boolean hasHaste(Permanent p, Set<Keyword> bonusKeywords, Set<Keyword> staticRemovedKeywords,
+                                    boolean losesAllAbilities) {
+        if (bonusKeywords.contains(Keyword.HASTE)) {
+            return true;
+        }
+        boolean layered = !bonusKeywords.isEmpty() || !staticRemovedKeywords.isEmpty() || losesAllAbilities;
+        return !layered && p.hasKeyword(Keyword.HASTE);
+    }
+
+    /**
      * Builds the view; {@code removedSubtypes} are the printed subtypes the permanent no longer has after the
      * layered pass (CR 613.1d), hidden from the card face, {@code regenerationShields} is how many regeneration
      * shields the floating effects on it give it, and {@code lostActivatedAbilities} are the printed activated
@@ -140,7 +154,7 @@ public class PermanentViewFactory {
         return new PermanentView(
                 p.getId(), cardView,
                 p.isTapped(), p.isAttacking(), p.isBlocking(),
-                new ArrayList<>(p.getBlockingTargets()), p.isSummoningSick() && !p.hasKeyword(Keyword.HASTE) && !allKeywords.contains(Keyword.HASTE),
+                new ArrayList<>(p.getBlockingTargets()), p.isSummoningSick() && !hasHaste(p, bonusKeywords, staticRemovedKeywords, losesAllAbilities),
                 bonusPower,
                 bonusToughness,
                 allKeywords,

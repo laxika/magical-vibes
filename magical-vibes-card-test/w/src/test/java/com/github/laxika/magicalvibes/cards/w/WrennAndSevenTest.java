@@ -191,7 +191,7 @@ class WrennAndSevenTest extends BaseCardTest {
 
             assertThat(wrenn.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
             Permanent treefolk = findPermanent(player1, "Treefolk");
-            assertThat(treefolk.hasKeyword(Keyword.REACH)).isTrue();
+            assertThat(gqs.hasKeyword(gd, treefolk, Keyword.REACH)).isTrue();
             // 3 lands you control (Wrenn is not a land)
             assertThat(gqs.getEffectivePower(gd, treefolk)).isEqualTo(3);
             assertThat(gqs.getEffectiveToughness(gd, treefolk)).isEqualTo(3);

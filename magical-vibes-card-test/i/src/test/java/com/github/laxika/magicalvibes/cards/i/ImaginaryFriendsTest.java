@@ -32,7 +32,7 @@ class ImaginaryFriendsTest extends BaseCardTest {
             assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
             assertThat(spirit.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(spirit.getCard().getSubtypes()).containsExactly(CardSubtype.SPIRIT);
-            assertThat(spirit.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, spirit, Keyword.FLYING)).isTrue();
         });
     }
 

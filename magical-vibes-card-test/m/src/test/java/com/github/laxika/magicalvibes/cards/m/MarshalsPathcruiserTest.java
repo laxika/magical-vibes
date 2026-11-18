@@ -62,7 +62,7 @@ class MarshalsPathcruiserTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, pathcruiser)).isTrue();
-        assertThat(gqs.isArtifact(pathcruiser)).isTrue();
+        assertThat(gqs.isArtifact(gd, pathcruiser)).isTrue();
         assertThat(pathcruiser.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, pathcruiser)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, pathcruiser)).isEqualTo(7);

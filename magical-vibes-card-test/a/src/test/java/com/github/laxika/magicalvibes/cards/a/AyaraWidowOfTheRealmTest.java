@@ -95,6 +95,7 @@ class AyaraWidowOfTheRealmTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Swordsworn Cavalier");
 
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, returned, gd.findControllerOf(returned))).isTrue();
         declareAttackers(player1, List.of());
         harness.passUntil(player1, TurnStep.END_STEP);
 
@@ -286,6 +287,6 @@ class AyaraWidowOfTheRealmTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player1, "Flywheel Racer");
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
     }
 }

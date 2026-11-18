@@ -129,8 +129,8 @@ class StarnheimUnleashedTest extends BaseCardTest {
                     .containsExactlyInAnyOrder(CardSubtype.ANGEL, CardSubtype.WARRIOR);
             assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
             assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
-            assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
-            assertThat(token.hasKeyword(Keyword.VIGILANCE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();
         }
     }
 }

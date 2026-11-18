@@ -54,7 +54,8 @@ class GrixisSlavedriverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Grixis Slavedriver");
-        assertThat(perm.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, perm, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, perm, gd.findControllerOf(perm))).isTrue();
         harness.assertNotInGraveyard(player1, "Grixis Slavedriver");
     }
 

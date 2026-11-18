@@ -29,7 +29,7 @@ class CallOfTheNightwingTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
-        assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
     }
 
     @Test

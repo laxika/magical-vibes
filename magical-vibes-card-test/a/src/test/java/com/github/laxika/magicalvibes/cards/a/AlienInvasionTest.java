@@ -28,7 +28,7 @@ class AlienInvasionTest extends BaseCardTest {
 
         Permanent alien = findPermanent(player1, "Alien");
         assertThat(alien.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(alien.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, alien, Keyword.HASTE)).isTrue();
         assertThat(invasion.getCounterCount(CounterType.INVASION)).isEqualTo(3);
     }
 

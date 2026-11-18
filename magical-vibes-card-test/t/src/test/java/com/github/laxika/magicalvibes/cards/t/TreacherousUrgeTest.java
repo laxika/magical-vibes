@@ -38,7 +38,8 @@ class TreacherousUrgeTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1);
 
         Permanent phantasm = findPermanent(player1, "Gossamer Phantasm");
-        assertThat(phantasm.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, phantasm, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, phantasm, gd.findControllerOf(phantasm))).isTrue();
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
                 .containsExactly("Extirpate");
         assertThat(DelayedPermanentMoves.waiting(gd))
@@ -102,10 +103,12 @@ class TreacherousUrgeTest extends BaseCardTest {
 
         Permanent phantasm = findPermanent(player1, "Gossamer Phantasm");
         assertThat(gqs.hasKeyword(gd, phantasm, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, phantasm, gd.findControllerOf(phantasm))).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, phantasm, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, phantasm, gd.findControllerOf(phantasm))).isTrue();
     }
 
     @Test

@@ -67,7 +67,7 @@ class VaultbreakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent vaultbreaker = findPermanent(player1, "Vaultbreaker");
-        assertThat(vaultbreaker.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, vaultbreaker, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -87,7 +87,7 @@ class VaultbreakerTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent vaultbreaker = findPermanent(player1, "Vaultbreaker");
-        assertThat(vaultbreaker.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vaultbreaker, Keyword.HASTE)).isTrue();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();

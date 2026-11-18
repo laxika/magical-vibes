@@ -432,7 +432,8 @@ public class StackEntry {
     @Setter private int foretellControllerTurnsAtExile = -1;
     /** Every player's turns-begun count when this spell was exiled by foretell; empty when unknown. */
     @Setter private Map<UUID, Integer> foretellTurnsTakenAtExile = Map.of();
-    @Setter private boolean alternateCost;
+    /** The alternative cost this spell was cast for; {@code null} when none was (CR 118.9). */
+    @Setter private AlternativeCostKind alternativeCost;
     /** Mana value of the creature returned to pay this spell's web-slinging cost, when applicable. */
     @Setter private Integer webSlingingReturnedCreatureManaValue;
     /** Whether this spell was cast for its madness cost. */
@@ -949,8 +950,6 @@ public class StackEntry {
     private final Set<Keyword> untilNextTurnKeywordsOnEntry = EnumSet.noneOf(Keyword.class);
     /** Suspend grants haste for as long as the same player controls the resulting permanent. */
     @Setter private boolean suspendHasteOnEntry;
-    /** Cast for a blitz cost granted by another source (Henzie): the permanent is sacrificed at the next end step. */
-    @Setter private boolean grantedBlitzOnEntry;
     /** Colors granted to the permanent as this spell enters the battlefield. */
     private final Set<CardColor> grantedColorsOnEntry = EnumSet.noneOf(CardColor.class);
     /** Creature subtypes granted to the permanent as this spell enters the battlefield. */
@@ -1408,7 +1407,7 @@ public class StackEntry {
         this.castForForetell = source.castForForetell;
         this.foretellControllerTurnsAtExile = source.foretellControllerTurnsAtExile;
         this.foretellTurnsTakenAtExile = source.foretellTurnsTakenAtExile;
-        this.alternateCost = source.alternateCost;
+        this.alternativeCost = source.alternativeCost;
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.overloaded = source.overloaded;
         this.controlledMountAsCast = source.controlledMountAsCast;
@@ -1497,7 +1496,6 @@ public class StackEntry {
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
         this.untilNextTurnKeywordsOnEntry.addAll(source.untilNextTurnKeywordsOnEntry);
         this.suspendHasteOnEntry = source.suspendHasteOnEntry;
-        this.grantedBlitzOnEntry = source.grantedBlitzOnEntry;
         this.grantedColorsOnEntry.addAll(source.grantedColorsOnEntry);
         this.grantedSubtypesOnEntry.addAll(source.grantedSubtypesOnEntry);
         this.basePowerOverrideOnEntry = source.basePowerOverrideOnEntry;
@@ -1610,7 +1608,7 @@ public class StackEntry {
         if (record.sourcePermanentSnapshot != null) {
             this.sourcePermanentSnapshot = new Permanent(record.sourcePermanentSnapshot);
         }
-        this.alternateCost = record.alternateCost;
+        this.alternativeCost = record.alternativeCost;
         // What was paid as the source was cast is the same for every ability of it, whatever the ability chooses.
         this.kicked |= record.kicked;
         this.spectacle |= record.spectacle;
@@ -2131,7 +2129,7 @@ public class StackEntry {
         this.spectacle = false;
         this.sneak = false;
         this.castForForetell = false;
-        this.alternateCost = false;
+        this.alternativeCost = null;
         this.webSlingingReturnedCreatureManaValue = null;
         this.madness = false;
         this.overloaded = false;
@@ -3015,5 +3013,32 @@ public class StackEntry {
         }
         int xSymbols = card.getParsedManaCost() == null ? 0 : card.getParsedManaCost().getXSymbolCount();
         return card.getManaValue() + xValue * xSymbols;
+    }
+
+    /** Whether this spell was cast for an alternative cost (CR 118.9), whichever it was. */
+    public boolean isAlternateCost() {
+        return alternativeCost != null;
+    }
+
+    /**
+     * Records that an alternative cost was paid ({@code true}) or that none was; a kind already recorded is kept
+     * when {@code alternateCost} is {@code true}.
+     */
+    public void setAlternateCost(boolean alternateCost) {
+        if (!alternateCost) {
+            this.alternativeCost = null;
+        } else if (this.alternativeCost == null) {
+            this.alternativeCost = AlternativeCostKind.OTHER;
+        }
+    }
+
+    /** Whether this spell was cast for its dash cost (CR 702.109a), not any other alternative cost. */
+    public boolean isDashCostPaid() {
+        return alternativeCost == AlternativeCostKind.DASH;
+    }
+
+    /** Whether this spell was cast for a blitz cost (CR 702.152a), not any other alternative cost. */
+    public boolean isBlitzCostPaid() {
+        return alternativeCost == AlternativeCostKind.BLITZ;
     }
 }

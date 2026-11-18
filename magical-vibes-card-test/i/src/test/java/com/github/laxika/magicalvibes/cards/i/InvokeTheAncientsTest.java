@@ -51,7 +51,7 @@ class InvokeTheAncientsTest extends BaseCardTest {
             assertThat(spirit.getCounterCount(CounterType.VIGILANCE)).isEqualTo(1);
             assertThat(spirit.getCounterCount(CounterType.REACH)).isZero();
             assertThat(spirit.getCounterCount(CounterType.TRAMPLE)).isZero();
-            assertThat(spirit.hasKeyword(Keyword.VIGILANCE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, spirit, Keyword.VIGILANCE)).isTrue();
         });
         assertThat(countPermanents(player2, "Spirit")).isZero();
         assertThat(gd.interaction.activeInteraction()).isNull();

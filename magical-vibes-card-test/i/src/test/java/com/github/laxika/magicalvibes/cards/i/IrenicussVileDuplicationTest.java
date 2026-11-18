@@ -69,10 +69,10 @@ class IrenicussVileDuplicationTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
         assertThat(token.isTapped()).isFalse();
         assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(token.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(token.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(mirri.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mirri, Keyword.FLYING)).isFalse();
         assertThat(mirri.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
     }
 
@@ -108,9 +108,9 @@ class IrenicussVileDuplicationTest extends BaseCardTest {
         assertThat(token.isFaceDown()).isFalse();
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
-        assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(token.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(token.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(token.hasKeyword(Keyword.FORESTWALK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FORESTWALK)).isFalse();
     }
 }

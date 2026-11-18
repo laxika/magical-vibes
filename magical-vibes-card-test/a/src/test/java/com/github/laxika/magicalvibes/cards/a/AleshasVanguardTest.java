@@ -28,7 +28,7 @@ class AleshasVanguardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent vanguard = findPermanent(player1, "Alesha's Vanguard");
-        assertThat(vanguard.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, vanguard, Keyword.HASTE)).isFalse();
 
         harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
@@ -47,7 +47,7 @@ class AleshasVanguardTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent vanguard = findPermanent(player1, "Alesha's Vanguard");
-        assertThat(vanguard.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vanguard, Keyword.HASTE)).isTrue();
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

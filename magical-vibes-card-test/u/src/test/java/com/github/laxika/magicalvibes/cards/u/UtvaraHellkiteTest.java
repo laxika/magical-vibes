@@ -40,7 +40,7 @@ class UtvaraHellkiteTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(6);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.DRAGON);
-        assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
     }
 
     @Test

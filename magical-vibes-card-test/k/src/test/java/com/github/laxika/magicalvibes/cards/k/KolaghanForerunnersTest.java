@@ -72,7 +72,7 @@ class KolaghanForerunnersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent forerunners = findPermanent(player1, "Kolaghan Forerunners");
-        assertThat(forerunners.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forerunners, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);

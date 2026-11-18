@@ -3,12 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerMaySacrificeOrDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DSC", collectorNumber = "29")
@@ -21,8 +17,5 @@ public class StarAthlete extends Card {
         target(TargetFilters.nonlandPermanent(), 0, 1)
                 .addTrigger(Triggers.attacks(),
                         new TargetPermanentControllerMaySacrificeOrDamageEffect(5));
-        addTrigger(Triggers.dies(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
-                new DrawCardEffect(1));
     }
 }

@@ -33,7 +33,7 @@ class BaronBertramGraywaterTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent token = findPermanent(player1, "Vampire Rogue");
-        assertThat(token.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.LIFELINK)).isTrue();
         assertThat(countPermanents(player1, "Vampire Rogue")).isEqualTo(1);
     }
 

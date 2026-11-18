@@ -32,7 +32,7 @@ class VoidBeckonerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.DEATHTOUCH)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
         harness.assertInGraveyard(player1, "Void Beckoner");
         harness.assertInHand(player1, "Phase Dolphin");
     }

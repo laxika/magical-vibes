@@ -33,7 +33,7 @@ class HeightenedReflexesTest extends BaseCardTest {
         assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
         assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
         assertThat(bear.getCounterCount(CounterType.FIRST_STRIKE)).isEqualTo(1);
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -51,7 +51,7 @@ class HeightenedReflexesTest extends BaseCardTest {
 
         assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(bear.getCounterCount(CounterType.FIRST_STRIKE)).isEqualTo(1);
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -78,7 +78,7 @@ class HeightenedReflexesTest extends BaseCardTest {
         assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(1);
         assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(creature.getCounterCount(CounterType.FIRST_STRIKE)).isEqualTo(1);
-        assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -94,6 +94,6 @@ class HeightenedReflexesTest extends BaseCardTest {
         assertThat(PermanentGrants.powerBoostOf(gd, creature)).isEqualTo(2);
         assertThat(PermanentGrants.toughnessBoostOf(gd, creature)).isZero();
         assertThat(creature.getCounterCount(CounterType.FIRST_STRIKE)).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
     }
 }

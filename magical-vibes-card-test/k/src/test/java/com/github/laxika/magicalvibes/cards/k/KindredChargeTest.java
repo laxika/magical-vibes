@@ -32,7 +32,7 @@ class KindredChargeTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(2);
-        assertThat(tokens).allMatch(token -> token.hasKeyword(Keyword.HASTE));
+        assertThat(tokens).allMatch(token -> gqs.hasKeyword(gd, token, Keyword.HASTE));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> !permanent.getCard().isToken())
                 .hasSize(3);
@@ -48,7 +48,7 @@ class KindredChargeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .singleElement()
-                .satisfies(token -> assertThat(token.hasKeyword(Keyword.HASTE)).isTrue());
+                .satisfies(token -> assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue());
 
         advanceToEndStep();
         harness.passBothPriorities();
@@ -152,10 +152,11 @@ class KindredChargeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getOriginalCard() instanceof Clone)
                 .singleElement().satisfies(copy -> {
-                    assertThat(copy.hasKeyword(Keyword.HASTE)).isFalse();
+                    assertThat(gqs.hasKeyword(gd, copy, Keyword.HASTE)).isFalse();
                     assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(2);
                 });
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, token, gd.findControllerOf(token))).isTrue();
     }
 
     private void castKindredCharge() {

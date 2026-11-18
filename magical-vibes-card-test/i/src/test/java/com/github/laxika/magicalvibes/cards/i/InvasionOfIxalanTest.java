@@ -82,7 +82,7 @@ class InvasionOfIxalanTest extends BaseCardTest {
         harness.castFromHand(player1, new CopperHostCrusher(), "{6}{G}{G}");
         harness.passBothPriorities();
 
-        assertThat(regisaur.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, regisaur, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -170,9 +170,9 @@ class InvasionOfIxalanTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Plains()));
         castInvasion();
 
-        assertThat(regisaur.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, regisaur, Keyword.INDESTRUCTIBLE)).isFalse();
         harness.passBothPriorities();
-        assertThat(regisaur.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, regisaur, Keyword.INDESTRUCTIBLE)).isTrue();
         harness.assertNotOnBattlefield(player1, "Invasion of Ixalan");
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -180,7 +180,7 @@ class InvasionOfIxalanTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(regisaur.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, regisaur, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -191,7 +191,7 @@ class InvasionOfIxalanTest extends BaseCardTest {
         harness.castFromHand(player2, new CopperHostCrusher(), "{6}{G}{G}");
         harness.passBothPriorities();
 
-        assertThat(regisaur.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, regisaur, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -202,7 +202,7 @@ class InvasionOfIxalanTest extends BaseCardTest {
         harness.playLand(player1, 0);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(regisaur.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, regisaur, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     private void castInvasion() {

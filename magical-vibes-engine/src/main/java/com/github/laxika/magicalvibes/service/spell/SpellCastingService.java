@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUnti
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.AlternativeCostKind;
 import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.Card;
@@ -4301,6 +4302,19 @@ public class SpellCastingService {
                 ? gameQueryService.findGrantedFreerunningAlternateCast(gameData, playerId, card).orElseThrow(
                 () -> new IllegalStateException("Card does not have a granted freerunning cost"))
                 : card.getCastingOption(AlternateHandCast.class).orElse(null);
+        // Only one alternative cost applies to a spell (CR 118.9a). These are paid instead of the hand-cast option
+        // above, so with any of them that option's cost wasn't the one paid.
+        boolean payingAlternateHandCast = usingAlternateCost && alternateHandCast != null
+                && !choosingBattlefieldAlternativeCost && !usingBestowCost && !usingWebSlingingCost
+                && !usingSharedColorDiscardAlternativeCost && !usingCollectEvidenceAlternativeCost;
+        final AlternativeCostKind alternativeCostKind = !payingAlternateHandCast ? null
+                // CR 702.152a: a blitz cost, printed or granted (Henzie).
+                : alternateHandCast.blitz() ? AlternativeCostKind.BLITZ
+                // CR 702.109a: the dash cost is a dash card's own alternative cost, not a granted one.
+                : card.getKeywords().contains(Keyword.DASH)
+                        && alternateHandCast == card.getCastingOption(AlternateHandCast.class).orElse(null)
+                ? AlternativeCostKind.DASH
+                : null;
         if (usingAlternateCost) {
             int declaredTargetCount = targetIds.size() + (targetId == null ? 0 : 1);
             if (declaredTargetCount < card.getMinTargetsWhenCastForAlternateCost()) {
@@ -6207,9 +6221,8 @@ public class SpellCastingService {
             entry.setPhysicalCard(printedHandCard != null ? printedHandCard : physicalSourceCard);
             entry.setPhyrexianManaPaidWithLife(phyrexianManaPaidWithLife);
             entry.setAlternateCost(usingAlternateCost);
-            if (usingGrantedBlitz && !printedBlitzCast) {
-                entry.setGrantedBlitzOnEntry(true);
-                entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
+            if (alternativeCostKind != null) {
+                entry.setAlternativeCost(alternativeCostKind);
             }
             entry.setCastWithMutate(usingAlternateCost && alternateHandCast != null && alternateHandCast.mutate());
             entry.setSacrificedToughness(alternateCostSacrificedToughness);
@@ -7770,6 +7783,21 @@ public class SpellCastingService {
      * Those abilities choose their targets as they are put on the stack (CR 603.3d), so a target named
      * while casting would only be mistaken for a target of the spell (CR 601.2c).
      */
+    /**
+     * The alternative cost a graveyard cast for {@code alternateManaCost} is. "You may cast this card from your graveyard
+     * using its blitz ability" (Sabin, Master Monk; Tenacious Underdog) is written as a graveyard cast for the blitz
+     * mana cost, so that cast pays the blitz cost (CR 702.152a); any other is some other alternative cost.
+     */
+    private static AlternativeCostKind graveyardAlternativeCostKind(Card card, String alternateManaCost) {
+        boolean blitz = card.getCastingOption(AlternateHandCast.class)
+                .filter(AlternateHandCast::blitz)
+                .flatMap(option -> option.getCost(ManaCastingCost.class))
+                .map(ManaCastingCost::manaCost)
+                .filter(alternateManaCost::equals)
+                .isPresent();
+        return blitz ? AlternativeCostKind.BLITZ : AlternativeCostKind.OTHER;
+    }
+
     private static void rejectEnterTheBattlefieldTargets(Card card, UUID targetId, List<UUID> targetIds) {
         if (targetId == null && (targetIds == null || targetIds.isEmpty())
                 || !EffectResolution.targetsOnlyWithEtbAbilities(card)) {
@@ -11558,7 +11586,8 @@ public class SpellCastingService {
             stackEntry.setCastWithWarp(castWithWarp);
             stackEntry.setCastTransformed(graveyardModalBackFace);
             if (isGraveyardCast && graveyardCastOpt.orElseThrow().alternateManaCost() != null) {
-                stackEntry.setAlternateCost(true);
+                stackEntry.setAlternativeCost(graveyardAlternativeCostKind(card,
+                        graveyardCastOpt.orElseThrow().alternateManaCost()));
             }
             stackEntry.setCasualtyCostPaid(
                     additionalCosts.casualtyCost() != null && sacrificePermanentId != null);
@@ -11703,7 +11732,8 @@ public class SpellCastingService {
             }
             stackEntry.setEscapeExiledCardIds(escapeExiledCardIds);
             if (isGraveyardCast && graveyardCastOpt.orElseThrow().alternateManaCost() != null) {
-                stackEntry.setAlternateCost(true);
+                stackEntry.setAlternativeCost(graveyardAlternativeCostKind(card,
+                        graveyardCastOpt.orElseThrow().alternateManaCost()));
             }
             if (isGrantedCyclingGraveyardCast
                     && filteredGraveyardPermission.orElseThrow().permission().alternateCost() != null) {

@@ -1057,6 +1057,8 @@ public class LayerSystemService {
         // have lifelink" — Alms Beast), so declaring attackers or blockers must invalidate the
         // memoized board.
         flags = flags << 1 | (p.isAlternateCost() ? 1 : 0);
+        flags = flags << 1 | (p.isDashCostPaid() ? 1 : 0);
+        flags = flags << 1 | (p.isBlitzCostPaid() ? 1 : 0);
         flags = flags << 1 | (p.isAttacking() ? 1 : 0);
         flags = flags << 1 | (p.isBlocking() ? 1 : 0);
         h = mix(h, flags);

@@ -79,7 +79,8 @@ class KederektLeviathanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Kederekt Leviathan");
-        assertThat(perm.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, perm, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, perm, gd.findControllerOf(perm))).isTrue();
         harness.assertNotInGraveyard(player1, "Kederekt Leviathan");
     }
 

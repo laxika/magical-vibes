@@ -33,7 +33,8 @@ class ThroughTheBreachTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         Permanent creature = findPermanent(player1, "Wandering Ones");
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, creature, gd.findControllerOf(creature))).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.assertOnBattlefield(player1, "Wandering Ones");
@@ -81,7 +82,8 @@ class ThroughTheBreachTest extends BaseCardTest {
         harness.handleCardChosen(player1, 1);
 
         Permanent creature = findPermanent(player1, "Wandering Ones");
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, creature, gd.findControllerOf(creature))).isTrue();
         // Through the Breach remains in hand after splice
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getName)
@@ -122,7 +124,7 @@ class ThroughTheBreachTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Wandering Ones");
         assertThat(gd.stack).isEmpty();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(findPermanent(player1, "Wandering Ones").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Wandering Ones"), Keyword.HASTE)).isTrue();
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         harness.assertOnBattlefield(player1, "Wandering Ones");
         assertThat(gd.stack).hasSize(1);
@@ -149,7 +151,7 @@ class ThroughTheBreachTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(findPermanent(player1, "Wandering Ones").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Wandering Ones"), Keyword.HASTE)).isTrue();
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         harness.assertOnBattlefield(player1, "Wandering Ones");
         assertThat(gd.stack).isEmpty();

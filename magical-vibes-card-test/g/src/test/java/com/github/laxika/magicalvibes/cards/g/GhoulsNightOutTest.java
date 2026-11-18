@@ -46,10 +46,10 @@ class GhoulsNightOutTest extends BaseCardTest {
         assertThat(gqs.hasColor(gd, ownPermanent, CardColor.BLACK)).isTrue();
         assertThat(gqs.hasColor(gd, ownPermanent, CardColor.GREEN)).isTrue();
         assertThat(gqs.hasColor(gd, opposingPermanent, CardColor.BLACK)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(ownPermanent, CardSubtype.ZOMBIE)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(opposingPermanent, CardSubtype.ZOMBIE)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(ownPermanent, CardSubtype.HUMAN)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(ownPermanent, CardSubtype.MONK)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, ownPermanent, CardSubtype.ZOMBIE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, opposingPermanent, CardSubtype.ZOMBIE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, ownPermanent, CardSubtype.HUMAN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, ownPermanent, CardSubtype.MONK)).isTrue();
         assertThat(gqs.hasKeyword(gd, ownPermanent, Keyword.DECAYED)).isTrue();
         assertThat(gqs.hasKeyword(gd, opposingPermanent, Keyword.DECAYED)).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();

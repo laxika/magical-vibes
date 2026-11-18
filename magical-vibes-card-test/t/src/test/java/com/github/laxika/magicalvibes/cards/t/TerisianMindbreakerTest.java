@@ -49,7 +49,8 @@ class TerisianMindbreakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent mindbreaker = findPermanent(player1, "Terisian Mindbreaker");
-        assertThat(mindbreaker.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mindbreaker, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, mindbreaker, gd.findControllerOf(mindbreaker))).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);

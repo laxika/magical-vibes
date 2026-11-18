@@ -41,7 +41,8 @@ class MishrasJuggernautTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent juggernaut = findPermanent(player1, "Mishra's Juggernaut");
-        assertThat(juggernaut.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, juggernaut, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, juggernaut, gd.findControllerOf(juggernaut))).isTrue();
         harness.assertNotInGraveyard(player1, "Mishra's Juggernaut");
     }
 

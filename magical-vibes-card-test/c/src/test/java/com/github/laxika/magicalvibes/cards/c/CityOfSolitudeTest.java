@@ -208,8 +208,8 @@ class CityOfSolitudeTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(chronatog.getPowerModifiers()).isEqualTo(3);
-        assertThat(chronatog.getToughnessModifiers()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, chronatog)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, chronatog)).isEqualTo(3);
     }
 
     @Test
@@ -223,8 +223,8 @@ class CityOfSolitudeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(chronatog.getPowerModifiers()).isEqualTo(3);
-        assertThat(chronatog.getToughnessModifiers()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, chronatog)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, chronatog)).isEqualTo(3);
     }
 
     @Test

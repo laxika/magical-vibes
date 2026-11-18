@@ -45,7 +45,7 @@ class GeneratorServantTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Runeclaw Bear").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Runeclaw Bear"), Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -58,7 +58,7 @@ class GeneratorServantTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Runeclaw Bear").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Runeclaw Bear"), Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -78,7 +78,7 @@ class GeneratorServantTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Runeclaw Bear").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Runeclaw Bear"), Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -98,7 +98,7 @@ class GeneratorServantTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Runeclaw Bear"))
                 .hasSize(2)
-                .allSatisfy(creature -> assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue());
+                .allSatisfy(creature -> assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue());
     }
 
     @Test
@@ -111,11 +111,12 @@ class GeneratorServantTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         Permanent creature = findPermanent(player1, "Runeclaw Bear");
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, creature, gd.findControllerOf(creature))).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
     }
 
     @Test

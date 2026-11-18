@@ -21,7 +21,7 @@ class MidnightManglerTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
 
-        assertThat(gqs.isArtifact(mangler)).isTrue();
+        assertThat(gqs.isArtifact(gd, mangler)).isTrue();
         assertThat(gqs.isCreature(gd, mangler)).isFalse();
     }
 
@@ -32,7 +32,7 @@ class MidnightManglerTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
 
-        assertThat(gqs.isArtifact(mangler)).isTrue();
+        assertThat(gqs.isArtifact(gd, mangler)).isTrue();
         assertThat(gqs.isCreature(gd, mangler)).isTrue();
         assertThat(gqs.getEffectivePower(gd, mangler)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, mangler)).isEqualTo(3);
@@ -72,7 +72,7 @@ class MidnightManglerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         assertThat(gqs.isCreature(gd, mangler)).isFalse();
-        assertThat(gqs.isArtifact(mangler)).isTrue();
+        assertThat(gqs.isArtifact(gd, mangler)).isTrue();
     }
 
     @Test

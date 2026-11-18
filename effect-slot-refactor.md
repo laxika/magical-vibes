@@ -825,6 +825,11 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Moments: as before; "until end of combat" grants outlive removal from combat and control change (CR 611.2a, 506.4; `RayOfCommandTest`). Ledger (3,258 card test classes, route tests): only `floating began|ended` lines and Dance of Many's own trigger added; trigger lines otherwise differ by random draws, drafts, coins and dice.
 - Left: text changes and until-next-turn copies; part 3's phasing item; `onPermanent` effects ending as their permanent leaves; then step 6.
 
+**D (part 19: dash and blitz, intrinsic reads).**
+- `AlternativeCostKind` (`DASH`, `BLITZ`, `OTHER`) replaces the boolean alternative cost on `StackEntry` and `Permanent`; dash's and blitz's end-step return or sacrifice check their own cost. Dash's haste and blitz's haste and dies-draw (`KeywordTriggers.BLITZ_DRAW`) are the permanent's own abilities, seeded by the pass when that cost was paid (CR 702.109a, 702.152a), so any lose-all removes them (CR 613.8a, 613.8b) (`LightningBerserkerTest`, `RiveteersDecoyTest`; fail before).
+- `TriggeringPermanentHasKeyword` reads the layered last-known keywords (`MilesTailsProwerTest`); the view's summoning-sick mark follows the layered haste.
+- Card tests reading effect-granted keywords, P/T, types or colours through the GameData-less accessors read the layered queries; haste assertions also assert the attack is legal.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

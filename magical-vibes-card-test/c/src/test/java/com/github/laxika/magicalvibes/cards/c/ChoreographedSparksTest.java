@@ -118,7 +118,8 @@ class ChoreographedSparksTest extends BaseCardTest {
                 .filter(p -> p.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, token, gd.findControllerOf(token))).isTrue();
 
         harness.passBothPriorities();
         harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
@@ -161,7 +162,8 @@ class ChoreographedSparksTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anySatisfy(permanent -> {
                     assertThat(permanent.getCard().isToken()).isTrue();
-                    assertThat(permanent.hasKeyword(Keyword.HASTE)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
+                    assertThat(als.canAttack(gd, permanent, player1.getId())).isTrue();
                 });
     }
 

@@ -63,7 +63,7 @@ class GoblinRabblemasterTest extends BaseCardTest {
         assertThat(goblin.getCard().getToughness()).isEqualTo(1);
         assertThat(goblin.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(goblin.getCard().getSubtypes()).contains(CardSubtype.GOBLIN);
-        assertThat(goblin.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -275,7 +275,7 @@ class GoblinRabblemasterTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .singleElement().satisfies(token -> {
                     assertThat(token.getCard().isToken()).isTrue();
-                    assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
                 });
     }
 

@@ -31,7 +31,7 @@ class PegasusStampedeTest extends BaseCardTest {
         Permanent token = findPermanent(player1, "Pegasus");
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
-        assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
         harness.assertInGraveyard(player1, "Pegasus Stampede");
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
@@ -69,7 +69,7 @@ class PegasusStampedeTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Pegasus")).satisfies(token -> {
             assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
             assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
-            assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
         });
         harness.assertInHand(player1, "Pegasus Stampede");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);

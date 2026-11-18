@@ -28,7 +28,7 @@ class VeiledAscensionTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(ownFaceDown.getCounterCount(CounterType.FLYING)).isEqualTo(1);
-        assertThat(ownFaceDown.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownFaceDown, Keyword.FLYING)).isTrue();
         assertThat(opponentFaceDown.getCounterCount(CounterType.FLYING)).isZero();
         assertThat(ownFaceUp.getCounterCount(CounterType.FLYING)).isZero();
     }
@@ -115,7 +115,7 @@ class VeiledAscensionTest extends BaseCardTest {
 
         assertThat(cloaked.isFaceDown()).isFalse();
         assertThat(cloaked.getCounterCount(CounterType.FLYING)).isEqualTo(1);
-        assertThat(cloaked.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cloaked, Keyword.FLYING)).isTrue();
     }
     @Test
     void eachAscensionAddsAnEntryCounterToTheSameCloakedCreature() {
@@ -144,7 +144,7 @@ class VeiledAscensionTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(creature.getCounterCount(CounterType.FLYING)).isZero();
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
     private Permanent addFaceDownCreature(Player player) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());

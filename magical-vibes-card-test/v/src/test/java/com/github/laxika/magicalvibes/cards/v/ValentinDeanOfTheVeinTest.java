@@ -153,8 +153,8 @@ class ValentinDeanOfTheVeinTest extends BaseCardTest {
         harness.assertLife(player1, 22);
         assertThat(lisette.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(lisette.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, lisette, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -212,8 +212,8 @@ class ValentinDeanOfTheVeinTest extends BaseCardTest {
 
         assertThat(lisette.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(lisette.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, lisette, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
     }
 
 }

@@ -101,7 +101,7 @@ class MajesticMetamorphosisTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(GameQueryService.permanentHasSubtype(target, CardSubtype.EQUIPMENT)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.EQUIPMENT)).isTrue();
         assertThat(gqs.effectiveCreatureSubtypes(gd, target)).contains(CardSubtype.ANGEL);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
 
@@ -110,7 +110,7 @@ class MajesticMetamorphosisTest extends BaseCardTest {
 
         assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.isCreature(gd, target)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(target, CardSubtype.EQUIPMENT)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.EQUIPMENT)).isTrue();
         assertThat(gqs.getEffectiveSubtypes(gd, target).contains(CardSubtype.ANGEL)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }

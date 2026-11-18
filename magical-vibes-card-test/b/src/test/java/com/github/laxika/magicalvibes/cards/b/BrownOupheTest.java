@@ -123,7 +123,7 @@ class BrownOupheTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.activateAbility(player1, 1, null, cannoneers.getId());
         harness.passBothPriorities();
-        assertThat(gqs.isArtifact(cannoneers)).isTrue();
+        assertThat(gqs.isArtifact(gd, cannoneers)).isTrue();
 
         harness.forceActivePlayer(player2);
         harness.activateAbility(player2, 0, null, player1.getId());
@@ -178,7 +178,7 @@ class BrownOupheTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, cannoneers.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.isArtifact(cannoneers)).isTrue();
+        assertThat(gqs.isArtifact(gd, cannoneers)).isTrue();
         harness.activateAbility(player1, 0, null, cannoneers.getCard().getId());
         harness.passBothPriorities();
 

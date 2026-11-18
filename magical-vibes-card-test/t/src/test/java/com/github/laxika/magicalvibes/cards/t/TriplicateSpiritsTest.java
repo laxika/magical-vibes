@@ -33,7 +33,7 @@ class TriplicateSpiritsTest extends BaseCardTest {
             assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(1);
             assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
             assertThat(spirit.getCard().getColor()).isEqualTo(CardColor.WHITE);
-            assertThat(spirit.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, spirit, Keyword.FLYING)).isTrue();
         });
     }
 

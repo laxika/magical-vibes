@@ -53,7 +53,7 @@ class EncouragingAviatorJumpTest extends BaseCardTest {
         assertThat(aviator.isPrepared()).isFalse();
         assertThat(aviator.getPreparedSpellCardId()).isNull();
         assertThat(gd.findExiledCard(copyId)).isNull();
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test

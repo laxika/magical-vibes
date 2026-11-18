@@ -52,7 +52,7 @@ class MarduShadowspearTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent shadowspear = findPermanent(player1, "Mardu Shadowspear");
-        assertThat(shadowspear.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, shadowspear, Keyword.HASTE)).isTrue();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP))
                 .anyMatch(action -> shadowspear.getId().equals(action.watchedPermanentId()));
 

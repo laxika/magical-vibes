@@ -45,7 +45,7 @@ class DragonBroodmotherTest extends BaseCardTest {
         assertThat(dragon.getCard().getToughness()).isEqualTo(1);
         assertThat(dragon.getCard().getColors()).contains(CardColor.RED, CardColor.GREEN);
         assertThat(dragon.getCard().getSubtypes()).contains(CardSubtype.DRAGON);
-        assertThat(dragon.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isTrue();
     }
 
     @Test

@@ -66,7 +66,7 @@ class MirrexTest extends BaseCardTest {
         assertThat(mite.getCard().getColor()).isNull();
         assertThat(mite.getCard().getSubtypes()).containsExactlyInAnyOrder(
                 CardSubtype.PHYREXIAN, CardSubtype.MITE);
-        assertThat(mite.hasKeyword(Keyword.TOXIC)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mite, Keyword.TOXIC)).isTrue();
         assertThat(bls.canBlock(gd, mite)).isFalse();
 
         mite.setSummoningSick(false);

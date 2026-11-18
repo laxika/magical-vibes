@@ -76,7 +76,7 @@ class SpiderSlayerHatredHonedTest extends BaseCardTest {
             assertThat(gqs.getEffectivePower(gd, robot)).isEqualTo(1);
             assertThat(gqs.getEffectiveToughness(gd, robot)).isEqualTo(1);
             assertThat(robot.getCard().getColor()).isNull();
-            assertThat(gqs.isArtifact(robot)).isTrue();
+            assertThat(gqs.isArtifact(gd, robot)).isTrue();
             assertThat(robot.getCard().getSubtypes()).contains(CardSubtype.ROBOT);
             assertThat(robot.getCard().getKeywords()).contains(Keyword.FLYING);
             assertThat(robot.isTapped()).isTrue();

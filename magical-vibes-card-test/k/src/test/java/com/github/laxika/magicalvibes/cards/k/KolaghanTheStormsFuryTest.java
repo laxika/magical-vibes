@@ -79,7 +79,8 @@ class KolaghanTheStormsFuryTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent kolaghan = findPermanent(player1, "Kolaghan, the Storm's Fury");
-        assertThat(kolaghan.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, kolaghan, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, kolaghan, player1.getId())).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -91,6 +92,7 @@ class KolaghanTheStormsFuryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each attacking Dragon gives one boost, even when Kolaghan does not attack")
     void eachAttackingDragonAddsOneBoostIncludingWhenKolaghanDoesNotAttack() {
         Permanent kolaghan = addCreatureReady(player1, new KolaghanTheStormsFury());
         Permanent firstDragon = addCreatureReady(player1, new ShockmawDragon());
@@ -108,6 +110,7 @@ class KolaghanTheStormsFuryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's attacking Dragon does not trigger the boost")
     void opposingDragonDoesNotTriggerBoost() {
         Permanent kolaghan = addCreatureReady(player1, new KolaghanTheStormsFury());
         Permanent swine = addCreatureReady(player1, new GoreSwine());
@@ -121,11 +124,12 @@ class KolaghanTheStormsFuryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Normal cast does not grant haste or return Kolaghan at end step")
     void normalCastDoesNotGrantHasteOrReturnAtEndStep() {
         harness.castFromHand(player1, new KolaghanTheStormsFury(), "{3}{B}{R}");
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Kolaghan, the Storm's Fury").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Kolaghan, the Storm's Fury"), Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -137,6 +141,7 @@ class KolaghanTheStormsFuryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Resolving a dashed Kolaghan does not create an enters-the-battlefield trigger")
     void dashDoesNotCreateAnEntersTheBattlefieldTrigger() {
         harness.setHand(player1, List.of(new KolaghanTheStormsFury()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -151,6 +156,7 @@ class KolaghanTheStormsFuryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The dash return waits for the end step trigger to resolve")
     void dashReturnWaitsForEndStepTriggerToResolve() {
         harness.setHand(player1, List.of(new KolaghanTheStormsFury()));
         harness.addMana(player1, ManaColor.BLACK, 1);

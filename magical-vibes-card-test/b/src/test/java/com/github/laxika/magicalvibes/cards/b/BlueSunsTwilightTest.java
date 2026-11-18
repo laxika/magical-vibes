@@ -90,8 +90,8 @@ class BlueSunsTwilightTest extends BaseCardTest {
                 .singleElement().satisfies(token -> {
                     assertThat(token.getId()).isNotEqualTo(target.getId());
                     assertThat(token.isSummoningSick()).isTrue();
-                    assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
-                    assertThat(token.hasKeyword(Keyword.VIGILANCE)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();
                 });
     }
 

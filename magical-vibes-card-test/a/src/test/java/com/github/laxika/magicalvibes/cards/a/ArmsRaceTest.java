@@ -53,7 +53,8 @@ class ArmsRaceTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         Permanent ornithopter = findPermanent(player1, "Ornithopter");
-        assertThat(ornithopter.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ornithopter, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, ornithopter, gd.findControllerOf(ornithopter))).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP))
                 .anySatisfy(delayed -> {
@@ -105,7 +106,8 @@ class ArmsRaceTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         Permanent ornithopter = findPermanent(player1, "Ornithopter");
-        assertThat(ornithopter.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ornithopter, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, ornithopter, gd.findControllerOf(ornithopter))).isTrue();
         harness.assertNotInGraveyard(player1, "Ornithopter");
     }
 

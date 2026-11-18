@@ -39,7 +39,7 @@ class EmmaraSoulOfTheAccordTest extends BaseCardTest {
         assertThat(token.getCard().getName()).isEqualTo("Soldier");
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
-        assertThat(token.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.LIFELINK)).isTrue();
     }
 
     @Test

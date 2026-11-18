@@ -107,7 +107,7 @@ class RakdosGuildmageTest extends BaseCardTest {
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.GOBLIN);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

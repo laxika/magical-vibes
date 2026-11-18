@@ -39,7 +39,8 @@ class SwiftWarkiteTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(bear.getId()));
 
         Permanent entered = findPermanent(player1, "Kolaghan Aspirant");
-        assertThat(entered.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, entered, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, entered, gd.findControllerOf(entered))).isTrue();
         assertThat(DelayedPermanentMoves.waiting(gd))
                 .contains(new DelayedPermanentAction(
                         entered.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP).scheduledBy(gd.resolutionOrdinal));
@@ -70,7 +71,8 @@ class SwiftWarkiteTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(bear.getId()));
 
         Permanent entered = findPermanent(player1, "Kolaghan Aspirant");
-        assertThat(entered.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, entered, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, entered, gd.findControllerOf(entered))).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(bear);
     }
 

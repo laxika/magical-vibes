@@ -70,8 +70,8 @@ class BofurReliableGuardianTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Bofur, Reliable Guardian");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(creature.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -85,16 +85,16 @@ class BofurReliableGuardianTest extends BaseCardTest {
         harness.castAdventure(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -108,8 +108,8 @@ class BofurReliableGuardianTest extends BaseCardTest {
         harness.castAdventure(player1, 0, artifact.getId());
         harness.passBothPriorities();
 
-        assertThat(artifact.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(artifact.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test

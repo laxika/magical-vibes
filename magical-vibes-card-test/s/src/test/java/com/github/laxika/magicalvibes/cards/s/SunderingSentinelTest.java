@@ -45,7 +45,8 @@ class SunderingSentinelTest extends BaseCardTest {
 
         Permanent returned = findSentinel(player1);
         assertThat(returned).isNotNull();
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, returned, gd.findControllerOf(returned))).isTrue();
         assertThat(gd.getLife(player2.getId())).isEqualTo(15);
         assertThat(gd.getLife(player1.getId())).isEqualTo(25);
         assertThat(gd.getCardIntensity(sentinel.getId())).isEqualTo(4);
@@ -82,7 +83,8 @@ class SunderingSentinelTest extends BaseCardTest {
 
         Permanent returned = findSentinel(player2);
         assertThat(returned).isNotNull();
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, returned, gd.findControllerOf(returned))).isTrue();
         harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
 

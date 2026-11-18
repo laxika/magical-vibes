@@ -47,7 +47,7 @@ class ArnimZolaBioFanaticTest extends BaseCardTest {
         assertThat(token.getCard().getPower()).isEqualTo(2);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
         assertThat(token.isTapped()).isTrue();
-        assertThat(token.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.MENACE)).isTrue();
     }
 
     @Test
@@ -149,6 +149,6 @@ class ArnimZolaBioFanaticTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Villain")).isEqualTo(1);
-        assertThat(findPermanent(player1, "Villain").hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Villain"), Keyword.MENACE)).isTrue();
     }
 }

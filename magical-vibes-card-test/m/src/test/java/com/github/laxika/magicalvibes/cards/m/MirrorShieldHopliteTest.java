@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.b.BolaSlinger;
 import com.github.laxika.magicalvibes.cards.c.ConsumingAetherborn;
 import com.github.laxika.magicalvibes.cards.s.SigiledSentinel;
@@ -32,7 +33,12 @@ class MirrorShieldHopliteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+        bears.setSummoningSick(false);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(bears))));
+        assertThat(bears.isAttacking()).isTrue();
+        assertThat(bears.isTapped()).isFalse();
     }
 
     @Test
@@ -51,8 +57,8 @@ class MirrorShieldHopliteTest extends BaseCardTest {
 
         assertThat(firstBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(secondBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(firstBears.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(secondBears.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, firstBears, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondBears, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -126,7 +132,7 @@ class MirrorShieldHopliteTest extends BaseCardTest {
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(opponentTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(opponentTarget.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentTarget, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test

@@ -34,7 +34,7 @@ class DragonTrainerTest extends BaseCardTest {
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.DRAGON);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
-        assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
     }
 
     @Test

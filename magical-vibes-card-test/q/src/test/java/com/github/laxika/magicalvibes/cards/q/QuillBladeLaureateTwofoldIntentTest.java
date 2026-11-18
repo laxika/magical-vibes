@@ -46,7 +46,7 @@ class QuillBladeLaureateTwofoldIntentTest extends BaseCardTest {
         assertThat(laureate.getPreparedSpellCardId()).isNull();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -66,7 +66,7 @@ class QuillBladeLaureateTwofoldIntentTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test

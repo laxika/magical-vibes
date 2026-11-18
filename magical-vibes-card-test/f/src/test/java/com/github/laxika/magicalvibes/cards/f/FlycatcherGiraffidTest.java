@@ -21,8 +21,8 @@ class FlycatcherGiraffidTest extends BaseCardTest {
 
         assertThat(giraffid.getCounterCount(CounterType.REACH)).isEqualTo(1);
         assertThat(giraffid.getCounterCount(CounterType.VIGILANCE)).isZero();
-        assertThat(giraffid.hasKeyword(Keyword.REACH)).isTrue();
-        assertThat(giraffid.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, giraffid, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, giraffid, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -31,8 +31,8 @@ class FlycatcherGiraffidTest extends BaseCardTest {
 
         assertThat(giraffid.getCounterCount(CounterType.REACH)).isZero();
         assertThat(giraffid.getCounterCount(CounterType.VIGILANCE)).isEqualTo(1);
-        assertThat(giraffid.hasKeyword(Keyword.REACH)).isFalse();
-        assertThat(giraffid.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, giraffid, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, giraffid, Keyword.VIGILANCE)).isTrue();
     }
 
     private Permanent castAndChoose(String counterType) {

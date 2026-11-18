@@ -120,7 +120,7 @@ class NotForgottenTest extends BaseCardTest {
         Permanent spirit = findPermanent(player1, "Spirit");
         assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
-        assertThat(spirit.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, spirit, Keyword.FLYING)).isTrue();
         assertThat(gqs.getEffectiveColors(gd, spirit)).containsExactly(CardColor.WHITE);
     }
 }

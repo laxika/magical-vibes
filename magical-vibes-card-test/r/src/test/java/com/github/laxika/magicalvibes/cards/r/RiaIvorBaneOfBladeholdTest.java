@@ -48,7 +48,7 @@ class RiaIvorBaneOfBladeholdTest extends BaseCardTest {
             assertThat(mite.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
             assertThat(mite.getCard().getSubtypes()).contains(com.github.laxika.magicalvibes.model.CardSubtype.PHYREXIAN,
                     com.github.laxika.magicalvibes.model.CardSubtype.MITE);
-            assertThat(mite.hasKeyword(Keyword.TOXIC)).isTrue();
+            assertThat(gqs.hasKeyword(gd, mite, Keyword.TOXIC)).isTrue();
             assertThat(bls.canBlock(gd, mite)).isFalse();
         });
     }

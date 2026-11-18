@@ -117,7 +117,7 @@ class SoulOfMigrationTest extends BaseCardTest {
             assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
             assertThat(bird.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(bird.getCard().getSubtypes()).contains(CardSubtype.BIRD);
-            assertThat(bird.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, bird, Keyword.FLYING)).isTrue();
         });
     }
 }

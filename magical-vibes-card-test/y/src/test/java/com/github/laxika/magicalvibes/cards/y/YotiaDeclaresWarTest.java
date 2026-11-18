@@ -38,7 +38,7 @@ class YotiaDeclaresWarTest extends BaseCardTest {
         assertThat(token.getCard().getPower()).isZero();
         assertThat(token.getCard().getToughness()).isEqualTo(2);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.THOPTER);
-        assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
         assertThat(gqs.isArtifact(gd, token)).isTrue();
     }
 
@@ -218,7 +218,7 @@ class YotiaDeclaresWarTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(5);
-        assertThat(artifact.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.FLYING)).isTrue();
         harness.assertInGraveyard(player1, "Yotia Declares War");
 
         harness.forceStep(TurnStep.END_STEP);
@@ -228,7 +228,7 @@ class YotiaDeclaresWarTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, artifact)).isTrue();
         assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(3);
-        assertThat(artifact.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.FLYING)).isTrue();
     }
 
     @Test

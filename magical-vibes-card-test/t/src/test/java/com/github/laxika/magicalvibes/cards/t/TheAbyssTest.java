@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TheAbyssTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The active player chooses a nonartifact creature they control and it is destroyed without regeneration")
     void activePlayerChoosesAControlledNonartifactCreatureAndItCannotRegenerate() {
         harness.addToBattlefield(player1, new TheAbyss());
         Permanent controllerCreature = harness.addToBattlefieldAndReturn(player1, new KoboldsOfKherKeep());
@@ -41,6 +43,7 @@ class TheAbyssTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Triggers during The Abyss controller's upkeep as well")
     void triggersDuringTheControllerUpkeepAsWell() {
         harness.addToBattlefield(player1, new TheAbyss());
         Permanent controllerCreature = harness.addToBattlefieldAndReturn(player1, new KoboldsOfKherKeep());
@@ -62,6 +65,7 @@ class TheAbyssTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not trigger without a legal creature")
     void doesNotTriggerWithoutALegalCreature() {
         harness.addToBattlefield(player1, new TheAbyss());
         Permanent controllerCreature = harness.addToBattlefieldAndReturn(player1, new KoboldsOfKherKeep());
@@ -76,6 +80,7 @@ class TheAbyssTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The active player chooses only one of several legal creatures")
     void activePlayerChoosesOnlyOneOfSeveralLegalCreatures() {
         harness.addToBattlefield(player1, new TheAbyss());
         Permanent first = harness.addToBattlefieldAndReturn(player2, new KoboldsOfKherKeep());
@@ -96,6 +101,7 @@ class TheAbyssTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A target that becomes an artifact before resolution survives")
     void targetBecomingAnArtifactBeforeResolutionSurvives() {
         harness.addToBattlefield(player1, new TheAbyss());
         harness.addToBattlefield(player2, new AshnodsTransmogrant());
@@ -106,7 +112,7 @@ class TheAbyssTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, creature.getId());
         harness.passBothPriorities();
-        assertThat(gqs.isArtifact(creature)).isTrue();
+        assertThat(gqs.isArtifact(gd, creature)).isTrue();
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(creature);
@@ -115,6 +121,7 @@ class TheAbyssTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature with shroud cannot be chosen, even by its controller")
     void shroudedCreatureCannotBeChosenEvenByItsController() {
         harness.addToBattlefield(player1, new TheAbyss());
         Permanent protectedCreature = harness.addToBattlefieldAndReturn(player2, new KoboldsOfKherKeep());

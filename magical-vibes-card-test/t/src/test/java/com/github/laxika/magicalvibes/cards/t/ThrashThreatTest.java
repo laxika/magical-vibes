@@ -78,7 +78,7 @@ class ThrashThreatTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getColors()).containsExactlyInAnyOrder(CardColor.RED, CardColor.GREEN);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.BEAST);
-        assertThat(token.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test

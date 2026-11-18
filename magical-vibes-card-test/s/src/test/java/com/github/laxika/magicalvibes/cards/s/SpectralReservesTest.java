@@ -34,7 +34,7 @@ class SpectralReservesTest extends BaseCardTest {
             assertThat(spirit.getCard().getToughness()).isEqualTo(1);
             assertThat(spirit.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(spirit.getCard().getSubtypes()).contains(CardSubtype.SPIRIT);
-            assertThat(spirit.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, spirit, Keyword.FLYING)).isTrue();
         }
 
         harness.assertLife(player1, 22);

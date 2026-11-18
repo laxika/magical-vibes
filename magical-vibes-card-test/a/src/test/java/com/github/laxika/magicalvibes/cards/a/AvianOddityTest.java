@@ -29,7 +29,7 @@ class AvianOddityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.FLYING)).isEqualTo(1);
-        assertThat(target.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, com.github.laxika.magicalvibes.model.Keyword.FLYING)).isTrue();
         harness.assertInGraveyard(player1, "Avian Oddity");
         harness.assertNotInHand(player1, "Almighty Brushwagg");
         harness.passBothPriorities();

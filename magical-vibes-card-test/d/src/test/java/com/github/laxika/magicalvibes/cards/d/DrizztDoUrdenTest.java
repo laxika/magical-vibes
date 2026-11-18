@@ -41,7 +41,7 @@ class DrizztDoUrdenTest extends BaseCardTest {
         assertThat(guenhwyvar.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
         assertThat(gqs.getEffectivePower(gd, guenhwyvar)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, guenhwyvar)).isEqualTo(1);
-        assertThat(guenhwyvar.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, guenhwyvar, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test

@@ -78,7 +78,7 @@ class ZurgoBellstrikerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent zurgo = findPermanent(player1, "Zurgo Bellstriker");
-        assertThat(zurgo.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, zurgo, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);

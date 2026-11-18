@@ -39,7 +39,7 @@ class AgentsOfHYDRATest extends BaseCardTest {
                     assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
                     assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
                     assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.VILLAIN);
-                    assertThat(token.hasKeyword(Keyword.MENACE)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, token, Keyword.MENACE)).isTrue();
                     assertThat(token.isTapped()).isFalse();
                 });
         harness.assertInGraveyard(player1, "Agents of HYDRA");

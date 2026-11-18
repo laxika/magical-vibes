@@ -28,7 +28,7 @@ class HireACrewTest extends BaseCardTest {
         Permanent token = findPermanent(player1, "Villain");
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.VILLAIN);
-        assertThat(token.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.MENACE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(3);

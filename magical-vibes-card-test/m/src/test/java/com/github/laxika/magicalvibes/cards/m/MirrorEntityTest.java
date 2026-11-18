@@ -77,7 +77,7 @@ class MirrorEntityTest extends BaseCardTest {
 
         // Every creature type, as a layer 4 type change rather than the Changeling ability
         assertThat(gqs.effectiveCreatureSubtypes(gd, healer)).contains(CardSubtype.ELF, CardSubtype.GOBLIN);
-        assertThat(healer.hasKeyword(Keyword.CHANGELING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, healer, Keyword.CHANGELING)).isFalse();
     }
 
     @Test

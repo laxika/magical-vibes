@@ -47,7 +47,7 @@ class SlumberingToraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
-        assertThat(gqs.isArtifact(tora)).isTrue();
+        assertThat(gqs.isArtifact(gd, tora)).isTrue();
         assertThat(gqs.isCreature(gd, tora)).isTrue();
         assertThat(gqs.getEffectivePower(gd, tora)).isEqualTo(discarded.getManaValue());
         assertThat(gqs.getEffectiveToughness(gd, tora)).isEqualTo(discarded.getManaValue());

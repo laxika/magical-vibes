@@ -53,7 +53,8 @@ class TerminalVelocityTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         Permanent elemental = findPermanent(player1, "Air Elemental");
-        assertThat(elemental.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, elemental, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, elemental, player1.getId())).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();

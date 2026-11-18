@@ -54,7 +54,7 @@ class LunarConvocationTest extends BaseCardTest {
         var bat = findPermanents(player1, "Bat").getFirst();
         assertThat(bat.getCard().getPower()).isEqualTo(1);
         assertThat(bat.getCard().getToughness()).isEqualTo(1);
-        assertThat(bat.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bat, Keyword.FLYING)).isTrue();
     }
 
     @Test

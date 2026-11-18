@@ -59,8 +59,8 @@ class TwoHeadedGiantTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        boolean hasDoubleStrike = giant.hasKeyword(Keyword.DOUBLE_STRIKE);
-        boolean hasMenace = giant.hasKeyword(Keyword.MENACE);
+        boolean hasDoubleStrike = gqs.hasKeyword(gd, giant, Keyword.DOUBLE_STRIKE);
+        boolean hasMenace = gqs.hasKeyword(gd, giant, Keyword.MENACE);
 
         // Double strike and menace are mutually exclusive outcomes
         assertThat(hasDoubleStrike && hasMenace)

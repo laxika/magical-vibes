@@ -85,7 +85,7 @@ class RagavanNimblePilfererTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent ragavan = findPermanent(player1, "Ragavan, Nimble Pilferer");
-        assertThat(ragavan.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ragavan, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -116,7 +116,7 @@ class RagavanNimblePilfererTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent ragavan = findPermanent(player1, "Ragavan, Nimble Pilferer");
-        assertThat(ragavan.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ragavan, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);

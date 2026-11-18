@@ -124,7 +124,7 @@ class LuminarchAscensionTest extends BaseCardTest {
         assertThat(angel.getCard().getSubtypes()).contains(CardSubtype.ANGEL);
         assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
-        assertThat(angel.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
     }
 
     @Test

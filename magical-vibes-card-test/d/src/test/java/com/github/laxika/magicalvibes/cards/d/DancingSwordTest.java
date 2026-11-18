@@ -47,7 +47,7 @@ class DancingSwordTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(sword);
         assertThat(gqs.isCreature(gd, sword)).isFalse();
-        assertThat(gqs.permanentHasSubtype(sword, CardSubtype.EQUIPMENT)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, sword, CardSubtype.EQUIPMENT)).isTrue();
         assertThat(sword.getCard().hasType(CardType.ARTIFACT)).isTrue();
         assertThat(sword.getAttachedTo()).isNull();
     }
@@ -67,8 +67,8 @@ class DancingSwordTest extends BaseCardTest {
         assertThat(gqs.isArtifact(gd, sword)).isTrue();
         assertThat(gqs.getEffectivePower(gd, sword)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, sword)).isEqualTo(1);
-        assertThat(GameQueryService.permanentHasSubtype(sword, CardSubtype.CONSTRUCT)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(sword, CardSubtype.EQUIPMENT)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, sword, CardSubtype.CONSTRUCT)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, sword, CardSubtype.EQUIPMENT)).isFalse();
         assertThat(gqs.hasKeyword(gd, sword, Keyword.FLYING)).isTrue();
         assertThat(sword.getAttachedTo()).isNull();
 

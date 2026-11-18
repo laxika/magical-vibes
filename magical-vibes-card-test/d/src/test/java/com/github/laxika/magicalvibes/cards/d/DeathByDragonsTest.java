@@ -35,7 +35,7 @@ class DeathByDragonsTest extends BaseCardTest {
         assertThat(dragon.getCard().getPower()).isEqualTo(5);
         assertThat(dragon.getCard().getToughness()).isEqualTo(5);
         assertThat(dragon.getCard().getSubtypes()).containsExactly(CardSubtype.DRAGON);
-        assertThat(dragon.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isTrue();
     }
 
     @Test

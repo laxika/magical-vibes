@@ -147,7 +147,7 @@ class DesecratedTombTest extends BaseCardTest {
         assertThat(bat.getCard().getToughness()).isEqualTo(1);
         assertThat(bat.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(bat.getCard().getSubtypes()).containsExactly(CardSubtype.BAT);
-        assertThat(bat.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bat, Keyword.FLYING)).isTrue();
         assertThat(bat.isTapped()).isFalse();
         assertThat(findPermanents(player1, "Zombie")).hasSize(1);
     }

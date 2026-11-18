@@ -37,7 +37,7 @@ class TyranidInvasionTest extends BaseCardTest {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
             assertThat(token.getCard().getSubtypes())
                     .containsExactlyInAnyOrder(CardSubtype.TYRANID, CardSubtype.WARRIOR);
-            assertThat(token.hasKeyword(Keyword.TRAMPLE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, token, Keyword.TRAMPLE)).isTrue();
             assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
             assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         });

@@ -105,7 +105,7 @@ class TheFaceOfBoeTest extends BaseCardTest {
 
         var permanent = findPermanent(player1, "Judoon Enforcers");
         assertThat(permanent.isSummoningSick()).isTrue();
-        assertThat(permanent.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isFalse();
         assertThat(permanent.getCounterCount(CounterType.TIME)).isZero();
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(enforcers);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();

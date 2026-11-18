@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanS
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourceToughness;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasGreaterPowerOrToughnessThanSource;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EchoEffect;
 import com.github.laxika.magicalvibes.model.effect.EvolveEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -74,6 +75,13 @@ public final class KeywordTriggers {
                         new PayEchoCost(echo.manaCost(), echo.handCardCost(), echo.cost(), echo.dynamicManaCost()),
                         List.of(new SacrificeSelfEffect()), true, echo.paidEffects()));
     }
+
+    /**
+     * Blitz's "When this permanent is put into a graveyard from the battlefield, draw a card" (CR 702.152a): a
+     * permanent's own ability for as long as its blitz cost was paid, whether the blitz was printed or granted.
+     */
+    public static final TriggeredAbility BLITZ_DRAW = new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
+            new DrawCardEffect(1));
 
     /** Every keyword that stands for a triggered ability the index lists, with that ability. */
     public static final List<KeywordTrigger> ALL = List.of(

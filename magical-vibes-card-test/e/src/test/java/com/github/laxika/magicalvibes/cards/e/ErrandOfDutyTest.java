@@ -29,7 +29,7 @@ class ErrandOfDutyTest extends BaseCardTest {
         Permanent knight = knights.getFirst();
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(1);
-        assertThat(knight.hasKeyword(Keyword.BANDING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.BANDING)).isTrue();
     }
 
     @Test
@@ -60,7 +60,7 @@ class ErrandOfDutyTest extends BaseCardTest {
         Permanent knight = findPermanent(player2, "Knight");
         assertThat(knight.isTapped()).isFalse();
         assertThat(knight.isSummoningSick()).isTrue();
-        assertThat(knight.hasKeyword(Keyword.BANDING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.BANDING)).isTrue();
         harness.assertInGraveyard(player2, "Errand of Duty");
         assertThat(gd.stack).isEmpty();
     }

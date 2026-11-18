@@ -102,7 +102,8 @@ class IncandescentSoulstokeTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         Permanent elemental = findPermanent(player1, "Flamekin Brawler");
-        assertThat(elemental.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, elemental, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, elemental, gd.findControllerOf(elemental))).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(elemental.isTapped()).isFalse();
 
@@ -141,6 +142,7 @@ class IncandescentSoulstokeTest extends BaseCardTest {
 
         Permanent elemental = findPermanent(player1, "Flamekin Brawler");
         assertThat(gqs.hasKeyword(gd, elemental, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, elemental, gd.findControllerOf(elemental))).isTrue();
         harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
@@ -188,6 +190,7 @@ class IncandescentSoulstokeTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, changeling)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, changeling)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, changeling, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, changeling, gd.findControllerOf(changeling))).isTrue();
         harness.assertInHand(player1, "Nameless Inversion");
     }
 

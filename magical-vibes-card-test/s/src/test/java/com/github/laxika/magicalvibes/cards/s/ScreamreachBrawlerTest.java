@@ -27,7 +27,7 @@ class ScreamreachBrawlerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent brawler = findPermanent(player1, "Screamreach Brawler");
-        assertThat(brawler.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, brawler, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -48,7 +48,7 @@ class ScreamreachBrawlerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent brawler = findPermanent(player1, "Screamreach Brawler");
-        assertThat(brawler.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, brawler, Keyword.HASTE)).isTrue();
         harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
 

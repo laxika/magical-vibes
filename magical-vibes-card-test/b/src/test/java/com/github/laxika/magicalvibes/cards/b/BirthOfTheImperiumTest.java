@@ -40,7 +40,7 @@ class BirthOfTheImperiumTest extends BaseCardTest {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(token.getCard().getSubtypes())
                     .containsExactlyInAnyOrder(CardSubtype.ASTARTES, CardSubtype.WARRIOR);
-            assertThat(token.hasKeyword(Keyword.VIGILANCE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();
         });
     }
 

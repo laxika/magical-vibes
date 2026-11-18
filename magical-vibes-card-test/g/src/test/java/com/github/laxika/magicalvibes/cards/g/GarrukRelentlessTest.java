@@ -281,7 +281,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             // GrizzlyBears is 2/2 + 3/3 = 5/5
             assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
             assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
-            assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
         }
 
         @Test
@@ -297,7 +297,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             // Still 2/2 (X=0)
             assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
             assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
-            assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
         }
 
         @Test
@@ -316,7 +316,7 @@ class GarrukRelentlessTest extends BaseCardTest {
 
             assertThat(gqs.getEffectivePower(gd, oppCreature)).isEqualTo(2);
             assertThat(gqs.getEffectiveToughness(gd, oppCreature)).isEqualTo(2);
-            assertThat(oppCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, oppCreature, Keyword.TRAMPLE)).isFalse();
         }
 
         @Test

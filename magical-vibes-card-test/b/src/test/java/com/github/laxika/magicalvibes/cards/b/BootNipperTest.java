@@ -23,8 +23,8 @@ class BootNipperTest extends BaseCardTest {
 
         assertThat(nipper.getCounterCount(CounterType.DEATHTOUCH)).isEqualTo(1);
         assertThat(nipper.getCounterCount(CounterType.LIFELINK)).isZero();
-        assertThat(nipper.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(nipper.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nipper, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nipper, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -33,8 +33,8 @@ class BootNipperTest extends BaseCardTest {
 
         assertThat(nipper.getCounterCount(CounterType.DEATHTOUCH)).isZero();
         assertThat(nipper.getCounterCount(CounterType.LIFELINK)).isEqualTo(1);
-        assertThat(nipper.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(nipper.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nipper, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nipper, Keyword.LIFELINK)).isTrue();
     }
 
     @Test

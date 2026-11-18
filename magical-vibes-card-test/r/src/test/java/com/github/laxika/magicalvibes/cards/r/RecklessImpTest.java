@@ -30,7 +30,7 @@ class RecklessImpTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent imp = findPermanent(player1, "Reckless Imp");
-        assertThat(imp.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, imp, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -51,7 +51,7 @@ class RecklessImpTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent imp = findPermanent(player1, "Reckless Imp");
-        assertThat(imp.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, imp, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);

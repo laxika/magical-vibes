@@ -100,7 +100,8 @@ class MilaCraftyCompanionTest extends BaseCardTest {
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() == creature)
                 .findFirst().orElseThrow();
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, returned, gd.findControllerOf(returned))).isTrue();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();

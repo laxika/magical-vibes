@@ -239,6 +239,7 @@ public class TriggerIndex {
                 && !(departure && gameData.lostPrintedAbilityWatcherIdsBeforeLeave.contains(permanent.getId()))) {
             abilities.addAll(withoutLost(gameData, permanent.getCard().getId(),
                     permanent.getCard().getTriggeredAbilities()));
+            blitzAbility(permanent, abilities);
         }
         keywordAbilities(gameData, permanent, staticBonus, abilities);
         // The granted abilities are those the layers leave it, after any "loses all abilities" older than them
@@ -260,6 +261,7 @@ public class TriggerIndex {
         List<TriggeredAbility> gained = new ArrayList<>();
         if (!lastKnown.isLastKnownLostPrintedAbilities() && !lastKnown.isFaceDown()) {
             printed.addAll(withoutLost(gameData, card.getId(), card.getTriggeredAbilities()));
+            blitzAbility(lastKnown, printed);
         }
         triggered(departure.grantedAbilities(), gained);
         // A permanent that left in the same event sees the others leave only with an ability that looks back
@@ -509,6 +511,7 @@ public class TriggerIndex {
         List<TriggeredAbility> gained = new ArrayList<>();
         if (!lastKnown.isLastKnownLostPrintedAbilities() && !lastKnown.isFaceDown()) {
             printed.addAll(withoutLost(gameData, card.getId(), card.getTriggeredAbilities()));
+            blitzAbility(lastKnown, printed);
         }
         // The abilities it was granted as the layers left it as it left: one granted after a "loses all abilities"
         // effect (Infuse with Vitality after Humble) stays (CR 613.7).
@@ -694,6 +697,7 @@ public class TriggerIndex {
                     abilities.add(KeywordTriggers.echo(echo));
                 }
             }
+            blitzAbility(permanent, abilities);
         }
         keywordAbilities(gameData, permanent, staticBonus, abilities);
         for (CardEffect granted : staticBonus.grantedEffects()) {
@@ -704,6 +708,17 @@ public class TriggerIndex {
         abilities.addAll(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(gameData, permanent,
                 staticBonus, ability -> true));
         return abilities;
+    }
+
+    /**
+     * Adds blitz's dies-draw ability ({@link KeywordTriggers#BLITZ_DRAW}) when {@code permanent}'s blitz cost was paid
+     * (CR 702.152a). It is the permanent's own ability, so callers add it with its printed ones, under the same "lost
+     * its abilities" gate.
+     */
+    private static void blitzAbility(Permanent permanent, List<TriggeredAbility> into) {
+        if (permanent.isBlitzCostPaid()) {
+            into.add(KeywordTriggers.BLITZ_DRAW);
+        }
     }
 
     /**

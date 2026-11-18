@@ -52,8 +52,8 @@ class DarkDepthsTest extends BaseCardTest {
         assertThat(maritLage.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(maritLage.getCard().getSubtypes()).containsExactly(CardSubtype.AVATAR);
         assertThat(maritLage.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
-        assertThat(maritLage.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(maritLage.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, maritLage, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, maritLage, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 

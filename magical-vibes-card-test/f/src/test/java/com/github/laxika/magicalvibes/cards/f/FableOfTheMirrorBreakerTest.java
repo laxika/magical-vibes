@@ -90,7 +90,7 @@ class FableOfTheMirrorBreakerTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(DelayedPermanentMoves.waiting(gd))
                 .containsExactly(new DelayedPermanentAction(token.getId(),
                         DelayedPermanentActionKind.SACRIFICE_AT_END_STEP).scheduledBy(gd.resolutionOrdinal));

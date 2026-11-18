@@ -150,6 +150,6 @@ class TombOfUramiTest extends BaseCardTest {
         assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.DEMON, CardSubtype.SPIRIT);
         assertThat(token.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
-        assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
     }
 }

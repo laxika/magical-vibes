@@ -75,7 +75,7 @@ class ClaimFameTest extends BaseCardTest {
 
         assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
         assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(0);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Claim // Fame");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Claim // Fame"));
@@ -96,7 +96,7 @@ class ClaimFameTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -126,6 +126,7 @@ class ClaimFameTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Claim cannot target a noncreature card")
     void claimCannotTargetNonCreatureCard() {
         Card land = new Forest();
         harness.setGraveyard(player1, List.of(land));
@@ -137,6 +138,7 @@ class ClaimFameTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Claim does nothing when its target left the graveyard")
     void claimDoesNotReturnTargetThatLeftGraveyard() {
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
@@ -154,6 +156,7 @@ class ClaimFameTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Fame can target an opponent's creature")
     void fameCanTargetOpponentsCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setGraveyard(player1, List.of(new ClaimFame()));
@@ -164,10 +167,11 @@ class ClaimFameTest extends BaseCardTest {
 
         assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
         assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
+    @DisplayName("Fame is exiled when its only target leaves the battlefield")
     void fameIsExiledWhenItsOnlyTargetLeavesBattlefield() {
         Card creature = new GrizzlyBears();
         Permanent target = harness.addToBattlefieldAndReturn(player1, creature);
@@ -188,6 +192,7 @@ class ClaimFameTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Fame cast from the graveyard after Claim gives the returned creature haste so it can attack")
     void claimThenFameUsesTheSamePhysicalCard() {
         Card creature = new GrizzlyBears();
         Card spell = new ClaimFame();
@@ -203,7 +208,9 @@ class ClaimFameTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+        assertThat(target.isSummoningSick()).isTrue();
+        assertThat(als.canAttack(gd, target, player1.getId())).isTrue();
         harness.assertNotInGraveyard(player1, "Claim // Fame");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(spell.getId()));
@@ -211,6 +218,7 @@ class ClaimFameTest extends BaseCardTest {
 
     @Test
     @CardUsed(SpellSnare.class)
+    @DisplayName("Fame is a mana value 2 spell and is exiled when countered")
     void fameIsAManaValueTwoSpellAndIsExiledWhenCountered() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Card spell = new ClaimFame();
@@ -224,7 +232,7 @@ class ClaimFameTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         harness.assertNotInGraveyard(player1, "Claim // Fame");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(spell.getId()));

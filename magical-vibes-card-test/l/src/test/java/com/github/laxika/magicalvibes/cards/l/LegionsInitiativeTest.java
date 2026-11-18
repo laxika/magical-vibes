@@ -98,8 +98,10 @@ class LegionsInitiativeTest extends BaseCardTest {
         Permanent vanguard = findPermanent(player1, "Elite Vanguard");
         assertThat(giant).isNotNull();
         assertThat(vanguard).isNotNull();
-        assertThat(giant.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(vanguard.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, giant, gd.findControllerOf(giant))).isTrue();
+        assertThat(gqs.hasKeyword(gd, vanguard, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, vanguard, gd.findControllerOf(vanguard))).isTrue();
         assertThat(giant.isTapped()).isFalse();
         assertThat(DelayedPermanentMoves.waitingExileReturns(gd)).isEmpty();
     }
@@ -150,6 +152,7 @@ class LegionsInitiativeTest extends BaseCardTest {
         advanceToBeginningOfCombat();
         Permanent giant = findPermanent(player1, "Hill Giant");
         assertThat(gqs.hasKeyword(gd, giant, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, giant, gd.findControllerOf(giant))).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 

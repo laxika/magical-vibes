@@ -44,7 +44,8 @@ class FeldonOfTheThirdPathTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, token, gd.findControllerOf(token))).isTrue();
 
         harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();
@@ -149,7 +150,7 @@ class FeldonOfTheThirdPathTest extends BaseCardTest {
                 .filter(permanent -> permanent.getOriginalCard() instanceof Clone)
                 .findFirst().orElseThrow();
         assertThat(clone.getCard().hasType(CardType.ARTIFACT)).isTrue();
-        assertThat(clone.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, clone, Keyword.HASTE)).isFalse();
 
         harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();

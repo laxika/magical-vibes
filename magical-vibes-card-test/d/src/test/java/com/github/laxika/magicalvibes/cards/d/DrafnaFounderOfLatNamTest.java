@@ -58,7 +58,7 @@ class DrafnaFounderOfLatNamTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(copy.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, copy, Keyword.HASTE)).isFalse();
     }
 
     @Test

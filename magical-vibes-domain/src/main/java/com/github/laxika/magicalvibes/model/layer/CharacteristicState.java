@@ -154,6 +154,11 @@ public class CharacteristicState {
         if (!permanent.isFaceDown()) {
             this.keywords.addAll(card.getKeywords());
             this.meleeInstances = keywords.contains(Keyword.MELEE) ? 1 : 0;
+            // Dash's (CR 702.109a, read from the post-copy card) and blitz's (CR 702.152a) own static ability.
+            if (permanent.isDashCostPaid() && card.getKeywords().contains(Keyword.DASH)
+                    || permanent.isBlitzCostPaid()) {
+                this.keywords.add(Keyword.HASTE);
+            }
         }
         if (permanent.isSuspected()) {
             this.keywords.add(Keyword.MENACE);

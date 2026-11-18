@@ -38,7 +38,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
-import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -48,7 +47,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -325,11 +323,9 @@ public class CardChoiceHandlerService {
                 && copy.getCastingOption(AlternateHandCast.class)
                         .map(AlternateHandCast::blitz)
                         .orElse(false) == false) {
-            // Haste and the end-step sacrifice come from the blitz cost having been paid as the permanent enters
-            // (CR 702.152a), not from enters abilities.
+            // Haste, the dies-draw ability and the end-step sacrifice come from the blitz cost having been paid as the
+            // permanent enters (CR 702.152a), not from abilities of the card.
             copy.addCastingOption(AlternateHandCast.blitz(copy.getManaCost()));
-            copy.addTrigger(Triggers.dies(ObjectRelation.THIS),
-                    TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()), new DrawCardEffect(1));
         }
         copy.freeze();
         hand.set(cardIndex, copy);

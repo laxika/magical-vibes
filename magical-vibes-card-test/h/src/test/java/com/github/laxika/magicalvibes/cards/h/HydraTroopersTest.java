@@ -36,7 +36,7 @@ class HydraTroopersTest extends BaseCardTest {
         assertThat(token.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
-        assertThat(token.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.MENACE)).isTrue();
     }
 
     @Test

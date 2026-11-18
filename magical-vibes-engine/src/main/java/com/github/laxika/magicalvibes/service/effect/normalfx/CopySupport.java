@@ -405,7 +405,7 @@ public class CopySupport {
         copy.setSacrificedColorCount(source.getSacrificedColorCount());
         copy.setKicked(source.isKicked());
         copy.setGiftPromised(source.isGiftPromised());
-        copy.setAlternateCost(source.isAlternateCost());
+        copy.setAlternativeCost(source.getAlternativeCost());
         copy.setWaterbendCostPaid(source.isWaterbendCostPaid());
         copy.setCastForForetell(source.isCastForForetell());
         copy.setRepeatedAdditionalCosts(source.getRepeatedAdditionalCosts());

@@ -77,7 +77,7 @@ class DragonTyphoonTest extends BaseCardTest {
         Permanent dragon = findPermanent(player1, "Dragon");
         assertThat(dragon.getCard().getPower()).isEqualTo(4);
         assertThat(dragon.getCard().getToughness()).isEqualTo(4);
-        assertThat(dragon.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isTrue();
         harness.assertInGraveyard(player1, "Dragon Typhoon");
     }
 }

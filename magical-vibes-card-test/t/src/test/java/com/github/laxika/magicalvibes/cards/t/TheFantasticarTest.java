@@ -27,7 +27,7 @@ class TheFantasticarTest extends BaseCardTest {
         castNoncreatureSpell(true);
 
         assertThat(gqs.isCreature(gd, fantasticar)).isTrue();
-        assertThat(gqs.isArtifact(fantasticar)).isTrue();
+        assertThat(gqs.isArtifact(gd, fantasticar)).isTrue();
         assertThat(gqs.getEffectivePower(gd, fantasticar)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, fantasticar)).isEqualTo(4);
 

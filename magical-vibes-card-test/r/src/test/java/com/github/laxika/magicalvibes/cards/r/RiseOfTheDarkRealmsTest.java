@@ -111,7 +111,8 @@ class RiseOfTheDarkRealmsTest extends BaseCardTest {
 
         var spider = findPermanent(player1, "Giant Spider");
         assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
-        assertThat(spider.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, spider, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, spider, player1.getId())).isTrue();
     }
 
     @Test

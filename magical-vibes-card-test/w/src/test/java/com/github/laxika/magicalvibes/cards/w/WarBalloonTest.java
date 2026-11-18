@@ -43,7 +43,7 @@ class WarBalloonTest extends BaseCardTest {
 
         balloon.setCounterCount(CounterType.FIRE, 3);
         assertThat(gqs.isCreature(gd, balloon)).isTrue();
-        assertThat(gqs.isArtifact(balloon)).isTrue();
+        assertThat(gqs.isArtifact(gd, balloon)).isTrue();
         assertThat(gqs.getEffectivePower(gd, balloon)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, balloon)).isEqualTo(3);
 

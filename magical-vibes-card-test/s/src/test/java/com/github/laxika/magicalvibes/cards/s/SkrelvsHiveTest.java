@@ -35,7 +35,7 @@ class SkrelvsHiveTest extends BaseCardTest {
         assertThat(mite.getCard().getSubtypes()).containsExactlyInAnyOrder(
                 com.github.laxika.magicalvibes.model.CardSubtype.PHYREXIAN,
                 com.github.laxika.magicalvibes.model.CardSubtype.MITE);
-        assertThat(mite.hasKeyword(Keyword.TOXIC)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mite, Keyword.TOXIC)).isTrue();
         assertThat(mite.getCard().getColor()).isNull();
         assertThat(mite.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(mite.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);

@@ -81,7 +81,7 @@ class LakeTownToymakerTest extends BaseCardTest {
         harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test

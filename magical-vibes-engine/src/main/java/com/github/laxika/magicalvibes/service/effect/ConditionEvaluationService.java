@@ -2059,7 +2059,11 @@ public class ConditionEvaluationService {
                             .filter(snapshot -> snapshot.getId().equals(ctx.triggeringPermanentId()))
                             .findFirst().orElse(null);
                     if (lastKnown != null) {
-                        yield lastKnown.hasKeyword(c.keyword());
+                        // Its keywords as it last existed: the floating grants still on its id as well as its own
+                        // printed and counter keywords, unless an effect had removed them.
+                        yield gameQueryService.hasKeyword(gameData, lastKnown, c.keyword())
+                                || (lastKnown.hasKeyword(c.keyword()) && !gameQueryService
+                                        .computeStaticBonus(gameData, lastKnown).removedKeywords().contains(c.keyword()));
                     }
                 }
                 yield triggeringPermanent != null

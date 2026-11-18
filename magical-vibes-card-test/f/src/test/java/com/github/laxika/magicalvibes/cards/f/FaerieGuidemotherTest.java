@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FaerieGuidemotherTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Gift of the Fae gives +2/+1 and flying until end of turn")
     void adventureBoostsTargetCreatureAndGrantsFlyingUntilEndOfTurn() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         FaerieGuidemother card = new FaerieGuidemother();
@@ -30,7 +32,7 @@ class FaerieGuidemotherTest extends BaseCardTest {
 
         assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(2);
         assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isEqualTo(1);
-        assertThat(bear.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
         assertThat(harness.getGameData().exilePlayPermissionHolder(card.getId())).isEqualTo(player1.getId());
 
@@ -38,10 +40,11 @@ class FaerieGuidemotherTest extends BaseCardTest {
 
         assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
         assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
-        assertThat(bear.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
     }
 
     @Test
+    @DisplayName("The creature can be cast from exile after the adventure resolves")
     void creatureCanBeCastFromExileAfterAdventureResolves() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FaerieGuidemother());
         FaerieGuidemother card = new FaerieGuidemother();
@@ -67,10 +70,11 @@ class FaerieGuidemotherTest extends BaseCardTest {
 
         assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
         assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isZero();
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test
+    @DisplayName("An adventure whose target is gone goes to the graveyard without exile permission")
     void adventureWithMissingTargetGoesToGraveyardWithoutExilePermission() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FaerieGuidemother());
         FaerieGuidemother card = new FaerieGuidemother();
@@ -88,6 +92,7 @@ class FaerieGuidemotherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The creature can be cast directly without going on an adventure")
     void creatureCanBeCastDirectlyWithoutGoingOnAdventure() {
         FaerieGuidemother card = new FaerieGuidemother();
         harness.setHand(player1, List.of(card));

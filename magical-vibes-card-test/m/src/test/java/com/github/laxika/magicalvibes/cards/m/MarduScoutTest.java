@@ -26,7 +26,7 @@ class MarduScoutTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent scout = findPermanent(player1, "Mardu Scout");
-        assertThat(scout.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, scout, Keyword.HASTE)).isFalse();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
@@ -44,7 +44,7 @@ class MarduScoutTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent scout = findPermanent(player1, "Mardu Scout");
-        assertThat(scout.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, scout, Keyword.HASTE)).isTrue();
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 

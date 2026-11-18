@@ -152,7 +152,7 @@ class AxgardCavalryTest extends BaseCardTest {
 
         assertThat(cavalry.isTapped()).isTrue();
         assertThat(gqs.hasKeyword(gd, cavalry, Keyword.HASTE)).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 }

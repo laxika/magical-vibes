@@ -49,8 +49,8 @@ class DranaTheLastBloodchiefTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(GameQueryService.permanentHasSubtype(returned, CardSubtype.VAMPIRE)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(returned, CardSubtype.MOUSE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.VAMPIRE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.MOUSE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstCreature, land, legendaryCreature);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
@@ -89,8 +89,8 @@ class DranaTheLastBloodchiefTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, drana));
 
-        assertThat(GameQueryService.permanentHasSubtype(returned, CardSubtype.VAMPIRE)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(returned, CardSubtype.MOUSE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.VAMPIRE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.MOUSE)).isTrue();
     }
 
     @Test
@@ -115,7 +115,7 @@ class DranaTheLastBloodchiefTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Canyon Jerboa");
         assertThat(returned.getCard().getId()).isEqualTo(newlyAddedCreature.getId());
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(GameQueryService.permanentHasSubtype(returned, CardSubtype.VAMPIRE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.VAMPIRE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstCreature);
     }
 

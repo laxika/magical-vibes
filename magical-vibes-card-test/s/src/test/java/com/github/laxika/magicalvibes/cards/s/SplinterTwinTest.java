@@ -27,8 +27,8 @@ class SplinterTwinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent token = tokenCopy(player1);
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(token.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.REACH)).isTrue();
         assertThat(token.isTapped()).isFalse();
         assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThatThrownBy(() -> harness.activateAbility(player1, 2, null, null))

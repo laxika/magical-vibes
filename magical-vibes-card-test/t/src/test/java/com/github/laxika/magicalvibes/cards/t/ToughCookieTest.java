@@ -115,7 +115,7 @@ class ToughCookieTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.isCreature(gd, food)).isFalse();
-        assertThat(gqs.isArtifact(food)).isTrue();
+        assertThat(gqs.isArtifact(gd, food)).isTrue();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int foodIndex = gd.playerBattlefields.get(player1.getId()).indexOf(food);
         harness.activateAbility(player1, foodIndex, null, null);

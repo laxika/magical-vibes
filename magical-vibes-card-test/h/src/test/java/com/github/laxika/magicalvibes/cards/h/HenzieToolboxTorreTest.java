@@ -37,7 +37,7 @@ class HenzieToolboxTorreTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent elemental = findPermanent(player1, "Air Elemental");
-        assertThat(elemental.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, elemental, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -59,7 +59,7 @@ class HenzieToolboxTorreTest extends BaseCardTest {
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Air Elemental").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Air Elemental"), Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -113,7 +113,7 @@ class HenzieToolboxTorreTest extends BaseCardTest {
 
         Permanent elemental = findPermanent(player1, "Ivy Elemental");
         assertThat(elemental.getPlusOnePlusOneCounters()).isEqualTo(3);
-        assertThat(elemental.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, elemental, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -125,7 +125,7 @@ class HenzieToolboxTorreTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
-        assertThat(findPermanent(player1, "Air Elemental").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Air Elemental"), Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -170,7 +170,7 @@ class HenzieToolboxTorreTest extends BaseCardTest {
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Air Elemental").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Air Elemental"), Keyword.HASTE)).isTrue();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();

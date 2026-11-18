@@ -102,7 +102,7 @@ class NecromanticSelectionTest extends BaseCardTest {
 
         Permanent returned = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Steel Hellkite"));
         assertThat(gqs.getEffectiveColors(gd, returned)).containsExactly(CardColor.BLACK);
-        assertThat(gqs.isArtifact(returned)).isTrue();
+        assertThat(gqs.isArtifact(gd, returned)).isTrue();
         assertThat(gqs.effectiveCreatureSubtypes(gd, returned)).contains(CardSubtype.DRAGON, CardSubtype.ZOMBIE);
         assertThat(returned.isTapped()).isFalse();
         harness.assertOnBattlefield(player2, "Sol Ring");

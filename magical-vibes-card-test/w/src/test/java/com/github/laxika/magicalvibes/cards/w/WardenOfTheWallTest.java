@@ -100,7 +100,7 @@ class WardenOfTheWallTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
 
-        assertThat(gqs.isArtifact(warden)).isTrue();
+        assertThat(gqs.isArtifact(gd, warden)).isTrue();
         assertThat(gqs.isCreature(gd, warden)).isTrue();
     }
 

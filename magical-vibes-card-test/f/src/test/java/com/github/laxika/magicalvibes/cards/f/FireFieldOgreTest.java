@@ -34,7 +34,8 @@ class FireFieldOgreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Fire-Field Ogre");
-        assertThat(perm.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, perm, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, perm, gd.findControllerOf(perm))).isTrue();
         harness.assertNotInGraveyard(player1, "Fire-Field Ogre");
     }
 

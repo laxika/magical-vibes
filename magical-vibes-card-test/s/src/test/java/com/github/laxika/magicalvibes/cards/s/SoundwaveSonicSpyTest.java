@@ -25,7 +25,7 @@ class SoundwaveSonicSpyTest extends BaseCardTest {
 
         assertThat(soundwave.isTransformed()).isTrue();
         assertThat(soundwave.getCard()).isInstanceOf(SoundwaveSuperiorCaptain.class);
-        assertThat(gqs.isArtifact(soundwave)).isTrue();
+        assertThat(gqs.isArtifact(gd, soundwave)).isTrue();
     }
 
     @Test

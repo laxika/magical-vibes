@@ -35,7 +35,7 @@ class BoroughBackupTest extends BaseCardTest {
             assertThat(hero.getCard().getSubtypes()).contains(CardSubtype.HERO);
             assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(3);
             assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(2);
-            assertThat(hero.hasKeyword(Keyword.VIGILANCE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, hero, Keyword.VIGILANCE)).isTrue();
         });
     }
 

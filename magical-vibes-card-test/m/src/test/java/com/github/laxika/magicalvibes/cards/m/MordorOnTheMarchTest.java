@@ -31,7 +31,8 @@ class MordorOnTheMarchTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Grizzly Bears");
         assertThat(token.getCard().isToken()).isTrue();
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, token, gd.findControllerOf(token))).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
 
         harness.forceActivePlayer(player1);

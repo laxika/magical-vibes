@@ -148,7 +148,7 @@ class FireNationWarshipTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, warship)).isFalse();
-        assertThat(gqs.isArtifact(warship)).isTrue();
+        assertThat(gqs.isArtifact(gd, warship)).isTrue();
     }
 
     @Test

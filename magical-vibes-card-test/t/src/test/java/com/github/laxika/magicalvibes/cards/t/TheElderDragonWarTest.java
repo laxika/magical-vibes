@@ -80,7 +80,7 @@ class TheElderDragonWarTest extends BaseCardTest {
         assertThat(token.getCard().getToughness()).isEqualTo(4);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.DRAGON);
-        assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
     }
 
     @Test

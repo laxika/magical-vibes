@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.AlternativeCostKind;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -206,6 +207,26 @@ class GameDataDeepCopyTest {
         // Original should be unaffected
         Permanent origPerm = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(origPerm.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Deep copy and snapshots keep which alternative cost a permanent and a spell were cast for")
+    void deepCopyKeepsAlternativeCostKind() {
+        Permanent dashed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        dashed.setAlternativeCost(AlternativeCostKind.DASH);
+        StackEntry spell = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Spell", List.of());
+        spell.setAlternativeCost(AlternativeCostKind.DASH);
+        gd.stack.add(spell);
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.playerBattlefields.get(player1.getId()).getFirst().isDashCostPaid()).isTrue();
+        assertThat(copy.stack.getFirst().isDashCostPaid()).isTrue();
+        assertThat(new Permanent(dashed).isDashCostPaid()).isTrue();
+        dashed.setAlternateCost(true);
+        assertThat(dashed.isDashCostPaid()).isTrue();
+        dashed.setAlternateCost(false);
+        assertThat(dashed.isAlternateCost()).isFalse();
     }
 
     @Test

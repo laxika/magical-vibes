@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -118,10 +119,10 @@ class SilverWyvernTest extends BaseCardTest {
         }
         harness.passBothPriorities();
 
-        assertThat(wyvern.getPowerModifiers()).isZero();
-        assertThat(wyvern.getToughnessModifiers()).isZero();
-        assertThat(falcon.getPowerModifiers()).isEqualTo(3);
-        assertThat(falcon.getToughnessModifiers()).isEqualTo(3);
+        assertThat(PermanentGrants.powerBoostOf(gd, wyvern)).isZero();
+        assertThat(PermanentGrants.toughnessBoostOf(gd, wyvern)).isZero();
+        assertThat(PermanentGrants.powerBoostOf(gd, falcon)).isEqualTo(3);
+        assertThat(PermanentGrants.toughnessBoostOf(gd, falcon)).isEqualTo(3);
     }
 
     @Test

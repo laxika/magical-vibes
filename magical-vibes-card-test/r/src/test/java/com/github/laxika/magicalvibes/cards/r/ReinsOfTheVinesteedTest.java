@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HuntingTriad;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Progenitus;
+import com.github.laxika.magicalvibes.cards.s.SoulstoneSanctuary;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,7 +24,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ReinsOfTheVinesteed.class, LlanowarElves.class, ElvishWarrior.class, GrizzlyBears.class,
-        DarkBanishing.class, ChangelingSentinel.class, Cremate.class, HuntingTriad.class, Progenitus.class})
+        DarkBanishing.class, ChangelingSentinel.class, Cremate.class, HuntingTriad.class, Progenitus.class,
+        SoulstoneSanctuary.class})
 class ReinsOfTheVinesteedTest extends BaseCardTest {
 
     @Test
@@ -60,6 +62,22 @@ class ReinsOfTheVinesteedTest extends BaseCardTest {
         Permanent aura = findPermanent(player1, "Reins of the Vinesteed");
         assertThat(aura.getAttachedTo()).isEqualTo(elfB.getId());
         assertThat(aura.getAttachedTo()).isNotEqualTo(elfA.getId());
+    }
+
+    @Test
+    @DisplayName("Reins can return to a creature that has all creature types from an effect")
+    void returnsToCreatureGrantedAllCreatureTypes() {
+        Permanent sanctuary = harness.addToBattlefieldAndReturn(player1, new SoulstoneSanctuary());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent dyingElf = addCreatureReady(player1, new LlanowarElves());
+        attachReinsTo(player1, dyingElf);
+
+        destroyEnchantedCreature(dyingElf);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanent(player1, "Reins of the Vinesteed").getAttachedTo()).isEqualTo(sanctuary.getId());
     }
 
     @Test

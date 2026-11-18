@@ -410,16 +410,13 @@ public class StackResolutionService {
         perm.setExileIfLeavesBattlefield(entry.isExilePermanentIfLeavesBattlefield());
         entry.getEnteringCounters().forEach((counterType, count) ->
                 perm.setCounterCount(counterType, perm.getCounterCount(counterType) + count));
-        perm.setAlternateCost(entry.isAlternateCost());
+        perm.setAlternativeCost(entry.getAlternativeCost());
         perm.setAlternateCostSacrificedToughness(entry.getSacrificedToughness());
         perm.setCastWithWarp(entry.isCastWithWarp());
         perm.setMadness(entry.isMadness());
         perm.setCollectEvidenceCostPaid(entry.isCollectEvidenceCostPaid());
         perm.setCastSacrificedCard(entry.getSacrificedCard() != null
                 ? entry.getSacrificedCard() : entry.getSacrificedCardSnapshot());
-        if (entry.isAlternateCost() && card.getKeywords().contains(Keyword.DASH)) {
-            gameData.addEffectOnPermanent(card.getName(), null, entry.getControllerId(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), perm.getId(), Duration.UNTIL_END_OF_TURN);
-        }
         perm.setEscaped(entry.isCastWithEscape());
         perm.setWebSlingingReturnedCreatureManaValue(entry.getWebSlingingReturnedCreatureManaValue());
         perm.setEnteredFromZone(entry.getSourceZone());
@@ -534,28 +531,7 @@ public class StackResolutionService {
                             com.github.laxika.magicalvibes.model.effect.Duration.WHILE_SOURCE_ON_BATTLEFIELD),
                     permanent.getId(), null, null, Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
-        // CR 702.152a: a blitzed permanent has haste as a static ability, not as an enters-the-battlefield
-        // trigger, so Torpor Orb-style suppression of enters triggers doesn't remove it.
-        boolean printedBlitzHaste = entry.isAlternateCost()
-                && entry.getCard().getCastingOption(com.github.laxika.magicalvibes.model.AlternateHandCast.class)
-                .filter(com.github.laxika.magicalvibes.model.AlternateHandCast::blitz).isPresent();
-        if (printedBlitzHaste) {
-            gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), permanent.getId(), controllerId,
-                    new com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect(
-                            Keyword.HASTE, com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET,
-                            com.github.laxika.magicalvibes.model.effect.Duration.WHILE_SOURCE_ON_BATTLEFIELD),
-                    permanent.getId(), null, null, Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
-        }
-        // CR 702.152a: the blitz end-step sacrifice is a delayed triggered ability created as the spell
-        // resolves, not an enters-the-battlefield trigger. A printed blitz cost is handled by
-        // BattlefieldPlacementService; only a blitz cost granted by another source is queued here.
-        if (entry.isGrantedBlitzOnEntry()) {
-            DelayedPermanentActions.schedule(gameData, entry,
-                    new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
-                    ActivePlayer.ANY);
-        }
-        if (entry.isAlternateCost() && entry.getCard().getKeywords().contains(Keyword.DASH)) {
+        if (entry.isDashCostPaid() && entry.getCard().getKeywords().contains(Keyword.DASH)) {
             gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(Triggers.endStep(
                     ActivePlayer.ANY), entry.getControllerId(), entry.getCard(), permanent.getId(), permanent.getId(),
                     com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.self()));

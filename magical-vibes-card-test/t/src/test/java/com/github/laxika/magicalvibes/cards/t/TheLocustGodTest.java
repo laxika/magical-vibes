@@ -62,8 +62,8 @@ class TheLocustGodTest extends BaseCardTest {
         assertThat(insect.getCard().getToughness()).isEqualTo(1);
         assertThat(insect.getCard().getColors()).containsExactlyInAnyOrder(CardColor.BLUE, CardColor.RED);
         assertThat(insect.getCard().getSubtypes()).contains(CardSubtype.INSECT);
-        assertThat(insect.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(insect.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, insect, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, insect, Keyword.HASTE)).isTrue();
     }
 
     @Test

@@ -43,7 +43,8 @@ class WakeThePastTest extends BaseCardTest {
                 .anyMatch(card -> card instanceof WakeThePast);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentArtifact);
         Permanent returnedWorker = findPermanent(player1, "Arcbound Worker");
-        assertThat(returnedWorker.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returnedWorker, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, returnedWorker, gd.findControllerOf(returnedWorker))).isTrue();
     }
 
     @Test
@@ -56,13 +57,14 @@ class WakeThePastTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         Permanent returnedWorker = findPermanent(player1, "Arcbound Worker");
-        assertThat(returnedWorker.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returnedWorker, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, returnedWorker, gd.findControllerOf(returnedWorker))).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(returnedWorker.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, returnedWorker, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -79,7 +81,7 @@ class WakeThePastTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
         Permanent myr = findPermanent(player1, "Myr");
-        assertThat(myr.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.HASTE)).isFalse();
     }
 
     @Test

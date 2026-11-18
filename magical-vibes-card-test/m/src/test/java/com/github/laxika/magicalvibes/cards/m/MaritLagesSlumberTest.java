@@ -57,8 +57,8 @@ class MaritLagesSlumberTest extends BaseCardTest {
         Permanent maritLage = findPermanent(player1, "Marit Lage");
         assertThat(gqs.getEffectivePower(gd, maritLage)).isEqualTo(20);
         assertThat(gqs.getEffectiveToughness(gd, maritLage)).isEqualTo(20);
-        assertThat(maritLage.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(maritLage.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, maritLage, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, maritLage, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(maritLage.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
     }
 

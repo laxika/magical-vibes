@@ -37,7 +37,7 @@ class ZephyrSingerTest extends BaseCardTest {
 
         assertThat(firstConvokeCreature.getCounterCount(CounterType.FLYING)).isEqualTo(1);
         assertThat(secondConvokeCreature.getCounterCount(CounterType.FLYING)).isEqualTo(1);
-        assertThat(firstConvokeCreature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, firstConvokeCreature, Keyword.FLYING)).isTrue();
         assertThat(nonConvokeCreature.getCounterCount(CounterType.FLYING)).isZero();
     }
 
@@ -80,7 +80,7 @@ class ZephyrSingerTest extends BaseCardTest {
 
         creatures.forEach(creature -> {
             assertThat(creature.getCounterCount(CounterType.FLYING)).isEqualTo(1);
-            assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
         });
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(5);
     }

@@ -475,8 +475,8 @@ public class Permanent {
     @Setter private boolean castWithWarp;
     /** Whether this permanent was cast for its madness cost. */
     @Setter private boolean madness;
-    /** Whether this permanent was cast by paying an alternate cost. */
-    @Setter private boolean alternateCost;
+    /** The alternative cost this permanent was cast for; {@code null} when none was (CR 118.9). */
+    @Setter private AlternativeCostKind alternativeCost;
     /** Effective toughness of the permanent sacrificed to pay this permanent's alternate cost. */
     @Setter private int alternateCostSacrificedToughness;
     /** Mana value of the creature returned to pay this permanent's web-slinging cost, when applicable. */
@@ -854,7 +854,7 @@ public class Permanent {
         this.prowl = source.prowl;
         this.castWithWarp = source.castWithWarp;
         this.madness = source.madness;
-        this.alternateCost = source.alternateCost;
+        this.alternativeCost = source.alternativeCost;
         this.alternateCostSacrificedToughness = source.alternateCostSacrificedToughness;
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.spectacle = source.spectacle;
@@ -1491,8 +1491,19 @@ public class Permanent {
             default -> null;
         };
         return (keyword == Keyword.MENACE && suspected)
+                || (keyword == Keyword.HASTE && hasAlternativeCostHaste())
                 || (!faceDown && card.hasKeyword(keyword))
                 || (keywordCounter != null && getCounterCount(keywordCounter) > 0);
+    }
+
+    /**
+     * Whether its own static ability from the alternative cost it was cast for gives it haste: "As long as this
+     * permanent's dash cost was paid, it has haste" (CR 702.109a) or "As long as this permanent's blitz cost was paid,
+     * it has haste" (CR 702.152a). The ability is the permanent's own, so it is gone with its abilities (removed in the
+     * layered pass like any printed ability) and, for dash, with the dash keyword (a copy effect).
+     */
+    public boolean hasAlternativeCostHaste() {
+        return !faceDown && (isBlitzCostPaid() || isDashCostPaid() && card.hasKeyword(Keyword.DASH));
     }
 
     public void setRepeatedAdditionalCosts(List<String> repeatedAdditionalCosts) {
@@ -1719,5 +1730,32 @@ public class Permanent {
     public void setManaSpentByColorToCast(Map<ManaColor, Integer> manaSpentByColor) {
         this.manaSpentByColorToCast = manaSpentByColor == null || manaSpentByColor.isEmpty()
                 ? Map.of() : Map.copyOf(manaSpentByColor);
+    }
+
+    /** Whether this permanent was cast for an alternative cost (CR 118.9), whichever it was. */
+    public boolean isAlternateCost() {
+        return alternativeCost != null;
+    }
+
+    /**
+     * Records that an alternative cost was paid ({@code true}) or that none was; a kind already recorded is kept
+     * when {@code alternateCost} is {@code true}.
+     */
+    public void setAlternateCost(boolean alternateCost) {
+        if (!alternateCost) {
+            this.alternativeCost = null;
+        } else if (this.alternativeCost == null) {
+            this.alternativeCost = AlternativeCostKind.OTHER;
+        }
+    }
+
+    /** Whether this permanent was cast for its dash cost (CR 702.109a), not any other alternative cost. */
+    public boolean isDashCostPaid() {
+        return alternativeCost == AlternativeCostKind.DASH;
+    }
+
+    /** Whether this permanent was cast for a blitz cost (CR 702.152a), not any other alternative cost. */
+    public boolean isBlitzCostPaid() {
+        return alternativeCost == AlternativeCostKind.BLITZ;
     }
 }

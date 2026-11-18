@@ -93,7 +93,7 @@ class BerserkTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(0);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test

@@ -7,11 +7,6 @@ import com.github.laxika.magicalvibes.model.CastingCost;
 import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -25,9 +20,5 @@ public class SabinMasterMonk extends Card {
         addCastingOption(AlternateHandCast.blitz(blitzCosts));
         addCastingOption(new GraveyardCast(null, "{2}{R}{R}",
                 List.of(new DiscardCardCastingCost()), null));
-
-        addTrigger(Triggers.dies(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
-                new DrawCardEffect(1));
     }
 }

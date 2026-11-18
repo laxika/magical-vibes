@@ -51,7 +51,7 @@ class MarduStrikeLeaderTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent leader = findPermanent(player1, "Mardu Strike Leader");
-        assertThat(leader.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, leader, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -73,7 +73,7 @@ class MarduStrikeLeaderTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent leader = findPermanent(player1, "Mardu Strike Leader");
-        assertThat(leader.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, leader, Keyword.HASTE)).isFalse();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);

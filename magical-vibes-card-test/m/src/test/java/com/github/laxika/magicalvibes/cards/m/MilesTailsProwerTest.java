@@ -11,8 +11,12 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -25,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MilesTailsProwerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A Vehicle without flying gets a flying counter")
     void nonFlyingVehicleGetsAFlyingCounter() {
         harness.addToBattlefield(player1, new MilesTailsPrower());
         Card vehicleCard = vehicle("Vehicle", false);
@@ -39,6 +44,7 @@ class MilesTailsProwerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A Vehicle with flying makes you draw a card")
     void flyingVehicleMakesYouDrawACard() {
         harness.addToBattlefield(player1, new MilesTailsPrower());
         Card vehicleCard = vehicle("Flying Vehicle", true);
@@ -52,6 +58,7 @@ class MilesTailsProwerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Flying is checked as the ability resolves, not as the Vehicle enters")
     void flyingIsCheckedAtResolutionRatherThanEntry() {
         harness.addToBattlefield(player1, new MilesTailsPrower());
         harness.setLibrary(player1, List.of(new Ornithopter()));
@@ -67,6 +74,7 @@ class MilesTailsProwerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A Vehicle that left with a flying counter still draws from its last known information")
     void vehicleWithoutPrintedFlyingStillDrawsAfterLeavingWithAFlyingCounter() {
         harness.addToBattlefield(player1, new MilesTailsPrower());
         harness.setLibrary(player1, List.of(new Ornithopter()));
@@ -86,6 +94,28 @@ class MilesTailsProwerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A Vehicle that left with flying granted by an effect still draws from its last known information")
+    void vehicleThatLeftWithGrantedFlyingDrawsFromItsLastKnownInformation() {
+        harness.addToBattlefield(player1, new MilesTailsPrower());
+        harness.setLibrary(player1, List.of(new Ornithopter()));
+        harness.castFromHand(player1, new ReckonerBankbuster(), "{2}");
+        harness.passBothPriorities();
+
+        Permanent vehicle = findPermanent(player1, "Reckoner Bankbuster");
+        gd.addEffectOnPermanent("Test", null, player1.getId(), new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
+                vehicle.getId(), Duration.UNTIL_END_OF_TURN);
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, vehicle.getId());
+        harness.assertInGraveyard(player1, "Reckoner Bankbuster");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Ornithopter");
+    }
+
+    @Test
+    @DisplayName("An opponent's Vehicle does not trigger")
     void opponentsVehicleDoesNotTrigger() {
         harness.addToBattlefield(player1, new MilesTailsPrower());
         harness.forceActivePlayer(player2);
@@ -98,6 +128,7 @@ class MilesTailsProwerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A flying artifact that is not a Vehicle does not trigger")
     void flyingArtifactThatIsNotAVehicleDoesNotTrigger() {
         harness.addToBattlefield(player1, new MilesTailsPrower());
         harness.castFromHand(player1, new Ornithopter(), "{0}");
@@ -108,6 +139,7 @@ class MilesTailsProwerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A Vehicle with printed flying draws without getting a counter")
     void realFlyingVehicleDrawsWithoutAddingACounter() {
         harness.addToBattlefield(player1, new MilesTailsPrower());
         harness.setLibrary(player1, List.of(new Ornithopter()));

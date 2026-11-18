@@ -57,7 +57,8 @@ class HallOfTheBanditLordTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Humble Budoka").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Humble Budoka"), Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, findPermanent(player1, "Humble Budoka"), player1.getId())).isTrue();
     }
 
     @Test
@@ -66,7 +67,7 @@ class HallOfTheBanditLordTest extends BaseCardTest {
         harness.castFromHand(player1, new HumbleBudoka(), "{1}{G}");
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Humble Budoka").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Humble Budoka"), Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -88,7 +89,7 @@ class HallOfTheBanditLordTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Humble Budoka").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Humble Budoka"), Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -103,11 +104,11 @@ class HallOfTheBanditLordTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent budoka = findPermanent(player1, "Humble Budoka");
-        assertThat(budoka.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, budoka, Keyword.HASTE)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(budoka.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, budoka, Keyword.HASTE)).isTrue();
     }
 
     @Test

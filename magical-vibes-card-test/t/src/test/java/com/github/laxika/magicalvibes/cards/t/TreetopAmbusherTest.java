@@ -66,7 +66,8 @@ class TreetopAmbusherTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent ambusher = findPermanent(player1, "Treetop Ambusher");
-        assertThat(ambusher.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ambusher, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, ambusher, player1.getId())).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -101,7 +102,7 @@ class TreetopAmbusherTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent ambusher = findPermanent(player1, "Treetop Ambusher");
-        assertThat(ambusher.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ambusher, Keyword.HASTE)).isFalse();
 
         harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();

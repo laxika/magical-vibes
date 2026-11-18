@@ -45,7 +45,7 @@ class CarnelianOrbOfDragonkindTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Test Dragon").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Test Dragon"), Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -58,7 +58,7 @@ class CarnelianOrbOfDragonkindTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Test Goblin").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Test Goblin"), Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -70,11 +70,12 @@ class CarnelianOrbOfDragonkindTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent dragon = findPermanent(player1, "Shivan Dragon");
-        assertThat(dragon.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.HASTE)).isTrue();
+        assertThat(als.canAttack(gd, dragon, gd.findControllerOf(dragon))).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(dragon.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -88,7 +89,7 @@ class CarnelianOrbOfDragonkindTest extends BaseCardTest {
         harness.castFromHand(player1, new ShivanDragon(), "{4}{R}{R}");
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Shivan Dragon").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Shivan Dragon"), Keyword.HASTE)).isFalse();
     }
 
     @Test

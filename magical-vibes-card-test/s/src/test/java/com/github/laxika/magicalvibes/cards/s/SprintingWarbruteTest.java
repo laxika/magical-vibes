@@ -105,7 +105,7 @@ class SprintingWarbruteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent warbrute = findPermanent(player1, "Sprinting Warbrute");
-        assertThat(warbrute.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, warbrute, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -125,7 +125,7 @@ class SprintingWarbruteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent warbrute = findPermanent(player1, "Sprinting Warbrute");
-        assertThat(warbrute.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warbrute, Keyword.HASTE)).isTrue();
 
         declareAttackers(player1, List.of(0));
         harness.passUntil(TurnStep.END_STEP);

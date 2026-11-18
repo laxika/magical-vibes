@@ -214,6 +214,20 @@ class PermanentViewFactoryTest {
         assertThat(factory.create(creature, 0, 0, Set.of(Keyword.HASTE), false, List.of()).summoningSick()).isFalse();
     }
 
+    @Test
+    @DisplayName("Printed haste clears summoning sickness only while the permanent still has it")
+    void removedPrintedHasteShowsSummoningSickness() {
+        Card printed = card("Raging Goblin", CardType.CREATURE);
+        printed.setKeywords(Set.of(Keyword.HASTE));
+        Permanent creature = new Permanent(printed);
+
+        assertThat(create(creature).summoningSick()).isFalse();
+        assertThat(factory.create(creature, 0, 0, Set.of(), false, List.of(), Set.of(), List.of(),
+                Set.of(), false, false, false, Set.of(Keyword.HASTE)).summoningSick()).isTrue();
+        assertThat(factory.create(creature, 0, 0, Set.of(), false, List.of(), Set.of(), List.of(),
+                Set.of(), false, false, false, Set.of(), true).summoningSick()).isTrue();
+    }
+
     // ── Subtypes ──────────────────────────────────────────────────────────────
 
     @Test

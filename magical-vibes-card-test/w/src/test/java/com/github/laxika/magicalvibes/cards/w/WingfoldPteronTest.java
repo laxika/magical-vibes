@@ -25,8 +25,8 @@ class WingfoldPteronTest extends BaseCardTest {
 
         assertThat(pteron.getCounterCount(CounterType.FLYING)).isEqualTo(1);
         assertThat(pteron.getCounterCount(CounterType.HEXPROOF)).isZero();
-        assertThat(pteron.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(pteron.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, pteron, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, pteron, Keyword.HEXPROOF)).isFalse();
     }
 
     @Test
@@ -35,8 +35,8 @@ class WingfoldPteronTest extends BaseCardTest {
 
         assertThat(pteron.getCounterCount(CounterType.FLYING)).isZero();
         assertThat(pteron.getCounterCount(CounterType.HEXPROOF)).isEqualTo(1);
-        assertThat(pteron.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(pteron.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, pteron, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, pteron, Keyword.HEXPROOF)).isTrue();
     }
 
     @Test
@@ -105,8 +105,8 @@ class WingfoldPteronTest extends BaseCardTest {
         assertThat(returned.getId()).isNotEqualTo(original.getId());
         assertThat(returned.getCounterCount(CounterType.FLYING)).isZero();
         assertThat(returned.getCounterCount(CounterType.HEXPROOF)).isEqualTo(1);
-        assertThat(returned.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(returned.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HEXPROOF)).isTrue();
     }
 
     private Permanent castAndChoose(String counterType) {

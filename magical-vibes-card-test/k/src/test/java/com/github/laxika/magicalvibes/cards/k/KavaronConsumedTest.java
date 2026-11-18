@@ -51,7 +51,7 @@ class KavaronConsumedTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, chosen)).isTrue();
         assertThat(gqs.getEffectivePower(gd, chosen)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, chosen)).isEqualTo(4);
-        assertThat(chosen.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

@@ -37,7 +37,7 @@ class GoblinAssaultTest extends BaseCardTest {
         assertThat(goblin.getCard().getToughness()).isEqualTo(1);
         assertThat(goblin.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(goblin.getCard().getSubtypes()).contains(CardSubtype.GOBLIN);
-        assertThat(goblin.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
     }
 
     @Test

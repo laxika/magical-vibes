@@ -34,7 +34,7 @@ class MinscBelovedRangerTest extends BaseCardTest {
         assertThat(boo.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
         assertThat(gqs.getEffectivePower(gd, boo)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, boo)).isEqualTo(1);
-        assertThat(GameQueryService.permanentHasSubtype(boo, CardSubtype.HAMSTER)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, boo, CardSubtype.HAMSTER)).isTrue();
         assertThat(gqs.hasKeyword(gd, boo, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, boo, Keyword.HASTE)).isTrue();
     }

@@ -51,7 +51,7 @@ class PitilessHordeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent horde = findPermanent(player1, "Pitiless Horde");
-        assertThat(horde.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, horde, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -87,7 +87,7 @@ class PitilessHordeTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Pitiless Horde").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Pitiless Horde"), Keyword.HASTE)).isFalse();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
 

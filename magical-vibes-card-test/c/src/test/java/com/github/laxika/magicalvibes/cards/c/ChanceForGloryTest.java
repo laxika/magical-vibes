@@ -38,14 +38,14 @@ class ChanceForGloryTest extends BaseCardTest {
 
         Permanent ownBears = findPermanent(player1, "Grizzly Bears");
         Permanent opposingBears = findPermanent(player2, "Grizzly Bears");
-        assertThat(ownBears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(opposingBears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownBears, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingBears, Keyword.INDESTRUCTIBLE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownBears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownBears, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -106,7 +106,7 @@ class ChanceForGloryTest extends BaseCardTest {
 
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        assertThat(findPermanent(player1, "Grizzly Bears").hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -121,7 +121,7 @@ class ChanceForGloryTest extends BaseCardTest {
             harness.forceStep(TurnStep.CLEANUP);
             harness.passBothPriorities();
             assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-            assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
 
             harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
             harness.passUntil(player1, TurnStep.END_STEP);
@@ -129,7 +129,7 @@ class ChanceForGloryTest extends BaseCardTest {
             assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
             harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-            assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
         });
     }
 

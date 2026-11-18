@@ -33,7 +33,7 @@ class PerchProtectionTest extends BaseCardTest {
             assertThat(bird.getCard().getSubtypes()).containsExactly(CardSubtype.BIRD);
             assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(2);
             assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
-            assertThat(bird.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, bird, Keyword.FLYING)).isTrue();
         });
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
         assertThat(gd.extraTurns).isEmpty();

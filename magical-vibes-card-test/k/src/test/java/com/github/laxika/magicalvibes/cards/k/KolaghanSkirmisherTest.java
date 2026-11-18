@@ -27,7 +27,7 @@ class KolaghanSkirmisherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent skirmisher = findPermanent(player1, "Kolaghan Skirmisher");
-        assertThat(skirmisher.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, skirmisher, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
@@ -47,7 +47,7 @@ class KolaghanSkirmisherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent skirmisher = findPermanent(player1, "Kolaghan Skirmisher");
-        assertThat(skirmisher.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, skirmisher, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);

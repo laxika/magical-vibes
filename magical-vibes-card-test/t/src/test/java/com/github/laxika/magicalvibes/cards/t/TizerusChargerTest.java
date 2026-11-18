@@ -27,7 +27,7 @@ class TizerusChargerTest extends BaseCardTest {
         Permanent charger = findPermanent(player1, "Tizerus Charger");
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(charger.getCounterCount(CounterType.FLYING)).isZero();
-        assertThat(charger.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, charger, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -41,7 +41,7 @@ class TizerusChargerTest extends BaseCardTest {
         Permanent charger = findPermanent(player1, "Tizerus Charger");
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(charger.getCounterCount(CounterType.FLYING)).isZero();
-        assertThat(charger.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, charger, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -60,7 +60,7 @@ class TizerusChargerTest extends BaseCardTest {
         Permanent charger = findPermanent(player1, "Tizerus Charger");
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(charger.getCounterCount(CounterType.FLYING)).isEqualTo(1);
-        assertThat(charger.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, charger, Keyword.FLYING)).isTrue();
     }
 
     @Test

@@ -46,7 +46,7 @@ class DanLewisTest extends BaseCardTest {
         Permanent scimitar = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        assertThat(gqs.permanentHasSubtype(myr, CardSubtype.EQUIPMENT)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, myr, CardSubtype.EQUIPMENT)).isFalse();
         assertThat(gqs.computeStaticBonus(gd, myr).grantedActivatedAbilities()).isEmpty();
 
         scimitar.setAttachedTo(bears.getId());
@@ -58,7 +58,7 @@ class DanLewisTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DanLewis());
         Permanent opponentForge = harness.addToBattlefieldAndReturn(player2, new TitanForge());
 
-        assertThat(gqs.permanentHasSubtype(opponentForge, CardSubtype.EQUIPMENT)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, opponentForge, CardSubtype.EQUIPMENT)).isFalse();
         assertThat(gqs.computeStaticBonus(gd, opponentForge).grantedActivatedAbilities()).isEmpty();
     }
 
