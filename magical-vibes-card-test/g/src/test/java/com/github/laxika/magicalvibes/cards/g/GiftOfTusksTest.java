@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -39,7 +40,7 @@ class GiftOfTusksTest extends BaseCardTest {
         assertThat(gqs.hasColor(gd, angel, CardColor.GREEN)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isFalse();
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isFalse();
-        assertThat(angel.getTransientCreatureTypeOverride()).isEqualTo(CardSubtype.ELEPHANT);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, angel)).containsExactly(CardSubtype.ELEPHANT);
     }
 
     @Test
@@ -56,7 +57,7 @@ class GiftOfTusksTest extends BaseCardTest {
         assertThat(angel.getEffectiveToughness()).isEqualTo(4);
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isTrue();
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
-        assertThat(angel.getTransientCreatureTypeOverride()).isNull();
+        assertThat(gd.floatingEffectsOnPermanent(angel.getId(), GrantSubtypeEffect.class)).isEmpty();
     }
 
     @Test

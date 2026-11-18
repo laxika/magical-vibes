@@ -172,8 +172,7 @@ class ReignOfChaosTest extends BaseCardTest {
         Permanent drake = harness.addToBattlefieldAndReturn(player2, new TeferisDrake());
 
         harness.castModalSorcery(player1, 0, 1, List.of(island.getId(), drake.getId()));
-        drake.setColorOverridden(true);
-        drake.getTransientColors().add(CardColor.GREEN);
+        harness.setColors(drake, CardColor.GREEN);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Island");

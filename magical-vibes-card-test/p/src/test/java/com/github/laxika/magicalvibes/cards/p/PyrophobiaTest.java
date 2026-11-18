@@ -32,7 +32,7 @@ class PyrophobiaTest extends BaseCardTest {
     void cowardsCantBlockThisTurn() {
         Permanent target = addCreatureReady(player2, new AirElemental());
         Permanent coward = addCreatureReady(player2, new GrizzlyBears());
-        coward.setTransientCreatureTypeOverride(CardSubtype.COWARD);
+        grantSubtypeUntilEndOfTurn(coward, CardSubtype.COWARD, true);
         Permanent nonCoward = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
@@ -66,11 +66,11 @@ class PyrophobiaTest extends BaseCardTest {
         castPyrophobia(target);
         attacker.setAttacking(true);
 
-        blocker.setTransientCreatureTypeOverride(CardSubtype.COWARD);
+        grantSubtypeUntilEndOfTurn(blocker, CardSubtype.COWARD, true);
         assertThat(bls.canBlockAttacker(gd, blocker, attacker,
                 gd.playerBattlefields.get(player2.getId()))).isFalse();
 
-        blocker.setTransientCreatureTypeOverride(CardSubtype.BEAR);
+        grantSubtypeUntilEndOfTurn(blocker, CardSubtype.BEAR, true);
         assertThat(bls.canBlockAttacker(gd, blocker, attacker,
                 gd.playerBattlefields.get(player2.getId()))).isTrue();
     }

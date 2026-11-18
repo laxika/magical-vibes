@@ -3330,17 +3330,9 @@ public class PermanentRemovalService {
                             .max(java.util.Comparator.comparingLong(FloatingContinuousEffect::timestamp))
                             .orElse(null);
                     if (remainingAnimation != null) {
-                        var base = (com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect)
-                                remainingAnimation.effect();
-                        animatedTarget.setPermanentAnimatedPower(base.power());
-                        animatedTarget.setPermanentAnimatedToughness(base.toughness());
                         entry.setValue(remainingAnimation.sourcePermanentId());
                         continue;
                     }
-                    animatedTarget.setPermanentlyAnimated(false);
-                    animatedTarget.setPermanentAnimatedPower(0);
-                    animatedTarget.setPermanentAnimatedToughness(0);
-                    animatedTarget.getGrantedSubtypes().clear();
                     animatedTarget.getGrantedColors().clear();
 
                     gameLogService.append(gameData,

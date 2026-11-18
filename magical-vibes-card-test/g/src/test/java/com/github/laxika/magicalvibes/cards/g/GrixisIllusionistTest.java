@@ -44,7 +44,6 @@ class GrixisIllusionistTest extends BaseCardTest {
         Permanent forest = becomeIsland(player1);
 
         assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
-        assertThat(forest.getTransientSubtypes()).isEmpty();
     }
 
     @Test

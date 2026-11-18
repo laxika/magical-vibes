@@ -1132,8 +1132,6 @@ public class TurnProgressionService {
         List<Permanent> activePlayerBf = gameData.playerBattlefields.get(nextActive);
         if (activePlayerBf != null) {
             activePlayerBf.forEach(Permanent::clearUntilNextTurnEffects);
-            gameData.playerBattlefields.values().stream().filter(Objects::nonNull).forEach(battlefield ->
-                    battlefield.forEach(p -> p.clearUntilNextTurnAnimationGrantedBy(nextActive)));
         }
         gameData.forEachPermanent((controllerId, permanent) ->
                 permanent.clearLosesAllAbilitiesUntilNextTurnController(nextActive));

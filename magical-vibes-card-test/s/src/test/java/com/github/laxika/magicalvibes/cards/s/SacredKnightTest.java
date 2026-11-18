@@ -45,8 +45,7 @@ class SacredKnightTest extends BaseCardTest {
     @DisplayName("Sacred Knight can't be blocked by a creature that is both black and red")
     void cannotBeBlockedByBlackAndRedCreature() {
         Permanent blackAndRedCreature = attackWithKnight(new FeralShadow());
-        blackAndRedCreature.setColorOverridden(true);
-        blackAndRedCreature.getTransientColors().addAll(Set.of(CardColor.BLACK, CardColor.RED));
+        harness.setColors(blackAndRedCreature, CardColor.BLACK, CardColor.RED);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -67,8 +66,7 @@ class SacredKnightTest extends BaseCardTest {
     @DisplayName("A white creature that is also black can't block Sacred Knight")
     void cannotBeBlockedByWhiteAndBlackCreature() {
         Permanent blocker = attackWithKnight(new RegalUnicorn());
-        blocker.setColorOverridden(true);
-        blocker.getTransientColors().addAll(Set.of(CardColor.WHITE, CardColor.BLACK));
+        harness.setColors(blocker, CardColor.WHITE, CardColor.BLACK);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -79,8 +77,7 @@ class SacredKnightTest extends BaseCardTest {
     @DisplayName("A white creature that is also red can't block Sacred Knight")
     void cannotBeBlockedByWhiteAndRedCreature() {
         Permanent blocker = attackWithKnight(new RegalUnicorn());
-        blocker.setColorOverridden(true);
-        blocker.getTransientColors().addAll(Set.of(CardColor.WHITE, CardColor.RED));
+        harness.setColors(blocker, CardColor.WHITE, CardColor.RED);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -91,8 +88,7 @@ class SacredKnightTest extends BaseCardTest {
     @DisplayName("A multicolored creature that is neither black nor red can block Sacred Knight")
     void canBeBlockedByWhiteAndGreenCreature() {
         Permanent blocker = attackWithKnight(new RegalUnicorn());
-        blocker.setColorOverridden(true);
-        blocker.getTransientColors().addAll(Set.of(CardColor.WHITE, CardColor.GREEN));
+        harness.setColors(blocker, CardColor.WHITE, CardColor.GREEN);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -103,8 +99,7 @@ class SacredKnightTest extends BaseCardTest {
     @DisplayName("Sacred Knight can block a black attacker")
     void canBlockBlackCreature() {
         Permanent attacker = addCreatureReady(player1, new HillGiant());
-        attacker.setColorOverridden(true);
-        attacker.getTransientColors().add(CardColor.BLACK);
+        harness.setColors(attacker, CardColor.BLACK);
         Permanent knight = addCreatureReady(player2, new SacredKnight());
         declareAttackersAndPrepareBlockers(List.of(0));
 

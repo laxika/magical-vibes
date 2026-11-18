@@ -281,7 +281,7 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
     void creatureWithGrantedWolfSubtypeParticipates() {
         addReadyMaster(player1);
         Permanent wolf = addCreatureReady(player1, new RuneclawBear());
-        wolf.getTransientSubtypes().add(CardSubtype.WOLF);
+        grantSubtypeUntilEndOfTurn(wolf, CardSubtype.WOLF, false);
         Permanent target = addCreatureReady(player2, new WallOfFrost());
 
         harness.activateAbility(player1, 0, null, target.getId());

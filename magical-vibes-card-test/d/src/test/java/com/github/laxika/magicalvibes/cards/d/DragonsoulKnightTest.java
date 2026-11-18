@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -63,7 +64,7 @@ class DragonsoulKnightTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(knight.getTransientCreatureTypeOverride()).isNull();
+        assertThat(gd.floatingEffectsOnPermanent(knight.getId(), GrantSubtypeEffect.class)).isEmpty();
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, knight, Keyword.FLYING)).isFalse();

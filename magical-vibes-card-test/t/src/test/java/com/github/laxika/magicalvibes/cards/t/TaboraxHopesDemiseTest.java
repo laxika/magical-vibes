@@ -191,7 +191,7 @@ class TaboraxHopesDemiseTest extends BaseCardTest {
     void overwrittenClericSubtypeDoesNotAllowDraw() {
         Permanent taborax = harness.addToBattlefieldAndReturn(player1, new TaboraxHopesDemise());
         Permanent cleric = harness.addToBattlefieldAndReturn(player1, new ClericOfChillDepths());
-        cleric.setTransientCreatureTypeOverride(CardSubtype.BEAR);
+        grantSubtypeUntilEndOfTurn(cleric, CardSubtype.BEAR, true);
         harness.setHand(player1, List.of());
         harness.setLife(player1, 20);
 

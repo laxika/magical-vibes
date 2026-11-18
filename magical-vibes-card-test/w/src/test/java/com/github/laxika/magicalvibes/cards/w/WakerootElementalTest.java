@@ -33,7 +33,7 @@ class WakerootElementalTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(5);
-        assertThat(land.getGrantedSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, land)).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
         assertThat(land.getCard().hasType(CardType.LAND)).isTrue();
     }

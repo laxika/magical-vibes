@@ -82,7 +82,7 @@ class WerewolfPackLeaderTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, leader)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, leader)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, leader, Keyword.TRAMPLE)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(leader, CardSubtype.HUMAN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, leader, CardSubtype.HUMAN)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -91,7 +91,7 @@ class WerewolfPackLeaderTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, leader)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, leader)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, leader, Keyword.TRAMPLE)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(leader, CardSubtype.HUMAN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, leader, CardSubtype.HUMAN)).isTrue();
     }
 
     @Test
@@ -177,8 +177,8 @@ class WerewolfPackLeaderTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, leader)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, leader)).isEqualTo(5);
-        assertThat(GameQueryService.permanentHasSubtype(leader, CardSubtype.WEREWOLF)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(leader, CardSubtype.HUMAN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, leader, CardSubtype.WEREWOLF)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, leader, CardSubtype.HUMAN)).isFalse();
 
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();

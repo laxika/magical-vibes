@@ -1256,18 +1256,12 @@ public class BattlefieldPlacementService {
         }
         if (colors != null) {
             CardColor color = colors.stream().findFirst().orElse(null);
-            permanent.getTransientColors().clear();
-            permanent.getTransientColors().addAll(colors);
-            permanent.setColorOverridden(true);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     permanent.getCard().getName(), null, controllerId, new SetTargetColorEffect(color),
                     permanent.getId(), null, null, Duration.PERMANENT, 0));
         }
         if (temporaryColors != null && !temporaryColors.isEmpty()) {
             CardColor color = temporaryColors.iterator().next();
-            permanent.getTransientColors().clear();
-            permanent.getTransientColors().addAll(temporaryColors);
-            permanent.setColorOverridden(true);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     permanent.getCard().getName(), null, controllerId,
                     new com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect(color),
@@ -2602,7 +2596,6 @@ public class BattlefieldPlacementService {
                 subtypes.add(to);
             }
         }
-        subtypes.addAll(entering.getTransientSubtypes());
         subtypes.addAll(entering.getGrantedSubtypes());
         boolean changeling = !entering.isLosesAllAbilitiesUntilEndOfTurn()
                 && entering.getCard().hasKeyword(Keyword.CHANGELING);

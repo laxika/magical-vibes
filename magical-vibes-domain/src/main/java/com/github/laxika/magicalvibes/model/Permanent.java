@@ -437,9 +437,6 @@ public class Permanent {
     private final Set<CardSubtype> faceDownSubtypes = EnumSet.noneOf(CardSubtype.class);
     /** Whether this face-down permanent was put onto the battlefield by manifest. */
     @Setter private boolean manifested;
-    @Setter private boolean permanentlyAnimated;
-    @Setter private int permanentAnimatedPower;
-    @Setter private int permanentAnimatedToughness;
     /** All counters on this permanent, keyed by {@link CounterType}. Absent keys mean zero counters.
      *  New counter kinds require only a new {@link CounterType} value — never a new field here.
      *  Read/write via {@link #getCounterCount(CounterType)} / {@link #setCounterCount(CounterType, int)}. */
@@ -477,44 +474,9 @@ public class Permanent {
     /** Keywords temporarily removed by one-shot effects (e.g. activated abilities).
      *  Cleared every turn by {@link #resetModifiers()}. */
     private final Set<Keyword> removedKeywords = new HashSet<>();
-    /** Transient colors granted by static/continuous effects (equipment, auras, animation, etc.).
-     *  Cleared every turn by {@link #resetModifiers()} and recomputed from active static effect sources.
-     *  For persistent color grants from one-shot effects, see {@link #grantedColors}. */
-    private final Set<CardColor> transientColors = EnumSet.noneOf(CardColor.class);
-    /** When {@code true}, {@link #transientColors} completely replaces the permanent's natural color
-     *  (e.g. "target creature becomes blue"). When {@code false}, transient colors are additive. */
-    @Setter private boolean colorOverridden;
-    /** Transient subtypes granted by static/continuous effects (equipment, auras, animation, etc.).
-     *  Cleared every turn by {@link #resetModifiers()} and recomputed from active static effect sources.
-     *  For persistent subtype grants from one-shot effects, see {@link #grantedSubtypes}. */
-    private final List<CardSubtype> transientSubtypes = new ArrayList<>();
-    /** When non-null, this land "becomes the basic land type of your choice" until end of turn,
-     *  replacing its other land types and mana ability (e.g. Tideshaper Mystic). Distinct from
-     *  {@link #transientSubtypes}, which is additive. Cleared every turn by {@link #resetModifiers()}. */
-    @Setter private CardSubtype transientLandTypeOverride;
-    /** When non-null, this land "becomes" the given basic land type until its controller's next
-     *  untap step (e.g. Orcish Farmer), replacing its other land types and mana ability per rule
-     *  305.7. Like {@link #transientLandTypeOverride} but longer-lived: NOT cleared by
-     *  {@link #resetModifiers()} — it survives end-of-turn cleanup and is cleared at the beginning
-     *  of the controller's next turn by {@link #clearUntilNextTurnEffects()}. */
-    @Setter private CardSubtype untilNextTurnLandTypeOverride;
-    /** When non-null, this land permanently becomes the given basic land type, replacing its
-     *  other land types and mana ability. */
-    @Setter private CardSubtype persistentLandTypeOverride;
-    /** When non-null, this creature "becomes a [creature type]" until end of turn, replacing all its
-     *  other creature types (e.g. Boldwyr Intimidator: "target creature becomes a Coward"). Read by the
-     *  layered pass, which strips every creature subtype and adds this one. Distinct from
-     *  {@link #transientSubtypes} (additive) and {@link #transientLandTypeOverride} (land types).
-     *  Cleared every turn by {@link #resetModifiers()}. */
-    @Setter private CardSubtype transientCreatureTypeOverride;
-    /** When non-empty, this creature becomes these creature types until end of turn, replacing all
-     *  its other creature types. The singular field above remains for single-type effects and
-     *  backwards-compatible callers. Cleared every turn by {@link #resetModifiers()}. */
-    private final List<CardSubtype> transientCreatureTypeOverrides = new ArrayList<>();
-    private final Set<CardType> grantedCardTypes = EnumSet.noneOf(CardType.class);
     /** Card types permanently granted by one-shot effects (e.g. Phyrexian Scriptures "becomes an artifact").
      *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
-     *  For transient card type grants from static/activated effects, see {@link #grantedCardTypes}. */
+     *  Until-end-of-turn type grants are floating effects. */
     private final Set<CardType> persistentGrantedCardTypes = EnumSet.noneOf(CardType.class);
     /** Supertypes granted to this permanent for as long as it stays on the battlefield by a one-shot
      *  effect ({@code SetTargetPermanentSupertypeEffect}, e.g. Arcum's Weathervane "target nonsnow
@@ -606,12 +568,11 @@ public class Permanent {
      *  Consumed by each SBA check; also cleared by regeneration and during the cleanup step. */
     @Setter private boolean damagedByDeathtouch;
     /** Colors permanently granted by one-shot effects (e.g. Rise from the Grave "in addition to its other colors").
-     *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
-     *  For transient color grants from static effects, see {@link #transientColors}. */
+     *  NOT cleared by {@link #resetModifiers()} — survives turn resets. */
     private final Set<CardColor> grantedColors = EnumSet.noneOf(CardColor.class);
     /** Subtypes permanently granted by one-shot effects (e.g. Rise from the Grave "in addition to its other types").
      *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
-     *  For transient subtype grants from static effects, see {@link #transientSubtypes}. */
+     *  Until-end-of-turn subtype grants are floating effects. */
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
     /** When true, the creature's base power has been permanently overridden (e.g. by an exchange effect
      *  like Evra, Halcyon Witness). NOT cleared by {@link #resetModifiers()} — survives turn resets.
@@ -655,14 +616,6 @@ public class Permanent {
             java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     /** When true, this permanent has lost all abilities indefinitely (e.g. Retched Wretch). */
     @Setter private boolean losesAllAbilitiesPermanently;
-    /** When true, this permanent has lost all creature types until end of turn (e.g. Amoeboid Changeling).
-     *  All creature subtypes (base, transient, granted) are treated as absent, and the Changeling keyword
-     *  no longer grants any creature types. Cleared by {@link #resetModifiers()}. */
-    @Setter private boolean losesAllCreatureTypesUntilEndOfTurn;
-    /** Subtypes this permanent has lost until end of turn (e.g. Haunted Plate Mail "no longer an
-     *  Equipment"). Honoured by every subtype query and the layered pass; cleared by
-     *  {@link #resetModifiers()}. */
-    private final Set<CardSubtype> transientRemovedSubtypes = EnumSet.noneOf(CardSubtype.class);
     /** Whether this permanent was kicked when cast (tracked for "if wasn't kicked" triggers). */
     @Setter private boolean kicked;
     /** Whether this permanent was cast for its evoke cost (gates the evoke sacrifice ETB trigger). */
@@ -820,22 +773,7 @@ public class Permanent {
      *  Cleared at the beginning of the controller's next turn by
      *  {@link com.github.laxika.magicalvibes.model.Permanent#clearUntilNextTurnEffects()}. */
     private final List<ActivatedAbility> untilNextTurnActivatedAbilities = new ArrayList<>();
-    /** When true, this land permanent is animated as a creature until the controller's next turn.
-     *  NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
-     *  Cleared at the beginning of the controller's next turn by
-     *  {@link #clearUntilNextTurnEffects()}. */
-    @Setter private boolean animatedUntilNextTurn;
-    @Setter private int untilNextTurnAnimatedPower;
-    @Setter private int untilNextTurnAnimatedToughness;
-    /** The player whose effect granted the current "until your next turn" animation, or null when the
-     *  animation is not tied to a grantor. A grantor's animation ends at the grantor's next turn rather
-     *  than at the permanent's controller's next turn (Karn, the Great Creator's +1 on an opponent's artifact). */
-    @Setter private UUID untilNextTurnAnimationGrantorId;
-    /** Subtypes granted by "until your next turn" animation effects (e.g. Elemental from Sylvan Awakening).
-     *  NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
-     *  Cleared at the beginning of the controller's next turn by {@link #clearUntilNextTurnEffects()}. */
-    private final List<CardSubtype> untilNextTurnSubtypes = new ArrayList<>();
-    /** Keywords granted by "until your next turn" animation effects (e.g. reach, indestructible, haste from Sylvan Awakening).
+    /** Keywords granted until the controller's next turn (an animation's keywords are floating effects instead).
      *  NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
      *  Cleared at the beginning of the controller's next turn by {@link #clearUntilNextTurnEffects()}. */
     private final Set<Keyword> untilNextTurnKeywords = new HashSet<>();
@@ -1081,9 +1019,6 @@ public class Permanent {
         this.faceDownCardTypes.addAll(source.faceDownCardTypes);
         this.faceDownSubtypes.addAll(source.faceDownSubtypes);
         this.manifested = source.manifested;
-        this.permanentlyAnimated = source.permanentlyAnimated;
-        this.permanentAnimatedPower = source.permanentAnimatedPower;
-        this.permanentAnimatedToughness = source.permanentAnimatedToughness;
         this.untapAfterTapCost = source.untapAfterTapCost;
         this.counters.putAll(source.counters);
         this.lastCounterRemovalVersions.putAll(source.lastCounterRemovalVersions);
@@ -1102,12 +1037,6 @@ public class Permanent {
         this.grantedKeywords.addAll(source.grantedKeywords);
         this.persistentGrantedKeywords.addAll(source.persistentGrantedKeywords);
         this.removedKeywords.addAll(source.removedKeywords);
-        this.transientColors.addAll(source.transientColors);
-        this.colorOverridden = source.colorOverridden;
-        this.transientSubtypes.addAll(source.transientSubtypes);
-        this.transientCreatureTypeOverride = source.transientCreatureTypeOverride;
-        this.transientCreatureTypeOverrides.addAll(source.transientCreatureTypeOverrides);
-        this.grantedCardTypes.addAll(source.grantedCardTypes);
         this.persistentGrantedCardTypes.addAll(source.persistentGrantedCardTypes);
         this.persistentGrantedSupertypes.addAll(source.persistentGrantedSupertypes);
         this.persistentRemovedSupertypes.addAll(source.persistentRemovedSupertypes);
@@ -1160,8 +1089,6 @@ public class Permanent {
         this.suppressedStaticEffectsUntilEndOfTurn.addAll(source.suppressedStaticEffectsUntilEndOfTurn);
         this.suppressedStaticEffectInstancesUntilEndOfTurn.addAll(source.suppressedStaticEffectInstancesUntilEndOfTurn);
         this.losesAllAbilitiesPermanently = source.losesAllAbilitiesPermanently;
-        this.losesAllCreatureTypesUntilEndOfTurn = source.losesAllCreatureTypesUntilEndOfTurn;
-        this.transientRemovedSubtypes.addAll(source.transientRemovedSubtypes);
         this.kicked = source.kicked;
         this.evoked = source.evoked;
         this.escaped = source.escaped;
@@ -1211,13 +1138,7 @@ public class Permanent {
         this.copyWhileAttached = source.copyWhileAttached;
         this.whileAttachedPreCopyCard = source.whileAttachedPreCopyCard;
         this.untilNextTurnActivatedAbilities.addAll(source.untilNextTurnActivatedAbilities);
-        this.animatedUntilNextTurn = source.animatedUntilNextTurn;
-        this.untilNextTurnAnimatedPower = source.untilNextTurnAnimatedPower;
-        this.untilNextTurnAnimatedToughness = source.untilNextTurnAnimatedToughness;
-        this.untilNextTurnSubtypes.addAll(source.untilNextTurnSubtypes);
         this.untilNextTurnKeywords.addAll(source.untilNextTurnKeywords);
-        this.untilNextTurnLandTypeOverride = source.untilNextTurnLandTypeOverride;
-        this.persistentLandTypeOverride = source.persistentLandTypeOverride;
         this.copyUntilControllerNextTurn = source.copyUntilControllerNextTurn;
         this.untilNextTurnPreCopyCard = source.untilNextTurnPreCopyCard;
         this.copyUntilNextTurnControllerId = source.copyUntilNextTurnControllerId;
@@ -1770,12 +1691,6 @@ public class Permanent {
         if (basePowerOverriddenPermanently) {
             return permanentBasePowerOverride;
         }
-        if (animatedUntilNextTurn) {
-            return untilNextTurnAnimatedPower;
-        }
-        if (permanentlyAnimated) {
-            return permanentAnimatedPower;
-        }
         if (faceDown) {
             return faceDownPower;
         }
@@ -1793,12 +1708,6 @@ public class Permanent {
         if (baseToughnessOverriddenPermanently) {
             return permanentBaseToughnessOverride;
         }
-        if (animatedUntilNextTurn) {
-            return untilNextTurnAnimatedToughness;
-        }
-        if (permanentlyAnimated) {
-            return permanentAnimatedToughness;
-        }
         if (faceDown) {
             return faceDownToughness;
         }
@@ -1809,9 +1718,6 @@ public class Permanent {
     }
 
     public CardColor getEffectiveColor() {
-        if (colorOverridden && !transientColors.isEmpty()) {
-            return transientColors.iterator().next();
-        }
         if (!faceDown && getCounterCount(CounterType.AWAKENING) > 0) {
             return CardColor.GREEN;
         }
@@ -1822,17 +1728,14 @@ public class Permanent {
     }
 
     /**
-     * The permanent's full intrinsic color set, respecting the same legacy overrides as
-     * {@link #getEffectiveColor()} but preserving every color of a multicolored card (a
+     * The permanent's full intrinsic color set, the same intrinsic answer as
+     * {@link #getEffectiveColor()} (face-down, awakening, card colors) but preserving every color of a multicolored card (a
      * {@code {W/U}} hybrid is both white and blue). Prefer this over {@link #getEffectiveColor()}
      * for color-matters checks (lords, protection, damage prevention). Does not include
      * static-effect grants — {@link com.github.laxika.magicalvibes.service.battlefield.GameQueryService#getEffectiveColors}
      * layers those on top.
      */
     public List<CardColor> getEffectiveColors() {
-        if (colorOverridden && !transientColors.isEmpty()) {
-            return List.copyOf(transientColors);
-        }
         if (!faceDown && getCounterCount(CounterType.AWAKENING) > 0) {
             return List.of(CardColor.GREEN);
         }
@@ -2130,13 +2033,6 @@ public class Permanent {
         this.saddled = false;
         this.grantedKeywords.clear();
         this.removedKeywords.clear();
-        this.transientColors.clear();
-        this.colorOverridden = false;
-        this.transientSubtypes.clear();
-        this.transientLandTypeOverride = null;
-        this.transientCreatureTypeOverride = null;
-        this.transientCreatureTypeOverrides.clear();
-        this.grantedCardTypes.clear();
         this.protectionFromCardTypes.clear();
         this.protectionFromColorsUntilEndOfTurn.clear();
         this.protectionFromPlayerIdsUntilEndOfTurn.clear();
@@ -2147,8 +2043,6 @@ public class Permanent {
         this.losesAllAbilitiesUntilEndOfTurn = false;
         this.suppressedStaticEffectsUntilEndOfTurn.clear();
         this.suppressedStaticEffectInstancesUntilEndOfTurn.clear();
-        this.losesAllCreatureTypesUntilEndOfTurn = false;
-        this.transientRemovedSubtypes.clear();
         this.temporaryActivatedAbilities.clear();
         expireTemporaryTextReplacements();
     }
@@ -2190,13 +2084,6 @@ public class Permanent {
             case SADDLED -> saddled;
             case GRANTED_KEYWORDS -> grantedKeywords;
             case REMOVED_KEYWORDS -> removedKeywords;
-            case TRANSIENT_COLORS -> transientColors;
-            case COLOR_OVERRIDDEN -> colorOverridden;
-            case TRANSIENT_SUBTYPES -> transientSubtypes;
-            case TRANSIENT_LAND_TYPE_OVERRIDE -> transientLandTypeOverride;
-            case TRANSIENT_CREATURE_TYPE_OVERRIDE -> transientCreatureTypeOverride;
-            case TRANSIENT_CREATURE_TYPE_OVERRIDES -> transientCreatureTypeOverrides;
-            case GRANTED_CARD_TYPES -> grantedCardTypes;
             case PROTECTION_FROM_CARD_TYPES -> protectionFromCardTypes;
             case PROTECTION_FROM_COLORS -> protectionFromColorsUntilEndOfTurn;
             case PROTECTION_FROM_PLAYERS -> protectionFromPlayerIdsUntilEndOfTurn;
@@ -2207,8 +2094,6 @@ public class Permanent {
             case LOSES_ALL_ABILITIES -> losesAllAbilitiesUntilEndOfTurn;
             case SUPPRESSED_STATIC_EFFECT_TYPES -> suppressedStaticEffectsUntilEndOfTurn;
             case SUPPRESSED_STATIC_EFFECT_INSTANCES -> new ArrayList<>(suppressedStaticEffectInstancesUntilEndOfTurn);
-            case LOSES_ALL_CREATURE_TYPES -> losesAllCreatureTypesUntilEndOfTurn;
-            case TRANSIENT_REMOVED_SUBTYPES -> transientRemovedSubtypes;
             case TEMPORARY_ACTIVATED_ABILITIES -> temporaryActivatedAbilities;
             case TEXT_REPLACEMENTS -> textReplacements.stream().filter(TextReplacement::untilEndOfTurn).toList();
             case DAMAGE_PREVENTION_SHIELD -> damagePreventionShield;
@@ -2247,13 +2132,6 @@ public class Permanent {
             case SADDLED -> saddled = true;
             case GRANTED_KEYWORDS -> grantedKeywords.addAll((Set<Keyword>) value);
             case REMOVED_KEYWORDS -> removedKeywords.addAll((Set<Keyword>) value);
-            case TRANSIENT_COLORS -> transientColors.addAll((Set<CardColor>) value);
-            case COLOR_OVERRIDDEN -> colorOverridden = true;
-            case TRANSIENT_SUBTYPES -> transientSubtypes.addAll((List<CardSubtype>) value);
-            case TRANSIENT_LAND_TYPE_OVERRIDE -> transientLandTypeOverride = (CardSubtype) value;
-            case TRANSIENT_CREATURE_TYPE_OVERRIDE -> transientCreatureTypeOverride = (CardSubtype) value;
-            case TRANSIENT_CREATURE_TYPE_OVERRIDES -> transientCreatureTypeOverrides.addAll((List<CardSubtype>) value);
-            case GRANTED_CARD_TYPES -> grantedCardTypes.addAll((Set<CardType>) value);
             case PROTECTION_FROM_CARD_TYPES -> protectionFromCardTypes.addAll((Set<CardType>) value);
             case PROTECTION_FROM_COLORS -> protectionFromColorsUntilEndOfTurn.addAll((Set<CardColor>) value);
             case PROTECTION_FROM_PLAYERS -> protectionFromPlayerIdsUntilEndOfTurn.addAll((Set<UUID>) value);
@@ -2266,8 +2144,6 @@ public class Permanent {
             case SUPPRESSED_STATIC_EFFECT_TYPES -> suppressedStaticEffectsUntilEndOfTurn.addAll((Set) value);
             case SUPPRESSED_STATIC_EFFECT_INSTANCES ->
                     suppressedStaticEffectInstancesUntilEndOfTurn.addAll((List<CardEffect>) value);
-            case LOSES_ALL_CREATURE_TYPES -> losesAllCreatureTypesUntilEndOfTurn = true;
-            case TRANSIENT_REMOVED_SUBTYPES -> transientRemovedSubtypes.addAll((Set<CardSubtype>) value);
             case TEMPORARY_ACTIVATED_ABILITIES -> temporaryActivatedAbilities.addAll((List<ActivatedAbility>) value);
             case TEXT_REPLACEMENTS -> textReplacements.addAll((List<TextReplacement>) value);
             case DAMAGE_PREVENTION_SHIELD -> damagePreventionShield += (Integer) value;
@@ -2400,44 +2276,7 @@ public class Permanent {
 
     public void clearUntilNextTurnEffects() {
         this.untilNextTurnActivatedAbilities.clear();
-        if (this.untilNextTurnAnimationGrantorId == null) {
-            clearUntilNextTurnAnimation();
-        }
-        this.untilNextTurnLandTypeOverride = null;
-    }
-
-    /**
-     * Ends an "until your next turn" animation granted by {@code playerId}'s effect when that player's
-     * turn begins. An animation an opponent granted outlasts the permanent's own controller's turns.
-     */
-    public void clearUntilNextTurnAnimationGrantedBy(UUID playerId) {
-        if (playerId != null && playerId.equals(this.untilNextTurnAnimationGrantorId)) {
-            clearUntilNextTurnAnimation();
-        }
-    }
-
-    private void clearUntilNextTurnAnimation() {
-        this.animatedUntilNextTurn = false;
-        this.untilNextTurnAnimatedPower = 0;
-        this.untilNextTurnAnimatedToughness = 0;
-        this.untilNextTurnSubtypes.clear();
         this.untilNextTurnKeywords.clear();
-        this.untilNextTurnAnimationGrantorId = null;
-    }
-
-    /**
-     * The active "becomes a basic land type" replacement override (rule 305.7), if any. Prefers the
-     * until-end-of-turn {@link #transientLandTypeOverride} (Tideshaper Mystic) over the longer-lived
-     * {@link #untilNextTurnLandTypeOverride} (Orcish Farmer); either wins over the land's printed types.
-     */
-    public CardSubtype getEffectiveLandTypeOverride() {
-        if (transientLandTypeOverride != null) {
-            return transientLandTypeOverride;
-        }
-        if (untilNextTurnLandTypeOverride != null) {
-            return untilNextTurnLandTypeOverride;
-        }
-        return persistentLandTypeOverride;
     }
 
     /**

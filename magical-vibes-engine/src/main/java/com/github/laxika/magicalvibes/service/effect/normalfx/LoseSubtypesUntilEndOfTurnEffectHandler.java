@@ -7,11 +7,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseSubtypesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -36,13 +40,15 @@ public class LoseSubtypesUntilEndOfTurnEffectHandler implements NormalEffectHand
         if (self == null) {
             return;
         }
-        self.getTransientRemovedSubtypes().addAll(lose.subtypes());
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(), lose,
+                self.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
 
         // CR 704.5p — a permanent that is no longer an Equipment/Aura/Fortification cannot stay
         // attached. Unattach immediately so subsequent effects in the same resolution see it free.
         if (self.isAttached() && lose.subtypes().contains(CardSubtype.EQUIPMENT)
-                && !GameQueryService.permanentHasSubtype(self, CardSubtype.EQUIPMENT)
-                && !GameQueryService.permanentHasSubtype(self, CardSubtype.AURA)) {
+                && !gameQueryService.hasEffectiveSubtype(gameData, self, CardSubtype.EQUIPMENT)
+                && !gameQueryService.hasEffectiveSubtype(gameData, self, CardSubtype.AURA)) {
             unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, self, self.getAttachedTo());
             self.setAttachedTo(null);
             durationClock.sourceUnattached(gameData, self.getId());

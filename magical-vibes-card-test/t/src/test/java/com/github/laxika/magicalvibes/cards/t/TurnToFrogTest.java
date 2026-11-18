@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.cards.m.Manalith;
 import com.github.laxika.magicalvibes.cards.f.Flight;
 import com.github.laxika.magicalvibes.cards.r.RoyalAssassin;
@@ -59,7 +60,7 @@ class TurnToFrogTest extends BaseCardTest {
 
         assertThat(gqs.hasColor(gd, angel, CardColor.BLUE)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isFalse();
-        assertThat(angel.getTransientCreatureTypeOverride()).isEqualTo(CardSubtype.FROG);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, angel)).containsExactly(CardSubtype.FROG);
     }
 
     @Test
@@ -77,7 +78,7 @@ class TurnToFrogTest extends BaseCardTest {
         assertThat(angel.getEffectiveToughness()).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isTrue();
-        assertThat(angel.getTransientCreatureTypeOverride()).isNull();
+        assertThat(gd.floatingEffectsOnPermanent(angel.getId(), GrantSubtypeEffect.class)).isEmpty();
     }
 
     @Test

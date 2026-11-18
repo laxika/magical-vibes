@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.b.BloodMoon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.Glimmerpost;
 import com.github.laxika.magicalvibes.cards.s.SuddenShock;
 import com.github.laxika.magicalvibes.cards.t.TerramorphicExpanse;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -19,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AshcoatBear.class, CyclopeanGiant.class, Forest.class, SuddenShock.class, TerramorphicExpanse.class})
+@CardUsed({AshcoatBear.class, BloodMoon.class, CyclopeanGiant.class, Glimmerpost.class, Forest.class, SuddenShock.class, TerramorphicExpanse.class})
 class CyclopeanGiantTest extends BaseCardTest {
 
     @Test
@@ -46,6 +48,24 @@ class CyclopeanGiantTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(giantCardId));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(giantCardId));
+    }
+
+    @Test
+    void laterBloodMoonOverridesTheEarlierSwampTypeChange() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new CyclopeanGiant());
+        Permanent glimmerpost = harness.addToBattlefieldAndReturn(player2, new Glimmerpost());
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new SuddenShock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, giant.getId());
+        harness.handlePermanentChosen(player1, glimmerpost.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.effectiveBasicLandTypes(gd, glimmerpost)).containsExactly(CardSubtype.SWAMP);
+
+        harness.addToBattlefield(player1, new BloodMoon());
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, glimmerpost)).containsExactly(CardSubtype.MOUNTAIN);
     }
 
     @Test

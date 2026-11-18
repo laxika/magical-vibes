@@ -41,7 +41,7 @@ class TezzeretCruelMachinistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, artifact.getId());
         harness.passBothPriorities();
 
-        assertThat(artifact.isAnimatedUntilNextTurn()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(artifact.getId())).isTrue();
         assertThat(gqs.isArtifact(gd, artifact)).isTrue();
         assertThat(gqs.isCreature(gd, artifact)).isTrue();
         assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(5);

@@ -99,7 +99,7 @@ class AquitectsWillTest extends BaseCardTest {
                 .filter(p -> p.getId().equals(mountainId))
                 .findFirst().orElseThrow();
         GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(
-                simMountain, CardSubtype.ISLAND, Duration.STATIC, false);
+                simCopy, simMountain, CardSubtype.ISLAND, Duration.STATIC, false, "test", null, player1.getId());
 
         assertThat(simMountain.getPersistentGrantedActivatedAbilities()).hasSize(1);
         assertThat(realMountain.getPersistentGrantedActivatedAbilities()).isEmpty();

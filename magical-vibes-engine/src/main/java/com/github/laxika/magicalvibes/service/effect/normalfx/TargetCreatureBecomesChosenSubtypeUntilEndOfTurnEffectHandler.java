@@ -97,8 +97,6 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
 
     private void setCreatureTypeOverride(GameData gameData, StackEntry entry, Permanent permanent,
                                          CardSubtype chosenSubtype) {
-        permanent.setTransientCreatureTypeOverride(chosenSubtype);
-        permanent.getTransientCreatureTypeOverrides().clear();
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(), new GrantSubtypeEffect(chosenSubtype, GrantScope.TARGET, true),

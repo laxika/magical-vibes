@@ -112,7 +112,7 @@ class VitasporeThallidTest extends BaseCardTest {
     @DisplayName("A Saproling source can be sacrificed when the cost does not say another")
     void canSacrificeSourceWhenItIsSaproling() {
         Permanent thallid = addThallid();
-        thallid.getTransientSubtypes().add(CardSubtype.SAPROLING);
+        grantSubtypeUntilEndOfTurn(thallid, CardSubtype.SAPROLING, false);
         Permanent target = addCreatureReady(player2, new SerraSphinx());
 
         harness.activateAbility(player1, 0, 1, null, target.getId());

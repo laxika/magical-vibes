@@ -46,8 +46,6 @@ public class BecomeColorlessIndefinitelyEffectHandler implements NormalEffectHan
             return;
         }
 
-        affected.getTransientColors().clear();
-        affected.setColorOverridden(true);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), null, entry.getControllerId(),
                 new BecomeColorlessUntilEndOfTurnEffect(false),

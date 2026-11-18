@@ -54,9 +54,9 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(tezz.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
-        assertThat(solRing.isPermanentlyAnimated()).isTrue();
-        assertThat(solRing.getEffectivePower()).isEqualTo(5);
-        assertThat(solRing.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gd.animatedByFloatingEffect(solRing.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, solRing)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, solRing)).isEqualTo(5);
     }
 
     @Test
@@ -72,9 +72,9 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         // Animation should persist - it's permanent, not "until end of turn"
-        assertThat(solRing.isPermanentlyAnimated()).isTrue();
-        assertThat(solRing.getEffectivePower()).isEqualTo(5);
-        assertThat(solRing.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gd.animatedByFloatingEffect(solRing.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, solRing)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, solRing)).isEqualTo(5);
     }
 
     @Test
@@ -118,9 +118,9 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
 
         // Equipment should be unattached and animated
         assertThat(swordPerm.getAttachedTo()).isNull();
-        assertThat(swordPerm.isPermanentlyAnimated()).isTrue();
-        assertThat(swordPerm.getEffectivePower()).isEqualTo(5);
-        assertThat(swordPerm.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gd.animatedByFloatingEffect(swordPerm.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, swordPerm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, swordPerm)).isEqualTo(5);
     }
 
     @Test
@@ -298,9 +298,9 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, artifact.getId());
         harness.passBothPriorities();
 
-        assertThat(artifact.isPermanentlyAnimated()).isTrue();
-        assertThat(artifact.getEffectivePower()).isEqualTo(5);
-        assertThat(artifact.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gd.animatedByFloatingEffect(artifact.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(5);
         harness.assertOnBattlefield(player2, "Sword of Feast and Famine");
     }
 

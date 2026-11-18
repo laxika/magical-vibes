@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.m.MelekIzzetParagon;
@@ -50,7 +51,7 @@ class TurnBurnTest extends BaseCardTest {
         assertThat(angel.getEffectiveToughness()).isEqualTo(1);
         assertThat(gqs.hasColor(gd, angel, CardColor.RED)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isFalse();
-        assertThat(angel.getTransientCreatureTypeOverride()).isEqualTo(CardSubtype.WEIRD);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, angel)).containsExactly(CardSubtype.WEIRD);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, angel, Keyword.VIGILANCE)).isFalse();
     }
@@ -106,7 +107,7 @@ class TurnBurnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(angel.getEffectivePower()).isZero();
-        assertThat(angel.getTransientCreatureTypeOverride()).isEqualTo(CardSubtype.WEIRD);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, angel)).containsExactly(CardSubtype.WEIRD);
         harness.assertLife(player2, 18);
     }
 
@@ -162,7 +163,7 @@ class TurnBurnTest extends BaseCardTest {
         assertThat(angel.getEffectiveToughness()).isEqualTo(4);
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.RED)).isFalse();
-        assertThat(angel.getTransientCreatureTypeOverride()).isNull();
+        assertThat(gd.floatingEffectsOnPermanent(angel.getId(), GrantSubtypeEffect.class)).isEmpty();
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
     }
 

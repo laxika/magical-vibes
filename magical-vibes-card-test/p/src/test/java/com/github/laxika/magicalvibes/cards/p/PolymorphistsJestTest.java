@@ -38,12 +38,12 @@ class PolymorphistsJestTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, targetAngel, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasColor(gd, targetAngel, CardColor.BLUE)).isTrue();
         assertThat(gqs.hasColor(gd, targetAngel, CardColor.WHITE)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(targetAngel, CardSubtype.FROG)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(targetAngel, CardSubtype.ANGEL)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, targetAngel, CardSubtype.FROG)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, targetAngel, CardSubtype.ANGEL)).isFalse();
 
         assertThat(targetBears.getEffectivePower()).isEqualTo(1);
         assertThat(targetBears.getEffectiveToughness()).isEqualTo(1);
-        assertThat(GameQueryService.permanentHasSubtype(targetBears, CardSubtype.FROG)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, targetBears, CardSubtype.FROG)).isTrue();
 
         assertThat(targetFountain.getEffectiveColor()).isNull();
         assertThat(ownAngel.getEffectivePower()).isEqualTo(4);
@@ -66,8 +66,8 @@ class PolymorphistsJestTest extends BaseCardTest {
         assertThat(angel.getEffectiveToughness()).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(angel, CardSubtype.ANGEL)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(angel, CardSubtype.FROG)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, angel, CardSubtype.ANGEL)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, angel, CardSubtype.FROG)).isFalse();
     }
 
     @Test
@@ -82,7 +82,7 @@ class PolymorphistsJestTest extends BaseCardTest {
         assertThat(ownAngel.getEffectiveToughness()).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ownAngel, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasColor(gd, ownAngel, CardColor.BLUE)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(ownAngel, CardSubtype.FROG)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, ownAngel, CardSubtype.FROG)).isTrue();
         assertThat(opposingAngel.getEffectivePower()).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, opposingAngel, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasColor(gd, opposingAngel, CardColor.WHITE)).isTrue();
@@ -102,8 +102,8 @@ class PolymorphistsJestTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, laterAngel, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasColor(gd, laterAngel, CardColor.WHITE)).isTrue();
         assertThat(gqs.hasColor(gd, laterAngel, CardColor.BLUE)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(laterAngel, CardSubtype.ANGEL)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(laterAngel, CardSubtype.FROG)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, laterAngel, CardSubtype.ANGEL)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, laterAngel, CardSubtype.FROG)).isFalse();
     }
 
     @Test
@@ -115,7 +115,7 @@ class PolymorphistsJestTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Polymorphist's Jest");
         assertThat(gqs.hasColor(gd, fountain, CardColor.BLUE)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(fountain, CardSubtype.FROG)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, fountain, CardSubtype.FROG)).isFalse();
     }
 
     @Test

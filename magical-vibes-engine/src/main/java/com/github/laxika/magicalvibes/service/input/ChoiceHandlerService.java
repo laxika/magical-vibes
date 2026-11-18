@@ -2755,9 +2755,6 @@ public class ChoiceHandlerService {
             Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
             if (source != null && sourceBecomesProducedColor(source)) {
                 CardColor sourceChosenColor = CardColor.valueOf(chosenColor.name());
-                source.getTransientColors().clear();
-                source.getTransientColors().add(sourceChosenColor);
-                source.setColorOverridden(true);
                 gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                         source.getCard().getName(), null, ctx.playerId(),
                         new GrantColorUntilEndOfTurnEffect(sourceChosenColor), source.getId(), null, null,
@@ -2924,9 +2921,6 @@ public class ChoiceHandlerService {
             Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
             if (source != null && sourceBecomesProducedColor(source)) {
                 CardColor sourceChosenColor = CardColor.valueOf(chosenColor.name());
-                source.getTransientColors().clear();
-                source.getTransientColors().add(sourceChosenColor);
-                source.setColorOverridden(true);
                 gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                         source.getCard().getName(), null, ctx.playerId(),
                         new GrantColorUntilEndOfTurnEffect(sourceChosenColor), source.getId(), null, null,
@@ -4883,9 +4877,6 @@ public class ChoiceHandlerService {
         String colorName = chosenColor.name().charAt(0) + chosenColor.name().substring(1).toLowerCase();
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
-            target.getTransientColors().clear();
-            target.getTransientColors().add(chosenColor);
-            target.setColorOverridden(true);
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), ctx.sourceCardName(), null, ctx.controllerId(),
                     new GrantColorUntilEndOfTurnEffect(chosenColor), target.getId(), null, null,
@@ -4976,12 +4967,7 @@ public class ChoiceHandlerService {
 
             // CR 613 layer engine: "becomes [color] until end of turn" is a floating layer-5
             // color-setting effect. We reuse GrantColorUntilEndOfTurnEffect (the L5 setter the
-            // layered pass already understands) as the wrapped effect, and dual-write the legacy
-            // transient-color fields for direct Permanent.getEffectiveColor callers, exactly as
-            // GrantColorUntilEndOfTurnEffectHandler does.
-            target.getTransientColors().clear();
-            target.getTransientColors().add(color);
-            target.setColorOverridden(true);
+            // layered pass already understands) as the wrapped effect.
             gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                     UUID.randomUUID(), ctx.sourceCardName(), null, ctx.controllerId(),
                     new com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect(color),
@@ -5020,9 +5006,6 @@ public class ChoiceHandlerService {
                 continue;
             }
 
-            target.getTransientColors().clear();
-            target.getTransientColors().add(chosenColor);
-            target.setColorOverridden(true);
             gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                     UUID.randomUUID(), ctx.sourceCardName(), null, ctx.controllerId(),
                     new com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect(chosenColor),
@@ -5438,11 +5421,6 @@ public class ChoiceHandlerService {
 
         // CR 613 layer engine: "becomes [colors]" is a floating layer-5 color-setting effect with
         // its own timestamp. Duration is UNTIL_END_OF_TURN (Prismwake Merrow) or PERMANENT (Shyft).
-        // The legacy transient fields are still written for direct Permanent.getEffectiveColor
-        // callers; the layered pass replays the setter.
-        target.getTransientColors().clear();
-        target.getTransientColors().addAll(colorSet);
-        target.setColorOverridden(true);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 ctx.sourceCardName(), null, controllerId,
                 new BecomeChosenColorsUntilEndOfTurnEffect(colorSet),
@@ -6900,16 +6878,8 @@ public class ChoiceHandlerService {
 
         Permanent targetLand = gameQueryService.findPermanentById(gameData, ctx.targetLandId());
         if (targetLand != null) {
-            if (ctx.replacing() && Duration.UNTIL_END_OF_TURN.equals(ctx.duration())) {
-                // A timestamped layer-4 floating effect, so a later "becomes" effect (Phantasmal Terrain,
-                // Blood Moon) overrides it by timestamp rather than the transient override always winning.
-                gameData.addFloatingEffect(new FloatingContinuousEffect(
-                        UUID.randomUUID(), "Basic land type choice", null, player.getId(),
-                        new GrantSubtypeEffect(subtype, GrantScope.TARGET, true),
-                        targetLand.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
-            } else {
-                GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(targetLand, subtype, ctx.duration(), ctx.replacing());
-            }
+            GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(gameData, targetLand, subtype,
+                    ctx.duration(), ctx.replacing(), "Basic land type choice", null, player.getId());
 
             String durationText = Duration.UNTIL_END_OF_TURN.equals(ctx.duration()) ? " until end of turn"
                     : Duration.UNTIL_CONTROLLERS_NEXT_UNTAP_STEP.equals(ctx.duration())
@@ -7006,8 +6976,8 @@ public class ChoiceHandlerService {
                 if (!gameQueryService.effectiveLandTypes(gameData, permanent).contains(fromType)) {
                     continue;
                 }
-                GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(
-                        permanent, subtype, Duration.UNTIL_END_OF_TURN, true);
+                GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(gameData, permanent, subtype,
+                        Duration.UNTIL_END_OF_TURN, true, "Land type change", null, player.getId());
             }
         }
 

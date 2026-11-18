@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.i.InBolassClutches;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SylvanAwakening.class, Forest.class, Mountain.class, LlanowarElves.class, InBolassClutches.class})
+@CardUsed({SylvanAwakening.class, Forest.class, Mountain.class, LlanowarElves.class, InBolassClutches.class, Humility.class})
 class SylvanAwakeningTest extends BaseCardTest {
 
     @Test
@@ -36,21 +37,43 @@ class SylvanAwakeningTest extends BaseCardTest {
 
         Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest).isNotNull();
-        assertThat(forest.isAnimatedUntilNextTurn()).isTrue();
-        assertThat(forest.getUntilNextTurnAnimatedPower()).isEqualTo(2);
-        assertThat(forest.getUntilNextTurnAnimatedToughness()).isEqualTo(2);
-        assertThat(forest.getEffectivePower()).isEqualTo(2);
-        assertThat(forest.getEffectiveToughness()).isEqualTo(2);
-        assertThat(forest.getUntilNextTurnSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
-        assertThat(forest.getUntilNextTurnKeywords()).containsExactlyInAnyOrder(
-                Keyword.REACH, Keyword.INDESTRUCTIBLE, Keyword.HASTE
-        );
+        assertThat(gd.animatedByFloatingEffect(forest.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(2);
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isTrue();
 
         Permanent mountain = findPermanent(player1, "Mountain");
         assertThat(mountain).isNotNull();
-        assertThat(mountain.isAnimatedUntilNextTurn()).isTrue();
-        assertThat(mountain.getEffectivePower()).isEqualTo(2);
-        assertThat(mountain.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.animatedByFloatingEffect(mountain.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Animated after Humility, the lands keep the animation's reach, indestructible, haste and 2/2 (CR 613.7)")
+    void animationAfterHumilityKeepsItsAbilities() {
+        harness.addToBattlefield(player2, new Humility());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new SylvanAwakening(), "{2}{G}");
+        harness.passBothPriorities();
+
+        Permanent forest = findPermanent(player1, "Forest");
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(2);
     }
 
     @Test
@@ -84,9 +107,9 @@ class SylvanAwakeningTest extends BaseCardTest {
 
         Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest).isNotNull();
-        assertThat(forest.hasKeyword(Keyword.REACH)).isTrue();
-        assertThat(forest.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(forest.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -104,7 +127,7 @@ class SylvanAwakeningTest extends BaseCardTest {
 
         Permanent elves = findPermanent(player1, "Llanowar Elves");
         assertThat(elves).isNotNull();
-        assertThat(elves.isAnimatedUntilNextTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(elves.getId())).isFalse();
     }
 
     @Test
@@ -122,7 +145,7 @@ class SylvanAwakeningTest extends BaseCardTest {
 
         Permanent opponentForest = findPermanent(player2, "Forest");
         assertThat(opponentForest).isNotNull();
-        assertThat(opponentForest.isAnimatedUntilNextTurn()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(opponentForest.getId())).isFalse();
     }
 
     @Test
@@ -143,13 +166,13 @@ class SylvanAwakeningTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         // Animation should still be present
-        assertThat(forest.isAnimatedUntilNextTurn()).isTrue();
-        assertThat(forest.getUntilNextTurnAnimatedPower()).isEqualTo(2);
-        assertThat(forest.getUntilNextTurnAnimatedToughness()).isEqualTo(2);
-        assertThat(forest.getUntilNextTurnKeywords()).containsExactlyInAnyOrder(
-                Keyword.REACH, Keyword.INDESTRUCTIBLE, Keyword.HASTE
-        );
-        assertThat(forest.getUntilNextTurnSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
+        assertThat(gd.animatedByFloatingEffect(forest.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isTrue();
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.ELEMENTAL);
     }
 
     @Test
@@ -171,8 +194,8 @@ class SylvanAwakeningTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, forest)).isFalse();
-        assertThat(forest.getUntilNextTurnKeywords()).isEmpty();
-        assertThat(forest.getUntilNextTurnSubtypes()).isEmpty();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.REACH)).isFalse();
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).doesNotContain(CardSubtype.ELEMENTAL);
     }
 
     @Test

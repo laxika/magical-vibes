@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -32,7 +33,7 @@ class StartlingDevelopmentTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
         assertThat(gqs.hasColor(gd, bears, CardColor.BLUE)).isTrue();
         assertThat(gqs.hasColor(gd, bears, CardColor.GREEN)).isFalse();
-        assertThat(bears.getTransientCreatureTypeOverride()).isEqualTo(CardSubtype.SERPENT);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, bears)).containsExactly(CardSubtype.SERPENT);
     }
 
     @Test
@@ -50,7 +51,7 @@ class StartlingDevelopmentTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
         assertThat(gqs.hasColor(gd, bears, CardColor.GREEN)).isTrue();
         assertThat(gqs.hasColor(gd, bears, CardColor.BLUE)).isFalse();
-        assertThat(bears.getTransientCreatureTypeOverride()).isNull();
+        assertThat(gd.floatingEffectsOnPermanent(bears.getId(), GrantSubtypeEffect.class)).isEmpty();
     }
 
     @Test

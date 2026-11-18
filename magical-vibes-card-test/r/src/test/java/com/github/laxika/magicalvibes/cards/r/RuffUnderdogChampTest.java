@@ -98,7 +98,7 @@ class RuffUnderdogChampTest extends BaseCardTest {
     @DisplayName("Underdog boosts Ruff itself even when Ruff is no longer a Dog")
     void underdogBoostsRuffRegardlessOfItsCreatureType() {
         Permanent ruff = harness.addToBattlefieldAndReturn(player1, new RuffUnderdogChamp());
-        ruff.setTransientCreatureTypeOverride(CardSubtype.BEAR);
+        grantSubtypeUntilEndOfTurn(ruff, CardSubtype.BEAR, true);
         gd.playersWhoLostGameThisMatch.add(player1.getId());
 
         assertThat(gqs.effectiveCreatureSubtypes(gd, ruff)).doesNotContain(CardSubtype.DOG);

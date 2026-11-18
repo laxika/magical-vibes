@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.testutil;
 
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -24,6 +25,8 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.LegacyDepartureFallback;
@@ -270,6 +273,29 @@ public abstract class BaseCardTest {
         animateUntilEndOfTurn(permanent);
         gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
                 new SetBasePowerToughnessEffect(power, toughness), permanent.getId(), Duration.UNTIL_END_OF_TURN));
+    }
+
+    /**
+     * Gives {@code permanent} {@code subtype} until end of turn as a resolved effect would: a floating layer-4
+     * effect. An {@code overriding} grant is "becomes a [type]" (it replaces the permanent's other types of that
+     * kind), otherwise the subtype is added in addition to its other types.
+     */
+    protected void grantSubtypeUntilEndOfTurn(Permanent permanent, CardSubtype subtype, boolean overriding) {
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new GrantSubtypeEffect(subtype, GrantScope.TARGET, overriding), permanent.getId(),
+                Duration.UNTIL_END_OF_TURN));
+    }
+
+    /** Makes {@code permanent} also {@code type} until end of turn, as a resolved effect would. */
+    protected void grantCardTypeUntilEndOfTurn(Permanent permanent, CardType type) {
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new GrantCardTypeEffect(type, GrantScope.TARGET), permanent.getId(), Duration.UNTIL_END_OF_TURN));
+    }
+
+    /** Makes {@code permanent} lose all creature types until end of turn, as a resolved effect would. */
+    protected void loseAllCreatureTypesUntilEndOfTurn(Permanent permanent) {
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
+                new LoseAllCreatureTypesEffect(GrantScope.TARGET), permanent.getId(), Duration.UNTIL_END_OF_TURN));
     }
 
     /**

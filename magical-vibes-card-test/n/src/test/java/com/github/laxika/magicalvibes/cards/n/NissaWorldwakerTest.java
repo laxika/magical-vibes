@@ -38,10 +38,10 @@ class NissaWorldwakerTest extends BaseCardTest {
 
         assertThat(nissa.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(gqs.isCreature(gd, forest)).isTrue();
-        assertThat(forest.getEffectivePower()).isEqualTo(4);
-        assertThat(forest.getEffectiveToughness()).isEqualTo(4);
-        assertThat(forest.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(forest.getGrantedSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.isLand(gd, forest)).isTrue();
     }
 
@@ -57,7 +57,8 @@ class NissaWorldwakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, forest)).isTrue();
-        assertThat(forest.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -136,10 +137,10 @@ class NissaWorldwakerTest extends BaseCardTest {
         assertThat(newLands).hasSize(2);
         assertThat(newLands).allSatisfy(land -> {
             assertThat(gqs.isCreature(gd, land)).isTrue();
-            assertThat(land.getEffectivePower()).isEqualTo(4);
-            assertThat(land.getEffectiveToughness()).isEqualTo(4);
-            assertThat(land.hasKeyword(Keyword.TRAMPLE)).isTrue();
-            assertThat(land.getGrantedSubtypes()).contains(CardSubtype.ELEMENTAL);
+            assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(4);
+            assertThat(gqs.hasKeyword(gd, land, Keyword.TRAMPLE)).isTrue();
+            assertThat(gqs.getEffectiveSubtypes(gd, land)).contains(CardSubtype.ELEMENTAL);
             assertThat(land.isTapped()).isFalse();
         });
     }
@@ -161,7 +162,7 @@ class NissaWorldwakerTest extends BaseCardTest {
                 .toList();
         assertThat(newLands).hasSize(1);
         assertThat(gqs.isCreature(gd, newLands.getFirst())).isTrue();
-        assertThat(newLands.getFirst().getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, newLands.getFirst())).isEqualTo(4);
     }
 
     @Test
@@ -202,7 +203,7 @@ class NissaWorldwakerTest extends BaseCardTest {
                 .filteredOn(p -> !p.getId().equals(existing.getId()))
                 .singleElement().satisfies(land -> {
                     assertThat(gqs.isCreature(gd, land)).isTrue();
-                    assertThat(land.getEffectivePower()).isEqualTo(4);
+                    assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(4);
                 });
     }
 

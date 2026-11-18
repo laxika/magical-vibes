@@ -176,7 +176,7 @@ class ShurikenTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GnarledMass());
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
-        ninja.setTransientCreatureTypeOverride(CardSubtype.SPIRIT);
+        grantSubtypeUntilEndOfTurn(ninja, CardSubtype.SPIRIT, true);
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);

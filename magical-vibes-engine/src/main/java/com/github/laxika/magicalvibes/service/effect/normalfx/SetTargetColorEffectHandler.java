@@ -59,13 +59,8 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
         if (target != null) {
             // CR 105.3 / 611.2b: "becomes [color]" with no stated duration is a floating layer-5 color
             // setter that replaces all previous colors and lasts indefinitely (Duration.PERMANENT).
-            // The legacy fields are seeded for direct getEffectiveColor callers; the layered pass replays
-            // the floating effect at its real timestamp.
-            target.getTransientColors().clear();
             if (color != null) {
-                target.getTransientColors().add(color);
             }
-            target.setColorOverridden(true);
             SetTargetColorEffect resolvedEffect = new SetTargetColorEffect(color, e.spellOnly(), false);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), null, entry.getControllerId(), resolvedEffect,

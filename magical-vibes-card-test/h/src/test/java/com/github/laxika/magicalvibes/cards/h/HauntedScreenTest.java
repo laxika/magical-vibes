@@ -115,7 +115,7 @@ class HauntedScreenTest extends BaseCardTest {
         assertThat(screen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
         assertThat(gqs.isArtifact(screen)).isTrue();
         assertThat(gqs.isCreature(gd, screen)).isTrue();
-        assertThat(screen.getGrantedSubtypes()).contains(CardSubtype.SPIRIT);
+        assertThat(gqs.getEffectiveSubtypes(gd, screen)).contains(CardSubtype.SPIRIT);
         assertThat(gqs.getEffectivePower(gd, screen)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, screen)).isEqualTo(7);
     }

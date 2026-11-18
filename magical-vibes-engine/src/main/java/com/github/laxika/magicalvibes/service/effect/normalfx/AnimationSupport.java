@@ -93,6 +93,14 @@ public class AnimationSupport {
         return AmountContext.forStackEntry(entry, source);
     }
 
+    /** The source of an animation's floating effects: a stack entry's, or an explicit one when there is none. */
+    private record AnimationSource(String name, UUID permanentId, UUID controllerId) {
+        static AnimationSource of(StackEntry entry) {
+            return new AnimationSource(entry.getCard().getName(), entry.getSourcePermanentId(),
+                    entry.getControllerId());
+        }
+    }
+
     /**
      * CR 613.4: an animate-and-set-P/T effect's base P/T is a layer-7b entry with the
      * animation's timestamp — a later-timestamp base-P/T setter (Diminish, Lignify) overrides
@@ -100,29 +108,14 @@ public class AnimationSupport {
      */
     private void addAnimationBasePtFloatingEffect(GameData gameData, StackEntry entry, Permanent target,
                                                   int power, int toughness, Duration duration) {
-        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                new SetBasePowerToughnessEffect(power, toughness), target.getId(), null, null,
-                duration, 0));
+        addFloating(gameData, AnimationSource.of(entry), target, new SetBasePowerToughnessEffect(power, toughness),
+                duration);
     }
 
-    private void addDynamicAnimationBasePtFloatingEffect(GameData gameData, StackEntry entry,
-                                                         Permanent target,
-                                                         AnimatePermanentsEffect effect, Duration duration) {
-        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                new SetPowerToughnessToAmountEffect(effect.power(), effect.toughness()), target.getId(),
-                null, null, duration, 0));
-    }
-
-    private void addAnimationColorFloatingEffect(GameData gameData, StackEntry entry, Permanent target,
-                                                 CardColor color,
-                                                 Duration duration) {
+    private void addAnimationColorFloatingEffect(GameData gameData, AnimationSource source, Permanent target,
+                                                 CardColor color, Duration duration) {
         if (color == null) return;
-        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                new GrantColorEffect(color, GrantScope.SELF, true), target.getId(), null, null,
-                duration, 0));
+        addFloating(gameData, source, target, new GrantColorEffect(color, GrantScope.SELF, true), duration);
     }
 
     /**
@@ -194,9 +187,9 @@ public class AnimationSupport {
     /**
      * SELF/TARGET scope, until your next turn — the target permanent becomes a creature with the
      * given power/toughness until the controller's next turn (Xenic Poltergeist animates a
-     * noncreature artifact into an artifact creature with P/T equal to its mana value). The
-     * animation flag alone grants creature-ness (see {@code GameQueryService.isCreature}); the
-     * layered base P/T comes from the floating 7b entry.
+     * noncreature artifact into an artifact creature with P/T equal to its mana value). The animation
+     * is floating effects that end when the player whose effect it is begins their next turn
+     * ({@link #addAnimationFloatingEffects}).
      */
     private void animateOneUntilNextTurn(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect, UUID targetId) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
@@ -208,15 +201,7 @@ public class AnimationSupport {
         int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
         int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
-        target.setAnimatedUntilNextTurn(true);
-        target.setUntilNextTurnAnimatedPower(power);
-        target.setUntilNextTurnAnimatedToughness(toughness);
-        target.setUntilNextTurnAnimationGrantorId(entry.getControllerId());
-        target.getUntilNextTurnSubtypes().addAll(effect.grantedSubtypes());
-        target.getUntilNextTurnKeywords().addAll(effect.grantedKeywords());
-        addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, Duration.UNTIL_YOUR_NEXT_TURN);
-        addAnimationColorFloatingEffect(gameData, entry, target, effect.animatedColor(),
-                Duration.UNTIL_YOUR_NEXT_TURN);
+        addAnimationFloatingEffects(gameData, entry, target, effect, power, toughness, Duration.UNTIL_YOUR_NEXT_TURN);
 
         if (target.isFaceDown()) {
             gameLogService.append(gameData, GameLog.text(
@@ -290,10 +275,18 @@ public class AnimationSupport {
     private void addAnimationFloatingEffects(GameData gameData, StackEntry entry, Permanent target,
                                              AnimatePermanentsEffect effect, int power, int toughness,
                                              Duration duration) {
+        addAnimationFloatingEffects(gameData, AnimationSource.of(entry), target, effect, power, toughness,
+                duration);
+    }
+
+    private void addAnimationFloatingEffects(GameData gameData, AnimationSource entry, Permanent target,
+                                             AnimatePermanentsEffect effect, int power, int toughness,
+                                             Duration duration) {
         if (effect.dynamicPowerToughness() && (effect.power() != null || effect.toughness() != null)) {
-            addDynamicAnimationBasePtFloatingEffect(gameData, entry, target, effect, duration);
+            addFloating(gameData, entry, target, new SetPowerToughnessToAmountEffect(effect.power(), effect.toughness()),
+                    duration);
         } else if (effect.power() != null || effect.toughness() != null) {
-            addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, duration);
+            addFloating(gameData, entry, target, new SetBasePowerToughnessEffect(power, toughness), duration);
         }
         boolean colorReplaced = false;
         if (effect.animatedColor() != null) {
@@ -333,10 +326,10 @@ public class AnimationSupport {
         }
     }
 
-    private void addFloating(GameData gameData, StackEntry entry, Permanent target, CardEffect effect,
+    private void addFloating(GameData gameData, AnimationSource source, Permanent target, CardEffect effect,
                              Duration duration) {
-        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), entry.getCard().getName(),
-                entry.getSourcePermanentId(), entry.getControllerId(), effect, target.getId(), null, null,
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), source.name(),
+                source.permanentId(), source.controllerId(), effect, target.getId(), null, null,
                 duration, 0));
     }
 
@@ -373,13 +366,10 @@ public class AnimationSupport {
                 gameData.id, target.getCard().getName(), power, toughness, duration);
     }
 
-    private void addAnimationCardTypeFloatingEffect(GameData gameData, StackEntry entry,
+    private void addAnimationCardTypeFloatingEffect(GameData gameData, AnimationSource source,
                                                     Permanent target, CardType cardType,
                                                     Duration duration) {
-        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                new GrantCardTypeEffect(cardType, GrantScope.TARGET), target.getId(), null, null,
-                duration, 0));
+        addFloating(gameData, source, target, new GrantCardTypeEffect(cardType, GrantScope.TARGET), duration);
     }
 
     /** OWN_LANDS scope — all lands you control (Sylvan Awakening), until end of turn or your next turn. */
@@ -404,22 +394,8 @@ public class AnimationSupport {
                 continue;
             }
 
-            if (untilNextTurn) {
-                addAnimationCardTypeFloatingEffect(gameData, entry, perm, CardType.CREATURE, effect.duration());
-                perm.setAnimatedUntilNextTurn(true);
-                perm.setUntilNextTurnAnimatedPower(power);
-                perm.setUntilNextTurnAnimatedToughness(toughness);
-                perm.setUntilNextTurnAnimationGrantorId(entry.getControllerId());
-                perm.getUntilNextTurnSubtypes().clear();
-                perm.getUntilNextTurnSubtypes().addAll(effect.grantedSubtypes());
-                perm.getUntilNextTurnKeywords().addAll(effect.grantedKeywords());
-                addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness, Duration.UNTIL_YOUR_NEXT_TURN);
-                addAnimationColorFloatingEffect(gameData, entry, perm, effect.animatedColor(),
-                        Duration.UNTIL_YOUR_NEXT_TURN);
-            } else {
-                addAnimationFloatingEffects(gameData, entry, perm, effect, power, toughness,
-                        Duration.UNTIL_END_OF_TURN);
-            }
+            addAnimationFloatingEffects(gameData, entry, perm, effect, power, toughness,
+                    untilNextTurn ? Duration.UNTIL_YOUR_NEXT_TURN : Duration.UNTIL_END_OF_TURN);
 
             log.info("Game {} - {} animated{}", gameData.id, perm.getCard().getName(),
                     untilNextTurn ? " until next turn" : " until end of turn");
@@ -699,63 +675,11 @@ public class AnimationSupport {
     public void animatePermanently(GameData gameData, Permanent target, AnimatePermanentsEffect effect,
                                    int power, int toughness, String sourceName, UUID sourcePermanentId,
                                    UUID controllerId) {
-        target.setPermanentlyAnimated(true);
-        target.setPermanentAnimatedPower(power);
-        target.setPermanentAnimatedToughness(toughness);
-        if (effect.power() != null || effect.toughness() != null) {
-            CardEffect basePowerToughnessEffect = !effect.dynamicPowerToughness()
-                    ? new SetBasePowerToughnessEffect(power, toughness)
-                    : new SetPowerToughnessToAmountEffect(effect.power(), effect.toughness());
-            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
-                    sourcePermanentId, controllerId, basePowerToughnessEffect, target.getId(), null, null,
-                    Duration.PERMANENT, 0));
-        }
-
-        for (CardSubtype subtype : effect.grantedSubtypes()) {
-            if (!target.getGrantedSubtypes().contains(subtype)) {
-                target.getGrantedSubtypes().add(subtype);
-            }
-        }
-
-        target.getGrantedKeywords().addAll(effect.grantedKeywords());
-        target.getPersistentGrantedKeywords().addAll(effect.grantedKeywords());
-        if (!effect.grantedKeywords().isEmpty()) {
-            // Timestamped layer-6 grant (CR 613.7) so an earlier "loses all abilities" effect
-            // (Turn to Frog) doesn't strip keywords this animation grants afterwards.
-            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
-                    sourcePermanentId, controllerId,
-                    new GrantKeywordEffect(effect.grantedKeywords(), GrantScope.TARGET),
-                    target.getId(), null, null, Duration.PERMANENT, 0));
-        }
-
+        addAnimationFloatingEffects(gameData, new AnimationSource(sourceName, sourcePermanentId, controllerId),
+                target, effect, power, toughness, Duration.PERMANENT);
         // The animation has no duration, so the granted card types must survive turn cleanup too
         // (Stalking Stones "becomes a 3/3 Elemental artifact creature that's still a land").
         target.getPersistentGrantedCardTypes().addAll(effect.grantedCardTypes());
-        if (effect.cardTypeOverriding()) {
-            // "Becomes a creature" replaces the other card types (CR 205.1a).
-            Set<CardType> replacementTypes = EnumSet.of(CardType.CREATURE);
-            replacementTypes.addAll(effect.grantedCardTypes());
-            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
-                    sourcePermanentId, controllerId,
-                    new SetCardTypesEffect(replacementTypes, GrantScope.TARGET),
-                    target.getId(), null, null, Duration.PERMANENT, 0));
-        }
-
-        boolean colorReplaced = false;
-        if (effect.animatedColor() != null) {
-            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
-                    sourcePermanentId, controllerId,
-                    new GrantColorEffect(effect.animatedColor(), GrantScope.TARGET, true),
-                    target.getId(), null, null, Duration.PERMANENT, 0));
-            colorReplaced = true;
-        }
-        for (CardColor color : effect.animatedColors()) {
-            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
-                    sourcePermanentId, controllerId,
-                    new GrantColorEffect(color, GrantScope.TARGET, !colorReplaced),
-                    target.getId(), null, null, Duration.PERMANENT, 0));
-            colorReplaced = true;
-        }
 
         // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
         if (target.isAttached() && target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
@@ -803,16 +727,10 @@ public class AnimationSupport {
         int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
         int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
-        target.setPermanentlyAnimated(true);
-        target.setPermanentAnimatedPower(power);
-        target.setPermanentAnimatedToughness(toughness);
         addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness,
                 Duration.WHILE_SOURCE_ON_BATTLEFIELD);
 
         for (CardSubtype subtype : effect.grantedSubtypes()) {
-            if (!target.getGrantedSubtypes().contains(subtype)) {
-                target.getGrantedSubtypes().add(subtype);
-            }
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                     new GrantSubtypeEffect(subtype, GrantScope.TARGET), target.getId(), null, null,

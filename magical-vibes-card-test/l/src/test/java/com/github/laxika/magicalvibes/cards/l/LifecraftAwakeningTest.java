@@ -34,7 +34,7 @@ class LifecraftAwakeningTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, artifact)).isTrue();
         assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(2);
-        assertThat(artifact.isPermanentlyAnimated()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(artifact.getId())).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, artifact, CardSubtype.CONSTRUCT)).isTrue();
     }
 
@@ -49,7 +49,7 @@ class LifecraftAwakeningTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, artifactCreature)).isTrue();
         assertThat(gqs.getEffectivePower(gd, artifactCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, artifactCreature)).isEqualTo(4);
-        assertThat(artifactCreature.isPermanentlyAnimated()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(artifactCreature.getId())).isFalse();
     }
 
     @Test
@@ -61,7 +61,7 @@ class LifecraftAwakeningTest extends BaseCardTest {
 
         assertThat(vehicle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.isCreature(gd, vehicle)).isFalse();
-        assertThat(vehicle.isPermanentlyAnimated()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(vehicle.getId())).isFalse();
     }
 
     @Test

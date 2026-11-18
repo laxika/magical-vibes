@@ -179,8 +179,7 @@ class DeathmarkTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castSorcery(player1, 0, druid.getId());
 
-        druid.setColorOverridden(true);
-        druid.getTransientColors().add(CardColor.BLUE);
+        harness.setColors(druid, CardColor.BLUE);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Boreal Druid");

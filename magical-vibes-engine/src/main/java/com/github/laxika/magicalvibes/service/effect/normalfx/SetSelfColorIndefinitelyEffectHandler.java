@@ -37,9 +37,6 @@ public class SetSelfColorIndefinitelyEffectHandler implements NormalEffectHandle
         }
 
         SetTargetColorEffect setter = new SetTargetColorEffect(change.color());
-        source.getTransientColors().clear();
-        source.getTransientColors().add(change.color());
-        source.setColorOverridden(true);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), source.getId(), entry.getControllerId(), setter,
                 source.getId(), null, null, Duration.PERMANENT, 0));

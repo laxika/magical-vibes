@@ -43,7 +43,7 @@ class EmergentSequenceTest extends BaseCardTest {
         assertThat(forest.getEffectivePower()).isEqualTo(2);
         assertThat(forest.getEffectiveToughness()).isEqualTo(2);
         assertThat(forest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(forest.getGrantedSubtypes()).contains(CardSubtype.FRACTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.FRACTAL);
         assertThat(gqs.getEffectiveColors(gd, forest))
                 .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLUE);
         assertThat(gqs.isLand(gd, forest)).isTrue();
@@ -150,7 +150,7 @@ class EmergentSequenceTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, forest)).isTrue();
         assertThat(forest.getEffectivePower()).isEqualTo(1);
         assertThat(forest.getEffectiveToughness()).isEqualTo(1);
-        assertThat(forest.getGrantedSubtypes()).contains(CardSubtype.FRACTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.FRACTAL);
         assertThat(gqs.getEffectiveColors(gd, forest))
                 .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLUE);
         assertThat(forest.isTapped()).isFalse();

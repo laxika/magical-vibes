@@ -508,7 +508,7 @@ boolean sharesType = (aIsChangeling && (bIsChangeling || !typesB.isEmpty()))
 2. B is Changeling (has all types) → shares with anything that has types
 3. Normal overlap check
 
-**Permanent vs Card**: Permanents can have `transientSubtypes` (from clone/copy/animate effects) and keyword grants, so use `permanent.hasKeyword()` and include `getTransientSubtypes()`. Cards in non-battlefield zones only have their printed subtypes/keywords.
+**Permanent vs Card**: Permanents can gain subtypes and keywords from continuous effects, so ask the layered queries (`GameQueryService.getEffectiveSubtypes`, `hasKeyword(gameData, permanent, …)`). Cards in non-battlefield zones only have their printed subtypes/keywords.
 
 ## Transform DFC checklist
 

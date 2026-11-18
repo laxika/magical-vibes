@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -55,8 +56,8 @@ class ArgentMutationTest extends BaseCardTest {
         UUID targetId = target.getId();
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(target.getGrantedCardTypes()).contains(CardType.ARTIFACT);
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.getEffectiveCardTypes(gd, target)).contains(CardType.ARTIFACT);
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.isCreature(gd, target)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
@@ -72,8 +73,8 @@ class ArgentMutationTest extends BaseCardTest {
         UUID targetId = target.getId();
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(target.getGrantedCardTypes()).contains(CardType.ARTIFACT);
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.getEffectiveCardTypes(gd, target)).contains(CardType.ARTIFACT);
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
     }
 
     @Test
@@ -86,8 +87,8 @@ class ArgentMutationTest extends BaseCardTest {
         UUID targetId = target.getId();
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(target.getGrantedCardTypes()).contains(CardType.ARTIFACT);
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.getEffectiveCardTypes(gd, target)).contains(CardType.ARTIFACT);
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
     }
 
     @Test
@@ -100,14 +101,14 @@ class ArgentMutationTest extends BaseCardTest {
         UUID targetId = target.getId();
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedCardTypes()).isEmpty();
-        assertThat(gqs.isArtifact(target)).isFalse();
+        assertThat(gd.floatingEffectsOnPermanent(target.getId(), GrantCardTypeEffect.class)).isEmpty();
+        assertThat(gqs.isArtifact(gd, target)).isFalse();
     }
 
     @Test

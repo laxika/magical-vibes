@@ -65,7 +65,6 @@ public class BoostNonHumanCreaturesByCreatureTypeCountEffectHandler implements S
             return allCreatureTypeCount();
         }
         Set<CardSubtype> subtypes = new HashSet<>(target.getCard().getSubtypes());
-        subtypes.addAll(target.getTransientSubtypes());
         subtypes.addAll(target.getGrantedSubtypes());
         return (int) subtypes.stream().filter(gameQueryService::isCreatureSubtype).count();
     }

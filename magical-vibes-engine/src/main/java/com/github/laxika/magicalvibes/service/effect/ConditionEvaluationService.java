@@ -2672,7 +2672,10 @@ public class ConditionEvaluationService {
     private boolean isMostCommonPermanentColor(GameData gameData, CardColor color) {
         Map<CardColor, Integer> counts = new java.util.EnumMap<>(CardColor.class);
         gameData.forEachPermanent((playerId, permanent) -> {
-            for (CardColor currentColor : gameQueryService.colorsForStaticEvaluation(permanent)) {
+            Set<CardColor> permanentColors = GameQueryService.isStaticEvaluationActive()
+                    ? gameQueryService.colorsForStaticEvaluation(permanent)
+                    : gameQueryService.getEffectiveColors(gameData, permanent);
+            for (CardColor currentColor : permanentColors) {
                 counts.merge(currentColor, 1, Integer::sum);
             }
         });

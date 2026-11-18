@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlledLandsBecomeTypeEffe
 import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseSubtypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PrimevalCounterEffect;
@@ -1031,16 +1032,12 @@ public class LayerSystemService {
 
         long flags = 0;
         flags = flags << 1 | (p.isTapped() ? 1 : 0);
-        flags = flags << 1 | (p.isColorOverridden() ? 1 : 0);
         flags = flags << 1 | (p.isBasePowerToughnessOverriddenUntilEndOfTurn() ? 1 : 0);
-        flags = flags << 1 | (p.isAnimatedUntilNextTurn() ? 1 : 0);
-        flags = flags << 1 | (p.isPermanentlyAnimated() ? 1 : 0);
         flags = flags << 1 | (p.isBasePowerOverriddenPermanently() ? 1 : 0);
         flags = flags << 1 | (p.isBaseToughnessOverriddenPermanently() ? 1 : 0);
         flags = flags << 1 | (p.isLosesAllAbilitiesUntilEndOfTurn() ? 1 : 0);
         flags = flags << 1 | (p.isSuspected() ? 1 : 0);
         flags = flags << 1 | (p.isCommander() ? 1 : 0);
-        flags = flags << 1 | (p.isLosesAllCreatureTypesUntilEndOfTurn() ? 1 : 0);
         flags = flags << 1 | (p.isTransformed() ? 1 : 0);
         flags = flags << 1 | (p.isFaceDown() ? 1 : 0);
         flags = flags << 1 | (p.isCloaked() ? 1 : 0);
@@ -1104,10 +1101,6 @@ public class LayerSystemService {
         h = mix(h, p.getToughnessModifier());
         h = mix(h, p.getBasePowerOverride());
         h = mix(h, p.getBaseToughnessOverride());
-        h = mix(h, p.getPermanentAnimatedPower());
-        h = mix(h, p.getPermanentAnimatedToughness());
-        h = mix(h, p.getUntilNextTurnAnimatedPower());
-        h = mix(h, p.getUntilNextTurnAnimatedToughness());
         h = mix(h, p.getPermanentBasePowerOverride());
         h = mix(h, p.getPermanentBasePowerOverrideTimestamp());
         h = mix(h, p.getPermanentBaseToughnessOverride());
@@ -1121,22 +1114,12 @@ public class LayerSystemService {
         h = hashEnums(h, p.getPersistentGrantedKeywords());
         h = hashEnums(h, p.getRemovedKeywords());
         h = hashEnums(h, p.getUntilNextTurnKeywords());
-        h = hashEnums(h, p.getTransientColors());
         h = hashEnums(h, p.getGrantedColors());
-        h = hashEnums(h, p.getTransientSubtypes());
         h = hashEnums(h, p.getGrantedSubtypes());
-        h = hashEnums(h, p.getUntilNextTurnSubtypes());
-        h = hashEnums(h, p.getTransientRemovedSubtypes());
-        h = hashEnums(h, p.getGrantedCardTypes());
         h = hashEnums(h, p.getPersistentGrantedCardTypes());
         h = hashEnums(h, p.getPersistentGrantedSupertypes());
         h = hashEnums(h, p.getPersistentRemovedSupertypes());
         h = mix(h, p.getPersistentName() == null ? 0 : p.getPersistentName().hashCode());
-        h = mix(h, enumOrdinal(p.getTransientLandTypeOverride()));
-        h = mix(h, enumOrdinal(p.getUntilNextTurnLandTypeOverride()));
-        h = mix(h, enumOrdinal(p.getPersistentLandTypeOverride()));
-        h = mix(h, enumOrdinal(p.getTransientCreatureTypeOverride()));
-        h = hashEnums(h, p.getTransientCreatureTypeOverrides());
 
         for (TextReplacement replacement : p.getTextReplacements()) {
             h = mix(h, System.identityHashCode(replacement));
@@ -1345,18 +1328,6 @@ public class LayerSystemService {
             if (permanent.isFaceDown() && (permanent.isCloaked() || permanent.isFaceDownWard())) {
                 state.addKeyword(Keyword.WARD);
             }
-            // The constructor seeds card values + persistent grants; the legacy engine also
-            // treats transient (until-end-of-turn) grants as part of the object's types until
-            // they become floating effects in a later migration step.
-            for (CardType granted : permanent.getGrantedCardTypes()) {
-                state.addCardType(granted);
-            }
-            for (CardSubtype granted : permanent.getTransientSubtypes()) {
-                state.addSubtype(granted);
-            }
-            for (CardSubtype granted : permanent.getUntilNextTurnSubtypes()) {
-                state.addSubtype(granted);
-            }
             if (!permanent.isFaceDown() && permanent.getCounterCount(CounterType.AWAKENING) > 0) {
                 // An awakened land is an Elemental creature: its creature types are replaced,
                 // while its land types stay.
@@ -1390,38 +1361,6 @@ public class LayerSystemService {
         applyDevotionModifiers(gameData, slots, slotsById, board);
         applyLayer4(gameData, slots, slotsById, board);
 
-        // Runtime one-shot type state not yet migrated to floating effects, applied with legacy
-        // precedence: the transient "becomes the basic land type of your choice" self-override
-        // (Tideshaper Mystic) beats static land-type setters, and "loses all creature types"
-        // (Amoeboid Changeling) strips creature types absolutely.
-        for (PermanentSlot slot : slots) {
-            Permanent permanent = slot.permanent();
-            CardSubtype transientOverride = permanent.getEffectiveLandTypeOverride();
-            if (transientOverride != null) {
-                setLandType(states.get(permanent.getId()), permanent.getId(),
-                        transientOverride, board.landTypeOverrides());
-            }
-            if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
-                states.get(permanent.getId()).removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
-            }
-            if (!permanent.getTransientRemovedSubtypes().isEmpty()) {
-                states.get(permanent.getId()).removeSubtypesIf(
-                        permanent.getTransientRemovedSubtypes()::contains);
-            }
-            // "Target creature becomes a [creature type]" (Boldwyr Intimidator): strip all creature
-            // subtypes and set the override types. Applied after lose-all so the override wins.
-            if (hasFloatingCreatureTypeOverride(gameData, permanent)) {
-                // Already applied at its own timestamp in layer 4 (CR 613.7).
-            } else if (!permanent.getTransientCreatureTypeOverrides().isEmpty()) {
-                setCreatureTypes(states.get(permanent.getId()), permanent.getTransientCreatureTypeOverrides());
-            } else {
-                CardSubtype creatureOverride = permanent.getTransientCreatureTypeOverride();
-                if (creatureOverride != null) {
-                    setCreatureType(states.get(permanent.getId()), creatureOverride);
-                }
-            }
-        }
-
         // Layers 5 (colors) and 6 (abilities): the classified instances in CDA-first,
         // timestamp order.
         applyLayer5(gameData, slots, slotsById, board);
@@ -1435,21 +1374,6 @@ public class LayerSystemService {
         // Sublayer 7d (P/T switching): each active switch is its own step on the finished
         // 7a-7c values, so only the per-permanent parity matters.
         applyLayer7d(gameData, slots, slotsById, board);
-    }
-
-    private static boolean hasFloatingCreatureTypeOverride(GameData gameData, Permanent permanent) {
-        synchronized (gameData.floatingEffects) {
-            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
-                if (permanent.getId().equals(floating.affectedPermanentId())
-                        && Duration.UNTIL_END_OF_TURN.equals(floating.duration())
-                        && floating.effect() instanceof GrantSubtypeEffect grant
-                        && grant.overriding()
-                        && !BASIC_LAND_SUBTYPES.contains(grant.subtype())) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /**
@@ -2756,6 +2680,11 @@ public class LayerSystemService {
                             });
                 }
             }
+            case LoseSubtypesUntilEndOfTurnEffect lose -> {
+                for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
+                    states.get(target.permanent().getId()).removeSubtypesIf(lose.subtypes()::contains);
+                }
+            }
             case RemoveCardTypeFromTargetPermanentEffect remove -> {
                 for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).removeCardType(remove.cardType());
@@ -3146,9 +3075,7 @@ public class LayerSystemService {
     }
 
     private static boolean isOneShotAnimated(Permanent permanent) {
-        return permanent.isAnimatedUntilNextTurn()
-                || permanent.isPermanentlyAnimated()
-                || permanent.getCounterCount(CounterType.AWAKENING) > 0;
+        return permanent.getCounterCount(CounterType.AWAKENING) > 0;
     }
 
     // ===== layers 5 and 6 =====
@@ -3166,11 +3093,6 @@ public class LayerSystemService {
                                                 List<TextReplacement> globalWordChange) {
         if (!permanent.isFaceDown() && permanent.getCounterCount(CounterType.AWAKENING) > 0) {
             state.replaceSeedColors(Set.of(CardColor.GREEN));
-        } else if (permanent.isColorOverridden() && !permanent.getTransientColors().isEmpty()) {
-            // Legacy one-shot color override (pre-migration state, e.g. AI simulation copies).
-            state.replaceSeedColors(permanent.getTransientColors());
-        } else {
-            permanent.getTransientColors().forEach(state::addColor);
         }
 
         // The object's own printed protection is an ability: a layer-6 "loses all abilities"

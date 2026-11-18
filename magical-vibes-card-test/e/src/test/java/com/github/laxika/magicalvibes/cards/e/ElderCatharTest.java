@@ -76,7 +76,7 @@ class ElderCatharTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handlePermanentChosen(player1, target.getId());
 
-            target.setTransientCreatureTypeOverride(CardSubtype.ZOMBIE);
+            grantSubtypeUntilEndOfTurn(target, CardSubtype.ZOMBIE, true);
             harness.passBothPriorities();
 
             assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

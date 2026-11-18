@@ -91,7 +91,7 @@ class TangledSkylineTest extends BaseCardTest {
     void skylineHasReachWhenItBecomesAPhyrexianCreature() {
         Permanent skyline = harness.addToBattlefieldAndReturn(player1, new TangledSkyline());
         animateUntilEndOfTurn(skyline, 4, 4);
-        skyline.getTransientSubtypes().add(CardSubtype.PHYREXIAN);
+        grantSubtypeUntilEndOfTurn(skyline, CardSubtype.PHYREXIAN, false);
 
         assertThat(gqs.isCreature(gd, skyline)).isTrue();
         assertThat(gqs.hasKeyword(gd, skyline, Keyword.REACH)).isTrue();

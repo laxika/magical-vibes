@@ -260,7 +260,9 @@ public class GameViewProjectionFactory {
                             faceUpExiledWith.add(exiledWith.card());
                         }
                     }
-                    PermanentView view = permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.cardTypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.losesAllNonManaAbilities(), bonus.grantedSupertypes(), explained.lines(), faceUpExiledWith, faceDownExiledCount, bonus.name());
+                    Set<CardSubtype> removedSubtypes = new HashSet<>(p.getCard().getSubtypes());
+                    removedSubtypes.removeAll(gameQueryService.getEffectiveSubtypes(data, p));
+                    PermanentView view = permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.cardTypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.losesAllNonManaAbilities(), bonus.grantedSupertypes(), explained.lines(), faceUpExiledWith, faceDownExiledCount, bonus.name(), removedSubtypes);
                     List<GrantedEffectAttribution> attributions =
                             new ArrayList<>(explained.grantedEffectAttributions());
                     attributions.addAll(gameQueryService.attachedRestrictionAttributions(data, p));

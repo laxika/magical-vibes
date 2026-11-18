@@ -6,9 +6,8 @@ import java.util.Set;
 
 /**
  * One-shot self effect: the source permanent loses the given subtypes until end of turn
- * (e.g. Haunted Plate Mail "…that's no longer an Equipment"). Writes into
- * {@code Permanent.transientRemovedSubtypes}, which every subtype query and the layered pass
- * honour; cleared by {@code resetModifiers()}.
+ * (e.g. Haunted Plate Mail "…that's no longer an Equipment"). Registered as a floating layer-4 effect
+ * on the source (the record itself is the payload), applied at its own timestamp.
  */
 public record LoseSubtypesUntilEndOfTurnEffect(Set<CardSubtype> subtypes) implements CardEffect {
 

@@ -110,6 +110,8 @@ import com.github.laxika.magicalvibes.model.effect.RequireFlagbearerTargetEffect
 import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeControlledByOtherPlayersEffect;
@@ -1484,9 +1486,6 @@ public class GameQueryService {
             addLandTypes(result, permanent.getGrantedSubtypes());
         }
         addLandTypes(result, bonus.grantedSubtypes());
-        addLandTypes(result, permanent.getTransientSubtypes());
-        addLandTypes(result, permanent.getUntilNextTurnSubtypes());
-        result.removeAll(permanent.getTransientRemovedSubtypes());
         return result;
     }
 
@@ -3466,8 +3465,6 @@ public class GameQueryService {
         if (hasEffectiveCardType(permanent, bonus, CardType.CREATURE)) return true;
         if (bonus.cardTypeOverriding()) return false;
         if (gameData.animatedByFloatingEffect(permanent.getId())) return true;
-        if (permanent.isAnimatedUntilNextTurn()) return true;
-        if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
         if (hasEffectiveCardType(permanent, bonus, CardType.ARTIFACT)
                 && hasAnimateArtifactEffect(gameData)) return true;
@@ -3542,7 +3539,6 @@ public class GameQueryService {
         // Phyrexian Scriptures' chapter I making a creature an artifact. Mirror the non-layered
         // isArtifact/isEnchantment so the layered checks see those grants too.
         return hasCardType(permanent, type)
-                || permanent.getGrantedCardTypes().contains(type)
                 || permanent.getPersistentGrantedCardTypes().contains(type)
                 || bonus.grantedCardTypes().contains(type);
     }
@@ -3558,7 +3554,6 @@ public class GameQueryService {
             cardTypes.addAll(permanent.getCard().getAdditionalTypes());
         }
         cardTypes.addAll(permanent.getPersistentGrantedCardTypes());
-        cardTypes.addAll(permanent.getGrantedCardTypes());
         return cardTypes;
     }
 
@@ -3594,8 +3589,6 @@ public class GameQueryService {
                 ? state.hasCardType(CardType.CREATURE)
                 : hasCardType(permanent, CardType.CREATURE);
         return typeCreature
-                || permanent.isAnimatedUntilNextTurn()
-                || permanent.isPermanentlyAnimated()
                 || permanent.getCounterCount(CounterType.AWAKENING) > 0;
     }
 
@@ -4038,7 +4031,6 @@ public class GameQueryService {
      */
     public boolean isArtifact(Permanent permanent) {
         return hasCardType(permanent, CardType.ARTIFACT)
-                || permanent.getGrantedCardTypes().contains(CardType.ARTIFACT)
                 || permanent.getPersistentGrantedCardTypes().contains(CardType.ARTIFACT);
     }
 
@@ -4056,7 +4048,6 @@ public class GameQueryService {
      */
     public boolean isEnchantment(Permanent permanent) {
         return hasCardType(permanent, CardType.ENCHANTMENT)
-                || permanent.getGrantedCardTypes().contains(CardType.ENCHANTMENT)
                 || permanent.getPersistentGrantedCardTypes().contains(CardType.ENCHANTMENT);
     }
 
@@ -6334,9 +6325,7 @@ public class GameQueryService {
         if (!bonus.subtypeOverriding()) {
             subtypes.addAll(permanent.getCard().getSubtypes());
         }
-        subtypes.addAll(permanent.getTransientSubtypes());
         subtypes.addAll(permanent.getGrantedSubtypes());
-        subtypes.addAll(permanent.getUntilNextTurnSubtypes());
         subtypes.addAll(bonus.grantedSubtypes());
         return subtypes.contains(CardSubtype.VEHICLE);
     }
@@ -7563,16 +7552,24 @@ public class GameQueryService {
             accumulator.setBasePTOverride(basePower, baseToughness);
         }
 
-        // "Becomes the basic land type" override (Tideshaper Mystic until end of turn, Orcish Farmer
-        // until controller's next untap step): replaces the land's subtypes and mana ability (rule 305.7).
-        if (target.getEffectiveLandTypeOverride() != null) {
-            accumulator.addGrantedSubtype(target.getEffectiveLandTypeOverride());
-            accumulator.setSubtypeOverriding(true);
-            accumulator.setLandSubtypeOverriding(true);
+        // A permanent off the battlefield (a departed snapshot) has no layered state: its one-shot
+        // type grants are still floating effects on its id and count as its last-known types (CR 608.2h).
+        if (state == null) {
+            for (var floating : gameData.floatingEffectsOnPermanent(target.getId(),
+                    GrantCardTypeEffect.class, GrantSubtypeEffect.class)) {
+                if (floating.effect() instanceof GrantCardTypeEffect grant) {
+                    accumulator.getGrantedCardTypes().add(grant.cardType());
+                } else if (floating.effect() instanceof GrantSubtypeEffect grant && !grant.overriding()) {
+                    accumulator.addGrantedSubtype(grant.subtype());
+                }
+            }
         }
 
         if (state != null && (state.isCardTypesOverridden()
-                || !state.getCardTypes().equals(baseCardTypes(target)))) {
+                || !state.getCardTypes().equals(baseCardTypes(target))
+                || gameData.floatingEffectsOnPermanent(target.getId(), GrantCardTypeEffect.class).stream()
+                        .anyMatch(fe -> !state.getCardTypes()
+                                .contains(((GrantCardTypeEffect) fe.effect()).cardType())))) {
             accumulator.getGrantedCardTypes().clear();
             accumulator.getGrantedCardTypes().addAll(state.getCardTypes());
             accumulator.setCardTypeOverriding(true);
@@ -7584,7 +7581,7 @@ public class GameQueryService {
 
         boolean layeredTouched = state != null
                 && (board.l56Touched().contains(target.getId()) || basePt7b != null || ptSwitched);
-        boolean isSelfAnimated = gameData.animatedByFloatingEffect(target.getId()) || target.isAnimatedUntilNextTurn() || target.getCounterCount(CounterType.AWAKENING) > 0 || accumulator.isSelfBecomeCreature();
+        boolean isSelfAnimated = gameData.animatedByFloatingEffect(target.getId()) || target.getCounterCount(CounterType.AWAKENING) > 0 || accumulator.isSelfBecomeCreature();
         if (!isNaturalCreature
                 && !accumulator.isAnimatedCreature()
                 && !isSelfAnimated
@@ -7698,9 +7695,6 @@ public class GameQueryService {
                 mergedKeywords.addAll(target.getPersistentGrantedKeywords());
                 mergedKeywords.addAll(target.getUntilNextTurnKeywords());
                 mergedKeywords.removeAll(target.getRemovedKeywords());
-                if (target.isLosesAllCreatureTypesUntilEndOfTurn()) {
-                    mergedKeywords.remove(Keyword.CHANGELING);
-                }
             }
             mergedKeywords.removeAll(accumulator.getRemovedKeywords());
             keywords = mergedKeywords;
@@ -8422,9 +8416,6 @@ public class GameQueryService {
             for (CardSubtype subtype : getEffectiveSubtypes(gameData, source)) {
                 if (protectedSubtypes.contains(subtype)) return true;
             }
-        }
-        for (CardSubtype subtype : source.getTransientSubtypes()) {
-            if (protectedSubtypes.contains(subtype)) return true;
         }
         for (CardSubtype subtype : source.getGrantedSubtypes()) {
             if (protectedSubtypes.contains(subtype)) return true;
@@ -11531,29 +11522,14 @@ public class GameQueryService {
 
     /**
      * Checks whether a permanent has a given subtype without triggering {@code computeStaticBonus}
-     * (which would cause infinite recursion). Checks base subtypes, transient subtypes,
-     * granted subtypes, and the intrinsic Changeling keyword.
+     * (which would cause infinite recursion). Checks base subtypes, persistent granted subtypes
+     * and the intrinsic Changeling keyword; continuous effects are the layered pass's business.
      */
     public static boolean permanentHasSubtype(Permanent permanent, CardSubtype subtype) {
         if (permanent.getLastKnownSubtypes() != null) {
             return permanent.getLastKnownSubtypes().contains(subtype);
         }
-        if (!NON_CREATURE_SUBTYPES.contains(subtype) && !permanent.getTransientCreatureTypeOverrides().isEmpty()) {
-            return permanent.getTransientCreatureTypeOverrides().contains(subtype);
-        }
-        if (!NON_CREATURE_SUBTYPES.contains(subtype) && permanent.getTransientCreatureTypeOverride() != null) {
-            return permanent.getTransientCreatureTypeOverride() == subtype;
-        }
-        // "Loses all creature types" (e.g. Amoeboid Changeling): every creature subtype is treated as absent.
-        // Removing creature types does not remove the changeling ability.
-        if (permanent.isLosesAllCreatureTypesUntilEndOfTurn() && !NON_CREATURE_SUBTYPES.contains(subtype)) {
-            return false;
-        }
-        if (permanent.getTransientRemovedSubtypes().contains(subtype)) {
-            return false;
-        }
         return permanent.getCard().getSubtypes().contains(subtype)
-                || permanent.getTransientSubtypes().contains(subtype)
                 || permanent.getGrantedSubtypes().contains(subtype)
                 || permanent.hasKeyword(Keyword.CHANGELING);
     }

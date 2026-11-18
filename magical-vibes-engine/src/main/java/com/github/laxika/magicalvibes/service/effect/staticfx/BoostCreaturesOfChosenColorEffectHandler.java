@@ -31,12 +31,9 @@ public class BoostCreaturesOfChosenColorEffectHandler implements StaticEffectHan
         CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
         if (layered != null) {
             colorMatch = layered.getColors().contains(chosenColor);
-        } else if (target.isColorOverridden()) {
-            colorMatch = target.getTransientColors().contains(chosenColor);
         } else {
             CardColor effectiveColor = target.getEffectiveColor();
-            colorMatch = (effectiveColor != null && effectiveColor == chosenColor)
-                    || target.getTransientColors().contains(chosenColor);
+            colorMatch = effectiveColor != null && effectiveColor == chosenColor;
         }
         if (colorMatch) {
             accumulator.addPower(boost.powerBoost());

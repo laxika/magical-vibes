@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Skinshifter;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -49,7 +50,7 @@ class BebopWarthogWarriorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(skinshifter.getTransientCreatureTypeOverride()).isNull();
+        assertThat(gd.floatingEffectsOnPermanent(skinshifter.getId(), GrantSubtypeEffect.class)).isEmpty();
         assertThat(gqs.hasKeyword(gd, skinshifter, Keyword.MENACE)).isFalse();
     }
 

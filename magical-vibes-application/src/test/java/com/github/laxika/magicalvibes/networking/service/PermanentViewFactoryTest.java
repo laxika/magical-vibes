@@ -215,19 +215,17 @@ class PermanentViewFactoryTest {
     // ── Subtypes ──────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("Transient, granted and until-next-turn subtypes merge onto the printed ones without duplicates")
+    @DisplayName("Granted subtypes merge onto the printed ones without duplicates")
     void grantedSubtypesAreMergedAndDeduplicated() {
         Card printed = card("Adventurer", CardType.CREATURE);
         printed.setSubtypes(List.of(CardSubtype.HUMAN));
         Permanent creature = new Permanent(printed);
-        creature.getTransientSubtypes().add(CardSubtype.BARD);
         creature.getGrantedSubtypes().add(CardSubtype.HUMAN);
-        creature.getUntilNextTurnSubtypes().add(CardSubtype.WIZARD);
 
         PermanentView view = create(creature);
 
         assertThat(view.card().subtypes())
-                .containsExactly(CardSubtype.HUMAN, CardSubtype.BARD, CardSubtype.WIZARD);
+                .containsExactly(CardSubtype.HUMAN);
     }
 
     @Test
@@ -301,30 +299,6 @@ class PermanentViewFactoryTest {
     // ── Card types and supertypes ─────────────────────────────────────────────
 
     @Test
-    @DisplayName("Card types granted to the permanent are added alongside its printed type")
-    void grantedCardTypesAreAdditional() {
-        Permanent land = new Permanent(card("Dryad Arbor", CardType.LAND));
-        land.getGrantedCardTypes().add(CardType.CREATURE);
-
-        PermanentView view = create(land);
-
-        assertThat(view.card().type()).isEqualTo(CardType.LAND);
-        assertThat(view.card().additionalTypes()).contains(CardType.CREATURE);
-    }
-
-    @Test
-    @DisplayName("A permanently animated permanent becomes an additional creature type and reads as animated")
-    void permanentAnimationAddsCreatureType() {
-        Permanent land = new Permanent(card("Inkmoth Nexus", CardType.LAND));
-        land.setPermanentlyAnimated(true);
-
-        PermanentView view = create(land);
-
-        assertThat(view.card().additionalTypes()).contains(CardType.CREATURE);
-        assertThat(view.animatedCreature()).isTrue();
-    }
-
-    @Test
     @DisplayName("A card-type override replaces the printed type, demoting the rest to additional types")
     void cardTypeOverrideReplacesPrintedType() {
         Permanent land = new Permanent(card("Mishra's Factory", CardType.LAND));
@@ -378,22 +352,6 @@ class PermanentViewFactoryTest {
 
         assertThat(view.card().color()).isEqualTo(CardColor.RED);
         assertThat(view.card().colors()).containsExactlyInAnyOrder(CardColor.RED, CardColor.BLACK);
-    }
-
-    @Test
-    @DisplayName("A transient color override replaces the printed colors outright")
-    void transientColorOverrideReplacesColors() {
-        Card printed = card("Bloodbraid Elf", CardType.CREATURE);
-        printed.setColor(CardColor.RED);
-        printed.setColors(List.of(CardColor.RED));
-        Permanent creature = new Permanent(printed);
-        creature.setColorOverridden(true);
-        creature.getTransientColors().add(CardColor.BLUE);
-
-        PermanentView view = create(creature);
-
-        assertThat(view.card().color()).isEqualTo(CardColor.BLUE);
-        assertThat(view.card().colors()).containsExactly(CardColor.BLUE);
     }
 
     @Test

@@ -35,8 +35,9 @@ class ArgothianUprootingTest extends BaseCardTest {
             assertThat(gqs.isCreature(gd, land)).isTrue();
             assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
             assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(2);
-            assertThat(land.getGrantedSubtypes()).contains(CardSubtype.ELEMENTAL);
-            assertThat(land.getGrantedKeywords()).contains(Keyword.REACH, Keyword.HASTE);
+            assertThat(gqs.getEffectiveSubtypes(gd, land)).contains(CardSubtype.ELEMENTAL);
+            assertThat(gqs.hasKeyword(gd, land, Keyword.REACH)).isTrue();
+            assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
             assertThat(land.getCard().hasType(CardType.LAND)).isTrue();
         }
     }

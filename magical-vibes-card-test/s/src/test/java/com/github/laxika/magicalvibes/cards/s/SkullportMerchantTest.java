@@ -139,7 +139,7 @@ class SkullportMerchantTest extends BaseCardTest {
     void canSacrificeItselfWhenAlsoATreasure() {
         harness.setHand(player1, List.of());
         Permanent merchant = harness.addToBattlefieldAndReturn(player1, new SkullportMerchant());
-        merchant.getGrantedCardTypes().add(CardType.ARTIFACT);
+        grantCardTypeUntilEndOfTurn(merchant, CardType.ARTIFACT);
         merchant.getGrantedSubtypes().add(CardSubtype.TREASURE);
         addAbilityMana();
 

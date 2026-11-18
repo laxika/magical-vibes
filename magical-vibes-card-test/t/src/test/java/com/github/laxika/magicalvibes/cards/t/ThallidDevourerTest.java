@@ -101,7 +101,7 @@ class ThallidDevourerTest extends BaseCardTest {
     @DisplayName("A Saproling source can be sacrificed when the cost does not say another")
     void canSacrificeSourceWhenItIsSaproling() {
         Permanent devourer = addDevourer();
-        devourer.getTransientSubtypes().add(CardSubtype.SAPROLING);
+        grantSubtypeUntilEndOfTurn(devourer, CardSubtype.SAPROLING, false);
 
         harness.activateAbility(player1, 0, 1, null, null);
 

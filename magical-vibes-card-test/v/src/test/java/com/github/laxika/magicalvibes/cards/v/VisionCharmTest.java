@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -121,9 +122,9 @@ class VisionCharmTest extends BaseCardTest {
 
             castLandModeAndChoose("FOREST", "ISLAND");
 
-            assertThat(ownForest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
-            assertThat(opponentForest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
-            assertThat(island.getTransientLandTypeOverride()).isNull();
+            assertThat(gqs.effectiveBasicLandTypes(gd, ownForest)).containsExactly(CardSubtype.ISLAND);
+            assertThat(gqs.effectiveBasicLandTypes(gd, opponentForest)).containsExactly(CardSubtype.ISLAND);
+            assertThat(gd.floatingEffectsOnPermanent(island.getId(), GrantSubtypeEffect.class)).isEmpty();
         }
 
         @Test
@@ -150,11 +151,11 @@ class VisionCharmTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.BLUE, 1);
 
             castLandModeAndChoose("FOREST", "ISLAND");
-            assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
+            assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
 
             harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-            assertThat(forest.getTransientLandTypeOverride()).isNull();
+            assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
         }
 
         @Test

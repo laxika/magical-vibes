@@ -35,9 +35,9 @@ class CycloneSireTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(land.isPermanentlyAnimated()).isTrue();
-        assertThat(land.getGrantedSubtypes()).contains(CardSubtype.ELEMENTAL);
-        assertThat(land.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gd.animatedByFloatingEffect(land.getId())).isTrue();
+        assertThat(gqs.getEffectiveSubtypes(gd, land)).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
         assertThat(gqs.getEffectiveCardTypes(gd, land)).contains(CardType.LAND, CardType.CREATURE);
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(3);
@@ -55,7 +55,7 @@ class CycloneSireTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(land.isPermanentlyAnimated()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(land.getId())).isFalse();
         assertThat(gqs.isCreature(gd, land)).isFalse();
     }
 

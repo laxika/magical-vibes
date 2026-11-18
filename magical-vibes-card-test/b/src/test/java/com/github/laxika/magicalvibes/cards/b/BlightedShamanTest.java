@@ -103,7 +103,7 @@ class BlightedShamanTest extends BaseCardTest {
     @Test
     void sacrificeSwampCanSacrificeSourceWhenItIsASwamp() {
         Permanent shaman = addCreatureReady(player1, new BlightedShaman());
-        shaman.getGrantedCardTypes().add(CardType.LAND);
+        grantCardTypeUntilEndOfTurn(shaman, CardType.LAND);
         shaman.getGrantedSubtypes().add(CardSubtype.SWAMP);
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 

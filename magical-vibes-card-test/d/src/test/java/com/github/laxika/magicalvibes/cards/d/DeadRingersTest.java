@@ -92,8 +92,7 @@ class DeadRingersTest extends BaseCardTest {
         castDeadRingersOnStack(List.of(departed.getId(), remaining.getId()));
 
         harness.inMutationScope(() -> {
-            departed.setColorOverridden(true);
-            departed.getTransientColors().add(CardColor.BLUE);
+            harness.setColors(departed, CardColor.BLUE);
         });
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, departed));
@@ -183,8 +182,7 @@ class DeadRingersTest extends BaseCardTest {
         castDeadRingersOnStack(List.of(first.getId(), second.getId()));
 
         harness.inMutationScope(() -> {
-            first.setColorOverridden(true);
-            first.getTransientColors().add(CardColor.RED);
+            harness.setColors(first, CardColor.RED);
         });
         harness.passBothPriorities();
 
@@ -199,8 +197,7 @@ class DeadRingersTest extends BaseCardTest {
         castDeadRingersOnStack(List.of(first.getId(), second.getId()));
 
         harness.inMutationScope(() -> {
-            first.setColorOverridden(true);
-            first.getTransientColors().addAll(List.of(CardColor.BLUE, CardColor.GREEN));
+            harness.setColors(first, CardColor.BLUE, CardColor.GREEN);
         });
         harness.passBothPriorities();
 

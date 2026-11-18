@@ -167,8 +167,6 @@ public class StaticEffectSupport {
         if (activeState != null && activeState.hasCardType(CardType.CREATURE)) return true;
         if (activeState == null && permanent.getCard().hasType(CardType.CREATURE)) return true;
         if (gameData != null && gameData.animatedByFloatingEffect(permanent.getId())) return true;
-        if (permanent.isAnimatedUntilNextTurn()) return true;
-        if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
         boolean artifact = activeState != null
                 ? activeState.hasCardType(CardType.ARTIFACT)
@@ -197,12 +195,7 @@ public class StaticEffectSupport {
             return layered.getColors().size();
         }
         Set<CardColor> colors = new HashSet<>();
-        if (permanent.isColorOverridden()) {
-            colors.addAll(permanent.getTransientColors());
-        } else {
-            colors.addAll(permanent.getEffectiveColors());
-            colors.addAll(permanent.getTransientColors());
-        }
+        colors.addAll(permanent.getEffectiveColors());
         return colors.size();
     }
 

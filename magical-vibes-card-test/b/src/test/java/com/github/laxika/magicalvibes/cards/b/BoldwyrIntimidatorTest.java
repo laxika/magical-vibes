@@ -27,7 +27,7 @@ class BoldwyrIntimidatorTest extends BaseCardTest {
         Permanent boldwyr = addCreatureReady(player1, new BoldwyrIntimidator());
         boldwyr.setAttacking(true); // Boldwyr is a Warrior
         Permanent blocker = addCreatureReady(player2, new MosquitoGuard());
-        blocker.setTransientCreatureTypeOverride(CardSubtype.COWARD);
+        grantSubtypeUntilEndOfTurn(blocker, CardSubtype.COWARD, true);
 
         prepareDeclareBlockers();
 
@@ -56,7 +56,7 @@ class BoldwyrIntimidatorTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new MosquitoGuard());
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new MosquitoGuard());
-        blocker.setTransientCreatureTypeOverride(CardSubtype.COWARD);
+        grantSubtypeUntilEndOfTurn(blocker, CardSubtype.COWARD, true);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
@@ -112,7 +112,7 @@ class BoldwyrIntimidatorTest extends BaseCardTest {
         harness.passBothPriorities();
         target.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new MosquitoGuard());
-        blocker.setTransientCreatureTypeOverride(CardSubtype.COWARD);
+        grantSubtypeUntilEndOfTurn(blocker, CardSubtype.COWARD, true);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
@@ -132,7 +132,7 @@ class BoldwyrIntimidatorTest extends BaseCardTest {
         harness.passBothPriorities();
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new MosquitoGuard());
-        blocker.setTransientCreatureTypeOverride(CardSubtype.COWARD);
+        grantSubtypeUntilEndOfTurn(blocker, CardSubtype.COWARD, true);
 
         prepareDeclareBlockers();
 

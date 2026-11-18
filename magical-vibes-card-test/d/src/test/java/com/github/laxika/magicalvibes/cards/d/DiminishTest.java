@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
@@ -208,9 +214,11 @@ class DiminishTest extends BaseCardTest {
         // Simulate a permanently animated artifact (e.g. Tezzeret's -1 making it a 5/5)
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent perm = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        perm.setPermanentlyAnimated(true);
-        perm.setPermanentAnimatedPower(5);
-        perm.setPermanentAnimatedToughness(5);
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Tezzeret", null, player1.getId(),
+                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.TARGET), perm.getId(), null, null,
+                Duration.PERMANENT, 0));
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Tezzeret", null, player1.getId(),
+                new SetBasePowerToughnessEffect(5, 5), perm.getId(), null, null, Duration.PERMANENT, 0));
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(5);

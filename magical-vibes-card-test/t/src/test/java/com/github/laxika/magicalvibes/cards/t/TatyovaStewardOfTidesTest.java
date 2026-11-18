@@ -42,7 +42,7 @@ class TatyovaStewardOfTidesTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, target)).isTrue();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
-        assertThat(target.getGrantedSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, target)).contains(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }

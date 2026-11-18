@@ -133,7 +133,7 @@ class RamsesAssassinLordTest extends BaseCardTest {
         Permanent ramses = addCreatureReady(player1, new RamsesAssassinLord());
         Permanent assassin = addCreatureReady(player1, new MassacreGirl());
         declareAttackersAndPrepareBlockers(List.of(1));
-        assassin.setTransientCreatureTypeOverride(CardSubtype.BEAR);
+        grantSubtypeUntilEndOfTurn(assassin, CardSubtype.BEAR, true);
 
         resolveLossTrigger(ramses);
 
@@ -145,7 +145,7 @@ class RamsesAssassinLordTest extends BaseCardTest {
         Permanent ramses = addCreatureReady(player1, new RamsesAssassinLord());
         Permanent bird = addCreatureReady(player1, new BirdsOfParadise());
         declareAttackersAndPrepareBlockers(List.of(1));
-        bird.setTransientCreatureTypeOverride(CardSubtype.ASSASSIN);
+        grantSubtypeUntilEndOfTurn(bird, CardSubtype.ASSASSIN, true);
 
         resolveLossTrigger(ramses);
 

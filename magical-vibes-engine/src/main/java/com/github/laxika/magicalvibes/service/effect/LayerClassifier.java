@@ -129,6 +129,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToPermanentsWit
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseSubtypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
@@ -396,6 +397,7 @@ public final class LayerClassifier {
         // Source-bound land type changes apply in the type layer.
         map.put(LoseAllCreatureTypesEffect.class, fixed(Layer.L4_TYPE));
         map.put(LoseAllLandTypesEffect.class, fixed(Layer.L4_TYPE));
+        map.put(LoseSubtypesUntilEndOfTurnEffect.class, fixed(Layer.L4_TYPE));
         map.put(SetCreatureTypesToImprintedCreatureEffect.class, fixed(Layer.L4_TYPE));
         // Animate-and-set-P/T: the type change applies in layer 4, the MV-based base P/T in
         // sublayer 7b, both with ONE timestamp (CR 613.4, March of the Machines). Titania's Song

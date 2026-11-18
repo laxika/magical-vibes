@@ -285,17 +285,10 @@ this step's "migrate away from the fields" plan): `SetBasePowerToughnessEffectHa
 direct/LKI readers AND create the floating 7b instance that drives precedence (per-permanent
 instances for the mass setter — locks the affected set per CR 611.2c).
 
-**Animation-flag 7b migration status (step 6):** migrated (flag still written; a floating
-`SetBasePowerToughnessEffect` at the animation's timestamp drives 7b ordering — all writers
-funnel through `AnimationSupport.addAnimationBasePtFloatingEffect`). An until-end-of-turn or
-until-end-of-combat animation (manlands, Crew, Chimeric Staff/Mass, Natural Affinity, The Antiquities War III,
-Jade Statue) writes no flag: each characteristic it changes is its own floating effect
-(`AnimationSupport.addAnimationFloatingEffects`), so readers outside the pass ask
-`GameData.animatedByFloatingEffect`. Still flags:
-`animatedUntilNextTurn` (`animateOwnLands` — Sylvan Awakening → `UNTIL_YOUR_NEXT_TURN`), and
-`permanentlyAnimated` (`animatePermanentTarget` — Tezzeret, Waker of the Wilds → `PERMANENT`;
-`animateWhileSource` — Awakener Druid → `WHILE_SOURCE_ON_BATTLEFIELD` with the source id, so
-the floating entry and the flag revert together when the source leaves). **Deferred** (flag
+**Animations:** no animation writes a flag. Whatever its duration (until end of turn or combat, until your next
+turn, `PERMANENT`, `WHILE_SOURCE_ON_BATTLEFIELD`), each characteristic an animation changes is its own floating effect
+at the animation's timestamp (`AnimationSupport.addAnimationFloatingEffects`): card types, creature types, colours,
+keywords, base P/T in 7b. Readers outside the pass ask `GameData.animatedByFloatingEffect`. **Deferred** (flag
 only, applies ONLY when no 7b entry exists — any real setter beats it regardless of relative
 order; cleanup debt): the AWAKENING-counter 8/8 (counters carry no timestamp; writers in
 `MultiPermanentChoiceHandlerService`). **Cleanup debt — direct `Permanent.getEffectivePower()/
@@ -436,7 +429,7 @@ Each source is classified into one or more layers:
 3. **Floating effects** created by resolved spells/abilities (`FloatingContinuousEffect`,
    stored on `GameData` — introduced in step 2). These replace today's scattered
    `Permanent` fields (`powerModifier`, `grantedKeywords`, `basePowerToughnessOverriddenUntilEndOfTurn`,
-   `losesAllAbilitiesUntilEndOfTurn`, `transientColors`, ...) and expire by duration instead
+   `losesAllAbilitiesUntilEndOfTurn`, ...) and expire by duration instead
    of by `resetModifiers()` bucket. (`powerToughnessSwitched` was the first field fully
    deleted this way — step 7; the four steal tracking sets — `untilEndOfTurnStolenCreatures`,
    `sourceDependentStolenCreatures`, `enchantmentDependentStolenCreatures`,
@@ -805,10 +798,14 @@ authoritative per-step record; this section is the reconciled summary.
 
 ### Known limitations
 
-- **Dual-write fields remain** (step-12 inventory has the per-family reader/writer lists):
+- **Dual-write fields remain** for P/T modifiers, keywords, protection, abilities and shields:
   one-shot handlers write legacy `Permanent` fields AND the floating effect; the fields feed
-  LKI, mid-pass predicate leaves, null-`GameData` fallbacks, and views. `transientSubtypes`/
-  `transientLandTypeOverride` are still field-only (one-shot type state is not floating).
+  LKI, mid-pass predicate leaves, null-`GameData` fallbacks, and views. One-shot colours, card
+  types, subtypes (land and creature type setters, lost subtypes) and animations are floating
+  effects only, applied in timestamp order (CR 613.7) with no legacy precedence; `Permanent`'s
+  `getEffectiveColor(s)` and the `GameData`-less type checks are intrinsic only. A departed
+  snapshot carries the layered colours and types copied at departure, and `computeStaticBonus`
+  folds the floating card-type and subtype grants still on its id (CR 608.2h).
 - **Flag-only 7b stragglers**: the AWAKENING-counter 8/8 (counters carry no timestamp) — any
   real 7b entry beats it regardless of relative order.
 - **LKI misses layered state**: a dying creature's last-known power

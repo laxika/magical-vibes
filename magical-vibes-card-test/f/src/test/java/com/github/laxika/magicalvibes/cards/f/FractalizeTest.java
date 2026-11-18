@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -35,7 +36,7 @@ class FractalizeTest extends BaseCardTest {
         assertThat(elemental.getEffectiveToughness()).isEqualTo(4);
         assertThat(gqs.hasColor(gd, elemental, CardColor.GREEN)).isTrue();
         assertThat(gqs.hasColor(gd, elemental, CardColor.BLUE)).isTrue();
-        assertThat(elemental.getTransientCreatureTypeOverride()).isEqualTo(CardSubtype.FRACTAL);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, elemental)).containsExactly(CardSubtype.FRACTAL);
         assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isTrue();
     }
 
@@ -65,7 +66,7 @@ class FractalizeTest extends BaseCardTest {
         assertThat(elemental.getEffectiveToughness()).isEqualTo(4);
         assertThat(gqs.hasColor(gd, elemental, CardColor.BLUE)).isTrue();
         assertThat(gqs.hasColor(gd, elemental, CardColor.GREEN)).isFalse();
-        assertThat(elemental.getTransientCreatureTypeOverride()).isNull();
+        assertThat(gd.floatingEffectsOnPermanent(elemental.getId(), GrantSubtypeEffect.class)).isEmpty();
     }
 
     @Test

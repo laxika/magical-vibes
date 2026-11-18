@@ -35,7 +35,7 @@ class EmergentHauntingTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, haunting)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, haunting, Keyword.FLYING)).isTrue();
         assertThat(haunting.getCard().hasType(CardType.ENCHANTMENT)).isTrue();
-        assertThat(haunting.getGrantedSubtypes()).contains(CardSubtype.SPIRIT);
+        assertThat(gqs.getEffectiveSubtypes(gd, haunting)).contains(CardSubtype.SPIRIT);
 
         haunting.resetModifiers();
 

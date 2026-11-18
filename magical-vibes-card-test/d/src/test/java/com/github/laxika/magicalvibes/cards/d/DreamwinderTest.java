@@ -34,7 +34,6 @@ class DreamwinderTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .containsExactly(island.getCard());
         assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
-        assertThat(forest.getTransientSubtypes()).isEmpty();
     }
 
     @Test

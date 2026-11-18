@@ -44,7 +44,7 @@ class AwakeningOfVituGhaziTest extends BaseCardTest {
         assertThat(gqs.hasEffectiveSupertype(gd, land, CardSupertype.LEGENDARY)).isTrue();
         assertThat(gqs.getEffectiveName(gd, land)).isEqualTo("Vitu-Ghazi");
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
-        assertThat(land.getGrantedSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, land)).contains(CardSubtype.ELEMENTAL);
     }
 
     @Test

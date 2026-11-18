@@ -65,9 +65,10 @@ class WakerOfTheWildsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, land.getId());
         harness.passBothPriorities();
 
-        assertThat(land.isPermanentlyAnimated()).isTrue();
-        assertThat(land.getPermanentAnimatedPower()).isEqualTo(0);
-        assertThat(land.getPermanentAnimatedToughness()).isEqualTo(0);
+        assertThat(gd.animatedByFloatingEffect(land.getId())).isTrue();
+        // The animation sets a 0/0 base; the two +1/+1 counters from X=2 make it 2/2.
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(2);
     }
 
     @Test
@@ -96,7 +97,7 @@ class WakerOfTheWildsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, land.getId());
         harness.passBothPriorities();
 
-        assertThat(land.getGrantedSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, land)).contains(CardSubtype.ELEMENTAL);
     }
 
     @Test
@@ -155,7 +156,7 @@ class WakerOfTheWildsTest extends BaseCardTest {
         land.resetModifiers();
 
         // Permanent animation and counters should persist
-        assertThat(land.isPermanentlyAnimated()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(land.getId())).isTrue();
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         GameData gd = harness.getGameData();
         assertThat(gqs.isCreature(gd, land)).isTrue();
@@ -176,7 +177,7 @@ class WakerOfTheWildsTest extends BaseCardTest {
         // Land is animated as 0/0 with no counters — will die to SBA
         harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertInGraveyard(player1, "Forest");
-        assertThat(land.isPermanentlyAnimated()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(land.getId())).isTrue();
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
@@ -285,7 +286,7 @@ class WakerOfTheWildsTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(harness.getGameData(), land)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(harness.getGameData(), land)).isEqualTo(2);
         assertThat(gqs.hasKeyword(harness.getGameData(), land, Keyword.HASTE)).isTrue();
-        assertThat(land.getGrantedSubtypes()).contains(CardSubtype.ELEMENTAL);
+        assertThat(gqs.getEffectiveSubtypes(gd, land)).contains(CardSubtype.ELEMENTAL);
         harness.assertOnBattlefield(player1, "Forest");
     }
 

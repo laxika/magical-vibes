@@ -39,8 +39,8 @@ class LiquimetalTorqueTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedCardTypes()).contains(CardType.ARTIFACT);
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.getEffectiveCardTypes(gd, target)).contains(CardType.ARTIFACT);
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.isCreature(gd, target)).isTrue();
     }
 
@@ -52,14 +52,14 @@ class LiquimetalTorqueTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedCardTypes()).doesNotContain(CardType.ARTIFACT);
-        assertThat(gqs.isArtifact(target)).isFalse();
+        assertThat(gqs.getEffectiveCardTypes(gd, target)).doesNotContain(CardType.ARTIFACT);
+        assertThat(gqs.isArtifact(gd, target)).isFalse();
     }
 
     @Test
@@ -101,13 +101,13 @@ class LiquimetalTorqueTest extends BaseCardTest {
         assertThat(torque.isTapped()).isTrue();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(gqs.isArtifact(torque)).isTrue();
+        assertThat(gqs.isArtifact(gd, torque)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.isArtifact(torque)).isTrue();
+        assertThat(gqs.isArtifact(gd, torque)).isTrue();
     }
 
     @Test
@@ -120,7 +120,7 @@ class LiquimetalTorqueTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gqs.isArtifact(target)).isFalse();
+        assertThat(gqs.isArtifact(gd, target)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 }

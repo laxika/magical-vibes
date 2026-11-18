@@ -43,10 +43,7 @@ public class BecomeColorlessUntilEndOfTurnEffectHandler implements NormalEffectH
         }
 
         // CR 613 layer engine: "becomes colorless until end of turn" is a floating layer-5
-        // color-setting effect with an empty color set and its own timestamp. The legacy transient
-        // fields are seeded for direct getEffectiveColor callers.
-        self.getTransientColors().clear();
-        self.setColorOverridden(true);
+        // color-setting effect with an empty color set and its own timestamp.
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), null, entry.getControllerId(),
                 new BecomeColorlessUntilEndOfTurnEffect(false),

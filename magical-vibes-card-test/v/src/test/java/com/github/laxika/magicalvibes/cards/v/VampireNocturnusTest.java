@@ -314,7 +314,7 @@ class VampireNocturnusTest extends BaseCardTest {
         Permanent aristocrat = findPermanent(player1, "Vampire Aristocrat");
         assertThat(gqs.getEffectivePower(gd, aristocrat)).isEqualTo(4);
 
-        aristocrat.setLosesAllCreatureTypesUntilEndOfTurn(true);
+        loseAllCreatureTypesUntilEndOfTurn(aristocrat);
 
         assertThat(gqs.getEffectivePower(gd, aristocrat)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, aristocrat)).isEqualTo(2);

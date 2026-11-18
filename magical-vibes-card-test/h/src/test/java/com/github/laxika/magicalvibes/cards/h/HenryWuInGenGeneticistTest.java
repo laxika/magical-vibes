@@ -97,7 +97,7 @@ class HenryWuInGenGeneticistTest extends BaseCardTest {
     @Test
     void henryKeepsGrantedExploitWhenNoLongerHuman() {
         Permanent henry = harness.addToBattlefieldAndReturn(player1, new HenryWuInGenGeneticist());
-        henry.setTransientCreatureTypeOverride(CardSubtype.BEAR);
+        grantSubtypeUntilEndOfTurn(henry, CardSubtype.BEAR, true);
         assertThat(gqs.hasKeyword(gd, henry, Keyword.EXPLOIT)).isTrue();
     }
 
@@ -156,7 +156,7 @@ class HenryWuInGenGeneticistTest extends BaseCardTest {
     @Test
     void humanThatLostHumanTypeGivesReward() {
         Permanent fodder = harness.addToBattlefieldAndReturn(player1, new EliteVanguard());
-        fodder.setTransientCreatureTypeOverride(CardSubtype.BEAR);
+        grantSubtypeUntilEndOfTurn(fodder, CardSubtype.BEAR, true);
         Card drawn = new GrizzlyBears();
         harness.setLibrary(player1, List.of(drawn));
         castHenry();

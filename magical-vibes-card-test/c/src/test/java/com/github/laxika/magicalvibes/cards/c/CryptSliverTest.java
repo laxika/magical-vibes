@@ -123,7 +123,7 @@ class CryptSliverTest extends BaseCardTest {
         Permanent aura = new Permanent(new BoundInSilence());
         aura.setAttachedTo(cryptSliver.getId());
         // Model a kindred Aura whose creature type has been changed to Sliver.
-        aura.setTransientCreatureTypeOverride(CardSubtype.SLIVER);
+        grantSubtypeUntilEndOfTurn(aura, CardSubtype.SLIVER, true);
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
         activateRegeneration(player1, 1, cryptSliver);

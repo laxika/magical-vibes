@@ -29,7 +29,7 @@ class ThranForgeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.isCreature(gd, target)).isTrue();
     }
 
@@ -44,7 +44,7 @@ class ThranForgeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
     }
 
     @Test
@@ -63,7 +63,7 @@ class ThranForgeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
-        assertThat(gqs.isArtifact(target)).isFalse();
+        assertThat(gqs.isArtifact(gd, target)).isFalse();
     }
 
     @Test
@@ -78,12 +78,12 @@ class ThranForgeTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
 
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
     }
 
     @Test
@@ -111,7 +111,7 @@ class ThranForgeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(forge.isTapped()).isTrue();
     }
 
@@ -127,7 +127,7 @@ class ThranForgeTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
-        assertThat(gqs.isArtifact(target)).isFalse();
+        assertThat(gqs.isArtifact(gd, target)).isFalse();
     }
 
     @Test
@@ -158,7 +158,7 @@ class ThranForgeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
         assertThat(gqs.isCreature(gd, target)).isTrue();
     }
 }

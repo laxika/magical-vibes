@@ -138,14 +138,12 @@ class SerrasBoonTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new SerrasBoon());
         aura.setAttachedTo(creature.getId());
 
-        creature.setColorOverridden(true);
-        creature.getTransientColors().add(CardColor.RED);
+        var redSetter = harness.setColors(creature, CardColor.RED);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isZero();
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
 
-        creature.setColorOverridden(false);
-        creature.getTransientColors().clear();
+        gd.endFloatingEffect(redSetter);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);

@@ -85,20 +85,11 @@ public class TargetCreatureBecomesSubtypeUntilEndOfTurnEffectHandler implements 
     }
 
     /**
-     * Sets the legacy override fields (read by direct {@code Permanent} readers) and registers the
-     * same change as timestamped floating layer-4 effects (CR 613.1d, 613.7), so a type-adding
+     * Registers the change as timestamped floating layer-4 effects (CR 613.1d, 613.7), so a type-adding
      * effect that begins later (Xenograft) is not stripped by this one.
      */
     private void setCreatureTypeOverride(GameData gameData, StackEntry entry, Permanent permanent,
                                          List<CardSubtype> subtypes) {
-        if (subtypes.size() == 1) {
-            permanent.setTransientCreatureTypeOverride(subtypes.getFirst());
-            permanent.getTransientCreatureTypeOverrides().clear();
-        } else {
-            permanent.setTransientCreatureTypeOverride(null);
-            permanent.getTransientCreatureTypeOverrides().clear();
-            permanent.getTransientCreatureTypeOverrides().addAll(subtypes);
-        }
         for (int i = 0; i < subtypes.size(); i++) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),

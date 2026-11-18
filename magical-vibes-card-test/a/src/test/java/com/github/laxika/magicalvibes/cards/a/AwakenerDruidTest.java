@@ -79,12 +79,12 @@ class AwakenerDruidTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         Permanent forest = findPermanent(player1, "Forest");
 
-        assertThat(forest.isPermanentlyAnimated()).isTrue();
-        assertThat(forest.getPermanentAnimatedPower()).isEqualTo(4);
-        assertThat(forest.getPermanentAnimatedToughness()).isEqualTo(5);
-        assertThat(forest.getEffectivePower()).isEqualTo(4);
-        assertThat(forest.getEffectiveToughness()).isEqualTo(5);
-        assertThat(forest.getGrantedSubtypes()).contains(CardSubtype.TREEFOLK);
+        assertThat(gd.animatedByFloatingEffect(forest.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(5);
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.TREEFOLK);
         assertThat(forest.getGrantedColors()).contains(CardColor.GREEN);
 
         // It's still a land
@@ -119,8 +119,8 @@ class AwakenerDruidTest extends BaseCardTest {
         // Forest should revert
         Permanent forest = findPermanent(player1, "Forest");
 
-        assertThat(forest.isPermanentlyAnimated()).isFalse();
-        assertThat(forest.getGrantedSubtypes()).isEmpty();
+        assertThat(gd.animatedByFloatingEffect(forest.getId())).isFalse();
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).doesNotContain(CardSubtype.TREEFOLK);
         assertThat(forest.getGrantedColors()).isEmpty();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
         assertThat(gd.sourceLinkedAnimations).isEmpty();
@@ -148,7 +148,7 @@ class AwakenerDruidTest extends BaseCardTest {
         // Forest should revert
         Permanent forest = findPermanent(player1, "Forest");
 
-        assertThat(forest.isPermanentlyAnimated()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(forest.getId())).isFalse();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
         assertThat(gd.sourceLinkedAnimations).isEmpty();
     }
@@ -201,7 +201,7 @@ class AwakenerDruidTest extends BaseCardTest {
 
         Permanent forest = findPermanent(player1, "Forest");
 
-        assertThat(forest.isPermanentlyAnimated()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(forest.getId())).isFalse();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
         assertThat(gd.sourceLinkedAnimations).isEmpty();
     }
@@ -273,10 +273,10 @@ class AwakenerDruidTest extends BaseCardTest {
         Permanent forest1 = gqs.findPermanentById(gd, forest1Id);
         Permanent forest2 = gqs.findPermanentById(gd, forest2Id);
 
-        assertThat(forest1.isPermanentlyAnimated()).isFalse();
-        assertThat(forest2.isPermanentlyAnimated()).isTrue();
-        assertThat(forest2.getEffectivePower()).isEqualTo(4);
-        assertThat(forest2.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gd.animatedByFloatingEffect(forest1.getId())).isFalse();
+        assertThat(gd.animatedByFloatingEffect(forest2.getId())).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest2)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, forest2)).isEqualTo(5);
         assertThat(gd.sourceLinkedAnimations).hasSize(1);
     }
 
@@ -293,8 +293,8 @@ class AwakenerDruidTest extends BaseCardTest {
 
         Permanent forest = findPermanent(player2, "Forest");
         assertThat(gqs.isCreature(gd, forest)).isTrue();
-        assertThat(forest.getEffectivePower()).isEqualTo(4);
-        assertThat(forest.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(5);
         assertThat(gqs.getEffectiveColors(gd, forest)).containsExactly(CardColor.GREEN);
     }
 
@@ -315,8 +315,8 @@ class AwakenerDruidTest extends BaseCardTest {
 
         Permanent forest = findPermanent(player1, "Forest");
         assertThat(gqs.isCreature(gd, forest)).isTrue();
-        assertThat(forest.getEffectivePower()).isEqualTo(4);
-        assertThat(forest.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(5);
         assertThat(gqs.getEffectiveColors(gd, forest)).containsExactly(CardColor.GREEN);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()

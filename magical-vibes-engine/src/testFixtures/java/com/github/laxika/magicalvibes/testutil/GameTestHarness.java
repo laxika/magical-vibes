@@ -440,6 +440,22 @@ public class GameTestHarness {
     }
 
     /**
+     * Makes {@code permanent} exactly the given colors (none for colorless) as a floating layer-5 setter that lasts
+     * until end of turn (CR 613.1e, CR 611.2a). Returns the stamped effect so a test can end it with
+     * {@link GameData#endFloatingEffect}.
+     */
+    public com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect setColors(
+            Permanent permanent, com.github.laxika.magicalvibes.model.CardColor... colors) {
+        java.util.UUID controllerId = gameData.findControllerOf(permanent);
+        return gameData.addFloatingEffect(
+                com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onPermanent(
+                        "Test", null, controllerId,
+                        new com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect(
+                                colors.length == 0 ? java.util.Set.of() : java.util.EnumSet.copyOf(java.util.List.of(colors))),
+                        permanent.getId(), com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
+    }
+
+    /**
      * Begins the queued choices of the triggered abilities a test put toward the stack by calling a service directly
      * (a planar ability's chaos, outside the die roll that would begin them): the any-target choice, then each mode and
      * target choice the stack door queued, as the game does before a player gets priority.

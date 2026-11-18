@@ -1489,18 +1489,6 @@ public class PredicateEvaluationService {
                     yield gameQueryService.hasEffectiveSubtype(gameData, permanent, hasSubtypePredicate.subtype());
                 }
                 boolean creatureSubtype = gameQueryService.isCreatureSubtype(hasSubtypePredicate.subtype());
-                if (creatureSubtype && permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
-                    yield false;
-                }
-                if (permanent.getTransientRemovedSubtypes().contains(hasSubtypePredicate.subtype())) {
-                    yield false;
-                }
-                if (creatureSubtype && !permanent.getTransientCreatureTypeOverrides().isEmpty()) {
-                    yield permanent.getTransientCreatureTypeOverrides().contains(hasSubtypePredicate.subtype());
-                }
-                if (creatureSubtype && permanent.getTransientCreatureTypeOverride() != null) {
-                    yield permanent.getTransientCreatureTypeOverride() == hasSubtypePredicate.subtype();
-                }
                 if (gameData != null && BASIC_LAND_SUBTYPES.contains(hasSubtypePredicate.subtype())) {
                     yield gameQueryService.effectiveBasicLandTypes(gameData, permanent)
                             .contains(hasSubtypePredicate.subtype());
@@ -1517,11 +1505,9 @@ public class PredicateEvaluationService {
                     yield gameQueryService.computeStaticBonus(gameData, permanent).grantedSubtypes()
                             .contains(hasSubtypePredicate.subtype())
                             || permanent.getCard().getSubtypes().contains(hasSubtypePredicate.subtype())
-                            || permanent.getTransientSubtypes().contains(hasSubtypePredicate.subtype())
                             || permanent.getGrantedSubtypes().contains(hasSubtypePredicate.subtype());
                 }
                 yield permanent.getCard().getSubtypes().contains(hasSubtypePredicate.subtype())
-                        || permanent.getTransientSubtypes().contains(hasSubtypePredicate.subtype())
                         || permanent.getGrantedSubtypes().contains(hasSubtypePredicate.subtype())
                         || (creatureSubtype && permanent.hasKeyword(Keyword.CHANGELING));
             }
@@ -1536,19 +1522,9 @@ public class PredicateEvaluationService {
                     yield hasAnySubtypePredicate.subtypes().stream()
                             .anyMatch(subtype -> gameQueryService.hasEffectiveSubtype(gameData, permanent, subtype));
                 }
-                Set<CardSubtype> wanted = permanent.isLosesAllCreatureTypesUntilEndOfTurn()
-                        ? hasAnySubtypePredicate.subtypes().stream()
-                                .filter(st -> !gameQueryService.isCreatureSubtype(st))
-                                .collect(java.util.stream.Collectors.toSet())
-                        : hasAnySubtypePredicate.subtypes();
-                if (!permanent.getTransientRemovedSubtypes().isEmpty()) {
-                    wanted = wanted.stream()
-                            .filter(st -> !permanent.getTransientRemovedSubtypes().contains(st))
-                            .collect(java.util.stream.Collectors.toSet());
-                }
+                Set<CardSubtype> wanted = hasAnySubtypePredicate.subtypes();
                 boolean hasSubtype = (!permanent.isFaceDown()
                         && permanent.getCard().getSubtypes().stream().anyMatch(wanted::contains))
-                        || permanent.getTransientSubtypes().stream().anyMatch(wanted::contains)
                         || permanent.getGrantedSubtypes().stream().anyMatch(wanted::contains);
                 if (!hasSubtype && gameData != null && !GameQueryService.isStaticEvaluationActive()) {
                     hasSubtype = gameQueryService.effectiveCreatureSubtypes(gameData, permanent).stream()
@@ -1646,8 +1622,6 @@ public class PredicateEvaluationService {
             case PermanentIsCreaturePredicate ignored -> {
                 if (gameData == null) {
                     yield permanent.getCard().hasType(CardType.CREATURE)
-                            || permanent.isAnimatedUntilNextTurn()
-                            || permanent.isPermanentlyAnimated()
                             || permanent.getCounterCount(CounterType.AWAKENING) > 0;
                 }
                 yield gameQueryService.isCreature(gameData, permanent);
@@ -2568,12 +2542,8 @@ public class PredicateEvaluationService {
                 if (gameData != null) {
                     yield gameQueryService.getEffectiveColors(gameData, permanent).size() == 2;
                 }
-                if (permanent.isColorOverridden()) {
-                    yield permanent.getTransientColors().size() == 2;
-                }
                 Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
                 combined.addAll(permanent.getEffectiveColors());
-                combined.addAll(permanent.getTransientColors());
                 combined.addAll(permanent.getGrantedColors());
                 yield combined.size() == 2;
             }
@@ -3571,7 +3541,6 @@ public class PredicateEvaluationService {
             cardTypes.addAll(permanent.getCard().getAdditionalTypes());
         }
         cardTypes.addAll(permanent.getPersistentGrantedCardTypes());
-        cardTypes.addAll(permanent.getGrantedCardTypes());
         return cardTypes;
     }
 
@@ -3581,8 +3550,6 @@ public class PredicateEvaluationService {
             return layered.hasCardType(CardType.CREATURE);
         }
         return permanent.getCard().hasType(CardType.CREATURE)
-                || permanent.isAnimatedUntilNextTurn()
-                || permanent.isPermanentlyAnimated()
                 || permanent.getCounterCount(CounterType.AWAKENING) > 0;
     }
 
@@ -4451,12 +4418,8 @@ public class PredicateEvaluationService {
         if (layered != null) {
             return layered.getColors();
         }
-        if (permanent.isColorOverridden()) {
-            return permanent.getTransientColors();
-        }
         Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
         combined.addAll(permanent.getEffectiveColors());
-        combined.addAll(permanent.getTransientColors());
         combined.addAll(permanent.getGrantedColors());
         return combined;
     }
@@ -4484,7 +4447,7 @@ public class PredicateEvaluationService {
      * Named creature subtypes of a permanent without consulting {@code computeStaticBonus}
      * (Changeling is handled by the caller). Mirrors the {@code PermanentHasSubtypePredicate} leaf:
      * the in-flight layer-4 state when a pass is running, the permanent's own stored types
-     * otherwise, honouring "becomes a [type]", "loses all creature types", and removed subtypes.
+     * otherwise.
      */
     private Set<CardSubtype> recursionSafeCreatureSubtypes(Permanent permanent) {
         CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
@@ -4493,20 +4456,9 @@ public class PredicateEvaluationService {
                     .filter(gameQueryService::isCreatureSubtype)
                     .collect(java.util.stream.Collectors.toSet());
         }
-        if (!permanent.getTransientCreatureTypeOverrides().isEmpty()) {
-            return new HashSet<>(permanent.getTransientCreatureTypeOverrides());
-        }
-        if (permanent.getTransientCreatureTypeOverride() != null) {
-            return Set.of(permanent.getTransientCreatureTypeOverride());
-        }
-        if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
-            return Set.of();
-        }
         Set<CardSubtype> result = new HashSet<>();
         result.addAll(permanent.getCard().getSubtypes());
-        result.addAll(permanent.getTransientSubtypes());
         result.addAll(permanent.getGrantedSubtypes());
-        result.removeAll(permanent.getTransientRemovedSubtypes());
         result.removeIf(subtype -> !gameQueryService.isCreatureSubtype(subtype));
         return result;
     }
@@ -4885,12 +4837,8 @@ public class PredicateEvaluationService {
         if (gameData != null) {
             return gameQueryService.getEffectiveColors(gameData, permanent);
         }
-        if (permanent.isColorOverridden()) {
-            return permanent.getTransientColors();
-        }
         Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
         combined.addAll(permanent.getEffectiveColors());
-        combined.addAll(permanent.getTransientColors());
         combined.addAll(permanent.getGrantedColors());
         return combined;
     }
@@ -5136,14 +5084,11 @@ public class PredicateEvaluationService {
     }
 
     /**
-     * The animation flags that make a permanent a creature without any layer-4 effect saying so (until your next
-     * turn, permanently, an awakening counter). Kept alongside the state read because these are recorded on the
-     * permanent rather than as floating effects.
+     * The awakening counter, which makes a permanent a creature without any layer-4 effect saying so. Kept
+     * alongside the state read because it is recorded on the permanent rather than as a floating effect.
      */
     private static boolean isOneShotAnimated(Permanent permanent) {
-        return permanent.isAnimatedUntilNextTurn()
-                || permanent.isPermanentlyAnimated()
-                || permanent.getCounterCount(CounterType.AWAKENING) > 0;
+        return permanent.getCounterCount(CounterType.AWAKENING) > 0;
     }
 
     /**
@@ -5160,7 +5105,6 @@ public class PredicateEvaluationService {
      */
     private static boolean hasSagaSubtype(Permanent permanent) {
         return permanent.getCard().getSubtypes().contains(CardSubtype.SAGA)
-                || permanent.getTransientSubtypes().contains(CardSubtype.SAGA)
                 || permanent.getGrantedSubtypes().contains(CardSubtype.SAGA);
     }
 

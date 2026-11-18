@@ -1162,7 +1162,7 @@ class GameQueryServiceTest {
         @DisplayName("returns true for permanent with granted artifact type")
         void returnsTrueForGrantedType() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            perm.getGrantedCardTypes().add(CardType.ARTIFACT);
+            perm.getPersistentGrantedCardTypes().add(CardType.ARTIFACT);
 
             assertThat(gqs.isArtifact(perm)).isTrue();
         }

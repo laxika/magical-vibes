@@ -32,7 +32,7 @@ class TendrilOfTheMycotyrantTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
-        assertThat(land.getGrantedSubtypes()).contains(CardSubtype.FUNGUS);
+        assertThat(gqs.getEffectiveSubtypes(gd, land)).contains(CardSubtype.FUNGUS);
     }
 
     @Test

@@ -106,14 +106,12 @@ class PhyrexianBoonTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(basePower - 1);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(baseToughness - 2);
 
-        creature.setColorOverridden(true);
-        creature.getTransientColors().add(CardColor.BLACK);
-        creature.getTransientColors().add(CardColor.BLUE);
+        var blackAndBlue = harness.setColors(creature, CardColor.BLACK, CardColor.BLUE);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(basePower + 2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(baseToughness + 1);
 
-        creature.getTransientColors().clear();
+        gd.endFloatingEffect(blackAndBlue);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(basePower - 1);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(baseToughness - 2);

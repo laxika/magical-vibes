@@ -245,19 +245,6 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Clears granted card types on permanents")
-        void clearsGrantedCardTypes() {
-            Card card = createCardWithName("Mutavault");
-            Permanent perm = new Permanent(card);
-            perm.getGrantedCardTypes().add(CardType.CREATURE);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.getGrantedCardTypes()).isEmpty();
-        }
-
-        @Test
         @DisplayName("Clears basePowerToughnessOverriddenUntilEndOfTurn flag on permanents")
         void clearsBasePowerToughnessOverridden() {
             Card card = createCardWithName("Grizzly Bears");
@@ -360,22 +347,6 @@ class TurnCleanupServiceTest {
 
             assertThat(gd.drainRulesEvents()).flatExtracting(RulesEventBatch::events)
                     .contains(new TurnEvent.Cleanup(player1Id));
-        }
-
-        @Test
-        @DisplayName("Clears transient color override on permanents whose only modifier is that override")
-        void clearsTransientColorOverride() {
-            Card card = createCardWithName("Scrapbasket");
-            Permanent perm = new Permanent(card);
-            perm.getTransientColors().addAll(Set.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK,
-                    CardColor.RED, CardColor.GREEN));
-            perm.setColorOverridden(true);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.getTransientColors()).isEmpty();
-            assertThat(perm.isColorOverridden()).isFalse();
         }
 
         @Test

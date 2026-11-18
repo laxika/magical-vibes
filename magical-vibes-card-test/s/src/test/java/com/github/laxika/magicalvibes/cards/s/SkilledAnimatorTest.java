@@ -35,8 +35,8 @@ class SkilledAnimatorTest extends BaseCardTest {
         Permanent ingot = gqs.findPermanentById(gd, ingotId);
 
         assertThat(gqs.isCreature(gd, ingot)).isTrue();
-        assertThat(ingot.getEffectivePower()).isEqualTo(5);
-        assertThat(ingot.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ingot)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ingot)).isEqualTo(5);
         assertThat(gqs.isArtifact(gd, ingot)).isTrue();
         assertThat(gd.sourceLinkedAnimations).containsKey(ingotId);
     }
@@ -58,7 +58,7 @@ class SkilledAnimatorTest extends BaseCardTest {
 
         Permanent ingot = gqs.findPermanentById(gd, ingotId);
         assertThat(gqs.isCreature(gd, ingot)).isFalse();
-        assertThat(ingot.isPermanentlyAnimated()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(ingot.getId())).isFalse();
         assertThat(gd.sourceLinkedAnimations).isEmpty();
     }
 

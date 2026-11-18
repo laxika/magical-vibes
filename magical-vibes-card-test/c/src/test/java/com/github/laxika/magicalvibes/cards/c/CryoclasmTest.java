@@ -158,7 +158,7 @@ class CryoclasmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castSorcery(player1, 0, land.getId());
 
-        land.setPersistentLandTypeOverride(CardSubtype.MOUNTAIN);
+        grantSubtypeUntilEndOfTurn(land, CardSubtype.MOUNTAIN, true);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Plains");

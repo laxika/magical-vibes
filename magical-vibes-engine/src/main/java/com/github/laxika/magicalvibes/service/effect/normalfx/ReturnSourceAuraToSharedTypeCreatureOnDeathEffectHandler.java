@@ -98,8 +98,8 @@ public class ReturnSourceAuraToSharedTypeCreatureOnDeathEffectHandler implements
             for (Permanent p : bf) {
                 if (!gameQueryService.isCreature(gameData, p)) continue;
 
-                List<CardSubtype> pTypes = new ArrayList<>(p.getCard().getSubtypes());
-                pTypes.addAll(p.getTransientSubtypes());
+                List<CardSubtype> pTypes = gameQueryService.getEffectiveSubtypes(gameData, p).stream()
+                        .filter(gameQueryService::isCreatureSubtype).toList();
                 boolean pIsChangeling = p.hasKeyword(Keyword.CHANGELING);
 
                 boolean sharesType = (pIsChangeling && (dyingChangeling || !dyingTypes.isEmpty()))

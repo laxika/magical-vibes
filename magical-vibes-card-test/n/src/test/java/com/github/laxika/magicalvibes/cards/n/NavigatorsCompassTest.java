@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
+import com.github.laxika.magicalvibes.cards.b.BloodMoon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.Glimmerpost;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -24,7 +27,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NavigatorsCompass.class, Forest.class, Mountain.class})
+@CardUsed({NavigatorsCompass.class, BloodMoon.class, Forest.class, Glimmerpost.class, Mountain.class})
 class NavigatorsCompassTest extends BaseCardTest {
 
     @Test
@@ -80,7 +83,7 @@ class NavigatorsCompassTest extends BaseCardTest {
         harness.handleListChoice(player1, "PLAINS");
 
         Permanent forest = gqs.findPermanentById(gd, forestId);
-        assertThat(forest.getTransientSubtypes()).contains(CardSubtype.PLAINS);
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.PLAINS);
     }
 
     @Test
@@ -128,7 +131,7 @@ class NavigatorsCompassTest extends BaseCardTest {
         harness.handleListChoice(player1, "SWAMP");
 
         Permanent mountain = gqs.findPermanentById(gd, mountainId);
-        assertThat(mountain.getTransientSubtypes()).contains(CardSubtype.SWAMP);
+        assertThat(gqs.getEffectiveSubtypes(gd, mountain)).contains(CardSubtype.SWAMP);
     }
 
     @Test
@@ -142,7 +145,7 @@ class NavigatorsCompassTest extends BaseCardTest {
         harness.handleListChoice(player1, "ISLAND");
 
         Permanent forest = gqs.findPermanentById(gd, forestId);
-        assertThat(forest.getTransientSubtypes()).contains(CardSubtype.ISLAND);
+        assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.ISLAND);
         assertThat(forest.getTemporaryActivatedAbilities()).hasSize(1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
@@ -150,7 +153,7 @@ class NavigatorsCompassTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(CardSubtype.FOREST, CardSubtype.ISLAND);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(forest.getTransientSubtypes()).isEmpty();
+        assertThat(gd.floatingEffectsOnPermanent(forest.getId(), GrantSubtypeEffect.class)).isEmpty();
         assertThat(forest.getTemporaryActivatedAbilities()).isEmpty();
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
         harness.tapPermanent(player1, 1);
@@ -245,7 +248,7 @@ class NavigatorsCompassTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(forest.getTransientSubtypes()).isEmpty();
+        assertThat(gd.floatingEffectsOnPermanent(forest.getId(), GrantSubtypeEffect.class)).isEmpty();
     }
 
     @Test
@@ -264,6 +267,21 @@ class NavigatorsCompassTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(CardSubtype.FOREST, CardSubtype.MOUNTAIN);
         harness.activateAbility(player1, 0, 0, null, null);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A land type added after Blood Moon began applying survives it (CR 613.7)")
+    void addedLandTypeLaterThanBloodMoonSurvivesIt() {
+        harness.addToBattlefield(player1, new NavigatorsCompass());
+        harness.addToBattlefield(player1, new BloodMoon());
+        Permanent glimmerpost = harness.addToBattlefieldAndReturn(player1, new Glimmerpost());
+
+        harness.activateAbility(player1, 0, null, glimmerpost.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ISLAND");
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, glimmerpost))
+                .containsExactlyInAnyOrder(CardSubtype.MOUNTAIN, CardSubtype.ISLAND);
     }
 
     @Test

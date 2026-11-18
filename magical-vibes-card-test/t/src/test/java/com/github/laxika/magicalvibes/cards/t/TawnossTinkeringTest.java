@@ -33,7 +33,7 @@ class TawnossTinkeringTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, creature)).isTrue();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
-        assertThat(creature.isPermanentlyAnimated()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(creature.getId())).isFalse();
     }
 
     @Test
@@ -49,7 +49,7 @@ class TawnossTinkeringTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, artifact)).isTrue();
         assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(2);
-        assertThat(artifact.isPermanentlyAnimated()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(artifact.getId())).isTrue();
         assertThat(gqs.isArtifact(gd, artifact)).isTrue();
     }
 

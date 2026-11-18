@@ -7761,9 +7761,7 @@ public class GameData {
     private int countCreaturePermanents(UUID playerId) {
         return (int) playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .filter(permanent -> permanent.getCard().hasType(CardType.CREATURE)
-                        || animatedByFloatingEffect(permanent.getId())
-                        || permanent.isAnimatedUntilNextTurn()
-                        || permanent.isPermanentlyAnimated())
+                        || animatedByFloatingEffect(permanent.getId()))
                 .count();
     }
 

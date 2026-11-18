@@ -161,7 +161,7 @@ class DeathsCaressTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.castSorcery(player1, 0, human.getId());
-        human.setTransientCreatureTypeOverride(CardSubtype.ZOMBIE);
+        grantSubtypeUntilEndOfTurn(human, CardSubtype.ZOMBIE, true);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Gavony Ironwright");
@@ -176,7 +176,7 @@ class DeathsCaressTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.castSorcery(player1, 0, target.getId());
-        target.setTransientCreatureTypeOverride(CardSubtype.HUMAN);
+        grantSubtypeUntilEndOfTurn(target, CardSubtype.HUMAN, true);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Highborn Ghoul");

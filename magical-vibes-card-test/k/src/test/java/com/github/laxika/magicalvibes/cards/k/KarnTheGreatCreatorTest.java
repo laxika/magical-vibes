@@ -59,8 +59,8 @@ class KarnTheGreatCreatorTest extends BaseCardTest {
 
         assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
         assertThat(gqs.isCreature(gd, mindStone)).isTrue();
-        assertThat(mindStone.getEffectivePower()).isEqualTo(2);
-        assertThat(mindStone.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, mindStone)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mindStone)).isEqualTo(2);
         assertThat(gqs.isArtifact(gd, mindStone)).isTrue();
     }
 

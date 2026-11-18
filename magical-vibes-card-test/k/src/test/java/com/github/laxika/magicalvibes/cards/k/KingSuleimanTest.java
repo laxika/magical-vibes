@@ -98,7 +98,7 @@ class KingSuleimanTest extends BaseCardTest {
         Permanent djinn = harness.addToBattlefieldAndReturn(player2, new NettletoothDjinn());
 
         harness.activateAbility(player1, 0, null, djinn.getId());
-        djinn.setLosesAllCreatureTypesUntilEndOfTurn(true);
+        loseAllCreatureTypesUntilEndOfTurn(djinn);
         harness.passBothPriorities();
 
         assertThat(king.isTapped()).isTrue();

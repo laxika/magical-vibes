@@ -48,7 +48,6 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
             Set<CardSubtype> subtypes = ConcurrentHashMap.newKeySet();
             subtypes.addAll(creature.getCard().getSubtypes());
             subtypes.addAll(creature.getGrantedSubtypes());
-            subtypes.addAll(creature.getTransientSubtypes());
             gd.combatDamageSourceSubtypesThisTurn.put(creature.getId(), subtypes);
         }
     }

@@ -84,6 +84,18 @@ public class PermanentViewFactory {
     }
 
     public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, boolean losesAllNonManaAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount, String staticName) {
+        return create(p, bonusPower, bonusToughness, bonusKeywords, animatedCreature, grantedActivatedAbilities,
+                staticGrantedColors, staticGrantedSubtypes, staticGrantedCardTypes, colorOverriding,
+                subtypeOverriding, landSubtypeOverriding, cardTypeOverriding, staticRemovedKeywords,
+                losesAllAbilities, losesAllNonManaAbilities, staticGrantedSupertypes, modifierLines,
+                faceUpExiledWithCards, faceDownExiledCount, staticName, Set.of());
+    }
+
+    /**
+     * Builds the view; {@code removedSubtypes} are the printed subtypes the permanent no longer has after the
+     * layered pass (CR 613.1d), hidden from the card face.
+     */
+    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, boolean losesAllNonManaAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount, String staticName, Set<CardSubtype> removedSubtypes) {
         Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
         allKeywords.addAll(p.getUntilNextTurnKeywords());
         allKeywords.addAll(bonusKeywords);
@@ -102,11 +114,9 @@ public class PermanentViewFactory {
             cardView = cardView.toBuilder().name(staticName).build();
         }
         cardView = applyTextReplacements(cardView, p);
-        cardView = applyGrantedSubtypes(cardView, p);
+        cardView = applyGrantedSubtypes(cardView, p, removedSubtypes);
         cardView = applyStaticGrantedSubtypes(cardView, staticGrantedSubtypes, subtypeOverriding, landSubtypeOverriding);
         cardView = applyAwakeningCounterSubtype(cardView, p);
-        cardView = applyGrantedCardTypes(cardView, p);
-        cardView = applyPermanentAnimation(cardView, p);
         cardView = applyStaticGrantedCardTypes(cardView, staticGrantedCardTypes, cardTypeOverriding);
         cardView = applyStaticGrantedSupertypes(cardView, staticGrantedSupertypes);
         if (!p.isFaceDown()) {
@@ -135,7 +145,7 @@ public class PermanentViewFactory {
                 p.getChosenColor(),
                 p.getChosenName(),
                 p.getRegenerationShield(),
-                animatedCreature || p.isAnimatedUntilNextTurn() || p.isPermanentlyAnimated(),
+                animatedCreature,
                 Map.copyOf(p.getCounters()),
                 p.getAttackTarget(),
                 p.getMarkedDamage(),
@@ -205,29 +215,17 @@ public class PermanentViewFactory {
                 .build();
     }
 
-    private CardView applyGrantedSubtypes(CardView cardView, Permanent p) {
-        if (p.getTransientSubtypes().isEmpty() && p.getGrantedSubtypes().isEmpty()
-                && p.getUntilNextTurnSubtypes().isEmpty()
-                && p.getTransientRemovedSubtypes().isEmpty()) {
+    private CardView applyGrantedSubtypes(CardView cardView, Permanent p, Set<CardSubtype> removedSubtypes) {
+        if (p.getGrantedSubtypes().isEmpty() && removedSubtypes.isEmpty()) {
             return cardView;
         }
         List<CardSubtype> mergedSubtypes = new ArrayList<>(cardView.subtypes());
-        for (CardSubtype subtype : p.getTransientSubtypes()) {
-            if (!mergedSubtypes.contains(subtype)) {
-                mergedSubtypes.add(subtype);
-            }
-        }
         for (CardSubtype subtype : p.getGrantedSubtypes()) {
             if (!mergedSubtypes.contains(subtype)) {
                 mergedSubtypes.add(subtype);
             }
         }
-        for (CardSubtype subtype : p.getUntilNextTurnSubtypes()) {
-            if (!mergedSubtypes.contains(subtype)) {
-                mergedSubtypes.add(subtype);
-            }
-        }
-        mergedSubtypes.removeAll(p.getTransientRemovedSubtypes());
+        mergedSubtypes.removeAll(removedSubtypes);
         return cardView.toBuilder().subtypes(mergedSubtypes).build();
     }
 
@@ -244,24 +242,6 @@ public class PermanentViewFactory {
                 .color(CardColor.GREEN)
                 .colors(List.of(CardColor.GREEN))
                 .build();
-    }
-
-    private CardView applyPermanentAnimation(CardView cardView, Permanent p) {
-        if (!p.isPermanentlyAnimated()) {
-            return cardView;
-        }
-        Set<CardType> mergedTypes = new HashSet<>(cardView.additionalTypes());
-        mergedTypes.add(CardType.CREATURE);
-        return cardView.toBuilder().additionalTypes(mergedTypes).build();
-    }
-
-    private CardView applyGrantedCardTypes(CardView cardView, Permanent p) {
-        if (p.getGrantedCardTypes().isEmpty()) {
-            return cardView;
-        }
-        Set<CardType> mergedTypes = new HashSet<>(cardView.additionalTypes());
-        mergedTypes.addAll(p.getGrantedCardTypes());
-        return cardView.toBuilder().additionalTypes(mergedTypes).build();
     }
 
     private CardView applyStaticGrantedCardTypes(CardView cardView, Set<CardType> staticGrantedCardTypes, boolean cardTypeOverriding) {
@@ -419,8 +399,7 @@ public class PermanentViewFactory {
 
     private CardView applyStaticGrantedColors(CardView cardView, Permanent p, Set<CardColor> staticGrantedColors, boolean colorOverriding) {
         // Determine the effective color: static grants add to permanent's colors
-        // If the permanent already has a color override (from non-static effects), use that
-        if (staticGrantedColors.isEmpty() && !colorOverriding && !p.isColorOverridden() && p.getGrantedColors().isEmpty()) {
+        if (staticGrantedColors.isEmpty() && !colorOverriding && p.getGrantedColors().isEmpty()) {
             return cardView;
         }
         CardColor effectiveColor = cardView.color();
@@ -435,10 +414,6 @@ public class PermanentViewFactory {
             if (effectiveColor == null) {
                 effectiveColor = p.getGrantedColors().iterator().next();
             }
-        }
-        if (p.isColorOverridden() && !p.getTransientColors().isEmpty()) {
-            effectiveColor = p.getTransientColors().iterator().next();
-            effectiveColors = new ArrayList<>(p.getTransientColors());
         }
         if (colorOverriding) {
             // Color-setting (including "becomes colorless" with an empty set)

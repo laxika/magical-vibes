@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.x.Xenograft;
@@ -36,7 +37,7 @@ class DragonshiftTest extends BaseCardTest {
         assertThat(gqs.hasColor(gd, angel, CardColor.BLUE)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.RED)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isFalse();
-        assertThat(angel.getTransientCreatureTypeOverride()).isEqualTo(CardSubtype.DRAGON);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, angel)).containsExactly(CardSubtype.DRAGON);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
     }
 
@@ -64,7 +65,7 @@ class DragonshiftTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, angel, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.RED)).isFalse();
-        assertThat(angel.getTransientCreatureTypeOverride()).isNull();
+        assertThat(gd.floatingEffectsOnPermanent(angel.getId(), GrantSubtypeEffect.class)).isEmpty();
     }
 
     @Test
@@ -100,12 +101,12 @@ class DragonshiftTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasColor(gd, first, CardColor.BLUE)).isTrue();
         assertThat(gqs.hasColor(gd, first, CardColor.RED)).isTrue();
-        assertThat(first.getTransientCreatureTypeOverride()).isEqualTo(CardSubtype.DRAGON);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, first)).containsExactly(CardSubtype.DRAGON);
         assertThat(gqs.hasKeyword(gd, second, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
 
         assertThat(theirs.getEffectivePower()).isEqualTo(2);
-        assertThat(theirs.getTransientCreatureTypeOverride()).isNull();
+        assertThat(gd.floatingEffectsOnPermanent(theirs.getId(), GrantSubtypeEffect.class)).isEmpty();
     }
 
     @Test

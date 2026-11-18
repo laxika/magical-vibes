@@ -9514,12 +9514,11 @@ public class AbilityActivationService {
     }
 
     /**
-     * The permanent's effective creature subtypes (base + transient + granted). Used as the context
+     * The permanent's effective creature subtypes (base + granted). Used as the context
      * for spell-or-ability restricted mana (e.g. Smokebraider) when paying an activated ability's cost.
      */
     private Set<CardSubtype> effectiveSubtypes(Permanent permanent) {
         Set<CardSubtype> subtypes = new HashSet<>(permanent.getCard().getSubtypes());
-        subtypes.addAll(permanent.getTransientSubtypes());
         subtypes.addAll(permanent.getGrantedSubtypes());
         return subtypes;
     }

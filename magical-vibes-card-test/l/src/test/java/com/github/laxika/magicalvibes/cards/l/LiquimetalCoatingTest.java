@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -76,8 +77,8 @@ class LiquimetalCoatingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedCardTypes()).contains(CardType.ARTIFACT);
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.getEffectiveCardTypes(gd, target)).contains(CardType.ARTIFACT);
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
     }
 
     @Test
@@ -90,7 +91,7 @@ class LiquimetalCoatingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, target)).isTrue();
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
     }
 
     @Test
@@ -102,8 +103,8 @@ class LiquimetalCoatingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetLand.getId());
         harness.passBothPriorities();
 
-        assertThat(targetLand.getGrantedCardTypes()).contains(CardType.ARTIFACT);
-        assertThat(gqs.isArtifact(targetLand)).isTrue();
+        assertThat(gqs.getEffectiveCardTypes(gd, targetLand)).contains(CardType.ARTIFACT);
+        assertThat(gqs.isArtifact(gd, targetLand)).isTrue();
     }
 
     @Test
@@ -115,8 +116,8 @@ class LiquimetalCoatingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, enchantment.getId());
         harness.passBothPriorities();
 
-        assertThat(enchantment.getGrantedCardTypes()).contains(CardType.ARTIFACT);
-        assertThat(gqs.isArtifact(enchantment)).isTrue();
+        assertThat(gqs.getEffectiveCardTypes(gd, enchantment)).contains(CardType.ARTIFACT);
+        assertThat(gqs.isArtifact(gd, enchantment)).isTrue();
     }
 
     @Test
@@ -128,7 +129,7 @@ class LiquimetalCoatingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, artifact.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.isArtifact(artifact)).isTrue();
+        assertThat(gqs.isArtifact(gd, artifact)).isTrue();
     }
 
     @Test
@@ -140,14 +141,14 @@ class LiquimetalCoatingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
 
         // Advance through END_STEP to trigger CLEANUP which resets end-of-turn modifiers
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedCardTypes()).isEmpty();
-        assertThat(gqs.isArtifact(target)).isFalse();
+        assertThat(gd.floatingEffectsOnPermanent(target.getId(), GrantCardTypeEffect.class)).isEmpty();
+        assertThat(gqs.isArtifact(gd, target)).isFalse();
     }
 
     @Test

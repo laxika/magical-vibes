@@ -65,7 +65,6 @@ class UnstableFrontierTest extends BaseCardTest {
         GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, forest);
         assertThat(bonus.landSubtypeOverriding()).isTrue();
         assertThat(bonus.grantedSubtypes()).containsExactly(CardSubtype.ISLAND);
-        assertThat(forest.getTransientSubtypes()).isEmpty();
 
         int forestIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forest);
         harness.tapPermanent(player1, forestIndex);

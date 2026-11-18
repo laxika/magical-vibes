@@ -814,7 +814,10 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesCardPredicate(artifact, predicate, sourceCard.getId(), gd, player1Id))
                     .isFalse();
 
-            source.setTransientCreatureTypeOverride(CardSubtype.GIANT);
+            gd.addFloatingEffect(com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onPermanent(
+                    "test", null, null, new com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect(
+                            CardSubtype.GIANT, com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET, true),
+                    source.getId(), com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
 
             assertThat(evaluator.matchesCardPredicate(illusion, predicate, sourceCard.getId(), gd, player1Id))
                     .isFalse();
@@ -2139,8 +2142,11 @@ class PredicateEvaluationServiceTest {
         @DisplayName("PermanentColorInPredicate matches overridden color")
         void colorInPredicateMatchesOverriddenColor() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            perm.setColorOverridden(true);
-            perm.getTransientColors().add(CardColor.BLUE);
+            gd.addFloatingEffect(com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onPermanent(
+                    "Test", null, player1Id,
+                    new com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect(
+                            EnumSet.of(CardColor.BLUE)),
+                    perm.getId(), com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm,
                     new PermanentColorInPredicate(EnumSet.of(CardColor.BLUE)))).isTrue();

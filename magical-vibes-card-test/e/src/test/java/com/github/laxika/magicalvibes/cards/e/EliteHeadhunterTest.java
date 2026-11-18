@@ -75,7 +75,7 @@ class EliteHeadhunterTest extends BaseCardTest {
     @DisplayName("An artifact Elite Headhunter can sacrifice itself")
     void canSacrificeItselfWhenItIsAnArtifact() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new EliteHeadhunter());
-        source.getGrantedCardTypes().add(CardType.ARTIFACT);
+        grantCardTypeUntilEndOfTurn(source, CardType.ARTIFACT);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         addHybridMana();
 

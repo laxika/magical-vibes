@@ -59,19 +59,8 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
                 continue;
             }
 
-            if (e.replacing() && (Duration.UNTIL_END_OF_TURN.equals(e.duration())
-                    || Duration.UNTIL_CONTROLLERS_NEXT_UNTAP_STEP.equals(e.duration()))) {
-                // A timestamped layer-4 floating effect, so a later "becomes" effect (Blood Moon,
-                // Phantasmal Terrain) overrides it by timestamp rather than the transient override
-                // always winning. The next-untap-step form is removed by the untap step itself.
-                gameData.addFloatingEffect(new FloatingContinuousEffect(
-                        UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                        entry.getControllerId(),
-                        new GrantSubtypeEffect(e.fixedSubtype(), GrantScope.TARGET, true),
-                        target.getId(), null, null, e.duration(), 0));
-            } else {
-                applyBasicLandType(target, e.fixedSubtype(), e.duration(), e.replacing());
-            }
+            applyBasicLandType(gameData, target, e.fixedSubtype(), e.duration(), e.replacing(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
             gameLogService.append(gameData, GameLog.text(describeBasicLandTypeChange(
                     target, e.fixedSubtype(), e.duration(), e.replacing())));
         }
@@ -87,23 +76,21 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
     /**
      * Applies a basic land type change to {@code targetLand}. When {@code replacing} is {@code false}
      * the subtype is added in addition to the land's other types (and its intrinsic mana ability is
-     * granted). When {@code replacing} is {@code true} the land <em>becomes</em> the subtype until end
-     * of turn, replacing its other land types/mana ability via a transient override (rule 305.7).
+     * granted). When {@code replacing} is {@code true} the land <em>becomes</em> the subtype for the
+     * duration, replacing its other land types/mana ability (rule 305.7). Both are timestamped
+     * layer-4 floating effects (rules 613.1d, 613.7); the one-shot added type and its mana
+     * ability end at end of turn, a permanent addition is stored on the Permanent as a persistent grant.
      * Shared by this handler (fixed-type path) and the player's basic-land-type choice resolution.
      */
-    public static void applyBasicLandType(Permanent targetLand, CardSubtype subtype, Duration duration, boolean replacing) {
+    public static void applyBasicLandType(GameData gameData, Permanent targetLand, CardSubtype subtype,
+                                          Duration duration, boolean replacing, String sourceName,
+                                          UUID sourcePermanentId, UUID controllerId) {
         if (replacing) {
-            // Type-replacing "becomes" (rule 305.7): the override is read by the static-bonus system
-            // (subtypes/mana). Until end of turn (Tideshaper Mystic) it is cleared by resetModifiers();
-            // until the controller's next untap step (Orcish Farmer) it survives end-of-turn cleanup
-            // and is cleared at that controller's next turn by clearUntilNextTurnEffects().
-            if (Duration.UNTIL_CONTROLLERS_NEXT_UNTAP_STEP.equals(duration)) {
-                targetLand.setUntilNextTurnLandTypeOverride(subtype);
-            } else if (Duration.STATIC.equals(duration) || Duration.PERMANENT.equals(duration)) {
-                targetLand.setPersistentLandTypeOverride(subtype);
-            } else {
-                targetLand.setTransientLandTypeOverride(subtype);
-            }
+            Duration floatingDuration = Duration.STATIC.equals(duration) ? Duration.PERMANENT : duration;
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), sourceName, sourcePermanentId, controllerId,
+                    new GrantSubtypeEffect(subtype, GrantScope.TARGET, true),
+                    targetLand.getId(), null, null, floatingDuration, 0));
             return;
         }
 
@@ -113,10 +100,10 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
                 "{T}: Add {" + manaColor.getCode() + "}.");
 
         if (Duration.UNTIL_END_OF_TURN.equals(duration)) {
-            // Transient: cleared at end of turn by resetModifiers()
-            if (!targetLand.getTransientSubtypes().contains(subtype)) {
-                targetLand.getTransientSubtypes().add(subtype);
-            }
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), sourceName, sourcePermanentId, controllerId,
+                    new GrantSubtypeEffect(subtype, GrantScope.TARGET),
+                    targetLand.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             targetLand.getTemporaryActivatedAbilities().add(manaAbility);
         } else {
             // Permanent: survives turn resets. Stored on the Permanent, never on the Card —

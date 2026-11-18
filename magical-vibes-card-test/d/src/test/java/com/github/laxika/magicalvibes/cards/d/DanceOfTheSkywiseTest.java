@@ -35,9 +35,9 @@ class DanceOfTheSkywiseTest extends BaseCardTest {
         assertThat(bear.getEffectiveToughness()).isEqualTo(4);
         assertThat(gqs.hasColor(gd, bear, CardColor.BLUE)).isTrue();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(bear, CardSubtype.DRAGON)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(bear, CardSubtype.ILLUSION)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(bear, CardSubtype.BEAR)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, bear, CardSubtype.DRAGON)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, bear, CardSubtype.ILLUSION)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, bear, CardSubtype.BEAR)).isFalse();
     }
 
     @Test
@@ -63,9 +63,9 @@ class DanceOfTheSkywiseTest extends BaseCardTest {
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
         assertThat(gqs.hasColor(gd, bear, CardColor.BLUE)).isFalse();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(bear, CardSubtype.BEAR)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(bear, CardSubtype.DRAGON)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(bear, CardSubtype.ILLUSION)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, bear, CardSubtype.BEAR)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, bear, CardSubtype.DRAGON)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, bear, CardSubtype.ILLUSION)).isFalse();
     }
 
     @Test
@@ -145,7 +145,7 @@ class DanceOfTheSkywiseTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.WHITE)).isTrue();
         assertThat(gqs.hasColor(gd, angel, CardColor.BLUE)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(angel, CardSubtype.ANGEL)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, angel, CardSubtype.ANGEL)).isTrue();
     }
 
     @Test
@@ -157,8 +157,8 @@ class DanceOfTheSkywiseTest extends BaseCardTest {
 
         assertThat(gqs.hasColor(gd, other, CardColor.BLUE)).isFalse();
         assertThat(gqs.hasKeyword(gd, other, Keyword.VIGILANCE)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(other, CardSubtype.DRAGON)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(other, CardSubtype.ANGEL)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, other, CardSubtype.DRAGON)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, other, CardSubtype.ANGEL)).isTrue();
     }
 
     private void castDanceOfTheSkywise(Permanent target) {

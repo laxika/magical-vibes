@@ -57,7 +57,7 @@ class ScatterToTheWindsTest extends BaseCardTest {
                 List.of(invoker.getId(), land.getId()));
         harness.passBothPriorities();
 
-        assertThat(land.isPermanentlyAnimated()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(land.getId())).isTrue();
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(3);
         assertThat(gqs.isCreature(gd, land)).isTrue();
@@ -133,7 +133,7 @@ class ScatterToTheWindsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Oran-Rief Invoker");
         harness.assertInGraveyard(player2, "Scatter to the Winds");
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(land.isPermanentlyAnimated()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(land.getId())).isFalse();
     }
 
     @Test

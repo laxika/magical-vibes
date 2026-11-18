@@ -43,11 +43,8 @@ public class BecomeAllColorsUntilEndOfTurnEffectHandler implements NormalEffectH
 
         // CR 613 layer engine: "becomes all colors until end of turn" is a floating layer-5
         // color-setting effect with its own timestamp. Reuse the BecomeChosenColors setter carrying
-        // every color; the legacy transient fields are seeded for direct getEffectiveColor callers.
+        // every color.
         Set<CardColor> allColors = EnumSet.allOf(CardColor.class);
-        self.getTransientColors().clear();
-        self.getTransientColors().addAll(allColors);
-        self.setColorOverridden(true);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), null, entry.getControllerId(),
                 new BecomeChosenColorsUntilEndOfTurnEffect(allColors),

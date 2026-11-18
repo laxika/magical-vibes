@@ -548,7 +548,7 @@ public class PhasingService {
         gameData.phasedOutPermanents.forEach((controllerId, permanents) -> List.copyOf(permanents).stream()
                 .filter(permanent -> !permanent.isPhasedOutIndirectly())
                 .filter(permanent -> !isHeldUntilEndOfNextTurn(gameData, permanent))
-                .filter(permanent -> isPhasedOutCreature(permanent))
+                .filter(permanent -> isPhasedOutCreature(gameData, permanent))
                 .forEach(permanent -> {
                     phasingIn.put(permanent, controllerId);
                     pending.add(permanent);
@@ -589,17 +589,16 @@ public class PhasingService {
 
     /**
      * Creature check for a phased-out permanent: continuous effects cannot touch it (CR 702.26b/e),
-     * so only the object's own types and animation/awakening state count.
+     * so only the object's own types and the animations and awakening counters it already has count.
      */
-    private static boolean isPhasedOutCreature(Permanent permanent) {
+    private static boolean isPhasedOutCreature(GameData gameData, Permanent permanent) {
         if (permanent.isFaceDown()) {
             return permanent.getFaceDownCardTypes().contains(CardType.CREATURE);
         }
         if (permanent.getCard().hasType(CardType.CREATURE)) {
             return true;
         }
-        return permanent.isAnimatedUntilNextTurn()
-                || permanent.isPermanentlyAnimated()
+        return gameData.animatedByFloatingEffect(permanent.getId())
                 || permanent.getCounterCount(CounterType.AWAKENING) > 0;
     }
 

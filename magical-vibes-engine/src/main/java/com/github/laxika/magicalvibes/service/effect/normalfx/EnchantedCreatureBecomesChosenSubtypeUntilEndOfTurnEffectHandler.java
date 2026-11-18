@@ -54,8 +54,6 @@ public class EnchantedCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler im
             return;
         }
 
-        enchanted.setTransientCreatureTypeOverride(chosenSubtype);
-        enchanted.getTransientCreatureTypeOverrides().clear();
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(), new GrantSubtypeEffect(chosenSubtype, GrantScope.TARGET, true),

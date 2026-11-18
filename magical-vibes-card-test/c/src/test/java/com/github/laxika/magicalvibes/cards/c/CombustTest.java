@@ -183,9 +183,7 @@ class CombustTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Wall of Frost");
         harness.castInstant(player1, 0, targetId);
         Permanent target = findPermanent(player2, "Wall of Frost");
-        target.setColorOverridden(true);
-        target.getTransientColors().clear();
-        target.getTransientColors().add(CardColor.RED);
+        harness.setColors(target, CardColor.RED);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Wall of Frost");

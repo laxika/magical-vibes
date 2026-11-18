@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
@@ -66,7 +67,7 @@ class SnakeformTest extends BaseCardTest {
 
         castSnakeform(elemental.getId());
 
-        assertThat(elemental.getTransientCreatureTypeOverride()).isEqualTo(CardSubtype.SNAKE);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, elemental)).containsExactly(CardSubtype.SNAKE);
     }
 
     @Test
@@ -96,7 +97,7 @@ class SnakeformTest extends BaseCardTest {
         assertThat(elemental.getEffectiveToughness()).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasColor(gd, elemental, CardColor.BLUE)).isTrue();
-        assertThat(elemental.getTransientCreatureTypeOverride()).isNull();
+        assertThat(gd.floatingEffectsOnPermanent(elemental.getId(), GrantSubtypeEffect.class)).isEmpty();
     }
 
     @Test

@@ -58,7 +58,7 @@ class SpikeTillerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, land.getId());
         harness.passBothPriorities();
 
-        assertThat(land.isPermanentlyAnimated()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(land.getId())).isTrue();
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(land.getCard().hasType(CardType.LAND)).isTrue();
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

@@ -161,18 +161,7 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
     private void applyEffect(GameData gameData, StackEntry entry, GrantColorUntilEndOfTurnEffect e, Permanent target) {
         // CR 613 layer engine: "becomes [color] until end of turn" is a floating layer-5
         // color effect with its own timestamp — it beats earlier setters (an already
-        // attached Nim Deathmantle) and loses to later ones, then wears off at cleanup. The
-        // legacy fields are still written for direct Permanent.getEffectiveColor callers; the
-        // layered pass seeds them and then replays this effect at its real timestamp.
-        if (!e.additive()) {
-            target.getTransientColors().clear();
-            target.getTransientColors().add(e.color());
-            target.setColorOverridden(true);
-        }
-        // For an additive grant ("in addition to its other colors") the legacy fields are left
-        // untouched: seedLegacyColorAndAbilityState folds transientColors into the *seeded* colors
-        // before snapshotting, so the query pass would strip them as intrinsic. The floating
-        // effect below adds the color after the snapshot, so it registers as a granted color.
+        // attached Nim Deathmantle) and loses to later ones, then wears off at cleanup.
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), null, entry.getControllerId(), e,
                 target.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));

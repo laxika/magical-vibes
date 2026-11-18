@@ -46,7 +46,7 @@ class MiresMaliceTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(land.isPermanentlyAnimated()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(land.getId())).isTrue();
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(3);
@@ -191,7 +191,7 @@ class MiresMaliceTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(land.isPermanentlyAnimated()).isFalse();
+        assertThat(gd.animatedByFloatingEffect(land.getId())).isFalse();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

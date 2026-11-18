@@ -42,7 +42,7 @@ class BrillianceUnleashedTest extends BaseCardTest {
         assertThat(gqs.isArtifact(gd, returned)).isTrue();
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(3);
-        assertThat(returned.getGrantedSubtypes()).contains(CardSubtype.ROBOT);
+        assertThat(gqs.getEffectiveSubtypes(gd, returned)).contains(CardSubtype.ROBOT);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isTrue();
     }
 
@@ -57,7 +57,7 @@ class BrillianceUnleashedTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, returned)).isTrue();
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(1);
-        assertThat(returned.getGrantedSubtypes()).doesNotContain(CardSubtype.ROBOT);
+        assertThat(gqs.getEffectiveSubtypes(gd, returned)).doesNotContain(CardSubtype.ROBOT);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isFalse();
     }
 

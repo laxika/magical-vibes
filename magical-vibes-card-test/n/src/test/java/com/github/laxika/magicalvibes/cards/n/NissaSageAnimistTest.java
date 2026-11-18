@@ -63,8 +63,8 @@ class NissaSageAnimistTest extends BaseCardTest {
         assertThat(nissa.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         Permanent ashaya = findPermanent(player1, "Ashaya, the Awoken World");
         assertThat(ashaya).isNotNull();
-        assertThat(ashaya.getEffectivePower()).isEqualTo(4);
-        assertThat(ashaya.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ashaya)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ashaya)).isEqualTo(4);
     }
 
     @Test
@@ -84,9 +84,9 @@ class NissaSageAnimistTest extends BaseCardTest {
         for (Permanent land : List.of(forest, mountain)) {
             assertThat(land.isTapped()).isFalse();
             assertThat(gqs.isCreature(gd, land)).isTrue();
-            assertThat(land.getEffectivePower()).isEqualTo(6);
-            assertThat(land.getEffectiveToughness()).isEqualTo(6);
-            assertThat(land.getGrantedSubtypes()).contains(CardSubtype.ELEMENTAL);
+            assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(6);
+            assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(6);
+            assertThat(gqs.getEffectiveSubtypes(gd, land)).contains(CardSubtype.ELEMENTAL);
             assertThat(land.getCard().hasType(CardType.LAND)).isTrue();
         }
     }
@@ -103,7 +103,7 @@ class NissaSageAnimistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, forest)).isTrue();
-        assertThat(forest.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(6);
     }
 
     @Test
@@ -163,9 +163,9 @@ class NissaSageAnimistTest extends BaseCardTest {
         for (Permanent target : targets) {
             assertThat(target.isTapped()).isFalse();
             assertThat(gqs.isCreature(gd, target)).isTrue();
-            assertThat(target.getEffectivePower()).isEqualTo(6);
-            assertThat(target.getEffectiveToughness()).isEqualTo(6);
-            assertThat(target.getGrantedSubtypes()).contains(CardSubtype.ELEMENTAL);
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+            assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
+            assertThat(gqs.getEffectiveSubtypes(gd, target)).contains(CardSubtype.ELEMENTAL);
         }
         assertThat(unchosen.isTapped()).isTrue();
         assertThat(gqs.isCreature(gd, unchosen)).isFalse();
@@ -216,8 +216,8 @@ class NissaSageAnimistTest extends BaseCardTest {
         harness.assertInHand(player1, "Forest");
         assertThat(mountain.isTapped()).isFalse();
         assertThat(gqs.isCreature(gd, mountain)).isTrue();
-        assertThat(mountain.getEffectivePower()).isEqualTo(6);
-        assertThat(mountain.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(6);
     }
 
     @Test

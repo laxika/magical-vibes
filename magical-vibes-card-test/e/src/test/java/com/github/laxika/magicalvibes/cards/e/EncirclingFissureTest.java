@@ -43,7 +43,7 @@ class EncirclingFissureTest extends BaseCardTest {
                 List.of(player2.getId(), land.getId()));
         harness.passBothPriorities();
 
-        assertThat(land.isPermanentlyAnimated()).isTrue();
+        assertThat(gd.animatedByFloatingEffect(land.getId())).isTrue();
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(2);

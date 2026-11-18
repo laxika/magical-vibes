@@ -31,8 +31,8 @@ class UnctussRetrofitterTest extends BaseCardTest {
         Permanent target = gqs.findPermanentById(gd, artifactId);
 
         assertThat(gqs.isCreature(gd, target)).isTrue();
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
         assertThat(target.getCard().hasType(CardType.ARTIFACT)).isTrue();
     }
 
@@ -129,8 +129,8 @@ class UnctussRetrofitterTest extends BaseCardTest {
         castRetrofitter(List.of(artifact.getId()));
 
         assertThat(gqs.isCreature(gd, artifact)).isTrue();
-        assertThat(artifact.getEffectivePower()).isEqualTo(6);
-        assertThat(artifact.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(6);
         assertThat(artifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 

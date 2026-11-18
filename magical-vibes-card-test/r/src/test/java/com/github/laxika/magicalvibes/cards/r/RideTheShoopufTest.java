@@ -74,7 +74,7 @@ class RideTheShoopufTest extends BaseCardTest {
         assertThat(gqs.isEnchantment(gd, shoopuf)).isTrue();
         assertThat(gqs.getEffectivePower(gd, shoopuf)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, shoopuf)).isEqualTo(7);
-        assertThat(shoopuf.getGrantedSubtypes()).contains(CardSubtype.BEAST);
+        assertThat(gqs.getEffectiveSubtypes(gd, shoopuf)).contains(CardSubtype.BEAST);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
@@ -114,7 +114,7 @@ class RideTheShoopufTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, shoopuf)).isTrue();
         assertThat(gqs.isEnchantment(gd, shoopuf)).isTrue();
-        assertThat(shoopuf.getGrantedSubtypes()).contains(CardSubtype.BEAST);
+        assertThat(gqs.getEffectiveSubtypes(gd, shoopuf)).contains(CardSubtype.BEAST);
         assertThat(gqs.getEffectivePower(gd, shoopuf)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, shoopuf)).isEqualTo(8);
     }

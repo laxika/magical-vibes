@@ -31,8 +31,8 @@ class MordenkainensPolymorphTest extends BaseCardTest {
         assertThat(dryad.getEffectivePower()).isEqualTo(4);
         assertThat(dryad.getEffectiveToughness()).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, dryad, Keyword.FLYING)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(dryad, CardSubtype.DRAGON)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(dryad, CardSubtype.DRYAD)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, dryad, CardSubtype.DRAGON)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, dryad, CardSubtype.DRYAD)).isFalse();
     }
 
     @Test
@@ -47,8 +47,8 @@ class MordenkainensPolymorphTest extends BaseCardTest {
         assertThat(dryad.getEffectivePower()).isEqualTo(1);
         assertThat(dryad.getEffectiveToughness()).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, dryad, Keyword.FLYING)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(dryad, CardSubtype.DRYAD)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(dryad, CardSubtype.DRAGON)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, dryad, CardSubtype.DRYAD)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, dryad, CardSubtype.DRAGON)).isFalse();
     }
 
     @Test
@@ -86,7 +86,7 @@ class MordenkainensPolymorphTest extends BaseCardTest {
         castMordenkainensPolymorph(dryad.getId());
 
         assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(other, CardSubtype.DRYAD)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, other, CardSubtype.DRYAD)).isTrue();
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.activateAbility(player1, 0, null, null);
 
