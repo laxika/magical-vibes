@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.o.Owlbear;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.DungeonProgress;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -96,7 +97,7 @@ class YuanTiMalisonTest extends BaseCardTest {
     @Test
     void losingAbilitiesAllowsDefenderToDeclareBlockersWhenAttackingAlone() {
         Permanent malison = addCreatureReady(player1, new YuanTiMalison());
-        malison.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, malison);
         addCreatureReady(player2, new Owlbear());
 
         declareAttackers(List.of(0));

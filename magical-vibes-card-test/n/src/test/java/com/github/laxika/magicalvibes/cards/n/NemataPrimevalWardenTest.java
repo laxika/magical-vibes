@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EvolvedSleeper;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -131,7 +132,7 @@ class NemataPrimevalWardenTest extends BaseCardTest {
     @DisplayName("Nemata without abilities does not exile dying opponents' creatures")
     void abilityLossDisablesReplacement() {
         Permanent nemata = addCreatureReady(player1, new NemataPrimevalWarden());
-        nemata.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, nemata);
         Permanent sleeper = addCreatureReady(player2, new EvolvedSleeper());
         sleeper.setMarkedDamage(1);
 

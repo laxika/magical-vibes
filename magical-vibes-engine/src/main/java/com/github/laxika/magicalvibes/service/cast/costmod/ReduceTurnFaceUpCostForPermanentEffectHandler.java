@@ -43,6 +43,6 @@ public class ReduceTurnFaceUpCostForPermanentEffectHandler implements CostModifi
         return gameData.playerBattlefields.values().stream()
                 .flatMap(List::stream)
                 .filter(permanent -> permanent.getId().equals(permanentId))
-                .anyMatch(Permanent::isLosesAllAbilitiesUntilEndOfTurn);
+                .anyMatch(gameData::losesAllAbilitiesByEffect);
     }
 }

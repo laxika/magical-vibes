@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
@@ -77,6 +78,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseSubtypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectOnTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PrimevalCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
@@ -1003,6 +1006,8 @@ public class LayerSystemService {
         h = mix(h, gameData.perpetualCardTypes.hashCode());
         h = mix(h, gameData.perpetualCardSubtypes.hashCode());
         h = mix(h, gameData.perpetualCreatureTypeReplacedCardIds.hashCode());
+        h = mix(h, gameData.perpetualTriggeredAbilityGrants.hashCode());
+        h = mix(h, gameData.perpetualActivatedAbilities.hashCode());
         synchronized (gameData.exiledCards) {
             for (ExiledCardEntry entry : gameData.exiledCards) {
                 h = mix(h, System.identityHashCode(entry.card()));
@@ -1039,7 +1044,6 @@ public class LayerSystemService {
 
         long flags = 0;
         flags = flags << 1 | (p.isTapped() ? 1 : 0);
-        flags = flags << 1 | (p.isLosesAllAbilitiesUntilEndOfTurn() ? 1 : 0);
         flags = flags << 1 | (p.isSuspected() ? 1 : 0);
         flags = flags << 1 | (p.isCommander() ? 1 : 0);
         flags = flags << 1 | (p.isTransformed() ? 1 : 0);
@@ -1115,9 +1119,6 @@ public class LayerSystemService {
         // layers 5/6 (chosen-color protection, Shifting Sky), so it must invalidate the cache.
         h = mix(h, enumOrdinal(p.getChosenColor()));
         h = mix(h, p.getChosenName() == null ? 0 : p.getChosenName().hashCode());
-        for (Object ability : p.getPersistentGrantedActivatedAbilities()) {
-            h = mix(h, System.identityHashCode(ability));
-        }
         return h;
     }
 
@@ -1319,10 +1320,13 @@ public class LayerSystemService {
             // leaves answering from the states never see less than the intrinsic values
             // (colors and keywords are untouched by layer 4).
             seedLegacyColorAndAbilityState(gameData, permanent, state, globalWordChange);
+            if (seedPerpetualAbilities(gameData, permanent, state)) {
+                board.l56Touched().add(permanent.getId());
+            }
             // A one-shot changeling grant (e.g. Wings of Velis Vel) is not applied to the state
             // until layer 6, so its floating keyword grant is read here, unless a newer floating
             // removal of changeling takes it away again (CR 613.7).
-            boolean grantedChangeling = !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+            boolean grantedChangeling = !gameData.losesAllAbilitiesByEffect(permanent.getId())
                     && hasFloatingKeywordGrant(gameData, permanent.getId(), Keyword.CHANGELING);
             if (state.hasKeyword(Keyword.CHANGELING) || grantedChangeling) {
                 for (CardSubtype subtype : CardSubtype.values()) {
@@ -3121,12 +3125,9 @@ public class LayerSystemService {
             }
         }
 
-        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
-            // Legacy one-shot lose-all flag (no timestamp): treat as applied before every
-            // layered instance, so static grants still stick — the old accumulator behavior.
-            state.loseAllAbilities(0);
-        } else {
-            state.snapshotPrintedTriggerKeywords();
+        state.snapshotPrintedTriggerKeywords();
+        // Perpetual keywords are part of the card; a face-down permanent has none of its card's text (CR 708.2a).
+        if (!permanent.isFaceDown()) {
             if (permanent.getOriginalCard() != null) {
                 state.addKeywords(keepingPerpetualRemovals(gameData, permanent.getCard().getId(),
                         gameData.perpetualKeywords.getOrDefault(permanent.getOriginalCard().getId(), Set.of())));
@@ -3138,6 +3139,50 @@ public class LayerSystemService {
                     .forEach(state::addPerpetualTriggerKeywordInstances);
         }
         state.snapshotSeededCharacteristics();
+    }
+
+    /**
+     * Seeds the abilities the permanent's card has perpetually gained: triggered ones as their grant, the effects of
+     * static ones and the activated ones. A perpetual change is made to the card, not an effect with a duration
+     * (CR 611.2a), so like the printed abilities they precede every effect and any "loses all abilities" removes
+     * them. Each grant of an equal ability is its own instance (CR 113.2c); an activated ability is listed once.
+     * A face-down permanent has none of its card's text (CR 708.2a), so none are seeded until it is turned face up.
+     * Returns whether it seeded any.
+     */
+    private static boolean seedPerpetualAbilities(GameData gameData, Permanent permanent, CharacteristicState state) {
+        if (permanent.getOriginalCard() == null || permanent.isFaceDown()) {
+            return false;
+        }
+        boolean seeded = false;
+        List<UUID> cardIds = new ArrayList<>(List.of(permanent.getOriginalCard().getId()));
+        if (!cardIds.contains(permanent.getCard().getId())) {
+            cardIds.add(permanent.getCard().getId());
+        }
+        List<ActivatedAbility> activated = new ArrayList<>();
+        for (UUID cardId : cardIds) {
+            for (Ability ability : gameData.perpetualAbilities(cardId)) {
+                switch (ability) {
+                    case TriggeredAbility triggered -> {
+                        state.addStaticEffect(new GrantTriggeredAbilityEffect(triggered, GrantScope.SELF));
+                        seeded = true;
+                    }
+                    case StaticAbility statik -> {
+                        statik.effects().forEach(state::addStaticEffect);
+                        seeded = true;
+                    }
+                    default -> {
+                    }
+                }
+            }
+            for (ActivatedAbility ability : gameData.perpetualActivatedAbilities.getOrDefault(cardId, List.of())) {
+                if (!activated.contains(ability)) {
+                    activated.add(ability);
+                    state.addActivatedAbility(ability);
+                    seeded = true;
+                }
+            }
+        }
+        return seeded;
     }
 
     /**
@@ -3484,6 +3529,10 @@ public class LayerSystemService {
                             state.removeProtectionColors(Set.of(remove.color()));
                     case RemoveAllProtectionUntilEndOfTurnEffect ignored ->
                             state.removeAllProtection();
+                    case SuppressStaticEffectUntilEndOfTurnEffect remove ->
+                            state.removeStaticAbilities(remove.effectType());
+                    case SuppressStaticEffectOnTargetUntilEndOfTurnEffect remove ->
+                            state.removeStaticAbilities(remove.effectType());
                     case GrantKeywordEffect grant -> {
                         state.addKeywords(grant.keywords());
                         board.recordProvenance(target.permanent().getId(),
@@ -3499,8 +3548,11 @@ public class LayerSystemService {
                                 provenanceSourceName(instance), cantBlock);
                     }
                     case GrantActivatedAbilityEffect grant -> {
-                        state.addActivatedAbility(grant.ability().withGrantSource(
-                                instance.floating().sourcePermanentId()));
+                        // An ability that already names the permanent that granted it (one gained from another
+                        // creature) keeps it; otherwise the effect's source is its grantor.
+                        state.addActivatedAbility(grant.ability().getGrantSourcePermanentId() != null
+                                ? grant.ability()
+                                : grant.ability().withGrantSource(instance.floating().sourcePermanentId()));
                         board.recordGrantedEffect(target.permanent().getId(),
                                 provenanceSourceName(instance), grant);
                     }

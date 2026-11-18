@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 
 import com.github.laxika.magicalvibes.model.effect.Duration;
 
@@ -170,7 +171,7 @@ class VigorTest extends BaseCardTest {
     @Test
     void abilityLossOnBattlefieldDisablesPrevention() {
         Permanent vigor = harness.addToBattlefieldAndReturn(player2, new Vigor());
-        vigor.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, vigor);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -185,7 +186,7 @@ class VigorTest extends BaseCardTest {
     void abilityLossOnBattlefieldDoesNotDisableGraveyardTrigger() {
         harness.setLibrary(player2, List.of());
         Permanent vigor = harness.addToBattlefieldAndReturn(player2, new Vigor());
-        vigor.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, vigor);
         vigor.setMarkedDamage(6);
 
         harness.runStateBasedActions();

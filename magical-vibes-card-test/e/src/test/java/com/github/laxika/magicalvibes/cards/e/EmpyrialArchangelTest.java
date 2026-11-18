@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.t.TidehollowStrix;
 import com.github.laxika.magicalvibes.cards.v.VolcanicGeyser;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -84,7 +85,7 @@ class EmpyrialArchangelTest extends BaseCardTest {
     @Test
     void archangelWithoutAbilitiesDoesNotRedirectDamage() {
         Permanent archangel = harness.addToBattlefieldAndReturn(player2, new EmpyrialArchangel());
-        archangel.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, archangel);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 

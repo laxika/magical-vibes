@@ -59,10 +59,5 @@ public class SuspectAndPerpetuallyGrantAbilityToTargetCreatureEffectHandler
         UUID cardId = target.getOriginalCard().getId();
         gameData.grantPerpetualAbilityOnce(cardId,
                 new TriggeredAbility(Triggers.dealsCombatDamageToCreature(), grantedAbility));
-
-        if (!target.getPersistentTriggerEffects(Triggers.dealsCombatDamageToCreature())
-                .contains(grantedAbility)) {
-            target.addPersistentAbility(new TriggeredAbility(Triggers.dealsCombatDamageToCreature(), grantedAbility));
-        }
     }
 }

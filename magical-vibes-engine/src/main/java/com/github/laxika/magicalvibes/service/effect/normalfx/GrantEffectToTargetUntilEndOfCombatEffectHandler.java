@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -54,8 +55,9 @@ public class GrantEffectToTargetUntilEndOfCombatEffectHandler implements NormalE
 
     private void grantTo(GameData gameData, StackEntry entry,
                          GrantEffectToTargetUntilEndOfCombatEffect grant, Permanent target) {
-        target.addCombatAbility(grantedBySource(entry,
-                AbilityEffects.withEffect(grant.grantedAbility(), grant.grantedEffect())));
+        gameData.grantAbilityToPermanent(entry, grantedBySource(entry,
+                AbilityEffects.withEffect(grant.grantedAbility(), grant.grantedEffect())), target.getId(),
+                Duration.UNTIL_END_OF_COMBAT);
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())

@@ -382,7 +382,7 @@ public class AbilityActivationService {
         // Tap mana is an ability: a continuous "loses all abilities" strips it
         // (Imprisoned in the Moon / Deep Freeze). Granted mana abilities use activateAbility.
         if (gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()
-                || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+                || gameData.losesAllAbilitiesByEffect(permanent)) {
             throw new IllegalStateException("Permanent has lost its abilities");
         }
         // Check for land type override (e.g. Evil Presence / Lush Growth)
@@ -6662,7 +6662,7 @@ public class AbilityActivationService {
     public List<ActivatedAbility> getEffectiveActivatedAbilities(GameData gameData, Permanent permanent) {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
         List<ActivatedAbility> abilities;
-        if (staticBonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+        if (staticBonus.losesAllAbilities()
                 || gameQueryService.hasLostAllAbilities(gameData, permanent)
                 || gameQueryService.hasLostPrintedAbilities(gameData, permanent)
                 && !staticBonus.losesAllNonManaAbilities()
@@ -6681,14 +6681,7 @@ public class AbilityActivationService {
             abilities = new ArrayList<>(printedActivatedAbilities(gameData, permanent));
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         }
-        abilities.removeIf(permanent::hasLostActivatedAbility);
-        permanent.getPersistentGrantedActivatedAbilities().forEach(ability -> {
-            if (!abilities.contains(ability)) {
-                abilities.add(ability);
-            }
-        });
-        abilities.addAll(permanent.getTemporaryActivatedAbilities());
-        abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
+        abilities.removeIf(ability -> gameData.hasLostActivatedAbility(permanent.getId(), ability));
         abilities.addAll(gameQueryService.missingIntrinsicManaAbilities(gameData, permanent, abilities));
         return abilities;
     }
@@ -10699,7 +10692,7 @@ public class AbilityActivationService {
     }
 
     private void validateActivationLimitPerTurn(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int abilityIndex) {
-        if (permanent.hasLostActivatedAbility(ability)) {
+        if (gameData.hasLostActivatedAbility(permanent.getId(), ability)) {
             throw new IllegalStateException("This permanent has lost that ability");
         }
         validateActivationLimitPerGame(gameData, playerId, permanent, ability, abilityIndex);

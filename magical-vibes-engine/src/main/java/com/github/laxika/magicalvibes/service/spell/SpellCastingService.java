@@ -12168,7 +12168,9 @@ public class SpellCastingService {
         if (graveyardLandPermission.isPresent()
                 && graveyardLandPermission.get().permission().entryTriggeredAbilityGrant() != null) {
             var grant = graveyardLandPermission.get().permission().entryTriggeredAbilityGrant();
-            permanent.addPersistentAbility(grant.grantedAbility());
+            gameData.grantAbilityToPermanent(landFace.getName(),
+                    graveyardLandPermission.get().sourcePermanentId(), playerId, grant.grantedAbility(),
+                    permanent.getId(), com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT);
         }
         if (entersTapped) {
             permanent.tap();

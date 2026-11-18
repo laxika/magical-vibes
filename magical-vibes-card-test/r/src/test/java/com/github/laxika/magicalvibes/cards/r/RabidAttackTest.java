@@ -33,7 +33,7 @@ class RabidAttackTest extends BaseCardTest {
         for (Permanent bear : List.of(bearA, bearB)) {
             assertThat(PermanentGrants.powerBoostOf(gd, bear)).isEqualTo(1);
             assertThat(PermanentGrants.toughnessBoostOf(gd, bear)).isZero();
-            assertThat(bear.getTemporaryTriggeredAbilities()).hasSize(1);
+            assertThat(PermanentGrants.grantedTriggeredAbilities(gd, bear)).hasSize(1);
         }
     }
 
@@ -75,7 +75,7 @@ class RabidAttackTest extends BaseCardTest {
         harness.passBothPriorities(); // advance through cleanup
 
         assertThat(PermanentGrants.powerBoostOf(gd, bear)).isZero();
-        assertThat(bear.getTemporaryTriggeredAbilities()).isEmpty();
+        assertThat(PermanentGrants.grantedTriggeredAbilities(gd, bear)).isEmpty();
     }
 
     @Test

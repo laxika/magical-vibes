@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.cards.m.Manalith;
 import com.github.laxika.magicalvibes.cards.f.Flight;
@@ -25,7 +29,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TurnToFrog.class, SerraAngel.class, Manalith.class, RuneclawBear.class, TitanicGrowth.class, Flight.class, RoyalAssassin.class})
+@CardUsed({TurnToFrog.class, SerraAngel.class, Manalith.class, RuneclawBear.class, TitanicGrowth.class, Flight.class, RoyalAssassin.class,
+        LlanowarElves.class})
 class TurnToFrogTest extends BaseCardTest {
 
     @Test
@@ -226,5 +231,45 @@ class TurnToFrogTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Runeclaw Bear");
         harness.assertNotOnBattlefield(player2, "Runeclaw Bear");
+    }
+
+    private static ActivatedAbility tapForGreen() {
+        return new ActivatedAbility(true, null, List.of(new AwardManaEffect(ManaColor.GREEN)), "{T}: Add {G}.");
+    }
+
+    @Test
+    @DisplayName("The frog loses its printed mana ability")
+    void frogLosesPrintedManaAbility() {
+        Permanent elves = addCreatureReady(player1, new LlanowarElves());
+
+        castTurnToFrog(elves.getId());
+
+        assertThat(gqs.canActivateManaAbility(gd, elves)).isFalse();
+        assertThat(gs.getEffectiveActivatedAbilities(gd, elves)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A mana ability granted after the frog's loss of abilities can be activated (CR 613.7)")
+    void manaAbilityGrantedAfterTheLossWorks() {
+        Permanent elves = addCreatureReady(player1, new LlanowarElves());
+        castTurnToFrog(elves.getId());
+
+        PermanentGrants.abilityUntilEndOfTurn(gd, elves, tapForGreen());
+
+        assertThat(gqs.canActivateManaAbility(gd, elves)).isTrue();
+        assertThat(gs.getEffectiveActivatedAbilities(gd, elves)).singleElement()
+                .satisfies(ability -> assertThat(ability.getDescription()).isEqualTo("{T}: Add {G}."));
+    }
+
+    @Test
+    @DisplayName("A mana ability granted before the frog's loss of abilities is gone (CR 613.7)")
+    void manaAbilityGrantedBeforeTheLossIsGone() {
+        Permanent elves = addCreatureReady(player1, new LlanowarElves());
+        PermanentGrants.abilityUntilEndOfTurn(gd, elves, tapForGreen());
+
+        castTurnToFrog(elves.getId());
+
+        assertThat(gqs.canActivateManaAbility(gd, elves)).isFalse();
+        assertThat(gs.getEffectiveActivatedAbilities(gd, elves)).isEmpty();
     }
 }

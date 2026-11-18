@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -37,7 +38,7 @@ public class GrantEffectToSourceUntilEndOfTurnEffectHandler implements NormalEff
             return;
         }
 
-        source.addTemporaryAbility(e.grantedAbility());
+        gameData.grantAbilityToPermanent(entry, e.grantedAbility(), source.getId(), Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(source.getCard())

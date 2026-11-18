@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
@@ -77,6 +78,23 @@ public class GrantedTriggeredAbilitySupport {
                 gameQueryService.computeStaticBonus(gameData, permanent, (UUID) null),
                 ability -> ability.conditions().stream().anyMatch(condition ->
                         condition.trigger() instanceof PermanentChangeTrigger));
+    }
+
+    /**
+     * The triggered abilities resolved effects granted {@code permanent} ({@link GrantTriggeredAbilityEffect}s on it)
+     * and those its card perpetually gained, read from the effects themselves: for a permanent the layered pass doesn't
+     * see, one that phased out or hasn't entered the battlefield yet.
+     */
+    public List<TriggeredAbility> abilitiesGrantedByEffects(GameData gameData, Permanent permanent) {
+        return WatchedAbilities.grantedByEffects(gameData, permanent);
+    }
+
+    /**
+     * Whether {@code ability} is one a resolved effect granted {@code permanent} or its card perpetually gained, rather
+     * than one another permanent's static ability grants it.
+     */
+    public boolean isGrantedByAnEffect(GameData gameData, Permanent permanent, TriggeredAbility ability) {
+        return abilitiesGrantedByEffects(gameData, permanent).contains(ability);
     }
 
     /**

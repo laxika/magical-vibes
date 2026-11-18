@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 
+import java.util.UUID;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -30,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GrantedAbilityViewFactoryTest {
 
     private final GrantedAbilityViewFactory factory = new GrantedAbilityViewFactory();
+    private final GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "owner");
 
     @Test
     @DisplayName("Formats a granted protection effect and retains its source")
@@ -39,7 +42,7 @@ class GrantedAbilityViewFactoryTest {
         Permanent creature = permanent("Colossus");
 
         List<GrantedAbilityView> views = factory.create(
-                creature,
+                gameData, creature,
                 bonus(Set.of(), List.of(protection)),
                 List.of(new GrantedEffectAttribution("Favor of the Mighty", protection)), false);
 
@@ -58,7 +61,7 @@ class GrantedAbilityViewFactoryTest {
                 new CantHaveMinusOneMinusOneCountersEffect());
 
         List<GrantedAbilityView> views =
-                factory.create(permanent("Creature"), bonus(Set.of(), effects), List.of(), false);
+                factory.create(gameData, permanent("Creature"), bonus(Set.of(), effects), List.of(), false);
 
         assertThat(views).extracting(GrantedAbilityView::text).containsExactly(
                 "Can't be blocked",
@@ -72,7 +75,7 @@ class GrantedAbilityViewFactoryTest {
     @DisplayName("Lists attachment-imposed restrictions that are attributed but not granted")
     void listsAttributedAttachmentRestrictions() {
         List<GrantedAbilityView> views = factory.create(
-                permanent("Creature"),
+                gameData, permanent("Creature"),
                 bonus(Set.of(), List.of()),
                 List.of(new GrantedEffectAttribution("Assault Suit", new CantBeSacrificedEffect()),
                         new GrantedEffectAttribution("Airtight Alibi", new CantBecomeSuspectedEffect()),
@@ -94,7 +97,7 @@ class GrantedAbilityViewFactoryTest {
         permanent.setChosenColor(CardColor.RED);
 
         List<GrantedAbilityView> views = factory.create(
-                permanent,
+                gameData, permanent,
                 bonus(Set.of(CardColor.BLACK, CardColor.RED, CardColor.GREEN), List.of()),
                 List.of(), false);
 
@@ -108,7 +111,7 @@ class GrantedAbilityViewFactoryTest {
     void projectsRuntimeGrantedAbilities() {
         Permanent permanent = permanent("Creature");
 
-        List<GrantedAbilityView> views = factory.create(permanent,
+        List<GrantedAbilityView> views = factory.create(gameData, permanent,
                 bonus(Set.of(), List.of(new ProtectionFromNonSubtypeCreaturesEffect(CardSubtype.HUMAN))),
                 List.of(), true);
 
@@ -124,7 +127,7 @@ class GrantedAbilityViewFactoryTest {
                 new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.GREEN));
 
         List<GrantedAbilityView> views = factory.create(
-                permanent("Creature"),
+                gameData, permanent("Creature"),
                 bonus(Set.of(CardColor.BLACK, CardColor.GREEN), List.of()),
                 List.of(new GrantedEffectAttribution(
                         "Sword of Feast and Famine", protection)), false);

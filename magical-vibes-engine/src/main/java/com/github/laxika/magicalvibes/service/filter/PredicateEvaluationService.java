@@ -275,6 +275,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCardTypePredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsChosenPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCreatedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerEqualsPredicate;
@@ -2617,6 +2618,10 @@ public class PredicateEvaluationService {
             }
             case PermanentIsTargetOfTriggeringSpellPredicate ignored -> filterContext != null
                     && filterContext.triggeringSpellTargetIds().contains(permanent.getId());
+            case PermanentCreatedBySourcePredicate ignored -> gameData != null && filterContext != null
+                    && filterContext.sourcePermanentId() != null
+                    && gameData.sourceCreatedTokens.getOrDefault(filterContext.sourcePermanentId(), java.util.Set.of())
+                    .contains(permanent.getId());
             case PermanentIsChosenPermanentPredicate ignored -> {
                 Permanent sourcePermanent = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
                 if (gameData != null && filterContext != null && filterContext.sourcePermanentId() != null) {
@@ -3217,7 +3222,7 @@ public class PredicateEvaluationService {
                             >= atLeastCountersPredicate.minimum();
             case PermanentCounterCountAtLeastPredicate counterCountPredicate ->
                     permanent.getCounterCount(counterCountPredicate.counterType()) >= counterCountPredicate.threshold();
-            case PermanentHasCumulativeUpkeepPredicate ignored -> permanent.hasCumulativeUpkeep();
+            case PermanentHasCumulativeUpkeepPredicate ignored -> gameQueryService.hasCumulativeUpkeep(gameData, permanent);
             case PermanentDealtDamageThisTurnPredicate ignored ->
                     gameData != null && gameData.permanentsDealtDamageThisTurn.contains(permanent.getId());
             case PermanentDealtDamageThisTurnBySourcePredicate bySource -> gameData != null
@@ -3970,6 +3975,10 @@ public class PredicateEvaluationService {
             }
             case PermanentIsTargetOfTriggeringSpellPredicate ignored -> context != null
                     && context.triggeringSpellTargetIds().contains(permanent.getId());
+            case PermanentCreatedBySourcePredicate ignored -> context != null && context.gameData() != null
+                    && context.sourcePermanentId() != null
+                    && context.gameData().sourceCreatedTokens
+                    .getOrDefault(context.sourcePermanentId(), java.util.Set.of()).contains(permanent.getId());
             case PermanentIsChosenPermanentPredicate ignored -> {
                 Permanent source = context == null ? null : context.sourcePermanentSnapshot();
                 if (context != null && context.gameData() != null && context.sourcePermanentId() != null) {
@@ -4612,13 +4621,7 @@ public class PredicateEvaluationService {
                     .anyMatch(ActivatedAbility::isExhaustAbility);
         }
         if (GameQueryService.isStaticEvaluationActive()) {
-            return permanent.getPersistentGrantedActivatedAbilities().stream()
-                    .anyMatch(ActivatedAbility::isExhaustAbility)
-                    || permanent.getTemporaryActivatedAbilities().stream()
-                    .anyMatch(ActivatedAbility::isExhaustAbility)
-                    || permanent.getUntilNextTurnActivatedAbilities().stream()
-                    .anyMatch(ActivatedAbility::isExhaustAbility)
-                    || permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
+            return permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                     .anyMatch(ActivatedAbility::isExhaustAbility);
         }
         return hasExhaustActivatedAbility(context == null ? null : context.gameData(), permanent);
@@ -4636,11 +4639,7 @@ public class PredicateEvaluationService {
             }
             if (state.isLosesAllNonManaAbilities()) {
                 return hasPrintedManaAbility(permanent.getCard())
-                        || hasOutOfBandManaAbility(permanent)
                         || hasBasicLandIntrinsicManaAbility(state);
-            }
-            if (hasOutOfBandManaAbility(permanent)) {
-                return true;
             }
             if (state.isPrintedAbilitiesRemoved()) {
                 return hasBasicLandIntrinsicManaAbility(state);
@@ -4649,7 +4648,7 @@ public class PredicateEvaluationService {
                     || hasBasicLandIntrinsicManaAbility(state);
         }
         if (GameQueryService.isStaticEvaluationActive()) {
-            return hasOutOfBandManaAbility(permanent) || hasPrintedManaAbility(permanent.getCard());
+            return hasPrintedManaAbility(permanent.getCard());
         }
         return hasManaAbility(context == null ? null : context.gameData(), permanent);
     }
@@ -4689,12 +4688,10 @@ public class PredicateEvaluationService {
                 return false;
             }
             if (bonus.losesAllNonManaAbilities()) {
-                return hasOutOfBandGrantedAbility(permanent)
-                        || hasOutOfBandManaAbility(permanent)
-                        || hasPrintedManaAbility(permanent.getCard());
+                return hasPrintedManaAbility(permanent.getCard());
             }
         }
-        if (permanent.hasLostAnyCurrentActivatedAbility() && !printedAbilitiesSuppressed(permanent)
+        if (hasLostAnyCurrentActivatedAbility(gameData, permanent) && !printedAbilitiesSuppressed(permanent)
                 && gameData != null) {
             Set<Keyword> perpetuallyRemoved = gameData.perpetualCardRemovedKeywords
                     .getOrDefault(permanent.getCard().getId(), Set.of());
@@ -4702,8 +4699,7 @@ public class PredicateEvaluationService {
                 return true;
             }
         }
-        return hasOutOfBandGrantedAbility(permanent)
-                || hasAnyPrintedAbility(permanent);
+        return hasAnyPrintedAbility(gameData, permanent);
     }
 
     private boolean hasAnyEffectiveNonKeywordAbility(GameData gameData, Permanent permanent) {
@@ -4725,12 +4721,10 @@ public class PredicateEvaluationService {
                 return false;
             }
             if (bonus.losesAllNonManaAbilities()) {
-                return hasOutOfBandManaAbility(permanent)
-                        || hasPrintedManaAbility(permanent.getCard());
+                return hasPrintedManaAbility(permanent.getCard());
             }
         }
-        return hasOutOfBandGrantedAbility(permanent)
-                || hasAnyPrintedNonKeywordAbility(permanent);
+        return hasAnyPrintedNonKeywordAbility(permanent);
     }
 
     private boolean hasAnyEffectiveAbilityFromLayeredState(Permanent permanent,
@@ -4739,10 +4733,9 @@ public class PredicateEvaluationService {
         if (state == null) {
             // A last-known/off-battlefield permanent has no layered state. During a static
             // evaluation, rebuilding its bonus here would re-enter the filter currently being
-            // evaluated. Printed and out-of-band abilities are the recursion-safe fallback.
+            // evaluated. Printed abilities are the recursion-safe fallback.
             if (GameQueryService.isStaticEvaluationActive()) {
-                return hasOutOfBandGrantedAbility(permanent)
-                        || hasAnyPrintedAbility(permanent);
+                return hasAnyPrintedAbility(context == null ? null : context.gameData(), permanent);
             }
             return hasAnyEffectiveAbility(context == null ? null : context.gameData(), permanent);
         }
@@ -4761,16 +4754,12 @@ public class PredicateEvaluationService {
         }
         if (state.isLosesAllNonManaAbilities()) {
             return hasPrintedManaAbility(permanent.getCard())
-                    || hasOutOfBandManaAbility(permanent)
                     || hasBasicLandIntrinsicManaAbility(state);
-        }
-        if (hasOutOfBandGrantedAbility(permanent)) {
-            return true;
         }
         if (state.isPrintedAbilitiesRemoved()) {
             return hasBasicLandIntrinsicManaAbility(state);
         }
-        return hasAnyPrintedAbility(permanent);
+        return hasAnyPrintedAbility(context == null ? null : context.gameData(), permanent);
     }
 
     private boolean hasAnyEffectiveNonKeywordAbilityFromLayeredState(Permanent permanent,
@@ -4778,8 +4767,7 @@ public class PredicateEvaluationService {
                                                                        FilterContext context) {
         if (state == null) {
             if (GameQueryService.isStaticEvaluationActive()) {
-                return hasOutOfBandGrantedAbility(permanent)
-                        || hasAnyPrintedNonKeywordAbility(permanent);
+                return hasAnyPrintedNonKeywordAbility(permanent);
             }
             return hasAnyEffectiveNonKeywordAbility(context == null ? null : context.gameData(), permanent);
         }
@@ -4793,29 +4781,12 @@ public class PredicateEvaluationService {
         }
         if (state.isLosesAllNonManaAbilities()) {
             return hasPrintedManaAbility(permanent.getCard())
-                    || hasOutOfBandManaAbility(permanent)
                     || hasBasicLandIntrinsicManaAbility(state);
-        }
-        if (hasOutOfBandGrantedAbility(permanent)) {
-            return true;
         }
         if (state.isPrintedAbilitiesRemoved()) {
             return hasBasicLandIntrinsicManaAbility(state);
         }
         return hasAnyPrintedNonKeywordAbility(permanent);
-    }
-
-    private boolean hasOutOfBandGrantedAbility(Permanent permanent) {
-        if (!permanent.getPersistentGrantedActivatedAbilities().isEmpty()
-                || !permanent.getTemporaryActivatedAbilities().isEmpty()
-                || !permanent.getUntilNextTurnActivatedAbilities().isEmpty()) {
-            return true;
-        }
-        if (!permanent.getPersistentStaticEffects().isEmpty() || !permanent.getTemporaryStaticEffects().isEmpty()) {
-            return true;
-        }
-        return !permanent.getPersistentTriggeredAbilities().isEmpty()
-                || !permanent.getTemporaryTriggeredAbilities().isEmpty();
     }
 
     /**
@@ -4836,15 +4807,6 @@ public class PredicateEvaluationService {
         return Set.copyOf(permanent.getEffectiveColors());
     }
 
-    private static boolean hasOutOfBandManaAbility(Permanent permanent) {
-        return permanent.getPersistentGrantedActivatedAbilities().stream()
-                .anyMatch(AbilityActivationService::isManaAbility)
-                || permanent.getTemporaryActivatedAbilities().stream()
-                .anyMatch(AbilityActivationService::isManaAbility)
-                || permanent.getUntilNextTurnActivatedAbilities().stream()
-                .anyMatch(AbilityActivationService::isManaAbility);
-    }
-
     /**
      * A face-down permanent has no characteristics beyond those listed (CR 708.2), so no abilities,
      * and a Deworded permanent counts as having none, so its printed abilities do not count when
@@ -4854,14 +4816,20 @@ public class PredicateEvaluationService {
         return permanent.isFaceDown() || permanent.getCard().hasKeyword(Keyword.DEWORDED);
     }
 
-    private static boolean hasAnyPrintedAbility(Permanent permanent) {
+    private static boolean hasAnyPrintedAbility(GameData gameData, Permanent permanent) {
         if (printedAbilitiesSuppressed(permanent)) {
             return false;
         }
-        if (!permanent.hasLostAnyCurrentActivatedAbility()) {
+        if (!hasLostAnyCurrentActivatedAbility(gameData, permanent)) {
             return hasAnyPrintedAbility(permanent.getCard());
         }
-        return hasAnyRemainingPrintedAbilityIgnoringKeywords(permanent);
+        return hasAnyRemainingPrintedAbilityIgnoringKeywords(gameData, permanent);
+    }
+
+    /** Whether an effect made {@code permanent} lose one of the printed activated abilities of the card it shows. */
+    private static boolean hasLostAnyCurrentActivatedAbility(GameData gameData, Permanent permanent) {
+        return gameData != null && permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
+                .anyMatch(ability -> gameData.hasLostActivatedAbility(permanent.getId(), ability));
     }
 
     /**
@@ -4870,10 +4838,10 @@ public class PredicateEvaluationService {
      * keywords are left to the caller, which already evaluates them against the layered state
      * (perpetual removals included).
      */
-    private static boolean hasAnyRemainingPrintedAbilityIgnoringKeywords(Permanent permanent) {
+    private static boolean hasAnyRemainingPrintedAbilityIgnoringKeywords(GameData gameData, Permanent permanent) {
         Card card = permanent.getCard();
         List<ActivatedAbility> printed = card.getActivatedAbilities(Zone.BATTLEFIELD);
-        if (printed.stream().anyMatch(ability -> !permanent.hasLostActivatedAbility(ability))) {
+        if (printed.stream().anyMatch(ability -> !gameData.hasLostActivatedAbility(permanent.getId(), ability))) {
             return true;
         }
         if (card.getActivatedAbilities().stream().anyMatch(ability -> !ability.functionsIn(Zone.BATTLEFIELD))) {
@@ -4975,7 +4943,7 @@ public class PredicateEvaluationService {
             abilities.addAll(permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
         } else {
             GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
-            if (!staticBonus.losesAllAbilities() && !permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            if (!staticBonus.losesAllAbilities() && !gameData.losesAllAbilitiesByEffect(permanent)) {
                 if (staticBonus.losesAllNonManaAbilities()) {
                     abilities.addAll(permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                             .filter(AbilityActivationService::isManaAbility)
@@ -4986,9 +4954,6 @@ public class PredicateEvaluationService {
             }
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         }
-        abilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
-        abilities.addAll(permanent.getTemporaryActivatedAbilities());
-        abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
         return abilities;
     }
 

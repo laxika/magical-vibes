@@ -50,9 +50,6 @@ public class PerpetuallyGrantActivatedAbilityToTargetPermanentEffectHandler
                 }
                 return List.copyOf(updated);
             });
-            if (!target.getPersistentGrantedActivatedAbilities().contains(ability)) {
-                target.getPersistentGrantedActivatedAbilities().add(ability);
-            }
         }
     }
 }

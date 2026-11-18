@@ -667,7 +667,7 @@ public class CombatDamageTriggers {
                 continue;
             }
             if (perm.isFaceDown() || gameQueryService.computeStaticBonus(gameData, perm).losesAllAbilities()
-                    || perm.isLosesAllAbilitiesUntilEndOfTurn()) {
+                    || gameData.losesAllAbilitiesByEffect(perm)) {
                 if (!perm.isFaceDown() && !battleDamage && !ownerRelativePass && perm.getId().equals(creature.getId())) {
                     markFirstTimeEachTurnSelfCombatDamageSpent(gameData, perm);
                 }

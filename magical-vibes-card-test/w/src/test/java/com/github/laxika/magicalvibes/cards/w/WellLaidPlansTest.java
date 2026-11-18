@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
@@ -91,7 +92,7 @@ class WellLaidPlansTest extends BaseCardTest {
     @DisplayName("Stops preventing damage when Well-Laid Plans loses all abilities")
     void stopsPreventingDamageWhenAbilitiesAreLost() {
         Permanent plans = harness.addToBattlefieldAndReturn(player1, new WellLaidPlans());
-        plans.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, plans);
         addCreatureReady(player1, new SamiteArcher());
         Permanent target = addCreatureReady(player2, new AngelOfMercy());
 

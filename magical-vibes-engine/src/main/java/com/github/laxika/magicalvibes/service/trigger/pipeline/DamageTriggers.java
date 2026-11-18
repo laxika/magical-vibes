@@ -434,7 +434,7 @@ public class DamageTriggers {
         // Salamander deals combat damage to a player", The Sea Devils).
         for (Watcher watcher : eventAbilitySupport.watchers(gameData)) {
             UUID controllerId = watcher.controllerId();
-            if (watcher.permanent() != null && watcher.permanent().isLosesAllAbilitiesUntilEndOfTurn()) {
+            if (watcher.permanent() != null && gameData.losesAllAbilitiesByEffect(watcher.permanent())) {
                 continue;
             }
 
@@ -541,7 +541,7 @@ public class DamageTriggers {
         }
         Trigger watch = Triggers.youAreDealtCombatDamage();
         for (Permanent source : new ArrayList<>(gameData.playerBattlefields.getOrDefault(damagedPlayerId, List.of()))) {
-            if (source.isLosesAllAbilitiesUntilEndOfTurn()) {
+            if (gameData.losesAllAbilitiesByEffect(source)) {
                 continue;
             }
             for (TriggeredAbility ability : printedWatchedAbilities(gameData, source, watch)) {
@@ -572,7 +572,7 @@ public class DamageTriggers {
         TriggerCause cause = new SourceDealsCombatDamage(creature.getCard(), creatureControllerId,
                 creature.getId(), damageDealt, damageDealt).cause();
         gameData.forEachPermanent((controllerId, source) -> {
-            if (source.isLosesAllAbilitiesUntilEndOfTurn()) {
+            if (gameData.losesAllAbilitiesByEffect(source)) {
                 return;
             }
 
@@ -622,7 +622,7 @@ public class DamageTriggers {
 
         gameData.forEachPermanent((controllerId, source) -> {
             if (controllerId.equals(damagedPlayerId)
-                    || source.isLosesAllAbilitiesUntilEndOfTurn()
+                    || gameData.losesAllAbilitiesByEffect(source)
                     || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
                 return;
             }

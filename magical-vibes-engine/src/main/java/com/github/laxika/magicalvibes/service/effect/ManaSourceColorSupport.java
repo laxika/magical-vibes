@@ -50,15 +50,12 @@ public class ManaSourceColorSupport {
         }
 
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, source);
-        if (staticBonus.losesAllAbilities() || source.isLosesAllAbilitiesUntilEndOfTurn() || source.isFaceDown()) {
+        if (staticBonus.losesAllAbilities() || gameData.losesAllAbilitiesByEffect(source) || source.isFaceDown()) {
             return Set.of();
         }
 
         List<ActivatedAbility> abilities = new ArrayList<>(source.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
         abilities.addAll(staticBonus.grantedActivatedAbilities());
-        abilities.addAll(source.getPersistentGrantedActivatedAbilities());
-        abilities.addAll(source.getTemporaryActivatedAbilities());
-        abilities.addAll(source.getUntilNextTurnActivatedAbilities());
 
         Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
         for (ActivatedAbility ability : abilities) {

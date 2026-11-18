@@ -53,7 +53,6 @@ public class PerpetuallyGrantKeywordToMatchingCardsEffectHandler implements Norm
             restoreOrStackPerpetualKeywords(gameData, permanent, grantableKeywords);
             addPerpetualKeywords(gameData, permanent.getOriginalCard().getId(), grantableKeywords);
             addPerpetualTriggeredAbility(gameData, permanent.getOriginalCard().getId(), perpetual);
-            addPersistentTriggeredAbility(permanent, perpetual);
         }
 
         for (Card card : gameData.playerHands.getOrDefault(entry.getControllerId(), List.of())) {
@@ -131,10 +130,4 @@ public class PerpetuallyGrantKeywordToMatchingCardsEffectHandler implements Norm
         gameData.grantPerpetualAbility(cardId, effect.grantedAbility());
     }
 
-    private void addPersistentTriggeredAbility(Permanent permanent,
-                                                PerpetuallyGrantKeywordToMatchingCardsEffect effect) {
-        if (effect.grantedAbility() != null) {
-            permanent.addPersistentAbility(effect.grantedAbility());
-        }
-    }
 }

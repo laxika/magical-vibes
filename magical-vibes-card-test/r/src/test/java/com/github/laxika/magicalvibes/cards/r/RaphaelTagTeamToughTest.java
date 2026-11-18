@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -112,7 +114,7 @@ class RaphaelTagTeamToughTest extends BaseCardTest {
     @DisplayName("Regaining the ability after the first combat damage does not trigger it on later damage")
     void regainingAbilityAfterFirstDamageDoesNotTriggerOnLaterDamage() {
         Permanent raphael = addCreatureReady(player1, new RaphaelTagTeamTough());
-        raphael.setLosesAllAbilitiesUntilEndOfTurn(true);
+        FloatingContinuousEffect loss = PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, raphael);
         gd.combatPhasesThisTurn = 1;
         int initialLife = gd.playerLifeTotals.get(player2.getId());
 
@@ -123,7 +125,7 @@ class RaphaelTagTeamToughTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(initialLife);
         assertThat(gd.additionalCombatPhasesOnly).isZero();
 
-        raphael.setLosesAllAbilitiesUntilEndOfTurn(false);
+        gd.endFloatingEffect(loss);
         raphael.untap();
         gd.combatPhasesThisTurn = 2;
         declareAttackers(List.of(0));

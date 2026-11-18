@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FrilledSandwalla;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -56,14 +57,14 @@ class DrivenDespairTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
-        assertThat(bears.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayer())).isNotEmpty();
+        assertThat(PermanentGrants.grantedTriggerEffects(gd, bears, Triggers.dealsCombatDamageToPlayer())).isNotEmpty();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
-        assertThat(bears.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayer())).isEmpty();
+        assertThat(PermanentGrants.grantedTriggerEffects(gd, bears, Triggers.dealsCombatDamageToPlayer())).isEmpty();
     }
 
     @Test
@@ -79,7 +80,7 @@ class DrivenDespairTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, early, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, late, Keyword.TRAMPLE)).isFalse();
-        assertThat(late.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayer())).isEmpty();
+        assertThat(PermanentGrants.grantedTriggerEffects(gd, late, Triggers.dealsCombatDamageToPlayer())).isEmpty();
     }
 
     @Test
@@ -125,7 +126,7 @@ class DrivenDespairTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isFalse();
-        assertThat(bears.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayer())).isEmpty();
+        assertThat(PermanentGrants.grantedTriggerEffects(gd, bears, Triggers.dealsCombatDamageToPlayer())).isEmpty();
     }
 
     @Test

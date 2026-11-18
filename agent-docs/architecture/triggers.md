@@ -155,8 +155,9 @@ judges, records or routes by an effect's class, and none reads, wraps or rebuild
 
 - `permanentAbilities`: a permanent's (or face-up scheme view's) abilities as the layers leave them (CR 613.1f): its
   card's and printed echo's (none face down, CR 708.2, or when lost), read through text changes (spell filters by
-  `TextChangeTransformer.transformSpellFilter`, CR 612.1); those granted until end of turn, end of combat, next upkeep
-  or until it leaves; others' static grants (granted cumulative upkeep too); one per keyword-trigger instance. No reader
+  `TextChangeTransformer.transformSpellFilter`, CR 612.1); the granted ones the layered state keeps, resolved grants
+  (floating `GrantTriggeredAbilityEffect`s of any duration) and others' static grants alike, in timestamp order against
+  a "loses all abilities" (CR 613.7; granted cumulative upkeep too); one per keyword-trigger instance. No reader
   assembles printed and granted abilities by hand or re-checks face down, cloaked or lost abilities.
 - `graveyardAbilities` (own and perpetually gained, none while an effect like Yixlid Jailer's applies), `cardAbilities`
   (exile, command zone), `delayedAbilities` / `delayedAbilitiesAbout`.

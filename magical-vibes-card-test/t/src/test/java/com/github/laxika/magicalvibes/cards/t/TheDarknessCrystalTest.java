@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -202,7 +203,7 @@ class TheDarknessCrystalTest extends BaseCardTest {
     @DisplayName("Losing all abilities disables the death replacement")
     void abilityLossDisablesDeathReplacement() {
         Permanent crystal = harness.addToBattlefieldAndReturn(player1, new TheDarknessCrystal());
-        crystal.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, crystal);
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);

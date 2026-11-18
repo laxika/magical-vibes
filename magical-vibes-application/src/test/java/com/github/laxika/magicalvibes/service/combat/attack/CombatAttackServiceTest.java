@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
@@ -511,7 +512,7 @@ class CombatAttackServiceTest extends BaseCardTest {
         @CardUsed(Okk.class)
         void greaterPowerRestrictionEndsWithPrintedAbilities() {
             Permanent okk = addCreatureReady(player1, new Okk());
-            okk.setLosesAllAbilitiesUntilEndOfTurn(true);
+            PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, okk);
             enterDeclareAttackers();
 
             declare(List.of(index(okk)));

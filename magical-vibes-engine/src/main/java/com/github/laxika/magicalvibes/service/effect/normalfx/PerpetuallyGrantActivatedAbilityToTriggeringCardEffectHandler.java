@@ -48,11 +48,5 @@ public class PerpetuallyGrantActivatedAbilityToTriggeringCardEffectHandler
             }
             return List.copyOf(updated);
         });
-
-        Permanent permanent = entry.getTriggeringPermanentId() == null
-                ? null : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
-        if (permanent != null && !permanent.getPersistentGrantedActivatedAbilities().contains(ability)) {
-            permanent.getPersistentGrantedActivatedAbilities().add(ability);
-        }
     }
 }

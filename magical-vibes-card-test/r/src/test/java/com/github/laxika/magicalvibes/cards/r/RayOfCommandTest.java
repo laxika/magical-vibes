@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.cards.b.BindingGrasp;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.FreyalisesWinds;
@@ -252,5 +258,22 @@ class RayOfCommandTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(card -> card instanceof RayOfCommand).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An ability granted until end of combat stays when the creature changes control (CR 611.2a, 506.4)")
+    void untilEndOfCombatGrantOutlivesTheControlChange() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        gd.grantAbilityToPermanent("Test", null, player2.getId(),
+                new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DrawCardEffect(1)), target.getId(),
+                Duration.UNTIL_END_OF_COMBAT);
+        harness.setHand(player1, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && entry.getCard().getId().equals(target.getCard().getId()));
     }
 }

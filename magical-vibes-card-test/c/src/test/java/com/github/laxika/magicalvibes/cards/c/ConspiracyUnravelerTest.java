@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FurtiveCourier;
 import com.github.laxika.magicalvibes.cards.d.Doppelgang;
 import com.github.laxika.magicalvibes.model.Card;
@@ -75,7 +76,7 @@ class ConspiracyUnravelerTest extends BaseCardTest {
     @Test
     void cannotUseAlternativeCostAfterSourceLosesAbilities() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new ConspiracyUnraveler());
-        source.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, source);
         harness.setGraveyard(player1, List.of(new ConspiracyUnraveler(), new FurtiveCourier()));
         harness.setHand(player1, List.of(new FurtiveCourier()));
 

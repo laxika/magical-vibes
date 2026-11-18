@@ -126,7 +126,7 @@ class TapestryWardenTest extends BaseCardTest {
         Permanent seedship = harness.addToBattlefieldAndReturn(player1, new SledgeClassSeedship());
 
         harness.activateAbility(player1, battlefieldIndex(seedship), null, null);
-        warden.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, warden);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectiveCombatDamage(gd, warden)).isEqualTo(3);

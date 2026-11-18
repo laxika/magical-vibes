@@ -250,7 +250,7 @@ public class PlanechaseService {
 
         boolean replacementActive = false;
         for (Permanent source : game.playerBattlefields.getOrDefault(state.controllerId, List.of())) {
-            if (source.isFaceDown() || source.isLosesAllAbilitiesUntilEndOfTurn()
+            if (source.isFaceDown() || game.losesAllAbilitiesByEffect(source)
                     || query.computeStaticBonus(game, source).losesAllAbilities()) {
                 continue;
             }

@@ -109,7 +109,7 @@ class BalduvianShamanTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(shaman), null, cop.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(shaman.isTapped()).isFalse();
-        assertThat(cop.hasCumulativeUpkeep()).isFalse();
+        assertThat(gqs.hasCumulativeUpkeep(gd, cop)).isFalse();
     }
 
     @Test
@@ -126,7 +126,7 @@ class BalduvianShamanTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         assertThat(cop.getTextReplacements()).containsExactly(new TextReplacement("black", "blue"));
-        assertThat(cop.hasCumulativeUpkeep()).isTrue();
+        assertThat(gqs.hasCumulativeUpkeep(gd, cop)).isTrue();
         assertThat(shaman.isTapped()).isTrue();
     }
 
@@ -253,7 +253,7 @@ class BalduvianShamanTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         assertThat(renewal.getTextReplacements()).containsExactly(new TextReplacement("black", "blue"));
-        assertThat(renewal.hasCumulativeUpkeep()).isTrue();
+        assertThat(gqs.hasCumulativeUpkeep(gd, renewal)).isTrue();
     }
 
     @Test

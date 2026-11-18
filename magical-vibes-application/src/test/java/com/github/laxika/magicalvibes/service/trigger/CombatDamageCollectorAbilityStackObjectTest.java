@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
@@ -167,7 +168,7 @@ class CombatDamageCollectorAbilityStackObjectTest extends BaseCardTest {
     @DisplayName("A combat damage ability of two effects a creature has until end of turn is one stack object")
     void temporaryCombatDamageToPlayerAbilityIsOneStackObject() {
         Permanent raider = attacking(creature("Drilled Raider"));
-        raider.addTemporaryAbility(drawAndGain(Triggers.dealsCombatDamageToPlayer()));
+        PermanentGrants.abilityUntilEndOfTurn(gd, raider, drawAndGain(Triggers.dealsCombatDamageToPlayer()));
 
         dealCombatDamage();
 
@@ -397,7 +398,7 @@ class CombatDamageCollectorAbilityStackObjectTest extends BaseCardTest {
     @DisplayName("A \"deals combat damage\" ability of two effects a creature has until end of turn is one stack object")
     void temporaryDealsCombatDamageAbilityIsOneStackObject() {
         Permanent raider = attacking(creature("Lent Raider"));
-        raider.addTemporaryAbility(drawAndGain(Triggers.dealsCombatDamage()));
+        PermanentGrants.abilityUntilEndOfTurn(gd, raider, drawAndGain(Triggers.dealsCombatDamage()));
 
         dealCombatDamage();
 

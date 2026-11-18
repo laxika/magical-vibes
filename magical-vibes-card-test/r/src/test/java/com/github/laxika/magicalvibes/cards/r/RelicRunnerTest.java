@@ -247,7 +247,7 @@ class RelicRunnerTest extends BaseCardTest {
         });
 
         assertThat(runner.isAttacking()).isTrue();
-        assertThat(runner.isLosesAllAbilitiesUntilEndOfTurn()).isTrue();
+        assertThat(gd.losesAllAbilitiesByEffect(runner.getId())).isTrue();
         assertThat(harness.getCombatBlockService().getBlockableAttackerIndices(
                 gd, player1.getId(), player2.getId())).contains(0);
     }

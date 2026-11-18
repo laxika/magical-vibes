@@ -1525,7 +1525,7 @@ public class CombatAttackService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                if (perm.isLosesAllAbilitiesUntilEndOfTurn()
+                if (gameData.losesAllAbilitiesByEffect(perm)
                         || gameQueryService.computeStaticBonus(gameData, perm).losesAllAbilities()) {
                     continue;
                 }

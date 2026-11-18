@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.a.AlchemistsApprentice;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -100,7 +101,7 @@ class WanderingWolfTest extends BaseCardTest {
     void losingAbilitiesRemovesRestriction() {
         Permanent blocker = addCreatureReady(player2, new AlchemistsApprentice());
         Permanent wolf = addCreatureReady(player1, new WanderingWolf());
-        wolf.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, wolf);
         wolf.setAttacking(true);
 
         prepareDeclareBlockers();

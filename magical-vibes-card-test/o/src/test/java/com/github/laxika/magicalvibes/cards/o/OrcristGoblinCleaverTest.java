@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -122,7 +123,7 @@ class OrcristGoblinCleaverTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent equipment = addEquipmentReady(player1);
         equipment.setAttachedTo(attacker.getId());
-        equipment.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, equipment);
         attacker.setAttacking(true);
 
         resolveCombat();

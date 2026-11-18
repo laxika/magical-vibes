@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.a.AgonizingDemise;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Firebolt;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.r.Recoil;
@@ -169,7 +170,7 @@ class YawgmothsAgendaTest extends BaseCardTest {
     @DisplayName("Losing Agenda's abilities removes its graveyard permissions")
     void losingAbilitiesRemovesGraveyardPermissions() {
         Permanent agenda = harness.addToBattlefieldAndReturn(player1, new YawgmothsAgenda());
-        agenda.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, agenda);
         harness.setGraveyard(player1, List.of(new Mountain(), new Zap()));
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.RED, 3);
@@ -186,7 +187,7 @@ class YawgmothsAgendaTest extends BaseCardTest {
     @DisplayName("Losing Agenda's abilities removes its graveyard spell permission")
     void losingAbilitiesRemovesGraveyardSpellPermission() {
         Permanent agenda = harness.addToBattlefieldAndReturn(player1, new YawgmothsAgenda());
-        agenda.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, agenda);
         harness.setGraveyard(player1, List.of(new Zap()));
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.RED, 3);
@@ -203,7 +204,7 @@ class YawgmothsAgendaTest extends BaseCardTest {
     @DisplayName("Losing Agenda's abilities removes its spell limit")
     void losingAbilitiesRemovesSpellLimit() {
         Permanent agenda = harness.addToBattlefieldAndReturn(player1, new YawgmothsAgenda());
-        agenda.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, agenda);
         harness.setHand(player1, List.of(new Zap(), new Zap()));
         harness.addMana(player1, ManaColor.RED, 6);
 
@@ -223,7 +224,7 @@ class YawgmothsAgendaTest extends BaseCardTest {
     @DisplayName("Losing Agenda's abilities removes its graveyard replacement effect")
     void losingAbilitiesRemovesGraveyardReplacement() {
         Permanent agenda = harness.addToBattlefieldAndReturn(player1, new YawgmothsAgenda());
-        agenda.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, agenda);
         harness.addToBattlefield(player1, new YavimayaBarbarian());
         harness.setHand(player1, List.of(new AgonizingDemise()));
         harness.addMana(player1, ManaColor.BLACK, 4);

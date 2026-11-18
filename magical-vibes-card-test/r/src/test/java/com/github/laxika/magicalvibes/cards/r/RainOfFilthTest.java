@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -36,13 +37,13 @@ class RainOfFilthTest extends BaseCardTest {
         harness.castFromHand(player1, new RainOfFilth(), "{B}");
         harness.passBothPriorities();
 
-        assertThat(forest.getTemporaryActivatedAbilities()).hasSize(1);
+        assertThat(PermanentGrants.grantedActivatedAbilities(gd, forest)).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(forest.getTemporaryActivatedAbilities()).isEmpty();
+        assertThat(PermanentGrants.grantedActivatedAbilities(gd, forest)).isEmpty();
     }
 
     @Test

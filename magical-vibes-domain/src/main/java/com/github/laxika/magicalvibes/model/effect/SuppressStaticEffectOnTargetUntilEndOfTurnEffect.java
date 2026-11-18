@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.model.effect;
 import java.util.Objects;
 
 /**
- * Suppresses one printed static effect on the targeted permanent until end of turn.
+ * "Target creature loses all '[static ability]' abilities until end of turn" (Tolaria, Shelkin Brownie): a layer-6
+ * ability removal (CR 613.1f). As it resolves it becomes a floating effect on the target with this record as its
+ * payload; the abilities of that kind it has then are removed, one granted later stays (CR 613.7).
  *
  * @param effectType the concrete static effect type to suppress
  */

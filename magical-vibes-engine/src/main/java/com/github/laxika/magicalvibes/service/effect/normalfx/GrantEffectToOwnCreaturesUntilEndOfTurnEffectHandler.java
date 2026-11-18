@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -47,7 +48,7 @@ public class GrantEffectToOwnCreaturesUntilEndOfTurnEffectHandler implements Nor
                         FilterContext.of(gameData).withSourcePermanentId(entry.getSourcePermanentId()))) {
                     continue;
                 }
-                permanent.addTemporaryAbility(e.grantedAbility());
+                gameData.grantAbilityToPermanent(entry, e.grantedAbility(), permanent.getId(), Duration.UNTIL_END_OF_TURN);
                 count++;
             }
         }

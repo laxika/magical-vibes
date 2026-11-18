@@ -5,6 +5,7 @@
 `PermanentBlockingSourcePredicate` resolves an attached Equipment's equipped creature as the source, just as it resolves an attached Aura's enchanted creature.
 
 | `PermanentIsChosenPermanentPredicate` | `()` | the permanent chosen by the source permanent, matched by its current permanent id | `sourcePermanentId` or `sourcePermanentSnapshot` |
+| `PermanentCreatedBySourcePredicate` | `()` | a token the source permanent created and tracks (`GameData.sourceCreatedTokens`): "the token" of a linked ability (Dance of Many's "when the token leaves the battlefield") | `sourcePermanentId` |
 
 `PermanentProtectedByDefendingPlayerPredicate()` matches battles protected by the defending player in the combat context carried by `FilterContext`; it is intended for attack-trigger target filters.
 

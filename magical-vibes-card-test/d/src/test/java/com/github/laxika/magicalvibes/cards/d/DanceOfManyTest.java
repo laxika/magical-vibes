@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.j.JinnieFayJetmirsSecond;
 import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -23,7 +24,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DanceOfMany.class, FountainOfYouth.class, GrizzlyBears.class, RayOfCommand.class, DoublingSeason.class})
+@CardUsed({DanceOfMany.class, FountainOfYouth.class, GrizzlyBears.class, RayOfCommand.class, DoublingSeason.class,
+        TurnToFrog.class})
 class DanceOfManyTest extends BaseCardTest {
 
     private void castDanceCopying(UUID targetId) {
@@ -403,5 +405,23 @@ class DanceOfManyTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, choice.options().stream()
                 .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
+    }
+
+    @Test
+    @DisplayName("The sacrifice trigger is Dance of Many's own: the token losing all abilities doesn't stop it")
+    void tokenLosingAbilitiesStillSacrificesDance() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castDanceCopying(harness.getPermanentId(player2, "Grizzly Bears"));
+        Permanent token = tokenCopy(player1);
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, token.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, token));
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(danceOfMany(player1)).isNull();
+        harness.assertInGraveyard(player1, "Dance of Many");
     }
 }

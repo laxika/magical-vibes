@@ -231,8 +231,7 @@ public class TriggerIndex {
     private void battlefieldCandidates(GameData gameData, List<ZoneChangeEvent> batch, boolean departure,
                                        Permanent permanent, UUID controllerId, List<TriggerCandidate> into) {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
-        boolean lostAll = permanent.isLosesAllAbilitiesUntilEndOfTurn() || staticBonus.losesAllAbilities()
-                || staticBonus.losesAllNonManaAbilities();
+        boolean lostAll = staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities();
         List<TriggeredAbility> abilities = new ArrayList<>();
         // An ability lost to an effect that ended with the departure was still lost as it left
         // (lostPrintedAbilityWatcherIdsBeforeLeave, CR 603.10a).
@@ -242,12 +241,12 @@ public class TriggerIndex {
                     permanent.getCard().getTriggeredAbilities()));
         }
         keywordAbilities(gameData, permanent, staticBonus, abilities);
+        // The granted abilities are those the layers leave it, after any "loses all abilities" older than them
+        // (CR 613.1f, 613.7).
+        abilities.addAll(grantedTriggeredAbilitySupport.grantedZoneChangeAbilities(gameData, permanent));
         if (!lostAll) {
-            abilities.addAll(permanent.getPersistentTriggeredAbilities());
-            abilities.addAll(grantedTriggeredAbilitySupport.grantedZoneChangeAbilities(gameData, permanent));
             abilities.addAll(lookBackConditionalGrants(gameData, batch, permanent, controllerId, abilities));
         }
-        abilities.addAll(permanent.getTemporaryTriggeredAbilities());
         addZoneChangeCandidates(permanent.getCard(), permanent, controllerId, Zone.BATTLEFIELD, abilities, into);
     }
 
@@ -259,14 +258,10 @@ public class TriggerIndex {
         Card printedSource = departure.card().getId().equals(card.getId()) ? departure.card() : card;
         List<TriggeredAbility> printed = new ArrayList<>();
         List<TriggeredAbility> gained = new ArrayList<>();
-        if (!lastKnown.isLosesAllAbilitiesUntilEndOfTurn()) {
-            if (!lastKnown.isFaceDown()) {
-                printed.addAll(withoutLost(gameData, card.getId(), card.getTriggeredAbilities()));
-            }
-            gained.addAll(lastKnown.getPersistentTriggeredAbilities());
-            triggered(departure.grantedAbilities(), gained);
+        if (!lastKnown.isLastKnownLostPrintedAbilities() && !lastKnown.isFaceDown()) {
+            printed.addAll(withoutLost(gameData, card.getId(), card.getTriggeredAbilities()));
         }
-        gained.addAll(lastKnown.getTemporaryTriggeredAbilities());
+        triggered(departure.grantedAbilities(), gained);
         // A permanent that left in the same event sees the others leave only with an ability that looks back
         // (CR 603.10a): "whenever another card is put into a graveyard from anywhere" doesn't see the cards put there
         // with it (CR 603.6c; Planar Void's and Bloodchief Ascension's rulings).
@@ -421,32 +416,24 @@ public class TriggerIndex {
         List<TriggerCandidate> candidates = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
-            boolean lostAll = permanent.isLosesAllAbilitiesUntilEndOfTurn() || staticBonus.losesAllAbilities()
-                    || staticBonus.losesAllNonManaAbilities();
+            boolean lostAll = staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities();
             List<TriggeredAbility> abilities = new ArrayList<>();
             if (!lostAll && !permanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                 abilities.addAll(withoutLost(gameData, permanent.getCard().getId(),
                         permanent.getCard().getTriggeredAbilities()));
             }
-            if (!lostAll) {
-                abilities.addAll(permanent.getPersistentTriggeredAbilities());
-                abilities.addAll(grantedTriggeredAbilitySupport.grantedPermanentChangeAbilities(gameData, permanent));
-            }
-            abilities.addAll(permanent.getTemporaryTriggeredAbilities());
+            abilities.addAll(grantedTriggeredAbilitySupport.grantedPermanentChangeAbilities(gameData, permanent));
             addCandidates(PermanentChangeTrigger.class, permanent.getCard(), permanent, controllerId,
                     Zone.BATTLEFIELD, abilities, candidates);
         });
         if (event.change() == PermanentChange.PHASED_OUT) {
             Permanent lastKnown = event.permanent();
             List<TriggeredAbility> abilities = new ArrayList<>();
-            if (!lastKnown.isLosesAllAbilitiesUntilEndOfTurn()) {
-                if (!lastKnown.isFaceDown()) {
-                    abilities.addAll(withoutLost(gameData, lastKnown.getCard().getId(),
-                            lastKnown.getCard().getTriggeredAbilities()));
-                }
-                abilities.addAll(lastKnown.getPersistentTriggeredAbilities());
+            if (!lastKnown.isLastKnownLostPrintedAbilities() && !lastKnown.isFaceDown()) {
+                abilities.addAll(withoutLost(gameData, lastKnown.getCard().getId(),
+                        lastKnown.getCard().getTriggeredAbilities()));
             }
-            abilities.addAll(lastKnown.getTemporaryTriggeredAbilities());
+            abilities.addAll(grantedTriggeredAbilitySupport.abilitiesGrantedByEffects(gameData, lastKnown));
             addCandidates(PermanentChangeTrigger.class, lastKnown.getCard(), lastKnown, event.controllerId(),
                     Zone.BATTLEFIELD, abilities, candidates);
         }
@@ -520,16 +507,12 @@ public class TriggerIndex {
         Card printedSource = event.card().getId().equals(card.getId()) ? event.card() : card;
         List<TriggeredAbility> printed = new ArrayList<>();
         List<TriggeredAbility> gained = new ArrayList<>();
-        if (!lastKnown.isLosesAllAbilitiesUntilEndOfTurn()) {
-            if (!lastKnown.isFaceDown()) {
-                printed.addAll(withoutLost(gameData, card.getId(), card.getTriggeredAbilities()));
-            }
-            gained.addAll(lastKnown.getPersistentTriggeredAbilities());
-            triggered(event.grantedAbilities(), gained);
+        if (!lastKnown.isLastKnownLostPrintedAbilities() && !lastKnown.isFaceDown()) {
+            printed.addAll(withoutLost(gameData, card.getId(), card.getTriggeredAbilities()));
         }
-        // An ability granted until end of turn has a later timestamp than most "loses all abilities" effects
-        // (Infuse with Vitality after Humble), so it stays.
-        gained.addAll(lastKnown.getTemporaryTriggeredAbilities());
+        // The abilities it was granted as the layers left it as it left: one granted after a "loses all abilities"
+        // effect (Infuse with Vitality after Humble) stays (CR 613.7).
+        triggered(event.grantedAbilities(), gained);
         for (CardEffect delayed : lastKnown.getDelayedDeathEffects()) {
             gained.add(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), delayed));
         }
@@ -701,8 +684,7 @@ public class TriggerIndex {
      */
     public List<TriggeredAbility> permanentAbilities(GameData gameData, Permanent permanent) {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
-        boolean lostAll = permanent.isLosesAllAbilitiesUntilEndOfTurn() || staticBonus.losesAllAbilities()
-                || staticBonus.losesAllNonManaAbilities();
+        boolean lostAll = staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities();
         List<TriggeredAbility> abilities = new ArrayList<>();
         if (!lostAll && !permanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
             abilities.addAll(withoutLost(gameData, permanent.getCard().getId(),
@@ -714,10 +696,6 @@ public class TriggerIndex {
             }
         }
         keywordAbilities(gameData, permanent, staticBonus, abilities);
-        if (!lostAll && !gameQueryService.hasLostAllAbilities(gameData, permanent)) {
-            abilities.addAll(permanent.getTemporaryTriggeredAbilities());
-            abilities.addAll(permanent.getPersistentTriggeredAbilities());
-        }
         for (CardEffect granted : staticBonus.grantedEffects()) {
             if (granted instanceof CumulativeUpkeepEffect) {
                 abilities.add(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), granted));

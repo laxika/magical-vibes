@@ -232,7 +232,7 @@ public class CombatSimulator {
     private boolean hasOwnAttackTrigger(GameData gameData, Permanent perm) {
         if (!WatchedAbilities.printed(perm.getCard(), Triggers.attacks(), Zone.BATTLEFIELD).isEmpty()
                 || !WatchedAbilities.printed(perm.getCard(), Triggers.attacksUnblocked(), Zone.BATTLEFIELD).isEmpty()
-                || !WatchedAbilities.temporary(perm, Triggers.attacks()).isEmpty()) {
+                || !WatchedAbilities.grantedByEffects(gameData, perm, Triggers.attacks()).isEmpty()) {
             return true;
         }
         // Aura-granted attack triggers (e.g. an aura with an ON_ATTACK registration)

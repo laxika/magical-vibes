@@ -1393,7 +1393,7 @@ public class DrawService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                boolean hasEffect = !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                boolean hasEffect = !gameData.losesAllAbilitiesByEffect(permanent)
                         && permanent.getCard().getStaticEffects().stream()
                         .anyMatch(effect -> effect instanceof UbaMaskDrawReplacementEffect);
                 if (hasEffect) {
@@ -2769,7 +2769,7 @@ public class DrawService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return null;
         for (Permanent perm : battlefield) {
-            if (perm.isLosesAllAbilitiesUntilEndOfTurn()
+            if (gameData.losesAllAbilitiesByEffect(perm)
                     || gameQueryService.computeStaticBonus(gameData, perm).losesAllAbilities()) {
                 continue;
             }

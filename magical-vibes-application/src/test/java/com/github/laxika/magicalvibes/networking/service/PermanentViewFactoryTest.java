@@ -42,6 +42,13 @@ class PermanentViewFactoryTest {
         return factory.create(p, 0, 0, Set.of(), false, List.of());
     }
 
+    /** A projection of a permanent that lost the printed activated abilities {@code lost}. */
+    private PermanentView createWithLost(Permanent p, List<ActivatedAbility> granted, List<ActivatedAbility> lost) {
+        return factory.create(p, 0, 0, Set.of(), false, granted, Set.of(), List.of(), Set.of(),
+                false, false, false, false, Set.of(), false, false, Set.of(), List.of(), List.of(), 0, null,
+                Set.of(), 0, lost);
+    }
+
     private PermanentView createWithExiled(Permanent p, List<Card> faceUpExiled, int faceDownCount) {
         return factory.create(p, 0, 0, Set.of(), false, List.of(), Set.of(), List.of(), Set.of(),
                 false, false, false, false, Set.of(), false, Set.of(), List.of(), faceUpExiled, faceDownCount);
@@ -171,10 +178,9 @@ class PermanentViewFactoryTest {
         printed.addActivatedAbility(
                 new ActivatedAbility(true, "{0}", List.of(new DrawCardEffect()), "{T}: Draw a card."));
         Permanent creature = new Permanent(printed);
-        creature.loseActivatedAbility(conjure);
         ActivatedAbility granted = new ActivatedAbility(false, "{1}", List.of(new DrawCardEffect()), "{1}: Draw a card.");
 
-        PermanentView view = factory.create(creature, 0, 0, Set.of(), false, List.of(granted));
+        PermanentView view = createWithLost(creature, List.of(granted), List.of(conjure));
 
         assertThat(view.card().activatedAbilities())
                 .extracting(ability -> ability.description())
@@ -188,14 +194,13 @@ class PermanentViewFactoryTest {
         ActivatedAbility conjure = new ActivatedAbility(false, "{3}{G}", List.of(new DrawCardEffect()), "Conjure.");
         printed.addActivatedAbility(conjure);
         Permanent creature = new Permanent(printed);
-        creature.loseActivatedAbility(conjure);
         Card copied = card("Prodigal Pyromancer", CardType.CREATURE);
         copied.addActivatedAbility(
                 new ActivatedAbility(true, null, List.of(new DrawCardEffect()), "{T}: Ping."));
 
         creature.setCard(copied);
 
-        assertThat(create(creature).card().activatedAbilities())
+        assertThat(createWithLost(creature, List.of(), List.of(conjure)).card().activatedAbilities())
                 .extracting(ability -> ability.description())
                 .containsExactly("{T}: Ping.");
     }

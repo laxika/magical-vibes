@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AscendingAven;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -54,7 +55,7 @@ class GrandMeleeTest extends BaseCardTest {
     @DisplayName("Losing Grand Melee's abilities removes its attack requirement")
     void losingAllAbilitiesRemovesAttackRequirement() {
         Permanent melee = harness.addToBattlefieldAndReturn(player1, new GrandMelee());
-        melee.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, melee);
         addCreatureReady(player1, new GlorySeeker());
 
         assertThatCode(() -> declareAttackers(player1, List.of()))
@@ -138,7 +139,7 @@ class GrandMeleeTest extends BaseCardTest {
     @DisplayName("Losing Grand Melee's abilities removes its block requirement")
     void losingAllAbilitiesRemovesBlockRequirement() {
         Permanent melee = harness.addToBattlefieldAndReturn(player1, new GrandMelee());
-        melee.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, melee);
         addCreatureReady(player1, new GlorySeeker());
         addCreatureReady(player2, new GlorySeeker());
         declareAttackersAndPrepareBlockers(List.of(1));

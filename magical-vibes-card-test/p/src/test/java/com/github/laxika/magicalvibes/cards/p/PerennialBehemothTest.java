@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -120,7 +121,7 @@ class PerennialBehemothTest extends BaseCardTest {
     @Test
     void losingAbilitiesRemovesLandPermission() {
         Permanent behemoth = harness.addToBattlefieldAndReturn(player1, new PerennialBehemoth());
-        behemoth.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, behemoth);
         harness.setGraveyard(player1, List.of(new Forest()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.testutil;
 
+import com.github.laxika.magicalvibes.model.Ability;
+import com.github.laxika.magicalvibes.model.AbilityEffects;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -7,14 +10,18 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
@@ -23,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -32,9 +40,9 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Gives a permanent a type, colour, keyword, protection, P/T boost or base P/T, or takes a keyword away, as a resolved
- * effect would (CR 611.2a): a floating effect on the permanent at its own timestamp, with no stated duration or until
- * end of turn. Reads back what the floating effects on a permanent give it or take from it, of any duration.
+ * Gives a permanent a type, colour, keyword, protection, ability, P/T boost or base P/T, or takes a keyword or all its
+ * abilities away, as a resolved effect would (CR 611.2a): a floating effect on the permanent at its own timestamp, with
+ * no stated duration or until end of turn. Reads back what the floating effects on a permanent give it or take from it, of any duration.
  */
 public final class PermanentGrants {
 
@@ -241,6 +249,61 @@ public final class PermanentGrants {
             }
         }
         return protections;
+    }
+
+    /** Makes {@code permanent} lose all its abilities until end of turn, as Merfolk Trickster does (layer 6). */
+    public static FloatingContinuousEffect loseAllAbilitiesUntilEndOfTurn(GameData gd, Permanent permanent) {
+        return untilEndOfTurn(gd, permanent, new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.UNTIL_END_OF_TURN));
+    }
+
+    /** Gives {@code permanent} {@code ability} until end of turn (layer 6). */
+    public static void abilityUntilEndOfTurn(GameData gd, Permanent permanent, Ability ability) {
+        gd.grantAbilityToPermanent("Test", null, gd.findControllerOf(permanent), ability, permanent.getId(),
+                Duration.UNTIL_END_OF_TURN);
+    }
+
+    /** Gives {@code permanent} {@code ability} with no duration (layer 6). */
+    public static void ability(GameData gd, Permanent permanent, Ability ability) {
+        gd.grantAbilityToPermanent("Test", null, gd.findControllerOf(permanent), ability, permanent.getId(),
+                Duration.PERMANENT);
+    }
+
+    /**
+     * The effects of the triggered abilities with {@code trigger} that the floating effects on {@code permanent} grant
+     * it, of any duration, oldest first.
+     */
+    public static List<CardEffect> grantedTriggerEffects(GameData gd, Permanent permanent, Trigger trigger) {
+        List<CardEffect> effects = new ArrayList<>();
+        for (FloatingContinuousEffect fe : gd.floatingEffectsOnPermanent(permanent.getId(),
+                GrantTriggeredAbilityEffect.class)) {
+            if (((GrantTriggeredAbilityEffect) fe.effect()).grantedAbility() instanceof TriggeredAbility triggered
+                    && triggered.hasTrigger(trigger)) {
+                effects.addAll(AbilityEffects.effectsOf(triggered));
+            }
+        }
+        return effects;
+    }
+
+    /** The triggered abilities the floating effects on {@code permanent} grant it, of any duration, oldest first. */
+    public static List<TriggeredAbility> grantedTriggeredAbilities(GameData gd, Permanent permanent) {
+        List<TriggeredAbility> abilities = new ArrayList<>();
+        for (FloatingContinuousEffect fe : gd.floatingEffectsOnPermanent(permanent.getId(),
+                GrantTriggeredAbilityEffect.class)) {
+            if (((GrantTriggeredAbilityEffect) fe.effect()).grantedAbility() instanceof TriggeredAbility triggered) {
+                abilities.add(triggered);
+            }
+        }
+        return abilities;
+    }
+
+    /** The activated abilities the floating effects on {@code permanent} grant it, of any duration, oldest first. */
+    public static List<ActivatedAbility> grantedActivatedAbilities(GameData gd, Permanent permanent) {
+        List<ActivatedAbility> abilities = new ArrayList<>();
+        for (FloatingContinuousEffect fe : gd.floatingEffectsOnPermanent(permanent.getId(),
+                GrantActivatedAbilityEffect.class)) {
+            abilities.add(((GrantActivatedAbilityEffect) fe.effect()).ability());
+        }
+        return abilities;
     }
 
     private static FloatingContinuousEffect untilEndOfTurn(GameData gd, Permanent permanent, CardEffect effect) {

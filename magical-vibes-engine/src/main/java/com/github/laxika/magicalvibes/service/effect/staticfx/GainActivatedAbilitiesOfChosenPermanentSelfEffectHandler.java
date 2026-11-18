@@ -41,7 +41,7 @@ public class GainActivatedAbilitiesOfChosenPermanentSelfEffectHandler implements
 
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, chosen);
         List<ActivatedAbility> abilities = new ArrayList<>();
-        if (staticBonus.losesAllAbilities() || chosen.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (staticBonus.losesAllAbilities() || gameData.losesAllAbilitiesByEffect(chosen)) {
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         } else if (staticBonus.losesAllNonManaAbilities()) {
             abilities.addAll(chosen.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
@@ -52,9 +52,6 @@ public class GainActivatedAbilitiesOfChosenPermanentSelfEffectHandler implements
             abilities.addAll(chosen.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         }
-        abilities.addAll(chosen.getPersistentGrantedActivatedAbilities());
-        abilities.addAll(chosen.getTemporaryActivatedAbilities());
-        abilities.addAll(chosen.getUntilNextTurnActivatedAbilities());
         abilities.addAll(gameQueryService.missingIntrinsicManaAbilities(gameData, chosen, abilities));
         abilities.stream()
                 .filter(ability -> ability.getLoyaltyCost() == null)

@@ -57,7 +57,7 @@ public class PutCounterOnCombatOpponentAtEndOfCombatEffectHandler implements Nor
                     combatOpponent.tap();
                 }
                 if (counterEffect.counterType() == CounterType.PARALYZATION) {
-                    CombatService.grantParalyzationRemoveAbility(combatOpponent);
+                    CombatService.grantParalyzationRemoveAbility(gameData, entry, combatOpponent);
                     if (combatOpponent.getCounterCount(CounterType.PARALYZATION) > 0) {
                         gameData.addFloatingEffect(new FloatingContinuousEffect(
                                 UUID.randomUUID(), entry.getCard().getName(), null,

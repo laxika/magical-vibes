@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.e.EarthVillageRuffians;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -57,9 +58,9 @@ class SozinsCometTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, earlyCreature, Keyword.FIREBENDING)).isTrue();
         assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.FIREBENDING)).isFalse();
-        assertThat(earlyCreature.getTemporaryTriggerEffects(Triggers.attacks()))
+        assertThat(PermanentGrants.grantedTriggerEffects(gd, earlyCreature, Triggers.attacks()))
                 .hasSize(1);
-        assertThat(lateCreature.getTemporaryTriggerEffects(Triggers.attacks()))
+        assertThat(PermanentGrants.grantedTriggerEffects(gd, lateCreature, Triggers.attacks()))
                 .isEmpty();
     }
 
@@ -77,7 +78,7 @@ class SozinsCometTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIREBENDING)).isFalse();
-        assertThat(creature.getTemporaryTriggerEffects(Triggers.attacks()))
+        assertThat(PermanentGrants.grantedTriggerEffects(gd, creature, Triggers.attacks()))
                 .isEmpty();
     }
 

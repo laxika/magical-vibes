@@ -1,6 +1,11 @@
 package com.github.laxika.magicalvibes.mechanics;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MoonlitWake;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
@@ -120,7 +125,7 @@ class TriggerPipelineTest extends BaseCardTest {
     @Test
     void aPermanentThatLostItsAbilitiesHasNoDiesTrigger() {
         Permanent bears = battlefieldCreatureWith(Triggers.dies(ObjectRelation.THIS), DRAW);
-        bears.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, bears);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
 
@@ -735,6 +740,36 @@ class TriggerPipelineTest extends BaseCardTest {
             case LIBRARY -> gd.playerDecks.get(player.getId());
             default -> gd.playerGraveyards.get(player.getId());
         };
+    }
+
+    @Test
+    @CardUsed(Humility.class)
+    @DisplayName("A dies ability granted after an older \"loses all abilities\" still triggers (CR 613.7)")
+    void aDiesAbilityGrantedAfterAnOlderAbilityLossTriggers() {
+        harness.addToBattlefield(player2, new Humility());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        PermanentGrants.ability(gd, bears, new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), DRAW));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
+
+        assertThat(triggersOf(bears.getCard())).hasSize(1);
+    }
+
+    @Test
+    @CardUsed(TurnToFrog.class)
+    @DisplayName("A dies ability granted until end of combat is removed by a newer \"loses all abilities\" (CR 613.7)")
+    void aNewerAbilityLossRemovesAnUntilEndOfCombatGrant() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.grantAbilityToPermanent("Test", null, player1.getId(),
+                new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), DRAW), bears.getId(),
+                Duration.UNTIL_END_OF_COMBAT);
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
+
+        assertThat(triggersOf(bears.getCard())).isEmpty();
     }
 
     private Permanent battlefieldCreatureWith(ZoneChangeTrigger trigger, CardEffect effect) {

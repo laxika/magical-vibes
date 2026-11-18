@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AbilityZones;
@@ -125,7 +126,7 @@ class BlockCollectorAbilityStackObjectTest extends BaseCardTest {
         card.addTrigger(Triggers.blocks(), new GainLifeEffect(2));
         attackingBears();
         Permanent guard = addCreatureReady(player2, card);
-        guard.addTemporaryAbility(drawAndGain(Triggers.blocks()));
+        PermanentGrants.abilityUntilEndOfTurn(gd, guard, drawAndGain(Triggers.blocks()));
 
         declareBlockers(new BlockerAssignment(0, 0));
 
@@ -141,7 +142,7 @@ class BlockCollectorAbilityStackObjectTest extends BaseCardTest {
         attackingBears();
         attackingBears();
         Permanent guard = addCreatureReady(player2, card);
-        guard.addTemporaryAbility(new TriggeredAbility(Triggers.blocks(), new DrawCardEffect(1)));
+        PermanentGrants.abilityUntilEndOfTurn(gd, guard, new TriggeredAbility(Triggers.blocks(), new DrawCardEffect(1)));
 
         declareBlockers(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1));
 
@@ -156,7 +157,7 @@ class BlockCollectorAbilityStackObjectTest extends BaseCardTest {
         attackingBears();
         attackingBears();
         Permanent guard = addCreatureReady(player2, card);
-        guard.addTemporaryAbility(new TriggeredAbility(Triggers.blocks(), TriggerOptions.ONE_OR_MORE,
+        PermanentGrants.abilityUntilEndOfTurn(gd, guard, new TriggeredAbility(Triggers.blocks(), TriggerOptions.ONE_OR_MORE,
                 new DrawCardEffect(1)));
 
         declareBlockers(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1));

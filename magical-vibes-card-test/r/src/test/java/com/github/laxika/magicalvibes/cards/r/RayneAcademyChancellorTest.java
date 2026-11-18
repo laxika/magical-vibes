@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BraidwoodCup;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Flicker;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.PlowUnder;
@@ -272,7 +273,7 @@ class RayneAcademyChancellorTest extends BaseCardTest {
     @DisplayName("Does not trigger while Rayne has lost all abilities")
     void doesNotTriggerWithoutAbilities() {
         Permanent rayne = harness.addToBattlefieldAndReturn(player1, new RayneAcademyChancellor());
-        rayne.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, rayne);
         harness.setHand(player2, List.of(new ScentOfNightshade()));
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.BLACK, 1);

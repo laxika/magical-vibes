@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -117,7 +119,7 @@ class LibraryTriggersTest {
         lenient().when(triggerIndex.permanentAbilities(any(), any())).thenAnswer(invocation -> {
             Permanent permanent = invocation.getArgument(1);
             List<TriggeredAbility> abilities = new ArrayList<>(permanent.getCard().getTriggeredAbilities());
-            abilities.addAll(permanent.getTemporaryTriggeredAbilities());
+            abilities.addAll(WatchedAbilities.grantedByEffects(gd, permanent));
             return abilities;
         });
         lenient().when(triggerIndex.graveyardAbilities(any(), any()))
@@ -247,7 +249,8 @@ class LibraryTriggersTest {
         @DisplayName("an ability granted for a duration triggers too, as the layers leave the permanent")
         void aGrantedAbilityTriggers() {
             Permanent bears = new Permanent(createCard("Grizzly Bears", CardType.CREATURE));
-            bears.addTemporaryAbility(new TriggeredAbility(Triggers.youDrawCard(), new BoostSelfEffect(1, 1)));
+            PermanentGrants.abilityUntilEndOfTurn(gd, bears,
+                    new TriggeredAbility(Triggers.youDrawCard(), new BoostSelfEffect(1, 1)));
             gd.playerBattlefields.get(player1Id).add(bears);
 
             draw(player1Id, null);

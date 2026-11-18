@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -80,7 +81,7 @@ class ThoughtleechTest extends BaseCardTest {
     void doesNotTriggerWhenItLosesAllAbilities() {
         Permanent thoughtleech = harness.addToBattlefieldAndReturn(player1, new Thoughtleech());
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
-        thoughtleech.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, thoughtleech);
 
         tap(island);
 

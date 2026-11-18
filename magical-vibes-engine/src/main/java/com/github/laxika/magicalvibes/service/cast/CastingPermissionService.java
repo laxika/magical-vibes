@@ -1187,7 +1187,7 @@ public class CastingPermissionService {
             for (Permanent permanent : battlefield) {
                 if (permanent.isFaceDown()) continue;
                 GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
-                if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                if (gameData.losesAllAbilitiesByEffect(permanent)
                         || staticBonus.losesAllAbilities()
                         || staticBonus.losesAllNonManaAbilities()) {
                     continue;
@@ -1662,7 +1662,7 @@ public class CastingPermissionService {
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)
                         || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()) {
                     continue;
                 }
@@ -3029,7 +3029,7 @@ public class CastingPermissionService {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
                 if (sourcePermanentId.equals(permanent.getId())) {
-                    return !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    return !gameData.losesAllAbilitiesByEffect(permanent)
                             && permanent.getCard().getStaticEffects().stream()
                             .anyMatch(effect -> effect instanceof UbaMaskDrawReplacementEffect);
                 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
 import com.github.laxika.magicalvibes.cards.w.WearAway;
@@ -111,7 +112,7 @@ class GenjuOfTheFieldsTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, plains)).isFalse();
         assertThat(gqs.getEffectiveColors(gd, plains)).isEmpty();
         assertThat(gqs.effectiveCreatureSubtypes(gd, plains)).isEmpty();
-        assertThat(plains.getTemporaryTriggerEffects(Triggers.dealsDamage())).isEmpty();
+        assertThat(PermanentGrants.grantedTriggerEffects(gd, plains, Triggers.dealsDamage())).isEmpty();
     }
 
     @Test

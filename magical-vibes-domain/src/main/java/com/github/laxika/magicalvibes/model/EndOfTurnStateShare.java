@@ -85,8 +85,7 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
                     added.removeAll(setValue(old));
                     delta.put(field, added);
                 }
-                case LIST -> delta.put(field, listMinus(listValue(current), listValue(old), false));
-                case IDENTITY_LIST -> delta.put(field, listMinus(listValue(current), listValue(old), true));
+                case LIST -> delta.put(field, listMinus(listValue(current), listValue(old)));
                 case COUNTS -> delta.put(field, combineCounts(countsValue(current), countsValue(old), -1));
             }
         }
@@ -114,7 +113,7 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
                     union.addAll(setValue(theirs));
                     combined.put(field, union);
                 }
-                case LIST, IDENTITY_LIST -> {
+                case LIST -> {
                     List<Object> concat = new ArrayList<>(listValue(mine));
                     concat.addAll(listValue(theirs));
                     combined.put(field, concat);
@@ -146,8 +145,7 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
                     kept.retainAll(setValue(now));
                     capped.put(field, kept);
                 }
-                case LIST -> capped.put(field, listIntersection(listValue(mine), listValue(now), false));
-                case IDENTITY_LIST -> capped.put(field, listIntersection(listValue(mine), listValue(now), true));
+                case LIST -> capped.put(field, listIntersection(listValue(mine), listValue(now)));
                 case COUNTS -> {
                     Map<Object, Integer> nowCounts = countsValue(now);
                     Map<Object, Integer> kept = new HashMap<>();
@@ -194,7 +192,7 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
             case FLAG -> Boolean.TRUE.equals(value) ? Boolean.TRUE : null;
             case ADDITIVE -> intValue(value) == 0 ? null : value;
             case SET -> setValue(value).isEmpty() ? null : Set.copyOf(setValue(value));
-            case LIST, IDENTITY_LIST -> listValue(value).isEmpty() ? null : List.copyOf(listValue(value));
+            case LIST -> listValue(value).isEmpty() ? null : List.copyOf(listValue(value));
             case COUNTS -> {
                 Map<Object, Integer> counts = new HashMap<>();
                 countsValue(value).forEach((key, count) -> {
@@ -234,10 +232,10 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
     }
 
     /** {@code from} with one occurrence of each element of {@code removed} taken out. */
-    private static <T> List<T> listMinus(List<T> from, List<T> removed, boolean identity) {
+    private static <T> List<T> listMinus(List<T> from, List<T> removed) {
         List<T> remaining = new ArrayList<>(from);
         for (T element : removed) {
-            removeOne(remaining, element, identity);
+            removeOne(remaining, element);
         }
         return remaining;
     }
@@ -247,20 +245,20 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
      * {@code current}, so an ordered store (a shield list whose first matching shield applies first) is restored in
      * its live order.
      */
-    private static <T> List<T> listIntersection(List<T> mine, List<T> current, boolean identity) {
+    private static <T> List<T> listIntersection(List<T> mine, List<T> current) {
         List<T> wanted = new ArrayList<>(mine);
         List<T> kept = new ArrayList<>();
         for (T element : current) {
-            if (removeOne(wanted, element, identity)) {
+            if (removeOne(wanted, element)) {
                 kept.add(element);
             }
         }
         return kept;
     }
 
-    private static <T> boolean removeOne(List<T> list, T element, boolean identity) {
+    private static <T> boolean removeOne(List<T> list, T element) {
         for (int i = 0; i < list.size(); i++) {
-            if (identity ? list.get(i) == element : Objects.equals(list.get(i), element)) {
+            if (Objects.equals(list.get(i), element)) {
                 list.remove(i);
                 return true;
             }

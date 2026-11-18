@@ -165,7 +165,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
         int scryCount = 0;
         int doubleExploreCount = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+            if (gameData.losesAllAbilitiesByEffect(permanent)
                     || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()) {
                 continue;
             }

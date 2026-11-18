@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SolkanarTheSwampKing;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
@@ -106,7 +107,7 @@ class UrDragoTest extends BaseCardTest {
     void swampwalkReturnsWhenUrDragoLosesAbilities() {
         harness.addToBattlefield(player2, new Swamp());
         Permanent urDrago = addCreatureReady(player2, new UrDrago());
-        urDrago.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, urDrago);
         Permanent attacker = addCreatureReady(player1, new SolkanarTheSwampKing());
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new BarbaryApes());

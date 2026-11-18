@@ -98,13 +98,13 @@ public class TokenKindReplacements implements ReplacementCandidateSource<TokenCr
         }
         List<Instance> instances = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(event.controllerId(), List.of())) {
-            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)) {
                 continue;
             }
             List<CardEffect> statics = permanent.getCard().getStaticEffects();
             for (int i = 0; i < statics.size(); i++) {
                 CardEffect effect = statics.get(i);
-                if (permanent.isStaticEffectSuppressed(effect.getClass())) {
+                if (gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())) {
                     continue;
                 }
                 String key = KEY_PREFIX + permanent.getId() + ":" + i;

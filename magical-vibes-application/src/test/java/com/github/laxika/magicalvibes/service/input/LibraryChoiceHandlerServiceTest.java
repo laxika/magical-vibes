@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -470,7 +471,7 @@ class LibraryChoiceHandlerServiceTest {
         ArgumentCaptor<Permanent> entered = ArgumentCaptor.forClass(Permanent.class);
         verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id),
                 entered.capture(), any(Set.class), any(List.class), isNull());
-        assertThat(entered.getValue().getPersistentTriggerEffects(Triggers.endStep(ActivePlayer.YOU)))
+        assertThat(PermanentGrants.grantedTriggerEffects(gd, entered.getValue(), Triggers.endStep(ActivePlayer.YOU)))
                 .singleElement().isInstanceOf(ReturnToHandEffect.class);
         assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
     }

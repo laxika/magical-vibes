@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +26,7 @@ public class SuppressStaticEffectUntilEndOfTurnEffectHandler implements NormalEf
         Permanent source = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source != null) {
-            source.suppressStaticEffectUntilEndOfTurn(
-                    ((SuppressStaticEffectUntilEndOfTurnEffect) effect).effectType());
+            gameData.addEffectOnPermanent(entry, effect, source.getId(), Duration.UNTIL_END_OF_TURN);
         }
     }
 }

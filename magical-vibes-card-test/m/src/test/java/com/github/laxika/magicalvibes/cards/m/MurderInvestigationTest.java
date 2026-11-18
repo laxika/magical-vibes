@@ -163,7 +163,7 @@ class MurderInvestigationTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new MurderInvestigation());
         aura.setAttachedTo(creature.getId());
-        aura.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, aura);
         creature.setMarkedDamage(2);
         harness.runStateBasedActions();
         harness.passBothPriorities();

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.b.BlackCat;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.n.NantukoShade;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -78,8 +79,8 @@ class HavengulLichTest extends BaseCardTest {
         harness.castFromGraveyard(player1, shade.getId());
         harness.passBothPriorities();
 
-        assertThat(lich.getTemporaryActivatedAbilities()).hasSize(1);
-        assertThat(lich.getTemporaryActivatedAbilities().getFirst().getManaCost()).isEqualTo("{B}");
+        assertThat(PermanentGrants.grantedActivatedAbilities(gd, lich)).hasSize(1);
+        assertThat(PermanentGrants.grantedActivatedAbilities(gd, lich).getFirst().getManaCost()).isEqualTo("{B}");
 
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.activateAbility(player1, 0, 1, null, null);
@@ -142,7 +143,7 @@ class HavengulLichTest extends BaseCardTest {
         harness.castFromGraveyard(player1, shade.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(lich.getTemporaryActivatedAbilities()).hasSize(1);
+        assertThat(PermanentGrants.grantedActivatedAbilities(gd, lich)).hasSize(1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, 0, null, uncastShade.getId(), Zone.GRAVEYARD);
@@ -153,7 +154,7 @@ class HavengulLichTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         assertThat(graveyardCastPermissionsByCard()).isEmpty();
-        assertThat(lich.getTemporaryActivatedAbilities()).isEmpty();
+        assertThat(PermanentGrants.grantedActivatedAbilities(gd, lich)).isEmpty();
     }
 
     @Test

@@ -478,8 +478,8 @@ public class PermanentControlSupport {
         }
         return (int) battlefield.stream()
                 .filter(permanent -> permanent.isSolved()
-                        && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                        && !permanent.isStaticEffectSuppressed(AddClueTokenToTokenCreationEffect.class))
+                        && !gameData.losesAllAbilitiesByEffect(permanent)
+                        && !gameData.removesOwnStaticAbility(permanent.getId(), AddClueTokenToTokenCreationEffect.class))
                 .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .filter(AddClueTokenToTokenCreationEffect.class::isInstance)
                 .count();

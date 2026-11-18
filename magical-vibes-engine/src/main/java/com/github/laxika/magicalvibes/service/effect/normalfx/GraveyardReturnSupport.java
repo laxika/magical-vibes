@@ -879,8 +879,12 @@ public class GraveyardReturnSupport {
                         effect.counterCountIfExiledCostCardHasSubtype());
             }
             if (effect.grantCumulativeUpkeepCost() != null && !effect.grantCumulativeUpkeepCost().isBlank()) {
-                p.addPersistentAbility(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
-                        new CumulativeUpkeepEffect(effect.grantCumulativeUpkeepCost())));
+                gameData.grantAbilityToPermanent(entry == null ? card.getName() : entry.getCard().getName(),
+                        entry == null ? null : entry.getSourcePermanentId(),
+                        entry == null ? controllerId : entry.getControllerId(),
+                        new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                                new CumulativeUpkeepEffect(effect.grantCumulativeUpkeepCost())),
+                        p.getId(), Duration.PERMANENT);
             }
             grantOnDeathEffect(p, effect.grantOnDeathEffect(), cardOwnerId != null ? cardOwnerId : card.getOwnerId());
             if (effect.battlefieldEffectGrants() != null) {
@@ -897,9 +901,10 @@ public class GraveyardReturnSupport {
                                     && java.util.Objects.equals(sourcePermanentId, floating.sourcePermanentId()))) {
                         continue;
                     }
-                    if (grantedEffect instanceof LosesAllAbilitiesEffect loses
-                            && Duration.PERMANENT.equals(loses.duration())) {
-                        p.setLosesAllAbilitiesPermanently(true);
+                    if (grantedEffect instanceof LosesAllAbilitiesEffect
+                            && gameData.losesAllAbilitiesByEffect(p.getId())) {
+                        // It already had no abilities as it entered.
+                        continue;
                     }
                     Duration grantDuration = effect.battlefieldEffectGrantDuration() == null
                             ? Duration.PERMANENT : effect.battlefieldEffectGrantDuration();
@@ -2292,7 +2297,12 @@ public class GraveyardReturnSupport {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
         applyPermanentGrants(gameData, controllerId, permanent, grantColor, grantSubtype, grantIndestructible);
-        permanent.setLosesAllAbilitiesPermanently(losesAllAbilities);
+        if (losesAllAbilities) {
+            // It has no abilities as it enters, so its own entry abilities don't apply.
+            gameData.addEffectOnPermanent(card.getName(), null, controllerId,
+                    new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT), permanent.getId(),
+                    Duration.PERMANENT);
+        }
         if (enterWithCounter != null && enterWithCounterAmount > 0
                 && !gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) {
             int counters = gameQueryService.replaceCounters(gameData, permanent, controllerId,
@@ -2766,7 +2776,12 @@ public class GraveyardReturnSupport {
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
-        permanent.setLosesAllAbilitiesPermanently(losesAllAbilities);
+        if (losesAllAbilities) {
+            // It has no abilities as it enters, so its own entry abilities don't apply.
+            gameData.addEffectOnPermanent(card.getName(), null, controllerId,
+                    new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT), permanent.getId(),
+                    Duration.PERMANENT);
+        }
         if (grantHaste) {
             gameData.addEffectOnPermanent(card.getName(), permanent.getId(), controllerId,
                     new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), permanent.getId(), Duration.PERMANENT);

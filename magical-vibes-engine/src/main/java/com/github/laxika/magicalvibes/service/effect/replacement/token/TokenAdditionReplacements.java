@@ -147,14 +147,14 @@ public class TokenAdditionReplacements implements ReplacementCandidateSource<Tok
         }
         List<Instance> instances = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(event.controllerId(), List.of())) {
-            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)) {
                 continue;
             }
             List<CardEffect> statics = permanent.getCard().getStaticEffects();
             for (int i = 0; i < statics.size(); i++) {
                 CardEffect effect = statics.get(i);
                 Addition addition = Addition.of(effect);
-                if (addition == null || permanent.isStaticEffectSuppressed(effect.getClass())
+                if (addition == null || gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())
                         || !applies(addition, permanent, event)) {
                     continue;
                 }

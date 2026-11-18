@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.m.MinimusContainment;
@@ -163,7 +164,7 @@ class ArcaneLaboratoryTest extends BaseCardTest {
     @DisplayName("Losing Arcane Laboratory's abilities removes its spell restriction")
     void losingAllAbilitiesRemovesRestriction() {
         Permanent laboratory = harness.addToBattlefieldAndReturn(player1, new ArcaneLaboratory());
-        laboratory.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, laboratory);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

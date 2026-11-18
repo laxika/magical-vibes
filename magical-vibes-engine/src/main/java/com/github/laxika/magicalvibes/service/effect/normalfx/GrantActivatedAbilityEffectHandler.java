@@ -216,7 +216,10 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
             ));
             return;
         }
-        permanent.getTemporaryActivatedAbilities().add(grantedAbility(grant.ability(), entry));
+        // Until end of turn, the one other duration a resolving grant states.
+        gameData.addEffectOnPermanent(entry, new GrantActivatedAbilityEffect(grantedAbility(grant.ability(), entry),
+                GrantScope.TARGET, grant.filter(), Duration.UNTIL_END_OF_TURN), permanent.getId(),
+                Duration.UNTIL_END_OF_TURN);
     }
 
     private static ActivatedAbility grantedAbility(ActivatedAbility ability, StackEntry entry) {

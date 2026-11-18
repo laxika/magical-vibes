@@ -21,7 +21,7 @@ public final class ZoneChangeCounterSupport {
         if (permanent == null || !hasPersistenceAbility(permanent.getCard())) {
             return;
         }
-        if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)) {
             // A face-down or ability-less permanent doesn't have the ability that retains counters.
             if (permanent.getCard() != null) {
                 gameData.countersPreservedAcrossZoneChanges.remove(permanent.getCard().getId());
@@ -52,7 +52,7 @@ public final class ZoneChangeCounterSupport {
             return;
         }
         if (enteredFromZone == Zone.GRAVEYARD && gameData.anyPermanentMatches(source -> !source.isFaceDown()
-                && !source.isLosesAllAbilitiesUntilEndOfTurn()
+                && !gameData.losesAllAbilitiesByEffect(source)
                 && source.getCard().getStaticEffects().stream()
                 .anyMatch(GraveyardCardsLoseAllAbilitiesEffect.class::isInstance))) {
             // Cards in graveyards have no abilities, so the card has no ability to retain its counters.

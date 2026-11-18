@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.g.GlacialWall;
 import com.github.laxika.magicalvibes.cards.j.JohtullWurm;
@@ -174,7 +175,7 @@ class DreadWightTest extends BaseCardTest {
         Permanent wight = addCreatureReady(player1, new DreadWight());
         wight.setAttacking(true);
         Permanent spider = addCreatureReady(player2, new GlacialWall());
-        spider.getPersistentGrantedActivatedAbilities().add(new ActivatedAbility(
+        PermanentGrants.ability(gd, spider, new ActivatedAbility(
                 false,
                 "{8}",
                 List.of(new RemoveCounterFromSourceEffect(CounterType.PARALYZATION, 2)),

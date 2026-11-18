@@ -752,19 +752,19 @@ public class UntapStepService {
         // "doesn't untap" locks too; a face-down permanent has no abilities at all. An aura-granted lock
         // comes from the aura, which is unaffected.
         boolean ownLockApplies = !permanent.isFaceDown()
-                && !gameQueryService.hasLostAllAbilities(gameData, permanent)
-                && (hasActiveCounterLock(permanent, permanent,
+                && (!gameQueryService.hasLostAllAbilities(gameData, permanent)
+                && hasActiveCounterLock(permanent, permanent,
                         permanent.getCard().getStaticEffects(), TapUntapScope.SELF)
                 // Granted, not printed: Mindbender Spores gives the creature it blocks
                 // "doesn't untap during your untap step if it has a fungus counter on it".
                 || hasActiveCounterLock(permanent, permanent,
-                        permanent.getPersistentStaticEffects(), TapUntapScope.SELF));
+                        gameQueryService.getGrantedEffects(gameData, permanent), TapUntapScope.SELF));
         return ownLockApplies || gameData.anyPermanentMatches(source -> source.isAttached()
                         && source.getAttachedTo().equals(permanent.getId())
                         && (hasActiveCounterLock(source, permanent,
                                 source.getCard().getStaticEffects(), TapUntapScope.ENCHANTED)
                         || hasActiveCounterLock(source, permanent,
-                                source.getPersistentStaticEffects(), TapUntapScope.ENCHANTED)));
+                                gameQueryService.getGrantedEffects(gameData, source), TapUntapScope.ENCHANTED)));
     }
 
     private static boolean hasActiveCounterLock(Permanent source, Permanent attached,

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.mechanics;
 
 import com.github.laxika.magicalvibes.cards.l.LeylinePhantom;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +19,7 @@ class CombatDamageAbilitiesAsDealtTest extends BaseCardTest {
     @DisplayName("A creature that lost all its abilities doesn't trigger its own \"deals combat damage\" ability")
     void creatureThatLostItsAbilitiesDoesNotTrigger() {
         Permanent phantom = addCreatureReady(player1, new LeylinePhantom());
-        phantom.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, phantom);
         phantom.setAttacking(true);
 
         resolveCombat();

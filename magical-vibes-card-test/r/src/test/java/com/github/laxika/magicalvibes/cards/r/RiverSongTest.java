@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.e.EvolvingWilds;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HymnOfTheFaller;
 import com.github.laxika.magicalvibes.cards.k.KayaIntangibleSlayer;
@@ -170,7 +171,7 @@ class RiverSongTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(top, bottom));
         harness.setHand(player1, List.of());
         Permanent riverSong = harness.addToBattlefieldAndReturn(player1, new RiverSong());
-        riverSong.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, riverSong);
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 

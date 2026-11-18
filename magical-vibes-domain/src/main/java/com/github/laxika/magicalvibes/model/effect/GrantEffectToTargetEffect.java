@@ -4,12 +4,9 @@ import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AbilityEffects;
 
 /**
- * When resolved, grants the targeted permanent an ability.
- * Duration {@link Duration#PERMANENT} stores it on
- * {@link com.github.laxika.magicalvibes.model.Permanent#addPersistentAbility} (survives
- * end-of-turn cleanup). Duration {@link Duration#UNTIL_END_OF_TURN} uses
- * {@link com.github.laxika.magicalvibes.model.Permanent#addTemporaryAbility} (cleared by
- * {@code resetModifiers()}).
+ * When resolved, grants the targeted permanent an ability: a floating layer-6 effect on it
+ * ({@code GameData.grantAbilityToPermanent}) until end of turn, until the effect controller's next
+ * upkeep, or with no stated duration ({@link Duration#PERMANENT}).
  *
  * <p>Example: Balduvian Shaman grants {@code Triggers.upkeep(ActivePlayer.YOU)} +
  * {@link CumulativeUpkeepEffect} indefinitely.

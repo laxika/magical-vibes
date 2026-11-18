@@ -386,9 +386,6 @@ public class EtbTriggerService {
                                       boolean printedAbilitiesRemoved, EtbEffectContext entryFacts,
                                       List<UUID> convokeCreatureIds) {
         List<TriggeredAbility> abilities = new ArrayList<>();
-        if (enteringPermanent != null) {
-            abilities.addAll(enteringPermanent.getGrantedOwnEntryAbilities());
-        }
         if (!printedAbilitiesRemoved) {
             // A perpetual "when this enters" grant is an ability of its own.
             for (CardEffect effect : gameData.perpetualEnterEffectsByCardId.getOrDefault(card.getId(), List.of())) {
@@ -398,6 +395,10 @@ public class EtbTriggerService {
         if (enteringPermanent != null && gameData.playerBattlefields.getOrDefault(controllerId, List.of())
                 .contains(enteringPermanent)) {
             abilities.addAll(grantedTriggeredAbilitySupport.grantedOwnEntryAbilities(gameData, enteringPermanent));
+        } else if (enteringPermanent != null) {
+            grantedTriggeredAbilitySupport.abilitiesGrantedByEffects(gameData, enteringPermanent).stream()
+                    .filter(TriggeredAbility::hasOwnEntry)
+                    .forEach(abilities::add);
         }
         if (!printedAbilitiesRemoved) {
             abilities.addAll(card.getOwnEntryAbilities());

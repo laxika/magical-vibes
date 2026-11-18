@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityToCreatedPermanentsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class GrantTriggeredAbilityToCreatedPermanentsEffectHandler implements No
         for (UUID permanentId : entry.getCreatedPermanentIds()) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent != null) {
-                permanent.addPersistentAbility(grant.grantedAbility());
+                gameData.grantAbilityToPermanent(entry, grant.grantedAbility(), permanent.getId(), Duration.PERMANENT);
             }
         }
     }

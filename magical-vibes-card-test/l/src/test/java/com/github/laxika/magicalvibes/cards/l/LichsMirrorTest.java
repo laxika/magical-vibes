@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.a.AshesOfTheAbhorrent;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.ImmortalCoil;
 import com.github.laxika.magicalvibes.cards.m.MortalCombat;
@@ -334,7 +335,7 @@ class LichsMirrorTest extends BaseCardTest {
     @DisplayName("A Mirror that has lost its abilities cannot replace a game loss")
     void mirrorWithoutAbilitiesDoesNotReplaceLoss() {
         var mirror = harness.addToBattlefieldAndReturn(player1, new LichsMirror());
-        mirror.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, mirror);
         harness.setLibrary(player1, shocks(10));
         harness.setLife(player1, 0);
 

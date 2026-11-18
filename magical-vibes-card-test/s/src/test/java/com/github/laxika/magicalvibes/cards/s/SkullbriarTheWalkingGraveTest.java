@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.r.Reveillark;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.u.Unearth;
 import com.github.laxika.magicalvibes.cards.y.YixlidJailer;
 import com.github.laxika.magicalvibes.cards.z.Zombify;
@@ -97,7 +98,7 @@ class SkullbriarTheWalkingGraveTest extends BaseCardTest {
         Card card = new SkullbriarTheWalkingGrave();
         Permanent skullbriar = addCreatureReady(player1, card);
         skullbriar.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        skullbriar.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, skullbriar);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, skullbriar));

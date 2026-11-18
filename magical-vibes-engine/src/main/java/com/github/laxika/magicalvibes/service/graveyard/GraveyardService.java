@@ -608,7 +608,7 @@ public class GraveyardService {
             // CR 614.7 â€” self-replacement effects apply first
 
             if (sourceZone == Zone.BATTLEFIELD && hasExileAndTakeExtraTurnReplacementEffect(card)
-                    && (battlefieldSnapshot == null || !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())) {
+                    && (battlefieldSnapshot == null || !gameData.losesAllAbilitiesByEffect(battlefieldSnapshot))) {
                 UUID extraTurnControllerId = battlefieldControllerId != null ? battlefieldControllerId : ownerId;
                 exileService.exileCard(gameData, ownerId, card);
                 gameData.queueExtraTurnFirst(extraTurnControllerId, false);
@@ -623,7 +623,7 @@ public class GraveyardService {
             // "If [this] would die, instead exile it with N egg counters" (e.g. Darigaaz Reincarnated)
             // "Die" = move from battlefield to graveyard, so only applies when sourceZone is BATTLEFIELD.
             if (sourceZone == Zone.BATTLEFIELD && hasExileWithEggCountersReplacementEffect(card)
-                    && (battlefieldSnapshot == null || !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())) {
+                    && (battlefieldSnapshot == null || !gameData.losesAllAbilitiesByEffect(battlefieldSnapshot))) {
                 ExileWithEggCountersInsteadOfDyingEffect eggEffect = getExileWithEggCountersReplacementEffect(card);
                 exileService.exileCard(gameData, ownerId, card);
                 gameData.exiledCardEggCounters.put(card.getId(), eggEffect.count());
@@ -637,7 +637,7 @@ public class GraveyardService {
             // "If [this creature] would die, put it on top or bottom of its owner's library instead"
             // "Die" = move from battlefield to graveyard, so only applies when sourceZone is BATTLEFIELD.
             DyingCreatureLibraryReplacementEffect libraryReplacement = sourceZone == Zone.BATTLEFIELD
-                    && (battlefieldSnapshot == null || !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())
+                    && (battlefieldSnapshot == null || !gameData.losesAllAbilitiesByEffect(battlefieldSnapshot))
                     ? getDyingCreatureLibraryReplacementEffect(card)
                     : null;
             if (libraryReplacement != null) {
@@ -674,7 +674,7 @@ public class GraveyardService {
                     && battlefieldSnapshot.getCard() != null ? battlefieldSnapshot.getCard() : card;
             if (hasShuffleIntoLibraryReplacementEffect(shuffleReplacementSource)
                     && (sourceZone != Zone.BATTLEFIELD || battlefieldSnapshot == null
-                    || !battlefieldSnapshot.isFaceDown() && !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())) {
+                    || !battlefieldSnapshot.isFaceDown() && !gameData.losesAllAbilitiesByEffect(battlefieldSnapshot))) {
                 if (opponentHasCreatureCardExileReplacement(gameData, ownerId, card, sourceZone)
                         || opponentHasExileReplacementEffect(gameData, ownerId, resolvedCardControllerId) != null
                         || shouldExileOwnCardInsteadOfGraveyard(
@@ -1625,7 +1625,7 @@ public class GraveyardService {
             }
         }
         for (Permanent p : gameData.simultaneousDyingPermanents.values()) {
-            if (!p.isFaceDown() && !p.isLosesAllAbilitiesUntilEndOfTurn()
+            if (!p.isFaceDown() && !gameData.losesAllAbilitiesByEffect(p)
                     && gameQueryService.findPermanentById(gameData, p.getId()) == null
                     && exilesPermanentWithSource(gameData, p, battlefieldSnapshot)) {
                 sources.add(p);
@@ -1713,7 +1713,7 @@ public class GraveyardService {
         // Permanents leaving the battlefield together still apply their replacement effects to each
         // other's cards, even once an earlier member of the group has already left.
         for (Permanent permanent : gameData.simultaneousDyingPermanents.values()) {
-            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+            if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)) continue;
             if (exilesCardsOfColors(permanent.getCard(), cardColors)) {
                 return true;
             }
@@ -1770,21 +1770,21 @@ public class GraveyardService {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent p : bf) {
-                if (bottomOfLibraryReplacementApplies(p, ownerId)) {
+                if (bottomOfLibraryReplacementApplies(gameData, p, ownerId)) {
                     return true;
                 }
             }
         }
-        if (leavingSnapshot != null && bottomOfLibraryReplacementApplies(leavingSnapshot, ownerId)) {
+        if (leavingSnapshot != null && bottomOfLibraryReplacementApplies(gameData, leavingSnapshot, ownerId)) {
             return true;
         }
         return gameData.simultaneousDyingPermanents.values().stream()
-                .anyMatch(p -> bottomOfLibraryReplacementApplies(p, ownerId));
+                .anyMatch(p -> bottomOfLibraryReplacementApplies(gameData, p, ownerId));
     }
 
-    private boolean bottomOfLibraryReplacementApplies(Permanent aura, UUID ownerId) {
+    private boolean bottomOfLibraryReplacementApplies(GameData gameData, Permanent aura, UUID ownerId) {
         return aura.isAttached() && ownerId.equals(aura.getAttachedTo())
-                && !aura.isLosesAllAbilitiesUntilEndOfTurn()
+                && !gameData.losesAllAbilitiesByEffect(aura)
                 && aura.getCard().getStaticEffects().stream()
                 .anyMatch(RevealAndPutOnBottomOfLibraryInsteadOfGraveyardEffect.class::isInstance);
     }
@@ -1800,7 +1800,7 @@ public class GraveyardService {
                                                                            UUID cardControllerId) {
         if (battlefieldSnapshot == null || battlefieldControllerId == null
                 || battlefieldControllerId.equals(ownerId) || battlefieldSnapshot.isFaceDown()
-                || battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn()
+                || battlefieldSnapshot.isLastKnownLostPrintedAbilities()
                 || battlefieldSnapshot.getCard() == null
                 || !battlefieldSnapshot.getCard().getId().equals(card.getId())) {
             return null;
@@ -1843,7 +1843,7 @@ public class GraveyardService {
             UUID dyingControllerId = gameData.simultaneousDyingPermanentControllers.get(dying.getKey());
             Permanent p = dying.getValue();
             if (dyingControllerId == null || dyingControllerId.equals(ownerId)
-                    || p.isFaceDown() || p.isLosesAllAbilitiesUntilEndOfTurn()) {
+                    || p.isFaceDown() || gameData.losesAllAbilitiesByEffect(p)) {
                 continue;
             }
             for (CardEffect effect : p.getCard().getStaticEffects()) {
@@ -1892,7 +1892,7 @@ public class GraveyardService {
             UUID dyingControllerId = gameData.simultaneousDyingPermanentControllers.get(dying.getKey());
             Permanent p = dying.getValue();
             if (dyingControllerId == null || dyingControllerId.equals(ownerId)
-                    || p.isFaceDown() || p.isLosesAllAbilitiesUntilEndOfTurn()
+                    || p.isFaceDown() || gameData.losesAllAbilitiesByEffect(p)
                     || gameQueryService.findPermanentById(gameData, p.getId()) != null) {
                 continue;
             }
@@ -1961,7 +1961,7 @@ public class GraveyardService {
         // Permanents leaving the battlefield together still apply their replacement effects to each
         // other's cards, even once an earlier member of the group has already left.
         for (Permanent p : gameData.simultaneousDyingPermanents.values()) {
-            if (p.isFaceDown() || p.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+            if (p.isFaceDown() || gameData.losesAllAbilitiesByEffect(p)) continue;
             if (applyBattlefieldExilePermanentsReplacement(gameData, ownerId, card, p, battlefieldSnapshot)) {
                 return true;
             }

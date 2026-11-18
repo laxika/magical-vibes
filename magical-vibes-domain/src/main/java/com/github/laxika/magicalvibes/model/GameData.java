@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLand
 import com.github.laxika.magicalvibes.model.effect.PlayersWithChosenPlanarModePlayAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OnlyChosenCreaturesCanAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipChosenStepOrPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.RenewExilePlayPermissionOnLoreCounterEffect;
@@ -4757,7 +4758,7 @@ public class GameData {
      * object it doesn't apply to.
      */
     public FloatingContinuousEffect addEffectOnPermanent(StackEntry entry, CardEffect effect, UUID permanentId,
-                                                         com.github.laxika.magicalvibes.model.effect.Duration duration) {
+                                                         Duration duration) {
         return addEffectOnPermanent(entry.getCard() == null ? null : entry.getCard().getName(),
                 entry.getSourcePermanentId(), entry.getControllerId(), effect, permanentId, duration);
     }
@@ -4770,9 +4771,129 @@ public class GameData {
      */
     public FloatingContinuousEffect addEffectOnPermanent(String sourceCardName, UUID sourcePermanentId,
                                                          UUID controllerId, CardEffect effect, UUID permanentId,
-                                                         com.github.laxika.magicalvibes.model.effect.Duration duration) {
+                                                         Duration duration) {
         return addFloatingEffect(FloatingContinuousEffect.onPermanent(sourceCardName, sourcePermanentId, controllerId,
                 effect, permanentId, duration));
+    }
+
+    /**
+     * "It gains [{@code ability}]" for {@code duration}, made by the resolving {@code entry}: see
+     * {@link #grantAbilityToPermanent(String, UUID, UUID, Ability, UUID, com.github.laxika.magicalvibes.model.effect.Duration)}.
+     */
+    public void grantAbilityToPermanent(StackEntry entry, Ability ability, UUID permanentId,
+                                        Duration duration) {
+        grantAbilityToPermanent(entry.getCard() == null ? null : entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(), ability, permanentId, duration);
+    }
+
+    /**
+     * "It gains [{@code ability}]" for {@code duration} (CR 611.2a): an ability-adding effect on the permanent
+     * {@code permanentId}, stamped now and applied in layer 6 in timestamp order (CR 613.1f, 613.7), so a "loses all
+     * abilities" effect older than it leaves the ability and a newer one removes it. The payloads are those of
+     * {@link #abilityGrantEffects(Ability)}, one floating effect each.
+     */
+    public void grantAbilityToPermanent(String sourceCardName, UUID sourcePermanentId, UUID controllerId,
+                                        Ability ability, UUID permanentId,
+                                        Duration duration) {
+        for (CardEffect grant : abilityGrantEffects(ability, duration)) {
+            addEffectOnPermanent(sourceCardName, sourcePermanentId, controllerId, grant, permanentId, duration);
+        }
+    }
+
+    /**
+     * The layer-6 payloads that grant {@code ability} to one permanent: a triggered ability is a
+     * {@link com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect}, each effect of a static ability
+     * a {@link com.github.laxika.magicalvibes.model.effect.GrantEffectEffect}, an activated ability a
+     * {@link com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect} lasting {@code duration}.
+     */
+    public static List<CardEffect> abilityGrantEffects(Ability ability,
+                                                       Duration duration) {
+        GrantScope target = GrantScope.TARGET;
+        return switch (ability) {
+            case TriggeredAbility triggered ->
+                    List.of(new com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect(triggered, target));
+            case StaticAbility statik -> statik.effects().stream()
+                    .<CardEffect>map(effect -> new com.github.laxika.magicalvibes.model.effect.GrantEffectEffect(effect, target))
+                    .toList();
+            case ActivatedAbility activated -> List.of(new com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect(
+                    activated, target, null, duration));
+            case SpellAbility ignored -> List.of();
+        };
+    }
+
+    /**
+     * Whether a "loses all abilities" effect a resolution made applies to the permanent {@code permanentId}, whatever its
+     * duration. Its own (printed) abilities are gone, as they precede every effect (CR 613.1f, 613.7); which granted
+     * ones it removed is for the layered pass to say.
+     */
+    public boolean losesAllAbilitiesByEffect(UUID permanentId) {
+        return hasFloatingEffectOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect.class);
+    }
+
+    /**
+     * As {@link #losesAllAbilitiesByEffect(UUID)} for {@code permanent}, or for the last-known copy of a permanent that
+     * left the battlefield, which also tells whether it had lost its own abilities as it left (CR 603.10a).
+     */
+    public boolean losesAllAbilitiesByEffect(Permanent permanent) {
+        return permanent.isLastKnownLostPrintedAbilities() || losesAllAbilitiesByEffect(permanent.getId());
+    }
+
+    /**
+     * Whether an effect removed the permanent {@code permanentId}'s own static abilities of exactly {@code type}
+     * ("loses 'prevent all damage that would be dealt to it'", "loses all 'bands with other' abilities", CR 613.1f).
+     * Its own abilities precede every effect, so any such effect removes them; which granted ones it removed is for the
+     * layered pass to say.
+     */
+    public boolean removesOwnStaticAbility(UUID permanentId, Class<? extends CardEffect> type) {
+        for (FloatingContinuousEffect fe : floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect.class,
+                com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectOnTargetUntilEndOfTurnEffect.class)) {
+            Class<? extends CardEffect> removed = fe.effect()
+                    instanceof com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect self
+                    ? self.effectType()
+                    : ((com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectOnTargetUntilEndOfTurnEffect)
+                    fe.effect()).effectType();
+            if (removed == type) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The static abilities resolved effects granted the permanent {@code permanentId} (the effects of the
+     * {@link com.github.laxika.magicalvibes.model.effect.GrantEffectEffect}s on it), oldest first, read from the
+     * effects themselves: for a reader that can't ask the layered pass, which alone knows which of them a later
+     * "loses all abilities" removed.
+     */
+    public List<CardEffect> staticAbilitiesGrantedByEffects(UUID permanentId) {
+        List<CardEffect> effects = new ArrayList<>();
+        for (FloatingContinuousEffect fe : floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.GrantEffectEffect.class)) {
+            effects.add(((com.github.laxika.magicalvibes.model.effect.GrantEffectEffect) fe.effect()).effect());
+        }
+        return effects;
+    }
+
+    /**
+     * Whether an effect made the permanent {@code permanentId} lose exactly this printed activated ability ("then this
+     * creature loses this ability"): the ability object, so the abilities of another card the permanent comes to show
+     * are not lost.
+     */
+    public boolean hasLostActivatedAbility(UUID permanentId, ActivatedAbility ability) {
+        return lostActivatedAbilities(permanentId).stream().anyMatch(lost -> lost == ability);
+    }
+
+    /** The printed activated abilities effects made the permanent {@code permanentId} lose, oldest first. */
+    public List<ActivatedAbility> lostActivatedAbilities(UUID permanentId) {
+        List<ActivatedAbility> lost = new ArrayList<>();
+        for (FloatingContinuousEffect fe : floatingEffectsOnPermanent(permanentId,
+                com.github.laxika.magicalvibes.model.effect.LoseThisActivatedAbilityEffect.class)) {
+            lost.add(((com.github.laxika.magicalvibes.model.effect.LoseThisActivatedAbilityEffect) fe.effect())
+                    .lostAbility());
+        }
+        return lost;
     }
 
     /**
@@ -8656,8 +8777,10 @@ public class GameData {
             endFloatingEffectsOnCard(cardId, Zone.EXILE);
             // A grant that lasts for as long as its card remains exiled ends as the card leaves (CR 611.2b).
             expireFloatingEffects(fe -> Duration.WHILE_SOURCE_CARD_EXILED.equals(fe.duration())
-                    && fe.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect grant
-                    && cardId.equals(grant.expirationCardId()));
+                    && (fe.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect grant
+                    && cardId.equals(grant.expirationCardId())
+                    || fe.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect triggeredGrant
+                    && cardId.equals(triggeredGrant.expirationCardId())));
         }
         return removed;
     }

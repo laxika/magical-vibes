@@ -65,14 +65,6 @@ public class PerpetuallyGrantCardCharacteristicsEffectHandler implements NormalE
             }
             return List.copyOf(updated);
         });
-
-        if (source != null) {
-            perpetual.activatedAbilities().forEach(ability -> {
-                if (!source.getPersistentGrantedActivatedAbilities().contains(ability)) {
-                    source.getPersistentGrantedActivatedAbilities().add(ability);
-                }
-            });
-        }
     }
 
     private void mergeCardTypes(GameData gameData, UUID cardId, Set<CardType> types) {

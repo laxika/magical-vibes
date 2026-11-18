@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.cards.o.OltecMatterweaver;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -73,7 +77,7 @@ class WorldwalkerHelmTest extends BaseCardTest {
     @Test
     void doesNotAddMapAfterLosingAbilities() {
         addHelmAndMatterweaver();
-        findPermanent(player1, "Worldwalker Helm").setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, findPermanent(player1, "Worldwalker Helm"));
 
         castCreatureAndChooseGnome();
 
@@ -82,10 +86,12 @@ class WorldwalkerHelmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not add a Map while the Helm has lost its token replacement ability")
     void doesNotAddMapWhenReplacementAbilityIsSuppressed() {
         addHelmAndMatterweaver();
-        findPermanent(player1, "Worldwalker Helm")
-                .suppressStaticEffectUntilEndOfTurn(AddMapTokenToArtifactTokenCreationEffect.class);
+        gd.addEffectOnPermanent("Test", null, player1.getId(),
+                new SuppressStaticEffectUntilEndOfTurnEffect(AddMapTokenToArtifactTokenCreationEffect.class),
+                findPermanent(player1, "Worldwalker Helm").getId(), Duration.UNTIL_END_OF_TURN);
 
         castCreatureAndChooseGnome();
 

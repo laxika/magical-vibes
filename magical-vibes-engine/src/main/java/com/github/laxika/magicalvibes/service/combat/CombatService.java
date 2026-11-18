@@ -9,9 +9,12 @@ import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -156,18 +159,21 @@ public class CombatService {
         gameData.combatDamagePhase1State = null;
     }
 
-    /** Idempotent grant of Dread Wight's "{4}: Remove a paralyzation counter from this creature." */
-    public static void grantParalyzationRemoveAbility(Permanent perm) {
-        boolean alreadyGranted = perm.getPersistentGrantedActivatedAbilities().stream()
-                .anyMatch(a -> a.getEffects().stream().anyMatch(e ->
-                        e.equals(REMOVE_PARALYZATION_COUNTER_EFFECT)));
+    /**
+     * Idempotent grant of Dread Wight's "{4}: Remove a paralyzation counter from this creature.": an ability grant with
+     * no stated duration on the creature (CR 611.2a), made by {@code entry}.
+     */
+    public static void grantParalyzationRemoveAbility(GameData gameData, StackEntry entry, Permanent perm) {
+        boolean alreadyGranted = gameData.floatingEffectsOnPermanent(perm.getId(), GrantActivatedAbilityEffect.class)
+                .stream().anyMatch(fe -> ((GrantActivatedAbilityEffect) fe.effect()).ability().getEffects()
+                        .contains(REMOVE_PARALYZATION_COUNTER_EFFECT));
         if (alreadyGranted) {
             return;
         }
-        perm.getPersistentGrantedActivatedAbilities().add(new ActivatedAbility(
+        gameData.grantAbilityToPermanent(entry, new ActivatedAbility(
                 false,
                 "{4}",
                 List.of(REMOVE_PARALYZATION_COUNTER_EFFECT),
-                "{4}: Remove a paralyzation counter from this creature."));
+                "{4}: Remove a paralyzation counter from this creature."), perm.getId(), Duration.PERMANENT);
     }
 }

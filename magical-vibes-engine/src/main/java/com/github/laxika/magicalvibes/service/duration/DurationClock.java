@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.duration;
 
+import com.github.laxika.magicalvibes.model.rules.PermanentChange;
+import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -48,7 +50,8 @@ import java.util.function.Predicate;
  * <p>The events that end durations: a turn beginning ({@link TurnEvent.Began}: "until your next turn", and control
  * of a player through their whole turn, CR 724.1), a step or phase ending ({@link TurnEvent.StepEnded}: "until end
  * of combat", "until the end of your next upkeep", CR 500.5), the cleanup step's damage removal ({@link TurnEvent.Cleanup}: "until end of turn", "until the end of your next turn",
- * CR 514.2), a step beginning ({@link StepEvent}: "until your next upkeep", "until the next end step"), the untap step's
+ * CR 514.2), a permanent being turned face up ("for as long as it remains face down"), a step beginning
+ * ({@link StepEvent}: "until your next upkeep", "until the next end step"), the untap step's
  * untapping ("until its controller's next untap step"), a spell being cast ({@link SpellEvent.Cast}) and a planeswalk
  * ({@link ActionEvent.Planeswalked}). A turn beginning also begins the effects scheduled to begin with it ("during your
  * next turn", "after this turn"), and drops the ones that were to begin at a combat phase of the turn that ended; the
@@ -268,6 +271,9 @@ public class DurationClock {
                             && effect.affectedPermanentId() != null
                             && untapped.controllerId().equals(
                             gameQueryService.findPermanentController(gameData, effect.affectedPermanentId()));
+            case PermanentChangeEvent change when change.change() == PermanentChange.TURNED_FACE_UP ->
+                    effect -> asLongAs(effect) == Duration.AsLongAs.AFFECTED_FACE_DOWN
+                            && change.permanent().getId().equals(effect.affectedPermanentId());
             case SpellEvent.Cast cast -> effect -> endsAtCast(gameData, cast, effect);
             case ActionEvent.Planeswalked ignored -> effect -> ends(effect, Duration.End.PLANESWALK);
             default -> null;

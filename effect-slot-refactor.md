@@ -817,6 +817,14 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Moments: cleanup (CR 514.2), end of combat or the controller's next turn, as before. Ledger (5,959 card test classes, route tests): only `floating began|ended` lines added and a recorded source on next-turn boosts; trigger lines differ only by random draws, dice, coins, modes and the new tests. Esika's Chariot's crew animation step depends on test run order (HEAD too).
 - Left: abilities and text changes; part 3's phasing item; `onPermanent` effects ending as their permanent leaves; then step 6.
 
+**D (part 18: granted abilities, losing all abilities, ability removals).**
+- "Gains '[ability]'" with any stated duration, or none (CR 611.2a), is a floating layer-6 grant on the permanent (`GameData.grantAbilityToPermanent`): `GrantTriggeredAbilityEffect`, a `GrantEffectEffect` per static effect, `GrantActivatedAbilityEffect`. "Loses all abilities" is only its floating `LosesAllAbilitiesEffect`; "loses '[static]'" uses the `SuppressStatic…` records as payloads; "loses this ability" is `LoseThisActivatedAbilityEffect`. Perpetual abilities and keywords are seeded by the pass, none while face down (CR 708.2a). Gone: 13 `Permanent` fields, 5 `EndOfTurnStateField`s, `Kind.IDENTITY_LIST`, the next-turn and upkeep clears.
+- Own-ability readers ask `GameData.losesAllAbilitiesByEffect` / `removesOwnStaticAbility`; departure snapshots keep `lastKnownLostPrintedAbilities`; granted abilities and mana activation follow the layered state only.
+- Durations: cipher's grant is `WHILE_SOURCE_CARD_EXILED` (CR 702.99c); Roalesk's is `WHILE_FACE_DOWN`, ended as the permanent is turned face up. Dance of Many's "when the token leaves" is its own trigger (`PermanentCreatedBySourcePredicate`).
+- Rules fixes (CR 613.1f, 613.7; tests fail before): Quicksilver Elemental, Shadow Slice under Humility, Turn to Frog and granted mana abilities, grant order in `TriggerPipelineTest`, Dance of Many, cipher leaving exile, Roalesk, perpetual abilities face down.
+- Moments: as before; "until end of combat" grants outlive removal from combat and control change (CR 611.2a, 506.4; `RayOfCommandTest`). Ledger (3,258 card test classes, route tests): only `floating began|ended` lines and Dance of Many's own trigger added; trigger lines otherwise differ by random draws, drafts, coins and dice.
+- Left: text changes and until-next-turn copies; part 3's phasing item; `onPermanent` effects ending as their permanent leaves; then step 6.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

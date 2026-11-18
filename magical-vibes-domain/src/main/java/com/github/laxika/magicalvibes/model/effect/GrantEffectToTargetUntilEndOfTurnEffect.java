@@ -5,9 +5,8 @@ import com.github.laxika.magicalvibes.model.AbilityEffects;
 
 /**
  * When resolved, grants the targeted creature a temporary triggered ability until end of turn.
- * The granted ability is stored on the permanent via
- * {@link com.github.laxika.magicalvibes.model.Permanent#addTemporaryAbility}
- * and cleared at the cleanup step by {@link com.github.laxika.magicalvibes.model.Permanent#resetModifiers()}.
+ * The grant is a floating layer-6 effect on the permanent ({@code GameData.grantAbilityToPermanent}) that the
+ * cleanup step ends.
  *
  * <p>Example: Verdant Rebirth grants "when this dies" +
  * {@link ReturnSourceCardFromGraveyardToOwnerHandEffect} until end of turn.

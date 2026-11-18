@@ -286,7 +286,7 @@ public class AuraAttachmentService {
         if (enchantingNothing) {
             lastKnown.setAttachedTo(null);
         }
-        lastKnown.setLosesAllAbilitiesUntilEndOfTurn(gameQueryService.hasLostPrintedAbilities(gameData, aura));
+        lastKnown.setLastKnownLostPrintedAbilities(gameQueryService.hasLostPrintedAbilities(gameData, aura));
         // It leaves as it last existed (CR 603.10a): with the card types it had, and as a creature (an animated Aura)
         // with the power and toughness it had.
         lastKnown.setCard(permanentRemovalServiceProvider.getObject().snapshotEffectivePermanentCard(gameData, aura));

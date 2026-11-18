@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.k.KorHaven;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.Mossdog;
 import com.github.laxika.magicalvibes.cards.n.NobleStand;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -185,7 +186,7 @@ class TangleWireTest extends BaseCardTest {
     @Test
     void wireWithoutAbilitiesDoesNotTriggerDuringOpponentsUpkeep() {
         Permanent wire = harness.enterBattlefieldAndReturn(player1, new TangleWire());
-        wire.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, wire);
         Permanent mossdog = harness.enterBattlefieldAndReturn(player2, new Mossdog());
 
         advanceToUpkeep(player2);

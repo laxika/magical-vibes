@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
@@ -107,7 +108,7 @@ class PalazzoArchersTest extends BaseCardTest {
     @Test
     void losingAllAbilitiesPreventsAttackTrigger() {
         Permanent archers = addCreatureReady(player1, new PalazzoArchers());
-        archers.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, archers);
         addCreatureReady(player2, new AirElemental());
 
         declareAttackers(player2, List.of(0));

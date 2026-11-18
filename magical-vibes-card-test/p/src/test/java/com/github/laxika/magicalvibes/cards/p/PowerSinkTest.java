@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishLyrist;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GlacialChasm;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -86,7 +87,7 @@ class PowerSinkTest extends BaseCardTest {
     void doesNotTapLandThatHasLostAllAbilities() {
         ElvishLyrist lyrist = prepareCounterTarget();
         Permanent landWithoutManaAbility = harness.addToBattlefieldAndReturn(player1, new Forest());
-        landWithoutManaAbility.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, landWithoutManaAbility);
         Permanent manaLand = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addMana(player1, ManaColor.GREEN, 1);
 

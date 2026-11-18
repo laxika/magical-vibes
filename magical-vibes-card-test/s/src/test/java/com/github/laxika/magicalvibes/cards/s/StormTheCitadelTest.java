@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -34,7 +35,7 @@ class StormTheCitadelTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
-        assertThat(ownCreature.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayerOrPlaneswalker()))
+        assertThat(PermanentGrants.grantedTriggerEffects(gd, ownCreature, Triggers.dealsCombatDamageToPlayerOrPlaneswalker()))
                 .isNotEmpty();
     }
 
@@ -73,7 +74,7 @@ class StormTheCitadelTest extends BaseCardTest {
         castStormTheCitadel();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
-        assertThat(creature.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayerOrPlaneswalker()))
+        assertThat(PermanentGrants.grantedTriggerEffects(gd, creature, Triggers.dealsCombatDamageToPlayerOrPlaneswalker()))
                 .isNotEmpty();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -82,7 +83,7 @@ class StormTheCitadelTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
-        assertThat(creature.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayerOrPlaneswalker()))
+        assertThat(PermanentGrants.grantedTriggerEffects(gd, creature, Triggers.dealsCombatDamageToPlayerOrPlaneswalker()))
                 .isEmpty();
     }
 

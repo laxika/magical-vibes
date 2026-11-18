@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -98,7 +99,7 @@ class BecomesUnattachedTriggerTest extends BaseCardTest {
         card.addTrigger(Triggers.becomesUnattachedFromPermanent(), new GainLifeEffect(1));
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent hook = attached(card, bears);
-        hook.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, hook);
 
         harness.inMutationScope(() -> removal().tryDestroyPermanent(gd, hook));
 

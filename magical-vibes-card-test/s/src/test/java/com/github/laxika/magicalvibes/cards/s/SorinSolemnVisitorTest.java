@@ -38,7 +38,6 @@ class SorinSolemnVisitorTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.LIFELINK)).isFalse();
 
         gd.rulesEvents.occur(new TurnEvent.Began(player1.getId()));
-        ownCreature.clearUntilNextTurnEffects();
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.LIFELINK)).isFalse();

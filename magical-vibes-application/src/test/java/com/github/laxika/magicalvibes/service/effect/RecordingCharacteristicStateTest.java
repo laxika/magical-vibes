@@ -132,6 +132,7 @@ class RecordingCharacteristicStateTest {
         if (Collection.class.isAssignableFrom(type)) return List.of();
         if (type == Predicate.class) return (Predicate<Object>) ignored -> false;
         if (type == CardEffect.class) return new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF);
+        if (type == Class.class) return GrantKeywordEffect.class;
         if (type == ActivatedAbility.class) {
             return new ActivatedAbility(false, "{W}",
                     List.of(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)), "Probe ability");

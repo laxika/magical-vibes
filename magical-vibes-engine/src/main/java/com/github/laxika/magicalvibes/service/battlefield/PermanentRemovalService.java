@@ -269,7 +269,7 @@ public class PermanentRemovalService {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
                 if (controllerId == null) continue;
                 Permanent snapshot = new Permanent(permanent);
-                snapshot.setLosesAllAbilitiesUntilEndOfTurn(gameQueryService.hasLostPrintedAbilities(gameData, permanent));
+                snapshot.setLastKnownLostPrintedAbilities(gameQueryService.hasLostPrintedAbilities(gameData, permanent));
                 snapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, permanent));
                 snapshot.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, permanent));
                 recordLastKnownAttachmentCounts(gameData, snapshot);
@@ -2237,7 +2237,7 @@ public class PermanentRemovalService {
     private boolean hadPrintedAbilitiesBeforeRemoval(GameData gameData, Permanent permanent) {
         Permanent snapshot = gameData.simultaneousDyingPermanents.get(permanent.getId());
         return snapshot == null ? !gameQueryService.hasLostPrintedAbilities(gameData, permanent)
-                : !snapshot.isFaceDown() && !snapshot.isLosesAllAbilitiesUntilEndOfTurn();
+                : !snapshot.isFaceDown() && !gameData.losesAllAbilitiesByEffect(snapshot);
     }
 
     private void recordLostPrintedAbilityWatchersBeforeLeave(GameData gameData, Permanent target) {
@@ -2521,7 +2521,7 @@ public class PermanentRemovalService {
             boolean hadPrintedAbilities, Card lastKnownCard, Integer powerAtDeparture, Zone destination,
             List<TriggeredAbility> grantedZoneChangeAbilities, boolean deathTriggersSuppressed) {
         Permanent departureSnapshot = new Permanent(target);
-        departureSnapshot.setLosesAllAbilitiesUntilEndOfTurn(!hadPrintedAbilities);
+        departureSnapshot.setLastKnownLostPrintedAbilities(!hadPrintedAbilities);
         departureSnapshot.setLastKnownPower(powerAtDeparture);
         departureSnapshot.setLastKnownSupertypes(Set.copyOf(lastKnownCard.getSupertypes()));
         emitDeparture(gameData, target, departureSnapshot, lastKnownCard, controllerId, destination,
@@ -2702,7 +2702,7 @@ public class PermanentRemovalService {
             return false;
         }
 
-        if (!dyingPermanent.isLosesAllAbilitiesUntilEndOfTurn()
+        if (!gameData.losesAllAbilitiesByEffect(dyingPermanent)
                 && hasOwnSubtypeExileReplacement(dyingPermanent.getCard(), dyingSubtypes)) {
             return true;
         }
@@ -2718,7 +2718,7 @@ public class PermanentRemovalService {
         for (Map.Entry<UUID, Permanent> entry : gameData.simultaneousDyingPermanents.entrySet()) {
             UUID sourceControllerId = gameData.simultaneousDyingPermanentControllers.get(entry.getKey());
             if (dyingControllerId.equals(sourceControllerId)
-                    && !entry.getValue().isLosesAllAbilitiesUntilEndOfTurn()
+                    && !gameData.losesAllAbilitiesByEffect(entry.getValue())
                     && hasOwnSubtypeExileReplacement(entry.getValue().getCard(), dyingSubtypes)) {
                 return true;
             }
@@ -2744,7 +2744,7 @@ public class PermanentRemovalService {
             }
         }
         for (Permanent permanent : gameData.simultaneousDyingPermanents.values()) {
-            if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()
+            if (!gameData.losesAllAbilitiesByEffect(permanent)
                     && permanent.getCard().getStaticEffects().stream()
                     .anyMatch(ExileNontokenCreaturesInsteadOfDyingWithBloodCounterEffect.class::isInstance)) {
                 return new NontokenCreatureDyingExileReplacement(
@@ -2786,7 +2786,7 @@ public class PermanentRemovalService {
             UUID controllerId = gameData.simultaneousDyingPermanentControllers.get(entry.getKey());
             if (controllerId != null && !ownerId.equals(controllerId)
                     && !entry.getValue().isFaceDown()
-                    && !entry.getValue().isLosesAllAbilitiesUntilEndOfTurn()
+                    && !gameData.losesAllAbilitiesByEffect(entry.getValue())
                     && entry.getValue().getCard().getStaticEffects().stream()
                     .anyMatch(OpponentCreatureCardExileReplacement.class::isInstance)) {
                 return true;
@@ -2933,7 +2933,7 @@ public class PermanentRemovalService {
                                               boolean hadPrintedAbilitiesAtDeparture,
                                               DeathExileReplacement chosenReplacement) {
         Permanent graveyardSnapshot = new Permanent(target);
-        graveyardSnapshot.setLosesAllAbilitiesUntilEndOfTurn(!hadPrintedAbilitiesAtDeparture);
+        graveyardSnapshot.setLastKnownLostPrintedAbilities(!hadPrintedAbilitiesAtDeparture);
         boolean wentToGraveyard = false;
         int exiledFromBattlefield = 0;
         PlanarCreatureExileReplacement planarExileReplacement = wasCreature

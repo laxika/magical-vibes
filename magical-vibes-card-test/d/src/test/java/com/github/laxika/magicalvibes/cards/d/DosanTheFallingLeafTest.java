@@ -94,7 +94,7 @@ class DosanTheFallingLeafTest extends BaseCardTest {
     @DisplayName("Losing Dosan's abilities removes its spell restriction")
     void losingAllAbilitiesRemovesRestriction() {
         Permanent dosan = harness.addToBattlefieldAndReturn(player1, new DosanTheFallingLeaf());
-        dosan.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, dosan);
         harness.setHand(player2, List.of(new EtherealHaze()));
         harness.addMana(player2, ManaColor.WHITE, 1);
 

@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,8 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffec
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryCharacteristicsEffect;
-import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
-import com.github.laxika.magicalvibes.model.trigger.Trigger;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -22,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Predicate;
 
 @Getter
 public class Permanent {
@@ -339,28 +334,9 @@ public class Permanent {
      *  restriction on this permanent. Multiple activations have independent durations.
      */
     private final Set<UUID> cantPhaseOutUntilUpkeepsOf = new HashSet<>();
-    /** Abilities temporarily granted by one-shot effects until end of turn (e.g. Verdant Rebirth
-     *  granting an "when this dies" ability with ReturnSourceCardFromGraveyardToOwnerHandEffect), mostly
-     *  triggered and sometimes static. Cleared every turn by {@link #resetModifiers()}. */
-    @Getter(AccessLevel.NONE)
-    private final List<Ability> temporaryAbilities = new ArrayList<>();
-    /** Abilities granted for the rest of the current combat. Cleared by {@link #clearCombatState()}. */
-    @Getter(AccessLevel.NONE)
-    private final List<Ability> combatAbilities = new ArrayList<>();
-    /** Abilities granted indefinitely by one-shot effects (e.g. Balduvian Shaman granting an
-     *  {@code Triggers.upkeep(ActivePlayer.YOU)} ability with CumulativeUpkeepEffect). Survives
-     *  {@link #resetModifiers()}. */
-    @Getter(AccessLevel.NONE)
-    private final List<Ability> persistentAbilities = new ArrayList<>();
-    /** "When this creature dies" delayed triggers created by a resolving ability (CR 603.7). Unlike
-     *  {@link #persistentAbilities} they are not abilities of the permanent, so losing all
-     *  abilities does not stop them. */
+    /** "When this creature dies" delayed triggers created by a resolving ability (CR 603.7). They are not
+     *  abilities of the permanent, so losing all abilities does not stop them. */
     private final List<CardEffect> delayedDeathEffects = new ArrayList<>();
-    /** Abilities granted until the next upkeep of the player whose effect created them, keyed by
-     *  that player. The expiry player is stored separately from the permanent's current controller
-     *  because the duration belongs to the resolving ability's controller. */
-    @Getter(AccessLevel.NONE)
-    private final Map<UUID, List<Ability>> untilNextUpkeepAbilities = new HashMap<>();
     /** Current base toughness used as loyalty by an attached Planeswalkerificate-style Aura. */
     @Setter private Integer toughnessAsLoyalty;
     private boolean faceDown;
@@ -484,20 +460,9 @@ public class Permanent {
     /** Keywords this permanent had from continuous effects that end as it leaves the battlefield (an Aura's or another
      *  permanent's static grant), kept so a last-known-information copy still has them (CR 608.2h). */
     @Setter private Set<Keyword> lastKnownKeywords;
-    /** When true, this permanent has lost all abilities until end of turn (e.g. Merfolk Trickster).
-     *  Keywords, activated abilities, and triggered abilities are suppressed.
-     *  Cleared by {@link #resetModifiers()}. */
-    @Setter private boolean losesAllAbilitiesUntilEndOfTurn;
-    /** Controllers whose next turn ends an active ability-loss effect on this permanent. */
-    private final Set<UUID> losesAllAbilitiesUntilNextTurnControllers = new HashSet<>();
-    /** Concrete printed static effect types suppressed on this permanent until end of turn. */
-    private final Set<Class<? extends CardEffect>> suppressedStaticEffectsUntilEndOfTurn = new HashSet<>();
-    /** Static effect objects removed from this permanent until end of turn; an effect it gains later is a
-     *  different object and is not affected (CR 611.2c). Compared by identity. */
-    private final Set<CardEffect> suppressedStaticEffectInstancesUntilEndOfTurn =
-            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
-    /** When true, this permanent has lost all abilities indefinitely (e.g. Retched Wretch). */
-    @Setter private boolean losesAllAbilitiesPermanently;
+    /** Whether this permanent had lost its printed abilities as it left the battlefield (a "loses all abilities"
+     *  effect, or a land type change, CR 305.7), recorded on its last-known-information copy (CR 603.10a). */
+    @Setter private boolean lastKnownLostPrintedAbilities;
     /** Whether this permanent was kicked when cast (tracked for "if wasn't kicked" triggers). */
     @Setter private boolean kicked;
     /** Whether this permanent was cast for its evoke cost (gates the evoke sacrifice ETB trigger). */
@@ -609,26 +574,6 @@ public class Permanent {
      * list, while an object that copies this creature's characteristics is a single object without components.
      */
     private final List<Card> mutatedComponentCards = new ArrayList<>();
-    /** Activated abilities temporarily granted by one-shot effects until end of turn
-     *  (e.g. Navigator's Compass adding a basic land mana ability to a land).
-     *  Cleared every turn by {@link #resetModifiers()}. */
-    private final List<ActivatedAbility> temporaryActivatedAbilities = new ArrayList<>();
-    /** Activated abilities granted for as long as this permanent remains on the battlefield
-     *  (e.g. Aquitect's Will making a land an Island in addition to its other types — the
-     *  granted "{T}: Add {U}" has no duration). Stored on the permanent rather than mutating
-     *  the {@link Card}: Card instances are shared with AI simulation copies (see the copy
-     *  constructor) and must stay immutable after construction.
-     *  NOT cleared by {@link #resetModifiers()}. */
-    private final List<ActivatedAbility> persistentGrantedActivatedAbilities = new ArrayList<>();
-    /** Printed activated abilities this permanent has lost ("then this creature loses this ability",
-     *  Great Fang Chroniclers), held by identity. Only the removed ability stays gone: if the permanent
-     *  becomes a copy of something else or changes face, the new card's abilities are other objects and
-     *  remain available, and the loss applies again if the permanent shows the original card once more.
-     *  Card instances (and so their abilities) are shared with AI simulation copies, so identity
-     *  survives the copy constructor. Never cleared by {@link #resetModifiers()}. */
-    @Getter(AccessLevel.NONE)
-    private final java.util.Set<ActivatedAbility> lostPrintedActivatedAbilities =
-            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     /** When true, this permanent is a temporary copy (until end of turn) of another creature.
      *  At the cleanup step, the copy's floating layer-1 effect expires and the card reverts to
      *  {@link #preCopyCard} via {@link #revertEndOfTurnCopy()}.
@@ -649,12 +594,6 @@ public class Permanent {
     /** The card to revert to when a "while attached" copy ends.
      *  Only non-null when {@link #copyWhileAttached} is true. */
     @Setter private Card whileAttachedPreCopyCard;
-    /** Activated abilities granted until the controller's next turn begins
-     *  (e.g. Song of Freyalise "{T}: Add one mana of any color.").
-     *  NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
-     *  Cleared at the beginning of the controller's next turn by
-     *  {@link com.github.laxika.magicalvibes.model.Permanent#clearUntilNextTurnEffects()}. */
-    private final List<ActivatedAbility> untilNextTurnActivatedAbilities = new ArrayList<>();
     /** When true, this permanent is a copy of another creature until {@link #copyUntilNextTurnControllerId}'s
      *  next turn (e.g. Shapesharer). NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
      *  Reverts to {@link #untilNextTurnPreCopyCard} via {@link #revertUntilNextTurnCopy()} at the beginning
@@ -853,12 +792,7 @@ public class Permanent {
         this.preparedSpellCardId = source.preparedSpellCardId;
         this.echoDamageRedirectionActive = source.echoDamageRedirectionActive;
         this.cantPhaseOutUntilUpkeepsOf.addAll(source.cantPhaseOutUntilUpkeepsOf);
-        this.temporaryAbilities.addAll(source.temporaryAbilities);
-        this.combatAbilities.addAll(source.combatAbilities);
-        this.persistentAbilities.addAll(source.persistentAbilities);
         this.delayedDeathEffects.addAll(source.delayedDeathEffects);
-        source.untilNextUpkeepAbilities.forEach((playerId, abilities) ->
-                this.untilNextUpkeepAbilities.put(playerId, new ArrayList<>(abilities)));
         this.sacrificeAtNextCleanup = source.sacrificeAtNextCleanup;
         this.returnToHandAtNextCleanup = source.returnToHandAtNextCleanup;
         this.returnToHandAtNextUntapPlayerId = source.returnToHandAtNextUntapPlayerId;
@@ -913,12 +847,7 @@ public class Permanent {
         this.lastKnownSubtypes = source.lastKnownSubtypes == null ? null : Set.copyOf(source.lastKnownSubtypes);
         this.lastKnownSupertypes = source.lastKnownSupertypes == null ? null : Set.copyOf(source.lastKnownSupertypes);
         this.lastKnownKeywords = source.lastKnownKeywords == null ? null : Set.copyOf(source.lastKnownKeywords);
-        this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
-        this.losesAllAbilitiesUntilNextTurnControllers.addAll(
-                source.losesAllAbilitiesUntilNextTurnControllers);
-        this.suppressedStaticEffectsUntilEndOfTurn.addAll(source.suppressedStaticEffectsUntilEndOfTurn);
-        this.suppressedStaticEffectInstancesUntilEndOfTurn.addAll(source.suppressedStaticEffectInstancesUntilEndOfTurn);
-        this.losesAllAbilitiesPermanently = source.losesAllAbilitiesPermanently;
+        this.lastKnownLostPrintedAbilities = source.lastKnownLostPrintedAbilities;
         this.kicked = source.kicked;
         this.evoked = source.evoked;
         this.escaped = source.escaped;
@@ -959,36 +888,16 @@ public class Permanent {
         this.devouredCreatures.addAll(source.devouredCreatures);
         this.meldComponentCards.addAll(source.meldComponentCards);
         this.mutatedComponentCards.addAll(source.mutatedComponentCards);
-        this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
-        this.persistentGrantedActivatedAbilities.addAll(source.persistentGrantedActivatedAbilities);
-        this.lostPrintedActivatedAbilities.addAll(source.lostPrintedActivatedAbilities);
         this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;
         this.preCopyCard = source.preCopyCard;
         this.nonCopiableKeywords.addAll(source.nonCopiableKeywords);
         this.copyWhileAttached = source.copyWhileAttached;
         this.whileAttachedPreCopyCard = source.whileAttachedPreCopyCard;
-        this.untilNextTurnActivatedAbilities.addAll(source.untilNextTurnActivatedAbilities);
         this.copyUntilControllerNextTurn = source.copyUntilControllerNextTurn;
         this.untilNextTurnPreCopyCard = source.untilNextTurnPreCopyCard;
         this.copyUntilNextTurnControllerId = source.copyUntilNextTurnControllerId;
         this.untilNextTurnCopyLayers.addAll(source.untilNextTurnCopyLayers);
         this.timestamp = source.timestamp;
-    }
-
-    /** Records that this permanent has lost the given printed activated ability. */
-    public void loseActivatedAbility(ActivatedAbility ability) {
-        lostPrintedActivatedAbilities.add(ability);
-    }
-
-    /** Whether this permanent has lost exactly this ability object ("loses this ability"). */
-    public boolean hasLostActivatedAbility(ActivatedAbility ability) {
-        return lostPrintedActivatedAbilities.contains(ability);
-    }
-
-    /** Whether any printed activated ability of the card this permanent currently shows has been lost. */
-    public boolean hasLostAnyCurrentActivatedAbility() {
-        return !lostPrintedActivatedAbilities.isEmpty()
-                && card.getActivatedAbilities(Zone.BATTLEFIELD).stream().anyMatch(lostPrintedActivatedAbilities::contains);
     }
 
     public Card getOriginalCard() {
@@ -1287,7 +1196,6 @@ public class Permanent {
         this.blocking = false;
         this.blockingTargets.clear();
         this.blockingTargetIds.clear();
-        this.combatAbilities.clear();
         this.bandId = null;
     }
 
@@ -1565,8 +1473,6 @@ public class Permanent {
     }
 
     public boolean hasKeyword(Keyword keyword) {
-        if (losesAllAbilitiesUntilEndOfTurn || !losesAllAbilitiesUntilNextTurnControllers.isEmpty()
-                || losesAllAbilitiesPermanently) return false;
         CounterType keywordCounter = switch (keyword) {
             case HASTE -> CounterType.HASTE;
             case FLYING -> CounterType.FLYING;
@@ -1594,137 +1500,11 @@ public class Permanent {
                 ? List.of() : List.copyOf(repeatedAdditionalCosts);
     }
 
-    /** Grants {@code ability} until end of turn. */
-    public void addTemporaryAbility(Ability ability) {
-        temporaryAbilities.add(ability);
-    }
-
-    /** Drops every temporarily granted ability; used when a later-timestamp effect removes all abilities. */
-    public void clearTemporaryTriggeredEffects() {
-        temporaryAbilities.clear();
-    }
-
-    /**
-     * The triggered abilities granted to it for a duration: until end of turn, end of combat or next upkeep,
-     * then those granted until it leaves (persistent), in that order. Each is an ability of this permanent, so
-     * losing all abilities drops the temporary ones; the persistent ones are read separately for that reason.
-     */
-    public List<TriggeredAbility> getTemporaryTriggeredAbilities() {
-        List<TriggeredAbility> triggered = new ArrayList<>();
-        for (List<Ability> abilities : List.of(temporaryAbilities, combatAbilities)) {
-            for (Ability ability : abilities) {
-                if (ability instanceof TriggeredAbility triggeredAbility) {
-                    triggered.add(triggeredAbility);
-                }
-            }
-        }
-        untilNextUpkeepAbilities.values().forEach(abilities -> abilities.forEach(ability -> {
-            if (ability instanceof TriggeredAbility triggeredAbility) {
-                triggered.add(triggeredAbility);
-            }
-        }));
-        return triggered;
-    }
-
-    /** The triggered abilities granted to it until it leaves the battlefield, perpetual grants among them. */
-    public List<TriggeredAbility> getPersistentTriggeredAbilities() {
-        List<TriggeredAbility> triggered = new ArrayList<>();
-        for (Ability ability : persistentAbilities) {
-            if (ability instanceof TriggeredAbility triggeredAbility) {
-                triggered.add(triggeredAbility);
-            }
-        }
-        return triggered;
-    }
-
-    /**
-     * The "when this enters" abilities ({@link TriggeredAbility#hasOwnEntry()}) granted until end of turn, end of
-     * combat or next upkeep, then those granted until it leaves the battlefield, in that order: the abilities a
-     * resolved effect gave the permanent, which the "when this enters" collector reads with its own.
-     */
-    public List<TriggeredAbility> getGrantedOwnEntryAbilities() {
-        List<TriggeredAbility> abilities = new ArrayList<>();
-        for (TriggeredAbility ability : getTemporaryTriggeredAbilities()) {
-            if (ability.hasOwnEntry()) {
-                abilities.add(ability);
-            }
-        }
-        for (TriggeredAbility ability : getPersistentTriggeredAbilities()) {
-            if (ability.hasOwnEntry()) {
-                abilities.add(ability);
-            }
-        }
-        return abilities;
-    }
-
-    /**
-     * The effects of the triggered abilities with {@code trigger} granted until end of turn, end of combat or next
-     * upkeep, in that order.
-     */
-    public List<CardEffect> getTemporaryTriggerEffects(Trigger trigger) {
-        return effectsWithTrigger(getTemporaryTriggeredAbilities(), trigger);
-    }
-
-    /** The effects of the triggered abilities with {@code trigger} granted until it leaves the battlefield. */
-    public List<CardEffect> getPersistentTriggerEffects(Trigger trigger) {
-        return effectsWithTrigger(getPersistentTriggeredAbilities(), trigger);
-    }
-
-    private static List<CardEffect> effectsWithTrigger(List<TriggeredAbility> abilities, Trigger trigger) {
-        List<CardEffect> effects = new ArrayList<>();
-        for (TriggeredAbility ability : abilities) {
-            if (ability.hasTrigger(trigger)) {
-                ability.effects().forEach(registration -> effects.add(registration.effect()));
-            }
-        }
-        return effects;
-    }
-
-    /**
-     * The effects of the static abilities granted until end of turn, end of combat or next upkeep, in
-     * that order.
-     */
-    public List<CardEffect> getTemporaryStaticEffects() {
-        List<CardEffect> effects = AbilityEffects.staticEffectsIn(temporaryAbilities);
-        List<CardEffect> untilEndOfCombat = AbilityEffects.staticEffectsIn(combatAbilities);
-        List<CardEffect> untilNextUpkeep = new ArrayList<>();
-        untilNextUpkeepAbilities.values().forEach(abilities -> untilNextUpkeep.addAll(AbilityEffects.staticEffectsIn(abilities)));
-        if (untilEndOfCombat.isEmpty() && untilNextUpkeep.isEmpty()) {
-            return effects;
-        }
-        List<CardEffect> combined = new ArrayList<>(effects.size()
-                + untilEndOfCombat.size() + untilNextUpkeep.size());
-        combined.addAll(effects);
-        combined.addAll(untilEndOfCombat);
-        combined.addAll(untilNextUpkeep);
-        return combined;
-    }
-
-    /** Grants {@code ability} until end of combat. */
-    public void addCombatAbility(Ability ability) {
-        combatAbilities.add(ability);
-    }
-
     public void setTransformed(boolean transformed) {
         if (this.transformed != transformed) {
             transformationSequence++;
         }
         this.transformed = transformed;
-    }
-
-    /** Grants {@code ability} indefinitely. */
-    public void addPersistentAbility(Ability ability) {
-        persistentAbilities.add(ability);
-    }
-
-    /**
-     * Removes the indefinitely granted triggered abilities with {@code trigger} that have an effect that matches
-     * {@code filter}.
-     */
-    public void removePersistentTriggeredEffectsIf(Trigger trigger, Predicate<CardEffect> filter) {
-        persistentAbilities.removeIf(ability -> ability instanceof TriggeredAbility triggered
-                && triggered.hasTrigger(trigger)
-                && AbilityEffects.effectsOf(ability).stream().anyMatch(filter));
     }
 
     public void addDelayedDeathEffect(CardEffect effect) {
@@ -1733,28 +1513,6 @@ public class Permanent {
 
     public List<CardEffect> getDelayedDeathEffects() {
         return List.copyOf(delayedDeathEffects);
-    }
-
-    /** The effects of the static abilities granted indefinitely. */
-    public List<CardEffect> getPersistentStaticEffects() {
-        return AbilityEffects.staticEffectsIn(persistentAbilities);
-    }
-
-    /** Removes the indefinitely granted static abilities whose effect matches {@code filter}. */
-    public void removePersistentStaticEffectsIf(Predicate<CardEffect> filter) {
-        persistentAbilities.removeIf(ability -> ability instanceof StaticAbility statik
-                && statik.effects().stream().anyMatch(filter));
-    }
-
-    /** Grants {@code ability} until the next upkeep of {@code expiryPlayerId}. */
-    public void addUntilNextUpkeepAbility(UUID expiryPlayerId, Ability ability) {
-        untilNextUpkeepAbilities
-                .computeIfAbsent(expiryPlayerId, ignored -> new ArrayList<>())
-                .add(ability);
-    }
-
-    public void clearUntilNextUpkeepTriggeredEffects(UUID expiryPlayerId) {
-        untilNextUpkeepAbilities.remove(expiryPlayerId);
     }
 
     public void preventPhaseOutUntilUpkeepOf(UUID playerId) {
@@ -1769,40 +1527,6 @@ public class Permanent {
         return cantPhaseOutUntilUpkeepsOf.isEmpty();
     }
 
-    /**
-     * Whether this permanent has cumulative upkeep — printed, temporarily granted, or persistently
-     * granted (Balduvian Shaman). Used for targeting restrictions like "that doesn't have
-     * cumulative upkeep".
-     */
-    public boolean hasCumulativeUpkeep() {
-        Trigger yourUpkeep = Triggers.upkeep(ActivePlayer.YOU);
-        return hasCumulativeUpkeepIn(card.getTriggerEffects(yourUpkeep, Zone.BATTLEFIELD))
-                || hasCumulativeUpkeepIn(getPersistentTriggerEffects(yourUpkeep))
-                || hasCumulativeUpkeepIn(getTemporaryTriggerEffects(yourUpkeep));
-    }
-
-    private static boolean hasCumulativeUpkeepIn(List<CardEffect> effects) {
-        for (CardEffect effect : effects) {
-            if (effect instanceof CumulativeUpkeepEffect) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean isLosesAllAbilitiesUntilEndOfTurn() {
-        return losesAllAbilitiesUntilEndOfTurn || !losesAllAbilitiesUntilNextTurnControllers.isEmpty()
-                || losesAllAbilitiesPermanently;
-    }
-
-    public void addLosesAllAbilitiesUntilNextTurnController(UUID controllerId) {
-        losesAllAbilitiesUntilNextTurnControllers.add(controllerId);
-    }
-
-    public void clearLosesAllAbilitiesUntilNextTurnController(UUID controllerId) {
-        losesAllAbilitiesUntilNextTurnControllers.remove(controllerId);
-    }
-
     public void recordTappedPermanentForAbility(UUID permanentId) {
         if (permanentId != null && !tappedPermanentsForAbilityThisTurn.contains(permanentId)) {
             tappedPermanentsForAbilityThisTurn.add(permanentId);
@@ -1813,34 +1537,10 @@ public class Permanent {
         tappedPermanentsForAbilityThisTurn.clear();
     }
 
-    public void suppressStaticEffectUntilEndOfTurn(Class<? extends CardEffect> effectType) {
-        suppressedStaticEffectsUntilEndOfTurn.add(effectType);
-    }
-
-    public boolean isStaticEffectSuppressed(Class<? extends CardEffect> effectType) {
-        return suppressedStaticEffectsUntilEndOfTurn.contains(effectType);
-    }
-
-    /** Removes exactly this static effect object from the permanent until end of turn. */
-    public void suppressStaticEffectInstanceUntilEndOfTurn(CardEffect effect) {
-        suppressedStaticEffectInstancesUntilEndOfTurn.add(effect);
-    }
-
-    /** Whether this static effect is suppressed, either as its whole type or as this exact object. */
-    public boolean isStaticEffectSuppressed(CardEffect effect) {
-        return suppressedStaticEffectsUntilEndOfTurn.contains(effect.getClass())
-                || suppressedStaticEffectInstancesUntilEndOfTurn.contains(effect);
-    }
-
     public void resetModifiers() {
         this.blockedWithoutBlockers = false;
         this.creaturesThatCrewedThisTurn.clear();
-        this.temporaryAbilities.clear();
         this.saddled = false;
-        this.losesAllAbilitiesUntilEndOfTurn = false;
-        this.suppressedStaticEffectsUntilEndOfTurn.clear();
-        this.suppressedStaticEffectInstancesUntilEndOfTurn.clear();
-        this.temporaryActivatedAbilities.clear();
         expireTemporaryTextReplacements();
     }
 
@@ -1872,12 +1572,7 @@ public class Permanent {
     private Object endOfTurnStateValue(EndOfTurnStateField field) {
         return switch (field) {
             case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers;
-            case TEMPORARY_ABILITIES -> temporaryAbilities;
             case SADDLED -> saddled;
-            case LOSES_ALL_ABILITIES -> losesAllAbilitiesUntilEndOfTurn;
-            case SUPPRESSED_STATIC_EFFECT_TYPES -> suppressedStaticEffectsUntilEndOfTurn;
-            case SUPPRESSED_STATIC_EFFECT_INSTANCES -> new ArrayList<>(suppressedStaticEffectInstancesUntilEndOfTurn);
-            case TEMPORARY_ACTIVATED_ABILITIES -> temporaryActivatedAbilities;
             case TEXT_REPLACEMENTS -> textReplacements.stream().filter(TextReplacement::untilEndOfTurn).toList();
             case TIMES_REGENERATED -> timesRegeneratedThisTurn;
             case TAPPED_PERMANENTS_FOR_ABILITY -> List.copyOf(tappedPermanentsForAbilityThisTurn);
@@ -1890,13 +1585,7 @@ public class Permanent {
     private void addEndOfTurnStateValue(EndOfTurnStateField field, Object value) {
         switch (field) {
             case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers = true;
-            case TEMPORARY_ABILITIES -> temporaryAbilities.addAll((List<Ability>) value);
             case SADDLED -> saddled = true;
-            case LOSES_ALL_ABILITIES -> losesAllAbilitiesUntilEndOfTurn = true;
-            case SUPPRESSED_STATIC_EFFECT_TYPES -> suppressedStaticEffectsUntilEndOfTurn.addAll((Set) value);
-            case SUPPRESSED_STATIC_EFFECT_INSTANCES ->
-                    suppressedStaticEffectInstancesUntilEndOfTurn.addAll((List<CardEffect>) value);
-            case TEMPORARY_ACTIVATED_ABILITIES -> temporaryActivatedAbilities.addAll((List<ActivatedAbility>) value);
             case TEXT_REPLACEMENTS -> textReplacements.addAll((List<TextReplacement>) value);
             case TIMES_REGENERATED -> timesRegeneratedThisTurn += (Integer) value;
             case TAPPED_PERMANENTS_FOR_ABILITY -> ((List<UUID>) value).forEach(this::recordTappedPermanentForAbility);
@@ -1973,15 +1662,6 @@ public class Permanent {
         }
         this.copyWhileAttached = false;
         this.whileAttachedPreCopyCard = null;
-    }
-
-    /**
-     * Clears all "until your next turn" effects: activated abilities (e.g. Song of Freyalise)
-     * and land animation (e.g. Sylvan Awakening). Called at the beginning of the controller's
-     * next turn, not at end of turn.
-     */
-    public void clearUntilNextTurnEffects() {
-        this.untilNextTurnActivatedAbilities.clear();
     }
 
     /**

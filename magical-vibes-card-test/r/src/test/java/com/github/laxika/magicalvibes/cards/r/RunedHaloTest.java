@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BriarberryCohort;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BurnTrail;
 import com.github.laxika.magicalvibes.cards.d.DrownerInitiate;
 import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
@@ -112,7 +113,7 @@ class RunedHaloTest extends BaseCardTest {
     @DisplayName("Protection ends when Runed Halo loses all abilities")
     void protectionEndsWhenHaloLosesAbilities() {
         Permanent halo = addReadyRunedHalo(player1, "Burn Trail");
-        halo.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, halo);
         harness.setLife(player1, 20);
 
         harness.forceActivePlayer(player2);

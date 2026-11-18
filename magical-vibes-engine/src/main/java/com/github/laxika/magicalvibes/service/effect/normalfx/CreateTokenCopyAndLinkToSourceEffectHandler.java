@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyAndLinkToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -52,21 +53,15 @@ public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffect
         }
 
         // A Dance of Many that already left creates an unlinked token. Otherwise every token the ability
-        // creates is "the token": the doubled copies and the tokens a replacement adds or substitutes
-        // (Queen Allenal's Soldier, Jinnie Fay's Cats), since the creating effect's instructions apply to
-        // all of them. The "when the token leaves, sacrifice this enchantment" trigger is the enchantment's
-        // ability, not a copiable value of the token, so it rides on each token's permanent.
+        // creates is "the token" its linked abilities name (tracked in GameData.sourceCreatedTokens): the doubled
+        // copies and the tokens a replacement adds or substitutes (Queen Allenal's Soldier, Jinnie Fay's Cats),
+        // since the creating effect's instructions apply to all of them.
         boolean linked = sourceEnchantment != null;
         var copyOptions = new CreateTokenCopyOfTargetPermanentEffect(List.of(), Set.of(), null, null, Map.of(),
                 false, false, false, false, linked, false, null, Set.of(), false, List.of(), List.of(), false, false,
                 new Fixed(1), false, Set.of(), false);
-        UUID enchantmentId = linked ? sourceEnchantment.getId() : null;
         tokenCopySupport.createTokenCopiesWithTokenRider(gameData, entry, List.of(targetCreature.getCard()),
-                entry.getControllerId(), copyOptions, linked ? token -> {
-                    token.addPersistentAbility(new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                            new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.SACRIFICE_PARTNER)));
-                    token.setChosenPermanentId(enchantmentId);
-                } : null);
+                entry.getControllerId(), copyOptions, null);
         log.info("Game {} - Dance of Many creates a token copy of {}", gameData.id,
                 targetCreature.getCard().getName());
     }

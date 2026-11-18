@@ -95,7 +95,13 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
                 permanent.setCounterCount(e.enterWithCounter(), counterCount);
             }
         }
-        permanent.setLosesAllAbilitiesPermanently(e.losesAllAbilities());
+        if (e.losesAllAbilities()) {
+            // "Return it to the battlefield ... and it loses all abilities": it has none as it enters, so its own
+            // entry abilities don't apply.
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), card.getName(), null,
+                    entry.getControllerId(), new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT),
+                    permanent.getId(), null, null, Duration.PERMANENT, 0));
+        }
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
         if (!e.overriddenCardTypes().isEmpty()) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
@@ -110,11 +116,6 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
                 " to the battlefield" + (e.tapped() ? " tapped" : "") + "."));
         log.info("Game {} - {} returns to the battlefield from the graveyard", gameData.id, card.getName());
 
-        if (e.losesAllAbilities()) {
-            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), card.getName(), null,
-                    entry.getControllerId(), new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT),
-                    permanent.getId(), null, null, Duration.PERMANENT, 0));
-        }
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, ownerId, permanent, card);
         if (e.useReturnedPermanentAsSource()) {
             entry.useReturnedPermanentAsSource(permanent, ownerId);

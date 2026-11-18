@@ -55,7 +55,6 @@ public class PerpetuallyGrantKeywordsToTargetCreatureEffectHandler implements No
 
             if (grant.grantedAbility() != null) {
                 gameData.grantPerpetualAbility(cardId, grant.grantedAbility());
-                target.addPersistentAbility(grant.grantedAbility());
             }
         }
     }

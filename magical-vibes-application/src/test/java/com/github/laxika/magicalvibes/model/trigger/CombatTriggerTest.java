@@ -86,9 +86,6 @@ class CombatTriggerTest {
         Card card = new Card();
         card.addTrigger(Triggers.creatureYouControlAttacks().withFilter(DRAGON), DRAW);
         TriggeredAbility ability = card.getTriggeredAbilities().getFirst();
-        Permanent permanent = new Permanent(new Card());
-        permanent.addTemporaryAbility(ability);
-
         assertThatThrownBy(ability::ownEntryEffects).isInstanceOf(IllegalStateException.class);
     }
 

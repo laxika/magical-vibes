@@ -457,6 +457,13 @@ final class RecordingCharacteristicState extends CharacteristicState {
     }
 
     @Override
+    public void removeStaticAbilities(Class<? extends CardEffect> type) {
+        log("removeStaticAbilities:" + type.getSimpleName());
+        write(Characteristic.ABILITIES);
+        super.removeStaticAbilities(type);
+    }
+
+    @Override
     public void addNonAbilityEffect(CardEffect effect) {
         write(Characteristic.ABILITIES);
         super.addNonAbilityEffect(effect);

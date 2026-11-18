@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceOfChosenColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -47,9 +48,9 @@ public class GrantEffectToSourceOfChosenColorUntilEndOfTurnEffectHandler impleme
         // trigger's filter on the blocking creature.
         TriggeredAbility granted = (TriggeredAbility) grant.grantedAbility();
         CombatTrigger trigger = (CombatTrigger) granted.conditions().getFirst().trigger();
-        source.addTemporaryAbility(new TriggeredAbility(
+        gameData.grantAbilityToPermanent(entry, new TriggeredAbility(
                 trigger.withFilter(new PermanentColorInPredicate(Set.of(chosenColor))),
-                granted.options(), granted.effects()));
+                granted.options(), granted.effects()), source.getId(), Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData, GameLog.builder()
                 .card(source.getCard())
                 .text(" gains a temporary ability until end of turn.")

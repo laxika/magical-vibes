@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -38,17 +39,16 @@ public class GainActivatedAbilitiesOfTargetCreatureUntilEndOfTurnEffectHandler i
 
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, target);
         List<ActivatedAbility> abilities = new ArrayList<>();
-        if (staticBonus.losesAllAbilities() || target.isLosesAllAbilitiesUntilEndOfTurn() || target.isFaceDown()) {
+        if (staticBonus.losesAllAbilities() || target.isFaceDown()) {
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         } else {
             abilities.addAll(target.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         }
-        abilities.addAll(target.getPersistentGrantedActivatedAbilities());
-        abilities.addAll(target.getTemporaryActivatedAbilities());
-        abilities.addAll(target.getUntilNextTurnActivatedAbilities());
         abilities.addAll(gameQueryService.missingIntrinsicManaAbilities(gameData, target, abilities));
-        source.getTemporaryActivatedAbilities().addAll(abilities);
+        // The abilities are those the creature has as this resolves (CR 611.2c).
+        abilities.forEach(ability ->
+                gameData.grantAbilityToPermanent(entry, ability, source.getId(), Duration.UNTIL_END_OF_TURN));
 
         gameLogService.append(gameData, GameLog.builder().card(source.getCard())
                 .text(" gains the activated abilities of " + target.getCard().getName() + " until end of turn.")

@@ -69,13 +69,10 @@ public class LandManaTypeSupport {
 
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, land);
         List<ActivatedAbility> abilities = new ArrayList<>();
-        if (!staticBonus.losesAllAbilities() && !land.isLosesAllAbilitiesUntilEndOfTurn() && !land.isFaceDown()) {
+        if (!staticBonus.losesAllAbilities() && !gameData.losesAllAbilitiesByEffect(land) && !land.isFaceDown()) {
             abilities.addAll(land.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
         }
         abilities.addAll(staticBonus.grantedActivatedAbilities());
-        abilities.addAll(land.getPersistentGrantedActivatedAbilities());
-        abilities.addAll(land.getTemporaryActivatedAbilities());
-        abilities.addAll(land.getUntilNextTurnActivatedAbilities());
         Set<CardSubtype> basicLandTypes = gameQueryService.effectiveBasicLandTypes(gameData, land);
         List<ManaColor> overriddenColors = gameQueryService.getOverriddenLandManaColors(gameData, land);
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.DwarvenTrader;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.Roterothopter;
 import com.github.laxika.magicalvibes.cards.w.WinterSky;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -78,7 +79,7 @@ class AetherStormTest extends BaseCardTest {
     @DisplayName("Losing Aether Storm's abilities removes its creature-spell restriction")
     void losingAllAbilitiesRemovesRestriction() {
         Permanent storm = harness.addToBattlefieldAndReturn(player1, new AetherStorm());
-        storm.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, storm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

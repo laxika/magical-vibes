@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromNonSubtypeCreaturesEffect;
@@ -43,6 +44,7 @@ import java.util.Set;
 public class GrantedAbilityViewFactory {
 
     public List<GrantedAbilityView> create(
+            GameData gameData,
             Permanent permanent,
             GameQueryService.StaticBonus bonus,
             List<GrantedEffectAttribution> attributions,
@@ -111,8 +113,7 @@ public class GrantedAbilityViewFactory {
         }
         if (permanent.getCard().getStaticEffects().stream()
                 .anyMatch(ProtectionFromChosenPlayerEffect.class::isInstance)
-                && !permanent.isStaticEffectSuppressed(ProtectionFromChosenPlayerEffect.class)
-                && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                && !gameData.removesOwnStaticAbility(permanent.getId(), ProtectionFromChosenPlayerEffect.class)
                 && !bonus.losesAllAbilities()) {
             result.add(new GrantedAbilityView("Protection from the chosen player", null));
         }

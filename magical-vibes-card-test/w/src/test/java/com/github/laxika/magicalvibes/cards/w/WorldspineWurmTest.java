@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.c.CodexShredder;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Cremate;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -124,7 +125,7 @@ class WorldspineWurmTest extends BaseCardTest {
     void abilityLossStopsDeathTriggerOnly() {
         harness.setLibrary(player1, List.of());
         Permanent wurm = harness.addToBattlefieldAndReturn(player1, new WorldspineWurm());
-        wurm.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, wurm);
         wurm.setMarkedDamage(15);
 
         harness.runStateBasedActions();

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FlashThompsonSpiderFan;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FlyingOctobot;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -169,7 +170,7 @@ class ScoutTheCityTest extends BaseCardTest {
         addManaForSpell();
         harness.castModalSorcery(player1, 0, 1, List.of(target.getId()));
 
-        target.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, target);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Flying Octobot");

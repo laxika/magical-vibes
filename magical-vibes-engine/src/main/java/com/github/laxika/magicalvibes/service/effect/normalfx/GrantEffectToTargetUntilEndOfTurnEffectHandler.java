@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -75,7 +76,7 @@ public class GrantEffectToTargetUntilEndOfTurnEffectHandler implements NormalEff
                     null, false, false, gameData.turnNumber, null, target.getId()));
             return;
         }
-        target.addTemporaryAbility(e.grantedAbility());
+        gameData.grantAbilityToPermanent(entry, e.grantedAbility(), target.getId(), Duration.UNTIL_END_OF_TURN);
 
         
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" grants a temporary " + AbilityEffects.label(e.grantedAbility()) + " ability to ").card(target.getCard()).text(" until end of turn.").build());

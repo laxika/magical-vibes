@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DarksteelSentinel;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -37,7 +38,7 @@ class MusicianTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.MUSIC)).isEqualTo(1);
-        assertThat(bears.getPersistentTriggerEffects(Triggers.upkeep(ActivePlayer.YOU)))
+        assertThat(PermanentGrants.grantedTriggerEffects(gd, bears, Triggers.upkeep(ActivePlayer.YOU)))
                 .containsExactly(new DestroyUnlessPaysPerCounterEffect(CounterType.MUSIC, "{1}"));
         assertThat(musician.isTapped()).isTrue();
     }
@@ -57,7 +58,7 @@ class MusicianTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.MUSIC)).isEqualTo(2);
-        assertThat(bears.getPersistentTriggerEffects(Triggers.upkeep(ActivePlayer.YOU))).hasSize(1);
+        assertThat(PermanentGrants.grantedTriggerEffects(gd, bears, Triggers.upkeep(ActivePlayer.YOU))).hasSize(1);
     }
 
     @Test

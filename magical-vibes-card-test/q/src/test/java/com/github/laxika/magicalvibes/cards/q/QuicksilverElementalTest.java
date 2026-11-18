@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import java.util.List;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.cards.a.AncientDen;
 import com.github.laxika.magicalvibes.cards.a.AuriokTransfixer;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
@@ -19,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({QuicksilverElemental.class, Duskworker.class, AuriokTransfixer.class,
-        AncientDen.class, CopperMyr.class})
+        AncientDen.class, CopperMyr.class, TurnToFrog.class})
 class QuicksilverElementalTest extends BaseCardTest {
 
     @Test
@@ -160,5 +162,20 @@ class QuicksilverElementalTest extends BaseCardTest {
         assertThat(opposingQuicksilver.isTapped()).isFalse();
         assertThat(transfixer.isTapped()).isFalse();
         assertThat(ancientDen.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A later \"loses all abilities\" removes the activated abilities it gained (CR 613.7)")
+    void laterAbilityLossRemovesGainedAbilities() {
+        Permanent quicksilver = addCreatureReady(player1, new QuicksilverElemental());
+        Permanent duskworker = addCreatureReady(player1, new Duskworker());
+
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.activateAbility(player1, 0, 0, null, duskworker.getId());
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.castAndResolveInstant(player1, 0, quicksilver.getId());
+
+        assertThat(gs.getEffectiveActivatedAbilities(gd, quicksilver)).isEmpty();
     }
 }

@@ -56,7 +56,6 @@ public class BecomeEverflameEffectHandler implements NormalEffectHandlerBean {
         source.setPersistentName(EVERFLAME_NAME);
         gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(CardSubtype.EQUIPMENT, GrantScope.TARGET),
                 source.getId(), Duration.PERMANENT);
-        source.setLosesAllAbilitiesPermanently(true);
 
         // "It loses all other card types": a layer-4 effect stamped now, so it overrides an earlier
         // animation that made the permanent a creature.

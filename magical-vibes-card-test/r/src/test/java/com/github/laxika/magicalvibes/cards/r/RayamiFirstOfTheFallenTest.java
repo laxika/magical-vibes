@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BlessedLight;
 import com.github.laxika.magicalvibes.cards.k.KnightOfMalice;
 import com.github.laxika.magicalvibes.cards.z.ZetalpaPrimalDawn;
@@ -96,7 +97,7 @@ class RayamiFirstOfTheFallenTest extends BaseCardTest {
     void losingAbilitiesDisablesTheDeathReplacement() {
         Permanent rayami = harness.addToBattlefieldAndReturn(player1, new RayamiFirstOfTheFallen());
         Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
-        rayami.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, rayami);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, angel));
@@ -109,7 +110,7 @@ class RayamiFirstOfTheFallenTest extends BaseCardTest {
     @Test
     void losingAbilitiesAlsoAllowsRayamiItselfToDie() {
         Permanent rayami = harness.addToBattlefieldAndReturn(player1, new RayamiFirstOfTheFallen());
-        rayami.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, rayami);
         rayami.setMarkedDamage(4);
 
         harness.runStateBasedActions();

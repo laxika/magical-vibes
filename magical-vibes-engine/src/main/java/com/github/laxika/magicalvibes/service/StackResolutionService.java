@@ -451,8 +451,11 @@ public class StackResolutionService {
         perm.setGrantedBloodthirst(entry.getGrantedBloodthirst());
         // Devour granted while the spell was on the stack (Jund).
         perm.setGrantedDevour(entry.getGrantedDevour());
-        entry.getGrantedAbilitiesOnEntry().forEach(perm::addTemporaryAbility);
-        entry.getPersistentAbilitiesOnEntry().forEach(perm::addPersistentAbility);
+        // Abilities the spell grants the permanent as it enters (CR 611.2a): until end of turn, or indefinitely.
+        entry.getGrantedAbilitiesOnEntry().forEach(ability -> gameData.grantAbilityToPermanent(card.getName(), null,
+                entry.getControllerId(), ability, perm.getId(), Duration.UNTIL_END_OF_TURN));
+        entry.getPersistentAbilitiesOnEntry().forEach(ability -> gameData.grantAbilityToPermanent(card.getName(), null,
+                entry.getControllerId(), ability, perm.getId(), Duration.PERMANENT));
         // Mirage flash clause: cast at a time a sorcery couldn't have been cast, so its controller
         // sacrifices the permanent it becomes at the beginning of the next cleanup step.
         if (entry.isCastWhenSorceryCouldNotBeCast() && card.getStaticEffects().stream()

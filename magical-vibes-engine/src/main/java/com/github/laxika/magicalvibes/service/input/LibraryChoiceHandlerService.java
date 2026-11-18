@@ -714,8 +714,10 @@ public class LibraryChoiceHandlerService {
                     }
                     if (returnToHandAtEndStep) {
                         if (librarySearch.returnToHandAtControllerEndStepId() != null) {
-                            perm.addPersistentAbility(new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),
-                                    com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.self()));
+                            gameData.grantAbilityToPermanent(perm.getCard().getName(), librarySearch.sourcePermanentId(),
+                                    playerId, new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),
+                                            com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.self()),
+                                    perm.getId(), com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT);
                         } else {
                             // The delayed trigger belongs to the ability that searched (e.g. Nahiri, the
                             // Harbinger's -8), not to the fetched permanent, even after control changes.

@@ -1246,7 +1246,7 @@ public class AmountEvaluationService {
         if (battlefield == null) return false;
         return battlefield.stream().anyMatch(permanent ->
                 !permanent.isFaceDown()
-                        && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                        && !gameData.losesAllAbilitiesByEffect(permanent)
                         && !gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()
                         && permanent.getCard().getStaticEffects().stream()
                         .anyMatch(effect -> effect instanceof StationPowerModifierEffect modifier

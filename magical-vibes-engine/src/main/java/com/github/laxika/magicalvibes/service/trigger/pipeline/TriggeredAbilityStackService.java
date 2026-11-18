@@ -1568,10 +1568,9 @@ public class TriggeredAbilityStackService extends StackDoor {
     }
 
     /**
-     * The controller of {@code candidate}'s ability: its source's controller, but for the ability Dance of Many gives
-     * its token ("when the token leaves the battlefield, sacrifice Dance of Many"), which is the enchantment's and
-     * controlled by the enchantment's controller while it is on the battlefield. The engine makes that ability, so it
-     * rides on the token.
+     * The controller of {@code candidate}'s ability: its source's controller, but for a linked token's "when this
+     * leaves the battlefield, sacrifice [its creator]" ({@link RemoveLinkedPermanentEffect.Mode#SACRIFICE_PARTNER}),
+     * which is controlled by its creator's controller while that is on the battlefield.
      */
 
     private UUID abilityControllerId(GameData gameData, TriggerCandidate candidate) {

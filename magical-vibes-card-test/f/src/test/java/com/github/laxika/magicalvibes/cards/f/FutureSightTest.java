@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BoneSplinters;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Harrow;
@@ -105,7 +106,7 @@ class FutureSightTest extends BaseCardTest {
     @DisplayName("Losing all abilities removes Future Sight's land-play permission")
     void losingAllAbilitiesRemovesLandPlayPermission() {
         Permanent futureSight = harness.addToBattlefieldAndReturn(player1, new FutureSight());
-        futureSight.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, futureSight);
         Forest forest = new Forest();
         harness.setLibrary(player1, List.of(forest));
 
@@ -118,7 +119,7 @@ class FutureSightTest extends BaseCardTest {
     @DisplayName("Losing all abilities removes Future Sight's spell-casting permission")
     void losingAllAbilitiesRemovesSpellCastingPermission() {
         Permanent futureSight = harness.addToBattlefieldAndReturn(player1, new FutureSight());
-        futureSight.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, futureSight);
         Shock shock = new Shock();
         harness.setLibrary(player1, List.of(shock));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -132,7 +133,7 @@ class FutureSightTest extends BaseCardTest {
     @DisplayName("Losing all abilities stops Future Sight from revealing the top card")
     void losingAllAbilitiesStopsTopCardReveal() {
         Permanent futureSight = harness.addToBattlefieldAndReturn(player1, new FutureSight());
-        futureSight.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, futureSight);
         harness.setLibrary(player1, List.of(new Shock()));
         harness.clearMessages();
 

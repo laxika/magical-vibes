@@ -471,6 +471,10 @@ public final class LayerClassifier {
                 fixed(Layer.L6_ABILITIES));
         map.put(RemoveKeywordEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(RemoveAllProtectionUntilEndOfTurnEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectUntilEndOfTurnEffect.class,
+                fixed(Layer.L6_ABILITIES));
+        map.put(com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectOnTargetUntilEndOfTurnEffect.class,
+                fixed(Layer.L6_ABILITIES));
         map.put(CountAsCreaturesEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(AllCreaturesAreTokensEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(MaroGoneNutsEffect.class, fixed(Layer.L6_ABILITIES));

@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.Ability;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -28,16 +32,35 @@ public final class WatchedAbilities {
     }
 
     /**
-     * The abilities with a trigger condition watched as {@code watched} granted to {@code permanent} until end of
-     * turn, end of combat or next upkeep.
+     * The abilities with a trigger condition watched as {@code watched} that resolved effects granted {@code permanent}
+     * (the {@code GrantTriggeredAbilityEffect}s on it) or that its card perpetually gained, read from the effects
+     * themselves rather than the layered pass.
      */
-    public static List<TriggeredAbility> temporary(Permanent permanent, Trigger watched) {
-        return withWatchedTrigger(permanent.getTemporaryTriggeredAbilities(), watched);
+    public static List<TriggeredAbility> grantedByEffects(GameData gameData, Permanent permanent, Trigger watched) {
+        return withWatchedTrigger(grantedByEffects(gameData, permanent), watched);
     }
 
-    /** The abilities with a trigger condition watched as {@code watched} granted to {@code permanent} until it leaves. */
-    public static List<TriggeredAbility> persistent(Permanent permanent, Trigger watched) {
-        return withWatchedTrigger(permanent.getPersistentTriggeredAbilities(), watched);
+    /**
+     * The triggered abilities resolved effects granted {@code permanent} (the {@code GrantTriggeredAbilityEffect}s on
+     * it) and those its card perpetually gained, read from the effects themselves rather than the layered pass.
+     */
+    public static List<TriggeredAbility> grantedByEffects(GameData gameData, Permanent permanent) {
+        List<TriggeredAbility> granted = new ArrayList<>();
+        // A face-down permanent has none of its card's perpetual abilities (CR 708.2a).
+        if (permanent.getOriginalCard() != null && !permanent.isFaceDown()) {
+            for (Ability ability : gameData.perpetualAbilities(permanent.getOriginalCard().getId())) {
+                if (ability instanceof TriggeredAbility triggered) {
+                    granted.add(triggered);
+                }
+            }
+        }
+        for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPermanent(permanent.getId(),
+                GrantTriggeredAbilityEffect.class)) {
+            if (((GrantTriggeredAbilityEffect) fe.effect()).grantedAbility() instanceof TriggeredAbility triggered) {
+                granted.add(triggered);
+            }
+        }
+        return granted;
     }
 
     /** The abilities of {@code abilities} with a trigger condition watched as {@code watched}, in order. */

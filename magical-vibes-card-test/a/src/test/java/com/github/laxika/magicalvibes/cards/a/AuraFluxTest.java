@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CourserOfKruphix;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.Erase;
 import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.k.Knighthood;
@@ -78,7 +79,7 @@ class AuraFluxTest extends BaseCardTest {
     @DisplayName("Aura Flux does not grant abilities while it has no abilities")
     void doesNotGrantAbilitiesWhileItHasNoAbilities() {
         Permanent auraFlux = addAuraFlux(player1);
-        auraFlux.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, auraFlux);
         Permanent knighthood = addKnighthood(player1);
 
         advanceToUpkeep(player1);

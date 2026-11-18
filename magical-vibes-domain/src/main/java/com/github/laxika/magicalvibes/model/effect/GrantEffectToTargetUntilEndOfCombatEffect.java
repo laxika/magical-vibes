@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AbilityEffects;
 
 /**
  * When resolved, grants each targeted creature a triggered ability for the rest of the current
- * combat. The grant is removed when combat state is cleared.
+ * combat: a floating layer-6 effect on it that ends as the combat phase ends.
  */
 public record GrantEffectToTargetUntilEndOfCombatEffect(
         Ability grantedAbility

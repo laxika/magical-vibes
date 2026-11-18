@@ -47,7 +47,7 @@ class DreamsOfTheDeadTest extends BaseCardTest {
     void returnsWhiteCreatureWithRiders() {
         Permanent spirit = reanimate(new BlinkingSpirit());
 
-        assertThat(spirit.hasCumulativeUpkeep()).isTrue();
+        assertThat(gqs.hasCumulativeUpkeep(gd, spirit)).isTrue();
         assertThat(spirit.isExileIfLeavesBattlefield()).isTrue();
         harness.assertNotInGraveyard(player1, "Blinking Spirit");
     }
@@ -57,7 +57,7 @@ class DreamsOfTheDeadTest extends BaseCardTest {
     void returnsBlackCreature() {
         Permanent fiend = reanimate(new MoorFiend());
 
-        assertThat(fiend.hasCumulativeUpkeep()).isTrue();
+        assertThat(gqs.hasCumulativeUpkeep(gd, fiend)).isTrue();
         assertThat(fiend.isExileIfLeavesBattlefield()).isTrue();
     }
 

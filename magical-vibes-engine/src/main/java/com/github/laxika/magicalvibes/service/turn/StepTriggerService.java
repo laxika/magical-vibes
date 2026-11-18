@@ -202,10 +202,6 @@ public class StepTriggerService {
                 .forEach(Permanent::markControllerUpkeepStarted);
         gameData.phasedOutPermanents.getOrDefault(gameData.activePlayerId, List.of())
                 .forEach(Permanent::markControllerUpkeepStarted);
-        gameData.forEachPermanent((playerId, permanent) ->
-                permanent.clearUntilNextUpkeepTriggeredEffects(gameData.activePlayerId));
-        gameData.phasedOutPermanents.values().forEach(permanents -> permanents.forEach(permanent ->
-                permanent.clearUntilNextUpkeepTriggeredEffects(gameData.activePlayerId)));
 
         if (gameData.activePlayerId != null
                 && gameData.activePlayerId.equals(gameData.initiativePlayerId)) {

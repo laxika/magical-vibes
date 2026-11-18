@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.h.HoardRobber;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.o.OhranFrostfang;
 import com.github.laxika.magicalvibes.cards.o.OrochiSoulReaver;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -81,7 +82,7 @@ class FelixFiveBootsTest extends BaseCardTest {
         addCreatureReady(player1, new OhranFrostfang());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new FelixFiveBoots(), new FelixFiveBoots()));
-        felix.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, felix);
         felix.setAttacking(true);
 
         resolveCombat();

@@ -77,8 +77,8 @@ public class JinnieFayTokenReplacements implements ReplacementCandidateSource<To
         }
         List<Instance> instances = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(event.controllerId(), List.of())) {
-            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                    || permanent.isStaticEffectSuppressed(JinnieFayTokenReplacementEffect.class)) {
+            if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)
+                    || gameData.removesOwnStaticAbility(permanent.getId(), JinnieFayTokenReplacementEffect.class)) {
                 continue;
             }
             List<CardEffect> statics = permanent.getCard().getStaticEffects();

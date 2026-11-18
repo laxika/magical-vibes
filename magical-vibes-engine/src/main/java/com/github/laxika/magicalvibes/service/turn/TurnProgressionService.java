@@ -1128,13 +1128,6 @@ public class TurnProgressionService {
                     p.getPermanentIdsThatDealtDamageThisTurn().clear();
                 }));
 
-        // Clear "until your next turn" activated abilities for the active player's permanents
-        List<Permanent> activePlayerBf = gameData.playerBattlefields.get(nextActive);
-        if (activePlayerBf != null) {
-            activePlayerBf.forEach(Permanent::clearUntilNextTurnEffects);
-        }
-        gameData.forEachPermanent((controllerId, permanent) ->
-                permanent.clearLosesAllAbilitiesUntilNextTurnController(nextActive));
         // The turn begins: the "until your next turn" effects of the player whose turn it is end.
         gameData.rulesEvents.occur(new TurnEvent.Began(nextActive));
         if (logPlayerControlBegun(gameData, Duration.Start.AFFECTED_PLAYERS_NEXT_TURN)) {

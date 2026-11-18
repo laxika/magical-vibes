@@ -104,12 +104,14 @@ public record Duration(Start start, End end, AsLongAs asLongAs, int combatPhase)
         ATTACHED,
         /** Its source card stays in exile (teach); it ends as the card leaves exile, cast or not. */
         SOURCE_CARD_EXILED,
+        /** The affected permanent stays face down (Roalesk's "for as long as it remains face down"). */
+        AFFECTED_FACE_DOWN,
         /** The static ability that generates it applies (CR 611.3). */
         STATIC_ABILITY;
 
         /** Whether it holds only while its source permanent is on the battlefield: it ends as the source leaves. */
         public boolean needsSourceOnBattlefield() {
-            return this != SOURCE_CARD_EXILED && this != STATIC_ABILITY;
+            return this != SOURCE_CARD_EXILED && this != STATIC_ABILITY && this != AFFECTED_FACE_DOWN;
         }
 
         /** Whether it holds only while its source stays tapped: it ends as the source untaps. */
@@ -167,6 +169,8 @@ public record Duration(Start start, End end, AsLongAs asLongAs, int combatPhase)
             new Duration(End.NEVER, AsLongAs.SOURCE_REMAINS_TAPPED);
     /** For as long as its source card remains exiled (teach). */
     public static final Duration WHILE_SOURCE_CARD_EXILED = new Duration(End.NEVER, AsLongAs.SOURCE_CARD_EXILED);
+    /** For as long as the affected permanent remains face down; it ends as the permanent is turned face up. */
+    public static final Duration WHILE_FACE_DOWN = new Duration(End.NEVER, AsLongAs.AFFECTED_FACE_DOWN);
     /** For as long as its source, an Aura or Equipment, stays attached to the affected permanent. */
     public static final Duration WHILE_ATTACHED = new Duration(End.NEVER, AsLongAs.ATTACHED);
     /** The effect of a static ability (CR 611.3): Auras, Equipment, Stations. */

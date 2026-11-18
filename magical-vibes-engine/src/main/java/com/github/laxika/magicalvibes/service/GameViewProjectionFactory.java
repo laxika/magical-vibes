@@ -244,9 +244,6 @@ public class GameViewProjectionFactory {
                     int adjustedBonusPower = gameQueryService.getEffectivePower(p, bonus) - p.getEffectivePower();
                     int adjustedBonusToughness = gameQueryService.getEffectiveToughness(p, bonus) - p.getEffectiveToughness();
                     List<ActivatedAbility> allGrantedAbilities = new ArrayList<>(bonus.grantedActivatedAbilities());
-                    allGrantedAbilities.addAll(p.getPersistentGrantedActivatedAbilities());
-                    allGrantedAbilities.addAll(p.getTemporaryActivatedAbilities());
-                    allGrantedAbilities.addAll(p.getUntilNextTurnActivatedAbilities());
                     // A basic land type's mana ability (CR 305.6) comes last, as in the engine's ability list.
                     List<ActivatedAbility> present = new ArrayList<>(p.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
                     present.addAll(allGrantedAbilities);
@@ -262,12 +259,12 @@ public class GameViewProjectionFactory {
                     }
                     Set<CardSubtype> removedSubtypes = new HashSet<>(p.getCard().getSubtypes());
                     removedSubtypes.removeAll(gameQueryService.getEffectiveSubtypes(data, p));
-                    PermanentView view = permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.cardTypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.losesAllNonManaAbilities(), bonus.grantedSupertypes(), explained.lines(), faceUpExiledWith, faceDownExiledCount, bonus.name(), removedSubtypes, data.regenerationShieldCount(p.getId()));
+                    PermanentView view = permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.cardTypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities(), bonus.losesAllNonManaAbilities(), bonus.grantedSupertypes(), explained.lines(), faceUpExiledWith, faceDownExiledCount, bonus.name(), removedSubtypes, data.regenerationShieldCount(p.getId()), data.lostActivatedAbilities(p.getId()));
                     List<GrantedEffectAttribution> attributions =
                             new ArrayList<>(explained.grantedEffectAttributions());
                     attributions.addAll(gameQueryService.attachedRestrictionAttributions(data, p));
                     views.add(view.withGrantedAbilities(grantedAbilityViewFactory.create(
-                            p, bonus, attributions,
+                            data, p, bonus, attributions,
                             data.hasFloatingEffectOnPermanent(p.getId(), CantBeBlockedEffect.class))));
                 }
                 battlefields.add(views);

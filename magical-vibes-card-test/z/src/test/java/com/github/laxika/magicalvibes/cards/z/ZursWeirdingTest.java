@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FontOfAgonies;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -309,7 +310,7 @@ class ZursWeirdingTest extends BaseCardTest {
     @DisplayName("Zur's Weirding does not reveal hands while it has lost its abilities")
     void abilityLossDisablesHandReveal() {
         Permanent weirding = harness.addToBattlefieldAndReturn(player1, new ZursWeirding());
-        weirding.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, weirding);
         harness.setHand(player1, List.of(new AirElemental()));
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.clearMessages();
@@ -344,7 +345,7 @@ class ZursWeirdingTest extends BaseCardTest {
         Permanent weirding = harness.addToBattlefieldAndReturn(player1, new ZursWeirding());
         gd.turnNumber = 2;
         advanceToUpkeep(player1);
-        weirding.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, weirding);
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
 
         harness.passBothPriorities();

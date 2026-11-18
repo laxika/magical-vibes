@@ -10,11 +10,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * With {@link Duration#CONTINUOUS}: static effect used by auras like Deep Freeze.
  * Resolved by {@code LosesAllAbilitiesEffectHandler} in {@code staticfx}.
  * <p>
- * With {@link Duration#UNTIL_END_OF_TURN}: one-shot effect that sets a temporary flag
- * on the permanent, cleared by {@link com.github.laxika.magicalvibes.model.Permanent#resetModifiers()}.
- * Used by cards like Merfolk Trickster. Resolved by {@code KeywordGrantResolutionService}.
- * Source-linked durations create a floating layer effect that lasts while the source remains on
- * the battlefield.
+ * Resolved (Merfolk Trickster, Retched Wretch's return) by the normalfx {@code LosesAllAbilitiesEffectHandler}: a
+ * floating layer-6 effect on each affected permanent with the stated duration (CR 611.2a), applied in timestamp order
+ * (CR 613.1f, 613.7), so an ability granted after it stays; source-linked durations last while the source remains.
  *
  * @param scope    which permanents are affected (ENCHANTED_CREATURE, TARGET, etc.)
  * @param filter   optional additional permanent filter

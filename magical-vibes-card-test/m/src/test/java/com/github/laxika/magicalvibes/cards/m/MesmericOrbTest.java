@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.d.Domineer;
 import com.github.laxika.magicalvibes.cards.r.Regress;
@@ -227,8 +228,8 @@ class MesmericOrbTest extends BaseCardTest {
     @Test
     @DisplayName("An Orb that has lost its abilities does not trigger")
     void orbWithAbilitiesRemovedDoesNotTrigger() {
-        harness.addToBattlefieldAndReturn(player1, new MesmericOrb())
-                .setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd,
+                harness.addToBattlefieldAndReturn(player1, new MesmericOrb()));
         harness.addToBattlefieldAndReturn(player1, new Mountain()).tap();
         harness.setLibrary(player1, List.of(new Mountain()));
 

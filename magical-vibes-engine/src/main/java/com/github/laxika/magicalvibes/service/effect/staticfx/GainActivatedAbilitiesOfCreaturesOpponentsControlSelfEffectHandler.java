@@ -62,7 +62,7 @@ public class GainActivatedAbilitiesOfCreaturesOpponentsControlSelfEffectHandler 
                                                                     GameQueryService gameQueryService) {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
         List<ActivatedAbility> abilities = new ArrayList<>();
-        if (staticBonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+        if (staticBonus.losesAllAbilities() || gameData.losesAllAbilitiesByEffect(permanent)
                 || permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         } else if (staticBonus.losesAllNonManaAbilities()) {
@@ -74,9 +74,6 @@ public class GainActivatedAbilitiesOfCreaturesOpponentsControlSelfEffectHandler 
             abilities.addAll(permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         }
-        abilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
-        abilities.addAll(permanent.getTemporaryActivatedAbilities());
-        abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
         abilities.addAll(gameQueryService.missingIntrinsicManaAbilities(gameData, permanent, abilities));
         return abilities;
     }

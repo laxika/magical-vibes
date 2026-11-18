@@ -33,7 +33,7 @@ public class GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffectHandler imp
             return;
         }
 
-        if (!EnchantedEquipmentGrantSupport.equipmentKeepsGrantedAbility(aura, equipment)) {
+        if (!EnchantedEquipmentGrantSupport.equipmentKeepsGrantedAbility(context.gameData(), aura, equipment)) {
             return;
         }
 

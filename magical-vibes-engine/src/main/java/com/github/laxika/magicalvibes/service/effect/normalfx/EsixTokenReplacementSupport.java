@@ -142,8 +142,8 @@ public class EsixTokenReplacementSupport {
         }
         for (Permanent permanent : battlefield) {
             if (gameData.tokenCreationReplacementUsedThisTurn.contains(permanent.getId())
-                    || permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                    || permanent.isStaticEffectSuppressed(EsixFractalBloomEffect.class)
+                    || gameData.losesAllAbilitiesByEffect(permanent)
+                    || gameData.removesOwnStaticAbility(permanent.getId(), EsixFractalBloomEffect.class)
                     || permanent.getCard().getStaticEffects().stream()
                     .noneMatch(EsixFractalBloomEffect.class::isInstance)) {
                 continue;

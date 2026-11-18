@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.m.MoonlightGeist;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.n.NettleSwine;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -109,7 +110,7 @@ class BowerPassageTest extends BaseCardTest {
         addBowerPassage(player1);
         addCreatureReady(player1, new NettleSwine()).setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new MoonlightGeist());
-        blocker.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, blocker);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));

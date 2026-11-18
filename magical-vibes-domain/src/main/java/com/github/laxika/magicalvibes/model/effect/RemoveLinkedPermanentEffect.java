@@ -9,9 +9,8 @@ import java.util.UUID;
  * creature it reanimated on both). The handler reads the link as the ability resolves: from the source on the
  * battlefield (the becomes-untapped trigger), else from the stack entry's source as it last existed
  * ({@code StackEntry.getSourcePermanentSnapshot()}, the leaves-the-battlefield trigger), and removes that linked
- * permanent according to {@link Mode} (exile or sacrifice). The link is cleared, so a second untap is a no-op. Used by
- * Dance of Many for the mutual bond between the enchantment and its token: when the enchantment leaves it exiles the
- * token ({@code EXILE}); when the token leaves it sacrifices the enchantment ({@code SACRIFICE_PARTNER}).
+ * permanent according to {@link Mode} (exile or sacrifice). The link is cleared, so a second untap is a no-op.
+ * {@code SACRIFICE_PARTNER} is a linked token's own "when this leaves the battlefield, sacrifice [its creator]".
  *
  * @param mode              how the linked permanent is removed
  * @param linkedPermanentId the linked permanent named by an engine-built delayed trigger (Coffin Queen's "when you lose

@@ -75,7 +75,7 @@ class GloomwidowTest extends BaseCardTest {
     @DisplayName("Gloomwidow can block a ground creature after losing all abilities")
     void canBlockGroundCreatureAfterLosingAbilities() {
         Permanent widow = addCreatureReady(player2, new Gloomwidow());
-        widow.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, widow);
         addCreatureReady(player1, new SafeholdSentry());
 
         declareAttackersAndPrepareBlockers(List.of(0));

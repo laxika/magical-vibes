@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
@@ -226,24 +227,36 @@ class GameDataDeepCopyTest {
     void deepCopyPreservesGrantedAbilitiesIndependently() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent origPerm = gd.playerBattlefields.get(player1.getId()).getFirst();
-        origPerm.addTemporaryAbility(new TriggeredAbility(Triggers.youLoseControlOfThis(), new DrawCardEffect(1)));
-        origPerm.addPersistentAbility(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(2)));
-        origPerm.addUntilNextUpkeepAbility(player1.getId(),
-                new TriggeredAbility(Triggers.youGainControlOfThis(), new DrawCardEffect(3)));
+        PermanentGrants.abilityUntilEndOfTurn(gd, origPerm,
+                new TriggeredAbility(Triggers.youLoseControlOfThis(), new DrawCardEffect(1)));
+        PermanentGrants.ability(gd, origPerm,
+                new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(2)));
 
         GameData copy = gd.simulationCopy();
         Permanent copyPerm = copy.playerBattlefields.get(player1.getId()).getFirst();
-        copyPerm.addPersistentAbility(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(4)));
-        copyPerm.clearUntilNextUpkeepTriggeredEffects(player1.getId());
+        PermanentGrants.ability(copy, copyPerm,
+                new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(4)));
 
-        assertThat(copyPerm.getTemporaryTriggerEffects(Triggers.youLoseControlOfThis()))
+        assertThat(PermanentGrants.grantedTriggerEffects(copy, copyPerm, Triggers.youLoseControlOfThis()))
                 .containsExactly(new DrawCardEffect(1));
-        assertThat(copyPerm.getPersistentTriggerEffects(Triggers.upkeep(ActivePlayer.YOU)))
+        assertThat(PermanentGrants.grantedTriggerEffects(copy, copyPerm, Triggers.upkeep(ActivePlayer.YOU)))
                 .containsExactly(new DrawCardEffect(2), new DrawCardEffect(4));
-        assertThat(origPerm.getPersistentTriggerEffects(Triggers.upkeep(ActivePlayer.YOU)))
+        assertThat(PermanentGrants.grantedTriggerEffects(gd, origPerm, Triggers.upkeep(ActivePlayer.YOU)))
                 .containsExactly(new DrawCardEffect(2));
-        assertThat(origPerm.getTemporaryTriggerEffects(Triggers.youGainControlOfThis()))
-                .containsExactly(new DrawCardEffect(3));
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps whether a triggering permanent had lost its printed abilities as it left")
+    void deepCopyKeepsLastKnownLostPrintedAbilities() {
+        Permanent dying = new Permanent(new GrizzlyBears());
+        dying.setLastKnownLostPrintedAbilities(true);
+        StackEntry entry = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Death trigger", List.of());
+        entry.setTriggeringPermanent(dying, new DepartedAttachments(List.of(), List.of(), java.util.Map.of()));
+        gd.stack.add(entry);
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.stack.getFirst().getTriggeringPermanentSnapshot().isLastKnownLostPrintedAbilities()).isTrue();
     }
 
     @Test

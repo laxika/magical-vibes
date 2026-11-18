@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.a.Abundance;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CanoptekWraith;
 import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -165,7 +166,7 @@ class OutOfTheTombsTest extends BaseCardTest {
     @Test
     void losingAbilitiesDisablesTheDrawReplacement() {
         Permanent tombs = harness.addToBattlefieldAndReturn(player1, new OutOfTheTombs());
-        tombs.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, tombs);
         harness.setLibrary(player1, List.of());
         harness.setGraveyard(player1, List.of(new CanoptekWraith()));
 

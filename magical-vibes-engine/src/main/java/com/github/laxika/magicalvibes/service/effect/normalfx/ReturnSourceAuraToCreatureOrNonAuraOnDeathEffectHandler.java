@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIs;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -118,9 +119,11 @@ public class ReturnSourceAuraToCreatureOrNonAuraOnDeathEffectHandler implements 
         enchantment.setCard(copy);
         // "At the beginning of that player's upkeep, this enchantment deals 1 damage to that player": the player is
         // part of the trigger condition, and the effect reads the player whose upkeep it is.
-        enchantment.addPersistentAbility(new TriggeredAbility(Triggers.upkeep(ActivePlayer.ANY),
+        gameData.grantAbilityToPermanent(auraCard.getName(), null, auraControllerId,
+                new TriggeredAbility(Triggers.upkeep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withEventCondition(new TargetPlayerIs(damagedPlayerId)),
-                new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER)));
+                new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER)), enchantment.getId(),
+                Duration.PERMANENT);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraControllerId, enchantment);
 
         gameLogService.append(gameData, GameLog.cardThen(copy,

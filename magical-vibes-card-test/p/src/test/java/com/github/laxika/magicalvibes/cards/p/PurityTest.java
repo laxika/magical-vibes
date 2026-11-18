@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.d.DrownerOfSecrets;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowDodger;
 import com.github.laxika.magicalvibes.cards.t.Tarfire;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -71,7 +72,7 @@ class PurityTest extends BaseCardTest {
     void abilityLossDisablesPrevention() {
         harness.setLife(player2, 20);
         Permanent purity = harness.addToBattlefieldAndReturn(player2, new Purity());
-        purity.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, purity);
 
         harness.setHand(player1, List.of(new Tarfire()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -140,7 +141,7 @@ class PurityTest extends BaseCardTest {
     void abilityLossOnBattlefieldDoesNotDisableGraveyardTrigger() {
         harness.setLibrary(player2, List.of());
         Permanent purity = harness.addToBattlefieldAndReturn(player2, new Purity());
-        purity.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, purity);
         purity.setMarkedDamage(6);
 
         harness.runStateBasedActions();

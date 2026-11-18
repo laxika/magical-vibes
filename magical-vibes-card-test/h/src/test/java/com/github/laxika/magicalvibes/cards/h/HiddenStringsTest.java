@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.m.MazeBehemoth;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -200,7 +201,7 @@ class HiddenStringsTest extends BaseCardTest {
         chooseAction("Tap");
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, attacker.getId());
-        attacker.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, attacker);
 
         declareAttackers(List.of(0));
         resolveCombat();

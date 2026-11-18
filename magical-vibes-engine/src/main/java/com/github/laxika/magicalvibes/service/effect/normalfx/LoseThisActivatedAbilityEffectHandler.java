@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LoseThisActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
@@ -35,7 +36,8 @@ public class LoseThisActivatedAbilityEffectHandler implements NormalEffectHandle
         }
         for (ActivatedAbility ability : source.getCard().getActivatedAbilities(Zone.BATTLEFIELD)) {
             if (ability.getEffects().contains(effect)) {
-                source.loseActivatedAbility(ability);
+                gameData.addEffectOnPermanent(entry, new LoseThisActivatedAbilityEffect(ability), source.getId(),
+                        Duration.PERMANENT);
             }
         }
     }

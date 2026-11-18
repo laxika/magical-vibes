@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WallOfDenial;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -210,7 +211,7 @@ class UnscytheKillerOfKingsTest extends BaseCardTest {
     void doesNotTriggerWhileEquipmentHasLostItsAbilities() {
         Permanent blocker = setUpEquippedKill(player1, player2, new WallOfDenial());
         Permanent equipment = findPermanent(player1, "Unscythe, Killer of Kings");
-        equipment.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, equipment);
         harness.resolveCombatDamage();
         assertThat(blocker.getMarkedDamage()).isEqualTo(2);
 

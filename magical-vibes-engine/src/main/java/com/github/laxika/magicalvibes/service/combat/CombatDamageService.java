@@ -2868,7 +2868,6 @@ public class CombatDamageService {
 
     private List<CardEffect> combatDamageAssignmentEffects(GameData gameData, Permanent attacker) {
         List<CardEffect> effects = new ArrayList<>(attacker.getCard().getStaticEffects());
-        effects.addAll(attacker.getTemporaryStaticEffects());
         effects.addAll(gameQueryService.getGrantedEffects(gameData, attacker));
         UUID attackerControllerId = gameData.findControllerOf(attacker);
         if (attackerControllerId != null) {

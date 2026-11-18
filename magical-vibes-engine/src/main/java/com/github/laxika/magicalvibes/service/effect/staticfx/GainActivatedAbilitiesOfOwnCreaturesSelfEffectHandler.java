@@ -57,7 +57,7 @@ public class GainActivatedAbilitiesOfOwnCreaturesSelfEffectHandler implements St
                                                 StaticBonusAccumulator accumulator) {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
         boolean losesAllAbilities = staticBonus.losesAllAbilities()
-                || permanent.isLosesAllAbilitiesUntilEndOfTurn();
+                || gameData.losesAllAbilitiesByEffect(permanent);
         List<ActivatedAbility> abilities = new ArrayList<>();
         if (losesAllAbilities || permanent.isFaceDown()) {
             abilities.addAll(staticBonus.grantedActivatedAbilities());
@@ -70,9 +70,6 @@ public class GainActivatedAbilitiesOfOwnCreaturesSelfEffectHandler implements St
             abilities.addAll(permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         }
-        abilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
-        abilities.addAll(permanent.getTemporaryActivatedAbilities());
-        abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
         abilities.addAll(gameQueryService.missingIntrinsicManaAbilities(gameData, permanent, abilities));
         abilities.forEach(accumulator::addActivatedAbility);
     }

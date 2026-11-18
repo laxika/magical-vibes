@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.a.ArmoredTransport;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({ShadowSlice.class, ArmoredTransport.class, TurnToFrog.class})
+@CardUsed({ShadowSlice.class, ArmoredTransport.class, TurnToFrog.class, Humility.class})
 class ShadowSliceTest extends BaseCardTest {
 
     @Test
@@ -133,5 +134,50 @@ class ShadowSliceTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.exiledCards).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Encoded after Humility entered, the creature still has the cipher ability (newer timestamp)")
+    void cipherAbilityNewerThanHumilityTriggers() {
+        harness.addToBattlefield(player2, new Humility());
+        Permanent attacker = addCreatureReady(player1, new ArmoredTransport());
+        harness.setHand(player1, List.of(new ShadowSlice()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    @DisplayName("Once the encoded card leaves exile, the creature no longer has the cipher ability (CR 702.99c)")
+    void cipherAbilityEndsWhenTheCardLeavesExile() {
+        Permanent attacker = addCreatureReady(player1, new ArmoredTransport());
+        harness.setHand(player1, List.of(new ShadowSlice()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, attacker.getId());
+        java.util.UUID encodedCardId = gd.exiledCards.getFirst().card().getId();
+        harness.inMutationScope(() -> gd.removeFromExile(encodedCardId));
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 15);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

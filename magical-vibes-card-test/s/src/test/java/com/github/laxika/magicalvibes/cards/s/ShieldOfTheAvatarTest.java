@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -134,7 +135,7 @@ class ShieldOfTheAvatarTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         Permanent shield = addShieldReady(player1);
         shield.setAttachedTo(creature.getId());
-        shield.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, shield);
         harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 1);
 

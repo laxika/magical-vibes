@@ -3356,7 +3356,7 @@ public class DamagePreventionService {
                 if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
                 for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     if (effect instanceof PlaneswalkerDamagePreventionEffect prevention
-                            && !permanent.isStaticEffectSuppressed(effect.getClass())) {
+                            && !gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())) {
                         reduction = SaturatingMath.add(reduction, prevention.amount());
                     }
                 }
@@ -3430,7 +3430,7 @@ public class DamagePreventionService {
 
         return battlefield.stream()
                 .filter(permanent -> !permanent.isFaceDown()
-                        && !permanent.isLosesAllAbilitiesUntilEndOfTurn())
+                        && !gameData.losesAllAbilitiesByEffect(permanent))
                 .filter(permanent -> gameQueryService.hasActiveStaticEffect(
                         gameData, permanent, ControllerOpponentDamageMillReplacementEffect.class))
                 .toList();

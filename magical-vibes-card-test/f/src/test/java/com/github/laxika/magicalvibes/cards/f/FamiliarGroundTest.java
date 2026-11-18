@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -152,7 +153,7 @@ class FamiliarGroundTest extends BaseCardTest {
     @DisplayName("Losing all abilities removes Familiar Ground's restriction")
     void losingAllAbilitiesRemovesRestriction() {
         Permanent familiarGround = harness.addToBattlefieldAndReturn(player1, new FamiliarGround());
-        familiarGround.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, familiarGround);
 
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);

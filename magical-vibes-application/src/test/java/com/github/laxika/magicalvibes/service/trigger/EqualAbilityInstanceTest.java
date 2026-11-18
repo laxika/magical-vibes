@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -80,8 +81,8 @@ class EqualAbilityInstanceTest extends BaseCardTest {
         TriggeredAbility ability = new TriggeredAbility(Triggers.attacks(), ONCE_EACH_TURN,
                 new DrawCardEffect(1));
         Permanent bears = addCreatureReady(player1, creature("Twice Blessed"));
-        bears.addTemporaryAbility(ability);
-        bears.addTemporaryAbility(ability);
+        PermanentGrants.abilityUntilEndOfTurn(gd, bears, ability);
+        PermanentGrants.abilityUntilEndOfTurn(gd, bears, ability);
 
         attackWith(0);
 

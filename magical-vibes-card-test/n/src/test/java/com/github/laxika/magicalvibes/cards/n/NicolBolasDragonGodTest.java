@@ -183,7 +183,7 @@ class NicolBolasDragonGodTest extends BaseCardTest {
     void cannotActivateAnAbilityAnotherPlaneswalkerHasLost() {
         Permanent nicol = addReadyNicol(player1, 4);
         Permanent ugin = addReadyPlaneswalker(player2, new UginTheIneffable(), 4);
-        ugin.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, ugin);
         harness.setLibrary(player1, List.of(new PrimordialWurm()));
 
         assertThatThrownBy(() -> harness.activateAbility(

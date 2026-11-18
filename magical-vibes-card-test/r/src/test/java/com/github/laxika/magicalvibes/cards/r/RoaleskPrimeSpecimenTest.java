@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,5 +88,30 @@ class RoaleskPrimeSpecimenTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(Permanent::isCloaked);
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The cloaked creature's turn-face-up ability ends once it is face up (for as long as it remains face down)")
+    void turnFaceUpAbilityEndsOnceFaceUp() {
+        harness.addToBattlefield(player1, new RoaleskPrimeSpecimen());
+        Permanent dogWalker = castFaceDownDogWalker();
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(dogWalker));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+        Permanent cloaked = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isCloaked)
+                .findFirst()
+                .orElseThrow();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(cloaked), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(cloaked.isFaceDown()).isFalse();
+        assertThat(gs.getEffectiveActivatedAbilities(gd, cloaked))
+                .noneMatch(ability -> "{G/U}: Turn this creature face up.".equals(ability.getDescription()));
     }
 }

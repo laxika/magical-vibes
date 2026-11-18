@@ -134,22 +134,8 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
     }
 
     private boolean applyEffect(GameData gameData, StackEntry entry, LosesAllAbilitiesEffect e, Permanent target) {
-        // Abilities granted earlier have an older timestamp than this effect and are removed by it;
-        // abilities granted afterwards are kept (CR 613.7).
-        target.clearTemporaryTriggeredEffects();
-        if (Duration.PERMANENT.equals(e.duration())) {
-            target.setLosesAllAbilitiesPermanently(true);
-        } else if (Duration.UNTIL_END_OF_TURN.equals(e.duration())) {
-            target.setLosesAllAbilitiesUntilEndOfTurn(true);
-        } else if (Duration.UNTIL_YOUR_NEXT_TURN.equals(e.duration())) {
-            target.addLosesAllAbilitiesUntilNextTurnController(entry.getControllerId());
-        }
-
-        // CR 613 layer engine: a one-shot "loses all abilities until end of turn" (Merfolk
-        // Trickster) is a floating layer-6 effect with its own timestamp — a later-timestamp
-        // keyword grant (Wings of Velis Vel) survives it. The legacy flag is still set for
-        // direct Permanent.hasKeyword/flag readers; the layered pass treats the flag as a
-        // seed-time removal and then replays this effect at its real timestamp.
+        // A layer-6 effect with its own timestamp (CR 613.1f, 613.7): the abilities granted before it are removed,
+        // those granted after it stay.
         boolean sourceLinked = Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(e.duration())
                 || Duration.WHILE_SOURCE_REMAINS.equals(e.duration())
                 || Duration.WHILE_SOURCE_TAPPED.equals(e.duration())

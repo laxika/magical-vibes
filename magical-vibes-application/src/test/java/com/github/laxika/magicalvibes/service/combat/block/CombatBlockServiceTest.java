@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat.block;
 
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 
 import com.github.laxika.magicalvibes.cards.a.AwesomePresence;
 import com.github.laxika.magicalvibes.cards.d.DreamProwler;
@@ -79,7 +80,7 @@ class CombatBlockServiceTest extends BaseCardTest {
     void greaterPowerRestrictionEndsWithPrintedAbilities() {
         Permanent attacker = attacking(player1, new GrizzlyBears());
         Permanent okk = addCreatureReady(player2, new Okk());
-        okk.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, okk);
         enterDeclareBlockers();
 
         gs.declareBlockers(gd, player2,

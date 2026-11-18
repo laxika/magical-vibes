@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -144,7 +145,7 @@ class ClassKeyedRecordCollectorTest extends BaseCardTest {
         card.addTrigger(Triggers.playerChoosesTargets(), new DrawCardEffect(1));
         Permanent silenced = addCreatureReady(player1, card);
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        silenced.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, silenced);
         StackEntry spell = opponentSpellTargeting(bears.getId());
 
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers.class).checkTargetChoiceTriggers(gd, spell));

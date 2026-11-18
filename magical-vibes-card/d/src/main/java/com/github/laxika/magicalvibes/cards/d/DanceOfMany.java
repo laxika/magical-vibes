@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCreatedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -45,8 +46,8 @@ public class DanceOfMany extends Card {
                                 new PayManaCost("{U}{U}"),
                                 List.of(new SacrificeSelfEffect()),
                                 true));
-        // "When the token leaves the battlefield, sacrifice this enchantment." — this trigger lives on
-        // the created token (attached in CreateTokenCopyAndLinkToSourceEffectHandler), since the token is
-        // a copy of an arbitrary creature built at resolution time.
+        // "When the token leaves the battlefield, sacrifice this enchantment."
+        addTrigger(Triggers.leavesBattlefield(new PermanentCreatedBySourcePredicate(), ObjectRelation.ANOTHER),
+                new SacrificeSelfEffect());
     }
 }

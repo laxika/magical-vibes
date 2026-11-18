@@ -95,7 +95,7 @@ class OutlandBoarTest extends BaseCardTest {
     void losingAbilityRemovesBlockingRestriction() {
         Permanent blocker = addCreatureReady(player2, new AetherChaser());
         Permanent boar = addCreatureReady(player1, new OutlandBoar());
-        boar.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, boar);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

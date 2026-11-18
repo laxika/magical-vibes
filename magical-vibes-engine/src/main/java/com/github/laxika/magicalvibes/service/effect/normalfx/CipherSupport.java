@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -46,7 +48,11 @@ public class CipherSupport {
         MayEffect trigger = new MayEffect(
                 new CipherCastCopyEffect(entry.getCard().getId()),
                 "Cast a copy of " + entry.getCard().getName() + " without paying its mana cost?");
-        creature.addPersistentAbility(new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), trigger));
+        // "For as long as this card is encoded on that creature" (CR 702.99a): it stays encoded while it remains
+        // exiled and the creature remains on the battlefield (CR 702.99c).
+        gameData.addEffectOnPermanent(entry, GrantTriggeredAbilityEffect.whileCardExiled(
+                        new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), trigger), entry.getCard().getId()),
+                creature.getId(), Duration.WHILE_SOURCE_CARD_EXILED);
 
         int resumeIndex = gameData.pendingEffectResolutionIndex;
         entry.setExileAndReturnToHandAtNextEndStep(false);

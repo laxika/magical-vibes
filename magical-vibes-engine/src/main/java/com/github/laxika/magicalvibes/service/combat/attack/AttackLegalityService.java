@@ -1278,7 +1278,7 @@ public class AttackLegalityService {
         }
         for (CardEffect effect : attacker.getCard().getStaticEffects()) {
             if (!(effect instanceof AttackerTargetRestrictionEffect restriction)
-                    || attacker.isStaticEffectSuppressed(effect.getClass())) {
+                    || gameData.removesOwnStaticAbility(attacker.getId(), effect.getClass())) {
                 continue;
             }
             UUID sourceControllerId = gameData.findControllerOf(attacker);

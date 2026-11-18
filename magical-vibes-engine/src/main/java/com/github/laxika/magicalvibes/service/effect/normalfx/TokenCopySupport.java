@@ -606,7 +606,7 @@ public class TokenCopySupport {
         CreateTokenCopyOfTargetPermanentEffect effect = batch.effect();
         for (int copy = 0; copy < count; copy++) {
             Card tokenCard = copyTemplate(batch.entry(), sourceCard, effect, batch.copyException());
-            Permanent preparedToken = withGrantedDeathEffects(withGrantedHaste(gameData, batch.entry(), tokenCard, sourceCard, effect), effect);
+            Permanent preparedToken = withGrantedDeathEffects(gameData, batch.entry(), withGrantedHaste(gameData, batch.entry(), tokenCard, sourceCard, effect), effect);
             if (tokenCard.hasType(CardType.PLANESWALKER) && tokenCard.getLoyalty() != null) {
                 preparedToken.setCounterCount(CounterType.LOYALTY, tokenCard.getLoyalty());
             }
@@ -629,7 +629,7 @@ public class TokenCopySupport {
         for (int i = 0; i < group.count(); i++) {
             Card substitute = TokenCardFactory.create(blueprint, fixedStat(blueprint.power()),
                     fixedStat(blueprint.toughness()), setCode);
-            tokens.add(withGrantedDeathEffects(withGrantedHaste(gameData, batch.entry(), substitute, substitute, batch.effect()),
+            tokens.add(withGrantedDeathEffects(gameData, batch.entry(), withGrantedHaste(gameData, batch.entry(), substitute, substitute, batch.effect()),
                     batch.effect()));
         }
     }
@@ -743,11 +743,13 @@ public class TokenCopySupport {
                 && triggered.hasTrigger(Triggers.dies(ObjectRelation.THIS));
     }
 
-    private static Permanent withGrantedDeathEffects(Permanent token, CreateTokenCopyOfTargetPermanentEffect effect) {
+    private static Permanent withGrantedDeathEffects(GameData gameData, StackEntry entry, Permanent token,
+                                                     CreateTokenCopyOfTargetPermanentEffect effect) {
         if (effect.additionalAbilities() != null) {
             effect.additionalAbilities().stream()
                     .filter(TokenCopySupport::isDeathAbility)
-                    .forEach(token::addPersistentAbility);
+                    .forEach(ability -> gameData.grantAbilityToPermanent(entry, ability, token.getId(),
+                            Duration.PERMANENT));
         }
         return token;
     }

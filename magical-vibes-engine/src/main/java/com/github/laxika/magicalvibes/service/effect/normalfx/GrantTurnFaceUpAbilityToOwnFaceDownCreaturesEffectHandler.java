@@ -44,8 +44,9 @@ public class GrantTurnFaceUpAbilityToOwnFaceDownCreaturesEffectHandler
             if (!permanent.isFaceDown() || !gameQueryService.isCreature(gameData, permanent)) {
                 continue;
             }
-            permanent.addPersistentAbility(new TriggeredAbility(
-                    Triggers.turnedFaceUp(null, ObjectRelation.THIS), grant.turnFaceUpEffect()));
+            gameData.grantAbilityToPermanent(entry, new TriggeredAbility(
+                    Triggers.turnedFaceUp(null, ObjectRelation.THIS), grant.turnFaceUpEffect()), permanent.getId(),
+                    Duration.PERMANENT);
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                     new ReduceTurnFaceUpCostForPermanentEffect(

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -97,8 +98,8 @@ class NavigatorsCompassTest extends BaseCardTest {
         harness.handleListChoice(player1, "PLAINS");
 
         Permanent forest = gqs.findPermanentById(gd, forestId);
-        assertThat(forest.getTemporaryActivatedAbilities()).hasSize(1);
-        assertThat(forest.getTemporaryActivatedAbilities().getFirst().isRequiresTap()).isTrue();
+        assertThat(PermanentGrants.grantedActivatedAbilities(gd, forest)).hasSize(1);
+        assertThat(PermanentGrants.grantedActivatedAbilities(gd, forest).getFirst().isRequiresTap()).isTrue();
     }
 
     @Test
@@ -146,7 +147,7 @@ class NavigatorsCompassTest extends BaseCardTest {
 
         Permanent forest = gqs.findPermanentById(gd, forestId);
         assertThat(gqs.getEffectiveSubtypes(gd, forest)).contains(CardSubtype.ISLAND);
-        assertThat(forest.getTemporaryActivatedAbilities()).hasSize(1);
+        assertThat(PermanentGrants.grantedActivatedAbilities(gd, forest)).hasSize(1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gqs.effectiveBasicLandTypes(gd, forest))
@@ -154,7 +155,7 @@ class NavigatorsCompassTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.floatingEffectsOnPermanent(forest.getId(), GrantSubtypeEffect.class)).isEmpty();
-        assertThat(forest.getTemporaryActivatedAbilities()).isEmpty();
+        assertThat(PermanentGrants.grantedActivatedAbilities(gd, forest)).isEmpty();
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
         harness.tapPermanent(player1, 1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);

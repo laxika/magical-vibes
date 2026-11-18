@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BloodbraidElf;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -105,8 +106,8 @@ class MaelstromNexusTest extends BaseCardTest {
     @Test
     void nexusWithoutAbilitiesDoesNotGrantCascade() {
         setupCasterTurn();
-        harness.addToBattlefieldAndReturn(player1, new MaelstromNexus())
-                .setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd,
+                harness.addToBattlefieldAndReturn(player1, new MaelstromNexus()));
         LlanowarElves untouched = new LlanowarElves();
         harness.setLibrary(player1, List.of(untouched));
 

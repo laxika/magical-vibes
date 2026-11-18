@@ -323,7 +323,7 @@ class GameQueryServiceTest {
         gd.playerBattlefields.get(player1Id).add(source);
 
         assertThat(gqs.fixedLandManaColor(gd, null)).isEqualTo(ManaColor.BLACK);
-        source.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, source);
         assertThat(gqs.fixedLandManaColor(gd, null)).isNull();
     }
 
@@ -336,7 +336,7 @@ class GameQueryServiceTest {
         gd.playerBattlefields.get(player1Id).add(source);
 
         assertThat(gqs.isPreventedFromDealingDamage(gd, source, true)).isTrue();
-        source.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, source);
         assertThat(gqs.isPreventedFromDealingDamage(gd, source, true)).isFalse();
     }
 
@@ -1745,7 +1745,7 @@ class GameQueryServiceTest {
         @DisplayName("includes temporary static replacement effects")
         void includesTemporaryStaticReplacementEffects() {
             Permanent scales = addPermanent(player1Id, createCreature("Hardened Scales", 0, 0, CardColor.GREEN));
-            scales.addTemporaryAbility(StaticAbility.of(new AddOnePlusOneCountersEffect()));
+            PermanentGrants.abilityUntilEndOfTurn(gd, scales, StaticAbility.of(new AddOnePlusOneCountersEffect()));
 
             assertThat(gqs.replacePlusOnePlusOneCounters(gd, player1Id, 1)).isEqualTo(2);
         }
@@ -3876,17 +3876,17 @@ class GameQueryServiceTest {
         }
 
         @Test
-        @DisplayName("returns false when permanent has losesAllAbilitiesUntilEndOfTurn set")
+        @DisplayName("returns false when the permanent loses all abilities until end of turn")
         void returnsFalse_whenLosesAllAbilitiesUntilEndOfTurn() {
             Card myrCard = createArtifactCreature("Alloy Myr", 2, 2, List.of(CardSubtype.MYR));
             Permanent myr = addPermanent(player1Id, myrCard);
-            myr.setLosesAllAbilitiesUntilEndOfTurn(true);
+            PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, myr);
 
             assertThat(gqs.canActivateManaAbility(gd, myr)).isFalse();
         }
 
         @Test
-        @DisplayName("returns true when losesAllAbilitiesUntilEndOfTurn is not set")
+        @DisplayName("returns true when the permanent has not lost its abilities")
         void returnsTrue_whenLosesAllAbilitiesNotSet() {
             Card myrCard = createArtifactCreature("Alloy Myr", 2, 2, List.of(CardSubtype.MYR));
             Permanent myr = addPermanent(player1Id, myrCard);

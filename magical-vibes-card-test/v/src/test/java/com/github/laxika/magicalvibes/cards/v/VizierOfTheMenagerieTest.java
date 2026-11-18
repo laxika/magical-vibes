@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DuneBeetle;
 import com.github.laxika.magicalvibes.cards.h.HazeOfPollen;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -201,7 +202,7 @@ class VizierOfTheMenagerieTest extends BaseCardTest {
     @Test
     void lostAbilitiesRemoveManaPermission() {
         var vizier = harness.addToBattlefieldAndReturn(player1, new VizierOfTheMenagerie());
-        vizier.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, vizier);
         harness.setHand(player1, List.of(new DuneBeetle()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 

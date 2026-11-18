@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.Carnophage;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RobeOfMirrors;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -114,7 +115,7 @@ class SongOfSerenityTest extends BaseCardTest {
     @DisplayName("Losing Song of Serenity's abilities removes its attack restriction")
     void losingAllAbilitiesRemovesAttackRestriction() {
         Permanent song = harness.addToBattlefieldAndReturn(player1, new SongOfSerenity());
-        song.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, song);
         harness.setLife(player2, 20);
         Permanent enchanted = addCreatureReady(player1, new Carnophage());
         attachRobeOfMirrors(enchanted, player2);
@@ -129,7 +130,7 @@ class SongOfSerenityTest extends BaseCardTest {
     @DisplayName("Losing Song of Serenity's abilities removes its block restriction")
     void losingAllAbilitiesRemovesBlockRestriction() {
         Permanent song = harness.addToBattlefieldAndReturn(player1, new SongOfSerenity());
-        song.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, song);
         Permanent attacker = addCreatureReady(player1, new Carnophage());
         attacker.setAttacking(true);
         Permanent enchanted = addCreatureReady(player2, new Carnophage());

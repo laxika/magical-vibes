@@ -8,9 +8,8 @@ import com.github.laxika.magicalvibes.model.AbilityEffects;
  * turn (e.g. Cruel Deceiver's "this creature gains '…' until end of turn"). Non-targeting — the
  * recipient is the resolving stack entry's source permanent, so nothing is chosen or validated.
  *
- * <p>The granted ability is stored via
- * {@link com.github.laxika.magicalvibes.model.Permanent#addTemporaryAbility}
- * and cleared at cleanup by {@link com.github.laxika.magicalvibes.model.Permanent#resetModifiers()}.
+ * <p>The grant is a floating layer-6 effect on the permanent ({@code GameData.grantAbilityToPermanent}) that the
+ * cleanup step ends.
  *
  * @param grantedAbility the granted ability
  */

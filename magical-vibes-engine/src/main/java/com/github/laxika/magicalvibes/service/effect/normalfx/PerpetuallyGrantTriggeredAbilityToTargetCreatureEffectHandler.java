@@ -39,10 +39,6 @@ public class PerpetuallyGrantTriggeredAbilityToTargetCreatureEffectHandler
 
             UUID cardId = targetCard.getId();
             gameData.grantPerpetualAbility(cardId, grant.grantedAbility());
-
-            if (target != null) {
-                target.addPersistentAbility(grant.grantedAbility());
-            }
         }
     }
 

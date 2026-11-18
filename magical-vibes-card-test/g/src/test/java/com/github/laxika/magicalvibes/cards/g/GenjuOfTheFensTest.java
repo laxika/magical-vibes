@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.w.WearAway;
@@ -90,7 +91,7 @@ class GenjuOfTheFensTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, swamp)).isFalse();
-        assertThat(swamp.getTemporaryActivatedAbilities()).isEmpty();
+        assertThat(PermanentGrants.grantedActivatedAbilities(gd, swamp)).isEmpty();
     }
 
     @Test

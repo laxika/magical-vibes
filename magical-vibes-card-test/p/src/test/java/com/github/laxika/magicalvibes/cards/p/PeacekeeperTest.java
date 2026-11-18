@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -70,7 +71,7 @@ class PeacekeeperTest extends BaseCardTest {
     @DisplayName("Peacekeeper does not trigger during upkeep after losing all abilities")
     void losingAllAbilitiesDisablesUpkeepTrigger() {
         Permanent peacekeeper = harness.addToBattlefieldAndReturn(player1, new Peacekeeper());
-        peacekeeper.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, peacekeeper);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -146,7 +147,7 @@ class PeacekeeperTest extends BaseCardTest {
     void losingAllAbilitiesAllowsAttacks() {
         Permanent peacekeeper = harness.addToBattlefieldAndReturn(player1, new Peacekeeper());
         Permanent treefolk = addReadyTreefolk(player1);
-        peacekeeper.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, peacekeeper);
 
         harness.setLife(player2, 20);
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(treefolk)));

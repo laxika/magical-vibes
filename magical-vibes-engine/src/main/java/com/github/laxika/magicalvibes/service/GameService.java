@@ -1619,7 +1619,7 @@ public class GameService {
                 throw new IllegalStateException("Spellmorph cards are cast from the battlefield instead");
             }
             if ((!manifestedOrCloaked && morphCost == null) || (manifestedOrCloaked && faceUpCost == null)
-                    || (!manifestedOrCloaked && (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    || (!manifestedOrCloaked && (gameData.losesAllAbilitiesByEffect(permanent)
                     || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()))) {
                 throw new IllegalStateException("Permanent cannot be turned face up");
             }

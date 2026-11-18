@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.model;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -83,44 +89,18 @@ class GrantedAbilitiesTest {
     }
 
     @Test
-    void aPermanentsGrantsAreReadByTriggerAndExpireByDuration() {
-        Permanent permanent = new Permanent(new Card());
-        UUID expiryPlayer = UUID.randomUUID();
-        permanent.addTemporaryAbility(new TriggeredAbility(LOSES_CONTROL, DRAW_ONE));
-        permanent.addCombatAbility(new TriggeredAbility(LOSES_CONTROL, DRAW_TWO));
-        permanent.addUntilNextUpkeepAbility(expiryPlayer, new TriggeredAbility(LOSES_CONTROL, GAIN_ONE));
-        permanent.addPersistentAbility(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), DRAW_ONE));
+    @DisplayName("A granted ability becomes its layer-6 grants: one for a triggered ability, one per effect of a static one")
+    void aGrantedAbilityBecomesItsLayerSixGrants() {
+        TriggeredAbility triggered = new TriggeredAbility(LOSES_CONTROL, DRAW_ONE);
+        ActivatedAbility activated = new ActivatedAbility(true, null, List.of(DRAW_TWO), "{T}: Draw two cards.");
 
-        assertThat(permanent.getTemporaryTriggerEffects(LOSES_CONTROL)).containsExactly(DRAW_ONE, DRAW_TWO, GAIN_ONE);
-        assertThat(permanent.getPersistentTriggerEffects(Triggers.upkeep(ActivePlayer.YOU))).containsExactly(DRAW_ONE);
-
-        permanent.clearUntilNextUpkeepTriggeredEffects(expiryPlayer);
-        permanent.clearCombatState();
-
-        assertThat(permanent.getTemporaryTriggerEffects(LOSES_CONTROL)).containsExactly(DRAW_ONE);
-    }
-
-    @Test
-    void aPermanentsStaticGrantsAreReadApartFromItsTriggers() {
-        Permanent permanent = new Permanent(new Card());
-        UUID expiryPlayer = UUID.randomUUID();
-        permanent.addTemporaryAbility(StaticAbility.of(DRAW_ONE));
-        permanent.addCombatAbility(StaticAbility.of(DRAW_TWO));
-        permanent.addUntilNextUpkeepAbility(expiryPlayer, StaticAbility.of(GAIN_ONE));
-        permanent.addPersistentAbility(StaticAbility.of(DRAW_ONE));
-        permanent.addPersistentAbility(StaticAbility.of(GAIN_ONE));
-        permanent.addTemporaryAbility(new TriggeredAbility(LOSES_CONTROL, GAIN_ONE));
-
-        assertThat(permanent.getTemporaryStaticEffects()).containsExactly(DRAW_ONE, DRAW_TWO, GAIN_ONE);
-        assertThat(permanent.getPersistentStaticEffects()).containsExactly(DRAW_ONE, GAIN_ONE);
-        assertThat(permanent.getTemporaryTriggerEffects(LOSES_CONTROL)).containsExactly(GAIN_ONE);
-
-        permanent.removePersistentStaticEffectsIf(GAIN_ONE::equals);
-        permanent.clearUntilNextUpkeepTriggeredEffects(expiryPlayer);
-        permanent.clearCombatState();
-
-        assertThat(permanent.getPersistentStaticEffects()).containsExactly(DRAW_ONE);
-        assertThat(permanent.getTemporaryStaticEffects()).containsExactly(DRAW_ONE);
+        assertThat(GameData.abilityGrantEffects(triggered, Duration.UNTIL_END_OF_TURN))
+                .containsExactly(new GrantTriggeredAbilityEffect(triggered, GrantScope.TARGET));
+        assertThat(GameData.abilityGrantEffects(new StaticAbility(List.of(DRAW_ONE, GAIN_ONE), AbilityZones.BATTLEFIELD),
+                Duration.PERMANENT)).containsExactly(new GrantEffectEffect(DRAW_ONE, GrantScope.TARGET),
+                new GrantEffectEffect(GAIN_ONE, GrantScope.TARGET));
+        assertThat(GameData.abilityGrantEffects(activated, Duration.UNTIL_YOUR_NEXT_TURN)).containsExactly(
+                new GrantActivatedAbilityEffect(activated, GrantScope.TARGET, null, Duration.UNTIL_YOUR_NEXT_TURN));
     }
 
     @Test
@@ -133,19 +113,6 @@ class GrantedAbilitiesTest {
 
         assertThat(gameData.perpetualStaticEffects(cardId)).containsExactly(DRAW_ONE, DRAW_ONE);
         assertThat(gameData.perpetualTriggerEffects(cardId, LOSES_CONTROL, Zone.BATTLEFIELD)).containsExactly(GAIN_ONE);
-    }
-
-    @Test
-    void persistentGrantsCanBeRemovedByTriggerAndEffect() {
-        Permanent permanent = new Permanent(new Card());
-        permanent.addPersistentAbility(new TriggeredAbility(LOSES_CONTROL, DRAW_ONE));
-        permanent.addPersistentAbility(new TriggeredAbility(LOSES_CONTROL, GAIN_ONE));
-        permanent.addPersistentAbility(new TriggeredAbility(GAINS_CONTROL, DRAW_ONE));
-
-        permanent.removePersistentTriggeredEffectsIf(LOSES_CONTROL, DrawCardEffect.class::isInstance);
-
-        assertThat(permanent.getPersistentTriggerEffects(LOSES_CONTROL)).containsExactly(GAIN_ONE);
-        assertThat(permanent.getPersistentTriggerEffects(GAINS_CONTROL)).containsExactly(DRAW_ONE);
     }
 
     @Test

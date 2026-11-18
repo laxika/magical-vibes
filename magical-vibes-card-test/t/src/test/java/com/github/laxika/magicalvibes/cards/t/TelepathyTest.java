@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -179,7 +180,7 @@ class TelepathyTest extends BaseCardTest {
     @DisplayName("Telepathy does not reveal the opponent's hand while it has lost its abilities")
     void abilityLossDisablesHandReveal() {
         var telepathy = harness.addToBattlefieldAndReturn(player1, new Telepathy());
-        telepathy.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, telepathy);
         harness.setHand(player2, List.of(new AirElemental()));
         harness.clearMessages();
 

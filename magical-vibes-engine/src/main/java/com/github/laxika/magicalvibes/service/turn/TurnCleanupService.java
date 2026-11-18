@@ -219,8 +219,7 @@ public class TurnCleanupService {
             List<CardEffect> activeStaticEffects =
                     new ArrayList<>(gameQueryService.getActiveStaticEffects(gameData, p, playerId));
             activeStaticEffects.addAll(gameQueryService.getGrantedEffects(gameData, p));
-            activeStaticEffects.addAll(p.getPersistentStaticEffects());
-            boolean damagePersists = !p.isLosesAllAbilitiesUntilEndOfTurn()
+            boolean damagePersists = !gameData.losesAllAbilitiesByEffect(p)
                     && activeStaticEffects.stream().anyMatch(DamagePersistenceEffect.class::isInstance);
             if (!damagePersists && allCreaturesKeepDamage && isCreatureForCleanup(gameData, p)) {
                 damagePersists = true;

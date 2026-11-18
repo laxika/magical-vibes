@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.a.AerialBoost;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvenReedstalker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.StormCrow;
@@ -126,7 +127,7 @@ class ErrantAndGiadaTest extends BaseCardTest {
     @Test
     void losingAbilitiesRemovesCastingAndLookingPermissions() {
         var errantAndGiada = harness.addToBattlefieldAndReturn(player1, new ErrantAndGiada());
-        errantAndGiada.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, errantAndGiada);
         Card cryptomancer = new SaibaCryptomancer();
         harness.setLibrary(player1, List.of(cryptomancer));
         harness.addMana(player1, ManaColor.BLUE, 2);

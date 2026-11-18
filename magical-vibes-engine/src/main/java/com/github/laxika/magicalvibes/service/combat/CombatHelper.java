@@ -38,7 +38,7 @@ public final class CombatHelper {
         boolean landwalkIgnored = isLandwalkIgnoredForBlocking(gameData)
                 || isLandwalkIgnoredForBlocking(gameData, attacker.getId());
         List<CardEffect> declaredStaticEffects = new java.util.ArrayList<>(attacker.getCard().getStaticEffects());
-        declaredStaticEffects.addAll(attacker.getTemporaryStaticEffects());
+        declaredStaticEffects.addAll(gameData.staticAbilitiesGrantedByEffects(attacker.getId()));
         for (CardEffect effect : declaredStaticEffects) {
             if (effect instanceof BlockabilityRestrictionEffect restriction) {
                 if (hasUnmetSharedTypeCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
@@ -310,7 +310,7 @@ public final class CombatHelper {
                     maximum[0] = Math.min(maximum[0], limit.maxBlockers());
                 }
             }
-            for (CardEffect effect : permanent.getTemporaryStaticEffects()) {
+            for (CardEffect effect : gameData.staticAbilitiesGrantedByEffects(permanent.getId())) {
                 if (effect instanceof CombatCreatureLimitEffect limit) {
                     maximum[0] = Math.min(maximum[0], limit.maxBlockers());
                 }

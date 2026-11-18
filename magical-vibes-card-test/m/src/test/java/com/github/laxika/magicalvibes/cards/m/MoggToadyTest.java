@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -57,7 +58,7 @@ class MoggToadyTest extends BaseCardTest {
     void canAttackAfterLosingAllAbilities() {
         Permanent toady = addCreatureReady(player1, new MoggToady());
         addCreatureReady(player2, new Mossdog());
-        toady.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, toady);
 
         assertThatCode(() -> declareAttackers(player1, List.of(0)))
                 .doesNotThrowAnyException();
@@ -108,7 +109,7 @@ class MoggToadyTest extends BaseCardTest {
     void canBlockAfterLosingAllAbilities() {
         addCreatureReady(player1, new Mossdog());
         Permanent toady = addCreatureReady(player2, new MoggToady());
-        toady.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, toady);
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

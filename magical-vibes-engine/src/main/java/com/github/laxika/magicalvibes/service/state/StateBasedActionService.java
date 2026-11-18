@@ -686,15 +686,14 @@ public class StateBasedActionService {
         List<Permanent> permanents = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> permanents.add(permanent));
         for (Permanent permanent : permanents) {
-            if (permanent.isLosesAllAbilitiesUntilEndOfTurn() || permanent.isLosesAllAbilitiesPermanently()) {
-                continue;
+            List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects = new ArrayList<>();
+            if (!gameData.losesAllAbilitiesByEffect(permanent)) {
+                effects.addAll(permanent.getCard().getStaticEffects());
             }
-            List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects = new ArrayList<>(
-                    permanent.getCard().getStaticEffects());
-            effects.addAll(permanent.getTemporaryStaticEffects());
+            effects.addAll(gameQueryService.getGrantedEffects(gameData, permanent));
             for (com.github.laxika.magicalvibes.model.effect.CardEffect effect : effects) {
                 if (!(effect instanceof CounterLimitEffect limit)
-                        || permanent.isStaticEffectSuppressed(effect.getClass())) {
+                        || gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())) {
                     continue;
                 }
                 int current = permanent.getCounterCount(limit.counterType());
@@ -913,7 +912,7 @@ public class StateBasedActionService {
         if (!totalLethal) {
             return false;
         }
-        if (p.isLosesAllAbilitiesUntilEndOfTurn()
+        if (gameData.losesAllAbilitiesByEffect(p)
                 || gameQueryService.computeStaticBonus(gameData, p).losesAllAbilities()) {
             return true;
         }

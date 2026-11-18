@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.DeckFormat;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -77,7 +78,7 @@ class ExquisiteArchangelTest extends BaseCardTest {
     @DisplayName("An Archangel with no abilities cannot replace its controller's loss")
     void doesNotReplaceLossAfterLosingAbilities() {
         var angel = harness.addToBattlefieldAndReturn(player1, new ExquisiteArchangel());
-        angel.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, angel);
         harness.setLife(player1, 0);
 
         harness.runStateBasedActions();

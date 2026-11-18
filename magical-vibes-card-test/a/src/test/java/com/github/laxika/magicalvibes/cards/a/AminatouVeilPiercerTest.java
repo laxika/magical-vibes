@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.DefenseGrid;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FormOfTheDragon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TheMasterOfKeys;
@@ -93,7 +94,7 @@ class AminatouVeilPiercerTest extends BaseCardTest {
     @Test
     void doesNotGrantMiracleAfterLosingAbilities() {
         var aminatou = harness.addToBattlefieldAndReturn(player1, new AminatouVeilPiercer());
-        aminatou.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, aminatou);
         harness.setLibrary(player1, List.of(new TheMasterOfKeys()));
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));

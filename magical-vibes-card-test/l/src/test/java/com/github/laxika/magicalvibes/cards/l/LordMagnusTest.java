@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.c.CatWarriors;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
 import com.github.laxika.magicalvibes.cards.r.RighteousAvengers;
 import com.github.laxika.magicalvibes.cards.s.SegovianLeviathan;
@@ -117,7 +118,7 @@ class LordMagnusTest extends BaseCardTest {
     void forestwalkReturnsWhenLordMagnusLosesAbilities() {
         harness.addToBattlefield(player2, basicLand(CardSubtype.FOREST));
         Permanent lordMagnus = addCreatureReady(player2, new LordMagnus());
-        lordMagnus.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, lordMagnus);
         Permanent attacker = addAttacker(new CatWarriors());
         Permanent blocker = addCreatureReady(player2, new DurkwoodBoars());
 

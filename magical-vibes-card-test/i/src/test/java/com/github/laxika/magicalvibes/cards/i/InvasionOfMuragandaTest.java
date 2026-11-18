@@ -81,8 +81,8 @@ class InvasionOfMuragandaTest extends BaseCardTest {
 
         assertThat(PermanentGrants.powerBoostOf(gd, target)).isEqualTo(2);
         assertThat(PermanentGrants.toughnessBoostOf(gd, target)).isEqualTo(2);
-        assertThat(target.isLosesAllAbilitiesUntilEndOfTurn()).isTrue();
-        assertThat(plasm.isLosesAllAbilitiesUntilEndOfTurn()).isFalse();
+        assertThat(gd.losesAllAbilitiesByEffect(target.getId())).isTrue();
+        assertThat(gd.losesAllAbilitiesByEffect(plasm.getId())).isFalse();
     }
 
     @Test
@@ -127,7 +127,7 @@ class InvasionOfMuragandaTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
-        assertThat(target.isLosesAllAbilitiesUntilEndOfTurn()).isTrue();
+        assertThat(gd.losesAllAbilitiesByEffect(target.getId())).isTrue();
     }
 
     @Test
@@ -166,7 +166,7 @@ class InvasionOfMuragandaTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(PermanentGrants.powerBoostOf(gd, target)).isZero();
-        assertThat(target.isLosesAllAbilitiesUntilEndOfTurn()).isFalse();
+        assertThat(gd.losesAllAbilitiesByEffect(target.getId())).isFalse();
     }
 
     @Test

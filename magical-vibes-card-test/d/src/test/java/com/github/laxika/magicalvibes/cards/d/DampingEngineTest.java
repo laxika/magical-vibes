@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -245,7 +246,7 @@ class DampingEngineTest extends BaseCardTest {
     @DisplayName("A Damping Engine that loses all abilities does not restrict spells")
     void losingAllAbilitiesRemovesRestriction() {
         Permanent engine = harness.addToBattlefieldAndReturn(player1, new DampingEngine());
-        engine.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, engine);
         harness.addToBattlefield(player1, new ForbiddingWatchtower());
         harness.addToBattlefield(player2, new ForbiddingWatchtower());
 

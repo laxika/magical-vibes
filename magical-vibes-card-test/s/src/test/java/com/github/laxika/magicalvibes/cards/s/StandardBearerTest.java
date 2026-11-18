@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AngelfireCrusader;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DegaDisciple;
 import com.github.laxika.magicalvibes.cards.d.DragonArch;
 import com.github.laxika.magicalvibes.cards.j.Jilt;
@@ -127,7 +128,7 @@ class StandardBearerTest extends BaseCardTest {
     @Test
     void losingAbilitiesRemovesFlagbearerRequirement() {
         Permanent standardBearer = addCreatureReady(player1, new StandardBearer());
-        standardBearer.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, standardBearer);
         Permanent otherCreature = addCreatureReady(player1, new AngelfireCrusader());
         harness.setHand(player2, List.of(new Jilt()));
         harness.addMana(player2, ManaColor.BLUE, 1);

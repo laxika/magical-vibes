@@ -787,8 +787,7 @@ public class TargetTriggers {
         List<TriggeredAbility> grantedAbilities = new ArrayList<>();
         for (TriggeredAbility ability : unjudgedTargetAbilities(
                 eventAbilitySupport.grantedAbilities(gameData, source, watch), watch)) {
-            if (source.getTemporaryTriggeredAbilities().contains(ability)
-                    || source.getPersistentTriggeredAbilities().contains(ability)) {
+            if (grantedTriggeredAbilitySupport.isGrantedByAnEffect(gameData, source, ability)) {
                 abilities.add(ability);
             } else if (sourceIsTarget || !actsOnASpell(ability)) {
                 grantedAbilities.add(ability);

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.p.PrimordialWurm;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -118,7 +119,7 @@ class JaceWielderOfMysteriesTest extends BaseCardTest {
         stockLibrary(player2, 2);
 
         harness.activateAbility(player1, 0, 0, null, player2.getId());
-        jace.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, jace);
         harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);

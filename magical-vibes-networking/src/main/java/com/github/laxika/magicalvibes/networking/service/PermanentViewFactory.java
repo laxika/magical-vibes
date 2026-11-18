@@ -96,15 +96,16 @@ public class PermanentViewFactory {
                 staticGrantedColors, staticGrantedSubtypes, staticGrantedCardTypes, colorOverriding,
                 subtypeOverriding, landSubtypeOverriding, cardTypeOverriding, staticRemovedKeywords,
                 losesAllAbilities, losesAllNonManaAbilities, staticGrantedSupertypes, modifierLines,
-                faceUpExiledWithCards, faceDownExiledCount, staticName, removedSubtypes, 0);
+                faceUpExiledWithCards, faceDownExiledCount, staticName, removedSubtypes, 0, List.of());
     }
 
     /**
      * Builds the view; {@code removedSubtypes} are the printed subtypes the permanent no longer has after the
-     * layered pass (CR 613.1d), hidden from the card face, and {@code regenerationShields} is how many regeneration
-     * shields the floating effects on it give it.
+     * layered pass (CR 613.1d), hidden from the card face, {@code regenerationShields} is how many regeneration
+     * shields the floating effects on it give it, and {@code lostActivatedAbilities} are the printed activated
+     * abilities effects made it lose ("then this creature loses this ability"), compared by identity.
      */
-    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, boolean losesAllNonManaAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount, String staticName, Set<CardSubtype> removedSubtypes, int regenerationShields) {
+    public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, boolean losesAllNonManaAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount, String staticName, Set<CardSubtype> removedSubtypes, int regenerationShields, List<ActivatedAbility> lostActivatedAbilities) {
         Set<Keyword> allKeywords = new HashSet<>(bonusKeywords);
         Set<Keyword> allRemovedKeywords = new HashSet<>(staticRemovedKeywords);
         // When creature loses all abilities, add card's own keywords to removed set
@@ -126,7 +127,7 @@ public class PermanentViewFactory {
         cardView = applyStaticGrantedCardTypes(cardView, staticGrantedCardTypes, cardTypeOverriding);
         cardView = applyStaticGrantedSupertypes(cardView, staticGrantedSupertypes);
         if (!p.isFaceDown()) {
-            cardView = stripLostActivatedAbilities(cardView, p);
+            cardView = stripLostActivatedAbilities(cardView, p, lostActivatedAbilities);
         }
         cardView = applyGrantedActivatedAbilities(cardView, grantedActivatedAbilities);
         cardView = applyStaticGrantedColors(cardView, staticGrantedColors, colorOverriding);
@@ -367,19 +368,24 @@ public class PermanentViewFactory {
      * Must run before granted abilities are appended, while the view's abilities still map one-to-one
      * onto the card's printed battlefield abilities.
      */
-    private CardView stripLostActivatedAbilities(CardView cardView, Permanent p) {
-        if (!p.hasLostAnyCurrentActivatedAbility()) {
+    private CardView stripLostActivatedAbilities(CardView cardView, Permanent p,
+                                                 List<ActivatedAbility> lostActivatedAbilities) {
+        List<ActivatedAbility> printed = p.getCard().getActivatedAbilities(Zone.BATTLEFIELD);
+        if (lostActivatedAbilities.isEmpty() || printed.stream().noneMatch(ability -> isLost(ability, lostActivatedAbilities))) {
             return cardView;
         }
-        List<ActivatedAbility> printed = p.getCard().getActivatedAbilities(Zone.BATTLEFIELD);
         List<ActivatedAbilityView> views = cardView.activatedAbilities();
         List<ActivatedAbilityView> retained = new ArrayList<>();
         for (int i = 0; i < views.size(); i++) {
-            if (i >= printed.size() || !p.hasLostActivatedAbility(printed.get(i))) {
+            if (i >= printed.size() || !isLost(printed.get(i), lostActivatedAbilities)) {
                 retained.add(views.get(i));
             }
         }
         return cardView.toBuilder().activatedAbilities(retained).build();
+    }
+
+    private static boolean isLost(ActivatedAbility ability, List<ActivatedAbility> lostActivatedAbilities) {
+        return lostActivatedAbilities.stream().anyMatch(lost -> lost == ability);
     }
 
     private CardView stripCardNonManaActivatedAbilities(CardView cardView, Card card) {

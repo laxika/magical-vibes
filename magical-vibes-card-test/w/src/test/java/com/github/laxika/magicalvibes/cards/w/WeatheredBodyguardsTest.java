@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.p.PsionicSliver;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PentarchWard;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -66,7 +67,7 @@ class WeatheredBodyguardsTest extends BaseCardTest {
     @DisplayName("Bodyguards that lose all abilities do not redirect combat damage")
     void bodyguardsWithoutAbilitiesDoNotRedirectDamage() {
         Permanent bodyguards = harness.addToBattlefieldAndReturn(player2, new WeatheredBodyguards());
-        bodyguards.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, bodyguards);
         addUnblockedAttacker(player1);
 
         resolveCombat();

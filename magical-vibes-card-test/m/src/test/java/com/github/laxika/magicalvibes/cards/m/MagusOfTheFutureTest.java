@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.h.HorizonCanopy;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LogicKnot;
 import com.github.laxika.magicalvibes.cards.n.NessianCourser;
 import com.github.laxika.magicalvibes.cards.p.PactOfTheTitan;
@@ -193,7 +194,7 @@ class MagusOfTheFutureTest extends BaseCardTest {
     @DisplayName("Losing all abilities removes the land-play permission")
     void losingAllAbilitiesRemovesLandPlayPermission() {
         Permanent magus = harness.addToBattlefieldAndReturn(player1, new MagusOfTheFuture());
-        magus.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, magus);
         HorizonCanopy land = new HorizonCanopy();
         harness.setLibrary(player1, List.of(land));
         harness.forceActivePlayer(player1);
@@ -209,7 +210,7 @@ class MagusOfTheFutureTest extends BaseCardTest {
     @DisplayName("Losing all abilities removes the spell-casting permission")
     void losingAllAbilitiesRemovesSpellCastingPermission() {
         Permanent magus = harness.addToBattlefieldAndReturn(player1, new MagusOfTheFuture());
-        magus.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, magus);
         NessianCourser courser = new NessianCourser();
         harness.setLibrary(player1, List.of(courser));
         harness.addMana(player1, ManaColor.GREEN, 3);
@@ -223,7 +224,7 @@ class MagusOfTheFutureTest extends BaseCardTest {
     @DisplayName("Losing all abilities stops the top library card reveal")
     void losingAllAbilitiesStopsTopCardReveal() {
         Permanent magus = harness.addToBattlefieldAndReturn(player1, new MagusOfTheFuture());
-        magus.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, magus);
         harness.setLibrary(player1, List.of(new PactOfTheTitan()));
         harness.clearMessages();
 

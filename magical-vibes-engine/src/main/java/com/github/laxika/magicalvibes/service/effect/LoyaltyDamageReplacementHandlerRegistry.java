@@ -33,7 +33,7 @@ public class LoyaltyDamageReplacementHandlerRegistry {
             for (Permanent source : battlefield) {
                 for (CardEffect effect : source.getCard().getStaticEffects()) {
                     LoyaltyDamageReplacementHandler handler = handlers.get(effect.getClass());
-                    if (handler == null || source.isStaticEffectSuppressed(effect.getClass())
+                    if (handler == null || gameData.removesOwnStaticAbility(source.getId(), effect.getClass())
                             || gameQueryService.hasLostAllAbilities(gameData, source)) continue;
                     result[0] = handler.apply(gameData, source, target, result[0]);
                 }

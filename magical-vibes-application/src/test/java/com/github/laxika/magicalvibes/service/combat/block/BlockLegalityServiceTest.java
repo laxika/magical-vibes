@@ -64,7 +64,7 @@ class BlockLegalityServiceTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, card);
         assertThat(bls.canBlock(gd, creature)).isFalse();
 
-        source.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, source);
 
         assertThat(bls.canBlock(gd, creature)).isTrue();
     }

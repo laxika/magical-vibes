@@ -33,10 +33,5 @@ public class RemovePerpetualTriggeredAbilityEffectHandler implements NormalEffec
 
         gameData.removePerpetualAbilitiesIf(cardId, removal.triggeredAbilityTrigger(),
                 removal.triggeredAbilityType()::isInstance);
-
-        if (source != null) {
-            source.removePersistentTriggeredEffectsIf(removal.triggeredAbilityTrigger(),
-                    removal.triggeredAbilityType()::isInstance);
-        }
     }
 }

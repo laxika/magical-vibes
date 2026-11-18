@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 
 import com.github.laxika.magicalvibes.cards.s.SafeholdElite;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -142,7 +143,7 @@ class KulrathKnightTest extends BaseCardTest {
     @Test
     void losingAbilitiesAllowsCounteredCreatureToBlock() {
         Permanent knight = addReadyKulrath(player1);
-        knight.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, knight);
         Permanent attacker = addCreature(player1);
         attacker.setAttacking(true);
         Permanent blocker = addCreature(player2);

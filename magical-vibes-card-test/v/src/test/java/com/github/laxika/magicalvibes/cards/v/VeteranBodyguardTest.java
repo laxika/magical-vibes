@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.b.BlueWard;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
@@ -49,7 +50,7 @@ class VeteranBodyguardTest extends BaseCardTest {
     @DisplayName("A Bodyguard that loses all abilities does not absorb damage")
     void bodyguardWithoutAbilitiesDoesNotAbsorbDamage() {
         Permanent bodyguard = addBodyguard();
-        bodyguard.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, bodyguard);
         addAttacker();
 
         resolveCombat();

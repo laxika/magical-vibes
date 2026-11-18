@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.b.BarkshellBlessing;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OrchardSpirit;
@@ -64,7 +65,7 @@ class LoreholdApprenticeTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(spirit.getTemporaryActivatedAbilities()).hasSize(2);
+        assertThat(PermanentGrants.grantedActivatedAbilities(gd, spirit)).hasSize(2);
     }
 
     @Test

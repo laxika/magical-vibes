@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
@@ -73,7 +74,7 @@ class OkkTest extends BaseCardTest {
     @DisplayName("Okk's attack restriction disappears when it loses all abilities")
     void attackRestrictionDisappearsWhenItLosesAllAbilities() {
         Permanent okk = addCreatureReady(player1, new Okk());
-        okk.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, okk);
 
         assertThatCode(() -> declareAttackers(player1, List.of(0))).doesNotThrowAnyException();
     }
@@ -82,7 +83,7 @@ class OkkTest extends BaseCardTest {
     @DisplayName("Okk that lost its abilities still attacks when a must-attack effect requires it")
     void lostAttackRestrictionStillSatisfiesMustAttackRequirement() {
         Permanent okk = addCreatureReady(player1, new Okk());
-        okk.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, okk);
         gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
                 new MustAttackIfAbleEffect(), okk.getId(), Duration.UNTIL_END_OF_TURN));
 
@@ -187,7 +188,7 @@ class OkkTest extends BaseCardTest {
     void blockRestrictionDisappearsWhenItLosesAllAbilities() {
         addReadyAttacker(player1);
         Permanent okk = addCreatureReady(player2, new Okk());
-        okk.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, okk);
         prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2,
@@ -207,7 +208,7 @@ class OkkTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, okk.getId());
             harness.passBothPriorities();
         });
-        okk.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, okk);
         armodon.setAttacking(true);
         prepareDeclareBlockers();
 

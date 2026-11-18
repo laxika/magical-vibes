@@ -102,8 +102,8 @@ class AquitectsWillTest extends BaseCardTest {
         GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(
                 simCopy, simMountain, CardSubtype.ISLAND, Duration.STATIC, false, "test", null, player1.getId());
 
-        assertThat(simMountain.getPersistentGrantedActivatedAbilities()).hasSize(1);
-        assertThat(realMountain.getPersistentGrantedActivatedAbilities()).isEmpty();
+        assertThat(PermanentGrants.grantedActivatedAbilities(simCopy, simMountain)).hasSize(1);
+        assertThat(PermanentGrants.grantedActivatedAbilities(gd, realMountain)).isEmpty();
         assertThat(PermanentGrants.subtypesOf(gd, realMountain)).doesNotContain(CardSubtype.ISLAND);
         assertThat(realMountain.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).isEmpty();
         // Only the Mountain's own mana ability (CR 305.6); no Island ability leaked from the copy.

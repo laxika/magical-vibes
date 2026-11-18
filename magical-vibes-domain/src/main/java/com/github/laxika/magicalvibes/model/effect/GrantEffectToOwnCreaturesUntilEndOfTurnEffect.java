@@ -9,9 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * ability until end of turn. Creatures that enter (or change control) later this turn do not
  * receive it — snapshot at resolution (e.g. Driven / Despair).
  *
- * <p>The granted ability is stored via
- * {@link com.github.laxika.magicalvibes.model.Permanent#addTemporaryAbility}
- * and cleared at cleanup by {@link com.github.laxika.magicalvibes.model.Permanent#resetModifiers()}.
+ * <p>Each grant is a floating layer-6 effect on its creature ({@code GameData.grantAbilityToPermanent}) that the
+ * cleanup step ends.
  *
  * @param grantedAbility the granted ability
  * @param filter        optional filter limiting the snapshot of creatures receiving the trigger

@@ -115,7 +115,7 @@ public class BlockLegalityService {
             if (source.isAttached()) {
                 attachedByHostId.computeIfAbsent(source.getAttachedTo(), id -> new ArrayList<>(1)).add(source);
             }
-            if (!source.isFaceDown() && !source.isLosesAllAbilitiesUntilEndOfTurn()
+            if (!source.isFaceDown() && !gameData.losesAllAbilitiesByEffect(source)
                         && !gameQueryService.computeStaticBonus(gameData, source).losesAllAbilities()) {
                 for (CardEffect effect : source.getCard().getStaticEffects()) {
                     if (effect instanceof BlockingRestrictionEffect restriction) {
@@ -591,7 +591,7 @@ public class BlockLegalityService {
         List<AttackerRestriction> restrictions = new ArrayList<>();
         GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, attacker);
         if (!attacker.isFaceDown() && !bonus.losesAllAbilities() && !bonus.losesAllNonManaAbilities()
-                && !attacker.isLosesAllAbilitiesUntilEndOfTurn()) {
+                && !gameData.losesAllAbilitiesByEffect(attacker)) {
             for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, attacker)) {
                 if (effect instanceof BlockabilityRestrictionEffect restriction) {
                     restrictions.add(new AttackerRestriction(attacker, restriction));
@@ -734,7 +734,7 @@ public class BlockLegalityService {
         boolean blocksLandwalkAsThoughNoLandwalk = false;
         List<PermanentPredicate> blocksAsThoughReachForAttackers = new ArrayList<>();
         Integer cantBlockPowerAtLeast = null;
-        if (!bonus.losesAllAbilities() && !blocker.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (!bonus.losesAllAbilities() && !gameData.losesAllAbilitiesByEffect(blocker)) {
             UUID blockerControllerId = gameQueryService.findPermanentController(gameData, blocker.getId());
             if (!blocker.isFaceDown()) {
                 for (CardEffect effect : blocker.getCard().getStaticEffects()) {

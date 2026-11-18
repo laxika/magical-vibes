@@ -833,7 +833,7 @@ public class DepartureService {
     private DepartureSnapshot snapshot(GameData gameData, Departing departing) {
         Permanent permanent = departing.permanent();
         Permanent lastKnown = new Permanent(permanent);
-        lastKnown.setLosesAllAbilitiesUntilEndOfTurn(gameQueryService.hasLostPrintedAbilities(gameData, permanent));
+        lastKnown.setLastKnownLostPrintedAbilities(gameQueryService.hasLostPrintedAbilities(gameData, permanent));
         lastKnown.setLastKnownPower(gameQueryService.getEffectivePower(gameData, permanent));
         lastKnown.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, permanent));
         permanentRemovalService.recordLastKnownAttachmentCounts(gameData, lastKnown);

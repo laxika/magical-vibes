@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.a.AmuletOfQuoz;
 import com.github.laxika.magicalvibes.cards.c.ChaosDragon;
@@ -90,7 +91,7 @@ class KrarksThumbTest extends BaseCardTest {
     void thumbWithoutAbilitiesDoesNotApply() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
         Permanent thumb = harness.addToBattlefieldAndReturn(player1, new KrarksThumb());
-        thumb.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, thumb);
         castFieryGambit(target);
 
         assertThat(coinFlipLogs()).isNotEmpty()

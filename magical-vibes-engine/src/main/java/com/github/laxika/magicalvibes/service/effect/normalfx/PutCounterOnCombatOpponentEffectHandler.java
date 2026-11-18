@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -48,14 +50,15 @@ public class PutCounterOnCombatOpponentEffectHandler implements NormalEffectHand
         permanentCounterSupport.placeCounterOnPermanent(
                 gameData, entry, target, counterEffect.counterType(), counterEffect.amount());
         if (counterEffect.grantedStaticEffect() != null
-                && !target.getPersistentStaticEffects()
-                        .contains(counterEffect.grantedStaticEffect())) {
-            target.addPersistentAbility(StaticAbility.of(counterEffect.grantedStaticEffect()));
+                && gameData.floatingEffectsOnPermanent(target.getId(), GrantEffectEffect.class).stream()
+                .noneMatch(fe -> ((GrantEffectEffect) fe.effect()).effect().equals(counterEffect.grantedStaticEffect()))) {
+            gameData.grantAbilityToPermanent(entry, StaticAbility.of(counterEffect.grantedStaticEffect()),
+                    target.getId(), Duration.PERMANENT);
         }
         if (counterEffect.grantedUpkeepEffect() != null) {
-            target.addPersistentAbility(new TriggeredAbility(
+            gameData.grantAbilityToPermanent(entry, new TriggeredAbility(
                     Triggers.upkeep(ActivePlayer.YOU),
-                    counterEffect.grantedUpkeepEffect()));
+                    counterEffect.grantedUpkeepEffect()), target.getId(), Duration.PERMANENT);
         }
     }
 }

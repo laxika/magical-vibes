@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChandrasPyrohelix;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plummet;
@@ -117,7 +118,7 @@ class HighTrollerTest extends BaseCardTest {
     @Test
     void doesNotReduceSpellCostsAfterLosingItsAbilities() {
         var troller = harness.addToBattlefieldAndReturn(player1, new HighTroller());
-        troller.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, troller);
         var target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.setHand(player1, List.of(new Plummet()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -131,7 +132,7 @@ class HighTrollerTest extends BaseCardTest {
     @Test
     void doesNotRandomizeTargetsAfterLosingItsAbilities() {
         var troller = harness.addToBattlefieldAndReturn(player1, new HighTroller());
-        troller.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, troller);
         var target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.setHand(player1, List.of(new Plummet()));
         harness.addMana(player1, ManaColor.GREEN, 2);

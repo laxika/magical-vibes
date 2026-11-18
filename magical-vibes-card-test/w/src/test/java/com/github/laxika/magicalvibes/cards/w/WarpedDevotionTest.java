@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.a.AshnodsHarvester;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -140,7 +141,7 @@ class WarpedDevotionTest extends BaseCardTest {
     @DisplayName("Warped Devotion does not trigger after it loses all abilities")
     void abilityDoesNotTriggerAfterLosingAllAbilities() {
         var warpedDevotion = harness.addToBattlefieldAndReturn(player1, new WarpedDevotion());
-        warpedDevotion.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, warpedDevotion);
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player2, List.of(new Forest()));
 

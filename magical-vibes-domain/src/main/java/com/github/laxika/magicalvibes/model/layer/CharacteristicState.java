@@ -120,9 +120,8 @@ public class CharacteristicState {
 
     /**
      * Seeds the state from the permanent's post-copy card and the counters and designations stored on the
-     * {@link Permanent}, and the activated abilities an effect gave it indefinitely. The types, colours and keywords
-     * an effect gives it are NOT seeded: those are floating continuous effects applied during the pass at their own
-     * timestamps.
+     * {@link Permanent}. The types, colours, keywords and abilities an effect gives it are NOT seeded: those are
+     * floating continuous effects applied during the pass at their own timestamps.
      */
     public CharacteristicState(Card card, Permanent permanent) {
         this.name = permanent.isFaceDown() ? null
@@ -159,7 +158,6 @@ public class CharacteristicState {
         if (permanent.isSuspected()) {
             this.keywords.add(Keyword.MENACE);
         }
-        this.grantedActivatedAbilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
         this.basePower = permanent.isFaceDown() ? permanent.getFaceDownPower()
                 : card.getPower() != null ? card.getPower() : 0;
         this.baseToughness = permanent.isFaceDown() ? permanent.getFaceDownToughness()
@@ -451,6 +449,16 @@ public class CharacteristicState {
     public void addStaticEffect(CardEffect effect) {
         if (abilityGainProhibited) return;
         grantedStaticEffects.add(effect);
+    }
+
+    /**
+     * Applies an effect that removes the static abilities of one kind ("loses 'prevent all damage that would be dealt
+     * to it'", "loses all 'bands with other' abilities", CR 613.1f): those of exactly {@code type} granted so far.
+     * The object's own abilities of that kind precede every effect, so the effect's readers drop them wherever it
+     * applies; abilities granted by a later effect (CR 613.7) are added afterwards and stay.
+     */
+    public void removeStaticAbilities(Class<? extends CardEffect> type) {
+        grantedStaticEffects.removeIf(effect -> !nonAbilityEffects.contains(effect) && effect.getClass() == type);
     }
 
     /** Adds a rules restriction that is not an ability, so a later "loses all abilities" does not remove it. */

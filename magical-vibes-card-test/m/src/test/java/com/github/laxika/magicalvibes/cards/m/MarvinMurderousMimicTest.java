@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FloodpitsDrowner;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Card;
@@ -82,7 +83,7 @@ class MarvinMurderousMimicTest extends BaseCardTest {
     void doesNotCopyAbilitiesDonorHasLost() {
         addCreatureReady(player1, new MarvinMurderousMimic());
         Permanent donor = addCreatureReady(player1, new DrudgeSkeletons());
-        donor.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, donor);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

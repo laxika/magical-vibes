@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import java.util.Set;
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IronrootTreefolk;
@@ -138,5 +142,27 @@ class TopsoilTurnerTest extends BaseCardTest {
         assertThat(gs.getEffectiveActivatedAbilities(gd, permanent)).containsExactly(ManaAbilities.intrinsic(ManaColor.GREEN));
         harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(permanent));
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A face-down permanent has none of its card's perpetual abilities and keywords until turned face up")
+    void faceDownPermanentHasNoPerpetualAbilities() {
+        IronrootTreefolk treefolk = new IronrootTreefolk();
+        harness.setHand(player1, List.of(treefolk));
+        harness.enterBattlefieldAndReturn(player1, new TopsoilTurner());
+        resolveAllTriggers();
+        harness.setHand(player1, List.of());
+        Permanent treefolkPermanent = harness.enterBattlefieldAndReturn(player1, treefolk);
+        gd.perpetualKeywords.put(treefolk.getId(), Set.of(Keyword.FLYING));
+
+        treefolkPermanent.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        assertThat(gs.getEffectiveActivatedAbilities(gd, treefolkPermanent)).isEmpty();
+        assertThat(gqs.hasKeyword(gd, treefolkPermanent, Keyword.FLYING)).isFalse();
+
+        treefolkPermanent.turnFaceUp();
+
+        assertThat(gs.getEffectiveActivatedAbilities(gd, treefolkPermanent)).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, treefolkPermanent, Keyword.FLYING)).isTrue();
     }
 }

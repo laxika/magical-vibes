@@ -73,9 +73,6 @@ public class GainActivatedAbilitiesOfAllLandsSelfEffectHandler implements Static
             abilities.addAll(permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         }
-        abilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
-        abilities.addAll(permanent.getTemporaryActivatedAbilities());
-        abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
         abilities.addAll(gameQueryService.missingIntrinsicManaAbilities(gameData, permanent, abilities));
         abilities.forEach(accumulator::addActivatedAbility);
     }

@@ -40,7 +40,7 @@ public class UntapPreventionSupport {
                                 && gameData.playerBattlefields.getOrDefault(floating.controllerId(), List.of())
                                 .stream().anyMatch(source -> source.getId().equals(floating.sourcePermanentId()))))
                 || !(gameQueryService == null
-                        ? permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                        ? permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)
                         : gameQueryService.hasLostPrintedAbilities(gameData, permanent))
                 && permanent.getCard().getStaticEffects().stream()
                 .anyMatch(effect -> hasActiveSelfDoesntUntap(gameData, permanent, controllerId, effect));

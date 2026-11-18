@@ -425,8 +425,8 @@ public final class TokenCreationReplacementSupport {
         }
         int bilboCount = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                    || permanent.isStaticEffectSuppressed(AddTreasureToFoodTokenCreationEffect.class)) {
+            if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)
+                    || gameData.removesOwnStaticAbility(permanent.getId(), AddTreasureToFoodTokenCreationEffect.class)) {
                 continue;
             }
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {
@@ -463,11 +463,11 @@ public final class TokenCreationReplacementSupport {
         if (!original.subtypes().contains(CardSubtype.TREASURE)) {
             List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(controllerId, List.of());
             for (Permanent permanent : battlefield) {
-                if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)) continue;
                 for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     if (effect instanceof com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect add
                             && add.affectedSubtype() == CardSubtype.TREASURE
-                            && !permanent.isStaticEffectSuppressed(add.getClass())) {
+                            && !gameData.removesOwnStaticAbility(permanent.getId(), add.getClass())) {
                         for (int i = 0; i < add.additionalTokens(); i++) {
                             blueprints.add(treasure);
                         }
@@ -655,14 +655,14 @@ public final class TokenCreationReplacementSupport {
             GameData gameData, UUID controllerId) {
         List<ReplaceTokenSubtypeCreationEffect> replacements = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
-            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)) {
                 continue;
             }
             int sourceLevel = permanent.getClassLevel();
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof ReplaceTokenSubtypeCreationEffect replacement
                         && sourceLevel >= replacement.minimumSourceLevel()
-                        && !permanent.isStaticEffectSuppressed(effect.getClass())) {
+                        && !gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())) {
                     replacements.add(replacement);
                 }
             }
@@ -686,8 +686,8 @@ public final class TokenCreationReplacementSupport {
         int count = 0;
         for (Permanent permanent : battlefield) {
             if (permanent.isFaceDown()
-                    || permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                    || permanent.isStaticEffectSuppressed(effectType)) {
+                    || gameData.losesAllAbilitiesByEffect(permanent)
+                    || gameData.removesOwnStaticAbility(permanent.getId(), effectType)) {
                 continue;
             }
             count += (int) permanent.getCard().getStaticEffects().stream()
@@ -710,13 +710,13 @@ public final class TokenCreationReplacementSupport {
         int count = 0;
         for (Permanent permanent : battlefield) {
             if (permanent.isFaceDown()
-                    || permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                    || permanent.isStaticEffectSuppressed(effectType)) {
+                    || gameData.losesAllAbilitiesByEffect(permanent)
+                    || gameData.removesOwnStaticAbility(permanent.getId(), effectType)) {
                 continue;
             }
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effectType.isInstance(effect)
-                        && !permanent.isStaticEffectSuppressed(effect.getClass())) {
+                        && !gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())) {
                     count++;
                 }
             }
@@ -810,8 +810,8 @@ public final class TokenCreationReplacementSupport {
         }
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                    || permanent.isStaticEffectSuppressed(AcademyManufactorTokenReplacementEffect.class)) {
+            if (gameData.losesAllAbilitiesByEffect(permanent)
+                    || gameData.removesOwnStaticAbility(permanent.getId(), AcademyManufactorTokenReplacementEffect.class)) {
                 continue;
             }
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {

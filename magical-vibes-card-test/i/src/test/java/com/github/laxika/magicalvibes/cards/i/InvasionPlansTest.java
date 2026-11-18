@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.s.SkyshroudFalcon;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -117,7 +118,7 @@ class InvasionPlansTest extends BaseCardTest {
     @DisplayName("Losing Invasion Plans' abilities removes both static effects")
     void losingAbilitiesRemovesStaticEffects() {
         Permanent plans = harness.addToBattlefieldAndReturn(player1, new InvasionPlans());
-        plans.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, plans);
         Permanent attacker = addCreatureReady(player1, new YouthfulKnight());
         addCreatureReady(player2, new YouthfulKnight());
         PendingInteraction.BlockerDeclaration pending = beginCombat(attacker);

@@ -50,10 +50,6 @@ public class PerpetuallyGrantTriggeredAbilityToTargetCreatureOrGraveyardCardEffe
             // are appended rather than deduplicated.
             UUID cardId = targetCard.getId();
             gameData.grantPerpetualAbility(cardId, grant.grantedAbility());
-
-            if (targetPermanent != null) {
-                targetPermanent.addPersistentAbility(grant.grantedAbility());
-            }
         }
     }
 

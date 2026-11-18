@@ -11,14 +11,11 @@ import java.util.List;
  * "When this enchantment enters, create a token that's a copy of target nontoken creature."
  *
  * <p>Beyond creating the token copy (of the permanent referenced by the stack entry's {@code targetId}),
- * this effect establishes the mutual bond Dance of Many needs: every created token (several with a
+ * this effect makes "the token" Dance of Many's other abilities name: every created token (several with a
  * token doubler, plus any token a replacement adds or substitutes, such as Queen Allenal's Soldier) is
- * recorded under the source in {@code GameData.sourceCreatedTokens} and stores the source's id in
- * {@code chosenPermanentId}, and each token's permanent (not its copiable card) is given an
- * "when this leaves the battlefield" {@link RemoveLinkedPermanentEffect} so it sacrifices the enchantment
- * if it leaves. The enchantment
- * carries the reciprocal {@link ExileTokensCreatedWithSourceEffect} trigger on its own card, which exiles
- * every tracked token.
+ * recorded under the source in {@code GameData.sourceCreatedTokens}. The enchantment's own abilities read that
+ * record: {@link ExileTokensCreatedWithSourceEffect} as it leaves, and "when the token leaves the battlefield,
+ * sacrifice this enchantment" through {@code PermanentCreatedBySourcePredicate}.
  */
 public record CreateTokenCopyAndLinkToSourceEffect() implements CardEffect {
 

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RingOfGix;
 import com.github.laxika.magicalvibes.cards.t.TickingGnomes;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -80,7 +82,7 @@ class YavimayaScionTest extends BaseCardTest {
     @DisplayName("Losing all abilities removes protection from artifacts")
     void losingAllAbilitiesRemovesProtectionFromArtifacts() {
         Permanent scion = addCreatureReady(player1, new YavimayaScion());
-        scion.setLosesAllAbilitiesUntilEndOfTurn(true);
+        FloatingContinuousEffect loss = PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, scion);
         Permanent artifactBlocker = addCreatureReady(player2, new TickingGnomes());
         assertThat(gqs.hasProtectionFromSourceCardTypes(gd, scion, artifactBlocker)).isFalse();
         assertThat(gqs.hasProtectionFromSourceCardTypes(gd, scion, new RingOfGix())).isFalse();
@@ -109,7 +111,7 @@ class YavimayaScionTest extends BaseCardTest {
     @DisplayName("Losing protection allows an artifact ability to target and tap the creature")
     void losingProtectionAllowsArtifactTargeting() {
         Permanent scion = addCreatureReady(player2, new YavimayaScion());
-        scion.setLosesAllAbilitiesUntilEndOfTurn(true);
+        FloatingContinuousEffect loss = PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, scion);
         harness.addToBattlefield(player1, new RingOfGix());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -138,12 +140,12 @@ class YavimayaScionTest extends BaseCardTest {
     @DisplayName("Regaining protection makes sacrificed Ticking Gnomes' target illegal on resolution")
     void regainedProtectionInvalidatesSacrificedArtifactTarget() {
         Permanent scion = addCreatureReady(player2, new YavimayaScion());
-        scion.setLosesAllAbilitiesUntilEndOfTurn(true);
+        FloatingContinuousEffect loss = PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, scion);
         harness.addToBattlefield(player1, new TickingGnomes());
 
         harness.activateAbility(player1, 0, null, scion.getId());
         harness.assertInGraveyard(player1, "Ticking Gnomes");
-        scion.setLosesAllAbilitiesUntilEndOfTurn(false);
+        gd.endFloatingEffect(loss);
         harness.passBothPriorities();
 
         assertThat(scion.getMarkedDamage()).isZero();

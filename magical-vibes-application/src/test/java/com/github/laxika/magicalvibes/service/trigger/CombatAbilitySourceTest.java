@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -88,7 +89,7 @@ class CombatAbilitySourceTest extends BaseCardTest {
     @DisplayName("A \"deals damage to a player\" ability a creature has until end of turn triggers on its combat damage")
     void temporaryDealsDamageToPlayerAbilityTriggersOnCombatDamage() {
         Permanent raider = attacking(creature("Borrowed Raider"));
-        raider.addTemporaryAbility(ability(Triggers.dealsDamageToPlayer(), new GainLifeEffect(1)));
+        PermanentGrants.abilityUntilEndOfTurn(gd, raider, ability(Triggers.dealsDamageToPlayer(), new GainLifeEffect(1)));
 
         dealCombatDamage();
 
@@ -99,8 +100,8 @@ class CombatAbilitySourceTest extends BaseCardTest {
     @DisplayName("\"Attacks and isn't blocked\" abilities a creature has until end of turn and until it leaves both trigger")
     void temporaryAndPersistentUnblockedAttackAbilitiesTrigger() {
         Permanent raider = attacking(creature("Slippery Raider"));
-        raider.addTemporaryAbility(ability(Triggers.attacksUnblocked(), new GainLifeEffect(1)));
-        raider.addPersistentAbility(ability(Triggers.attacksUnblocked(), new DrawCardEffect(1)));
+        PermanentGrants.abilityUntilEndOfTurn(gd, raider, ability(Triggers.attacksUnblocked(), new GainLifeEffect(1)));
+        PermanentGrants.ability(gd, raider, ability(Triggers.attacksUnblocked(), new DrawCardEffect(1)));
 
         declareNoBlockers();
 
@@ -111,7 +112,7 @@ class CombatAbilitySourceTest extends BaseCardTest {
     @DisplayName("A \"creature you control attacks and isn't blocked\" ability a permanent has until end of turn triggers")
     void temporaryAllyUnblockedAttackAbilityTriggers() {
         Permanent lookout = addCreatureReady(player1, creature("Lookout"));
-        lookout.addTemporaryAbility(ability(Triggers.creatureYouControlAttacksUnblocked(), new GainLifeEffect(1)));
+        PermanentGrants.abilityUntilEndOfTurn(gd, lookout, ability(Triggers.creatureYouControlAttacksUnblocked(), new GainLifeEffect(1)));
         attacking(new GrizzlyBears());
 
         declareNoBlockers();

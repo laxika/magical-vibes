@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -158,7 +159,7 @@ class MadameWebClairvoyantTest extends BaseCardTest {
     @Test
     void losingAbilitiesRemovesLibraryCastingPermission() {
         Permanent madameWeb = harness.addToBattlefieldAndReturn(player1, new MadameWebClairvoyant());
-        madameWeb.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, madameWeb);
         Card top = new Shock();
         harness.setLibrary(player1, List.of(top));
         harness.addMana(player1, ManaColor.RED, 1);

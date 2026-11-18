@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -127,8 +128,8 @@ class RamunapExcavatorTest extends BaseCardTest {
 
     @Test
     void cannotPlayLandAfterExcavatorLosesAbilities() {
-        harness.addToBattlefieldAndReturn(player1, new RamunapExcavator())
-                .setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd,
+                harness.addToBattlefieldAndReturn(player1, new RamunapExcavator()));
         harness.setGraveyard(player1, List.of(new Forest()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

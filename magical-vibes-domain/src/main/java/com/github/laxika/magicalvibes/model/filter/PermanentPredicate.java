@@ -154,6 +154,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsBlockedPredicate,
         PermanentIsBlockingPredicate,
         PermanentIsChosenPermanentPredicate,
+        PermanentCreatedBySourcePredicate,
         PermanentIsCreaturePredicate,
         PermanentIsDamagedPredicate,
         PermanentIsEnchantedPredicate,

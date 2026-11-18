@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -158,7 +159,7 @@ class CrucibleOfWorldsTest extends BaseCardTest {
     @DisplayName("Cannot play land from graveyard when Crucible has lost all abilities")
     void cannotPlayWhenCrucibleHasLostAllAbilities() {
         Permanent crucible = harness.addToBattlefieldAndReturn(player1, new CrucibleOfWorlds());
-        crucible.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, crucible);
         harness.setGraveyard(player1, List.of(new Forest()));
         harness.setHand(player1, List.of());
 

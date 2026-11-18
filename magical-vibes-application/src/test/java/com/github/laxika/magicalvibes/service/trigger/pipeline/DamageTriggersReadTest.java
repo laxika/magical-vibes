@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -119,13 +121,17 @@ class DamageTriggersReadTest {
     }
 
     @Test
+    @DisplayName("Abilities a resolved effect granted are found by their watched trigger and read with their filter")
     void grantedAbilitiesAreFoundByTheWatchedTriggerAndReadWithTheirFilter() {
         TriggeredAbility ability = new TriggeredAbility(Triggers.dealsDamage().withFilter(DRAGON), DRAW);
         Permanent permanent = new Permanent(new Card());
-        permanent.addTemporaryAbility(ability);
+        GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "p1");
+        PermanentGrants.abilityUntilEndOfTurn(gameData, permanent, ability);
 
-        assertThat(WatchedAbilities.temporary(permanent, Triggers.dealsDamage())).containsExactly(ability);
-        assertThat(Read.read(WatchedAbilities.temporary(permanent, Triggers.dealsDamage()), Triggers.dealsDamage()))
+        assertThat(WatchedAbilities.grantedByEffects(gameData, permanent, Triggers.dealsDamage()))
+                .containsExactly(ability);
+        assertThat(Read.read(WatchedAbilities.grantedByEffects(gameData, permanent, Triggers.dealsDamage()),
+                Triggers.dealsDamage()))
                 .singleElement().extracting(Read::filter).isEqualTo(DRAGON);
     }
 

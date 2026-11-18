@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.condition.SourceIsFaceDown;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaConjureRandomCreatureWithManaValueAndCloakEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpEffect;
@@ -101,13 +101,12 @@ public class PayXManaConjureRandomCreatureWithManaValueAndCloakEffectHandler
         card.setOwnerId(entry.getControllerId());
         Permanent cloaked = new Permanent(card);
         cloaked.setFaceDownAsCloaked();
-        cloaked.getPersistentGrantedActivatedAbilities().add(new ActivatedAbility(
+        // "It gains '{G/U}: Turn this creature face up' for as long as it remains face down" (CR 611.2b).
+        gameData.grantAbilityToPermanent(entry, new ActivatedAbility(
                 false,
                 "{G/U}",
                 List.of(new TurnSourceFaceUpEffect()),
-                "{G/U}: Turn this creature face up.")
-                .withActivationCondition(new SourceIsFaceDown(),
-                        "Activate only while this creature is face down."));
+                "{G/U}: Turn this creature face up."), cloaked.getId(), Duration.WHILE_FACE_DOWN);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), cloaked);
         battlefieldEntryService.processFaceDownCreatureETBTriggers(
                 gameData, entry.getControllerId(), card);

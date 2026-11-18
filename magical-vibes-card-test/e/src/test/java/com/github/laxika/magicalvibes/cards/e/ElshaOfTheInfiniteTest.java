@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -183,7 +184,7 @@ class ElshaOfTheInfiniteTest extends BaseCardTest {
     @Test
     void losingAbilitiesRemovesLibraryCastingAndViewingPermissions() {
         Permanent elsha = harness.addToBattlefieldAndReturn(player1, new ElshaOfTheInfinite());
-        elsha.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, elsha);
         Divination top = new Divination();
         harness.setLibrary(player1, List.of(top));
         harness.addMana(player1, ManaColor.BLUE, 3);

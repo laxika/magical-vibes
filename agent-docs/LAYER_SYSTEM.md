@@ -237,12 +237,9 @@ queries used by protection (`hasProtectionFromSource` checks every source color)
 intimidate, color predicates, chosen-color boosts, convoke, and color-based damage prevention.
 The pass registers itself on the ThreadLocal BEFORE computing (nested `computeStaticBonus`
 calls made by handlers during L5/L6 read the states as of the layers applied so far; the bonus
-memo is only used once the board is finished). **One-shot migrated handlers dual-write:** the
-normalfx `GrantColorUntilEndOfTurn`/`GrantKeyword` (SELF/TARGET/TOKENS paths)/`RemoveKeyword`/
-`LosesAllAbilities` handlers still write the legacy `Permanent` fields for direct
-`Permanent.hasKeyword`/`getEffectiveColor` callers AND create the floating effect; the pass
-seeds the legacy fields (a legacy lose-all flag = removal-before-everything) and then replays
-the floating instance at its real timestamp, which is what drives ordering. Remaining direct
+memo is only used once the board is finished). **One-shot effects write nothing to the `Permanent`:**
+a resolved colour, keyword, ability or "loses all abilities" effect is only its floating effect, applied at its
+own timestamp, which is what drives ordering. Remaining direct
 `Permanent.getEffectiveColor()` uses to clean up later: `ai/BoardEvaluator` (heuristics),
 `PermanentViewFactory`'s legacy transient-color branch, `Permanent.hasKeyword` direct callers
 in null-`GameData` predicate fallbacks. The finished board is **memoized per `GameData` across
@@ -429,9 +426,8 @@ Each source is classified into one or more layers:
    `STATIC_EFFECT_HANDLERS.md` for the current handler inventory that must be re-classified.
 2. **Emblems** (`GameData.emblems`).
 3. **Floating effects** created by resolved spells/abilities (`FloatingContinuousEffect`,
-   stored on `GameData` — introduced in step 2). These replace today's scattered
-   `Permanent` fields (`powerModifier`, `grantedKeywords`, `basePowerToughnessOverriddenUntilEndOfTurn`,
-   `losesAllAbilitiesUntilEndOfTurn`, ...) and expire by duration instead
+   stored on `GameData` — introduced in step 2). They replaced the scattered `Permanent` fields that held
+   P/T modifiers, keywords, granted abilities and "loses all abilities" flags, and expire by duration instead
    of by `resetModifiers()` bucket. (`powerToughnessSwitched` was the first field fully
    deleted this way — step 7; the four steal tracking sets — `untilEndOfTurnStolenCreatures`,
    `sourceDependentStolenCreatures`, `enchantmentDependentStolenCreatures`,
@@ -446,7 +442,8 @@ while and ends for good once it stops holding (CR 611.2b). Every duration is one
 `UNTIL_END_OF_TURN` (CR 514.2), `UNTIL_END_OF_COMBAT`, `UNTIL_YOUR_NEXT_TURN`, `UNTIL_END_OF_YOUR_NEXT_TURN`,
 the upkeep, untap-step, next-end-step, spell-cast and planeswalk ends, `PERMANENT`, the source-linked
 `WHILE_SOURCE_ON_BATTLEFIELD` / `_CONTROLLED` / `_REMAINS` / `_TAPPED` / `_REMAINS_TAPPED`, `WHILE_ATTACHED` for
-attachment-backed effects and `WHILE_SOURCE_CARD_EXILED` (teach's grant, ended by `GameData.removeFromExile`). Compare durations with `equals`. `STATIC` marks the effect of a static ability (CR 611.3)
+attachment-backed effects, `WHILE_SOURCE_CARD_EXILED` (teach's and cipher's grants, ended by `GameData.removeFromExile`)
+and `WHILE_FACE_DOWN` (ended by the clock as the permanent is turned face up). Compare durations with `equals`. `STATIC` marks the effect of a static ability (CR 611.3)
 and is not valid for a floating effect.
 
 Only `GameData`'s methods change `floatingEffects`: `addFloatingEffect` (stamps a new timestamp), `putFloatingEffect`
@@ -505,6 +502,27 @@ timestamp order (CR 613.4b, 613.7); switching stays 7d, after both. An amount co
 permanent's own. Tests give and read these through `testutil.PermanentGrants` (`boostUntilEndOfTurn`,
 `powerBoostOf`, `basePowerToughnessUntilEndOfTurn`).
 
+**Abilities.** "It gains '[ability]'" until end of turn, until end of combat, until the effect controller's next upkeep or
+with no stated duration (Cipher, Dread Wight's removal ability, a token copy's added death ability, a land's added mana
+ability) is a floating effect on the permanent (`GameData.grantAbilityToPermanent`, CR 611.2a), applied in layer 6 in
+timestamp order (CR 613.1f, 613.7): a triggered ability as `GrantTriggeredAbilityEffect`, each effect of a static one as
+`GrantEffectEffect`, an activated one as `GrantActivatedAbilityEffect` (`GrantScope.TARGET`). "Loses all abilities"
+(`LosesAllAbilitiesEffect`) and the removal of one kind of static ability ("loses 'prevent all damage…'", "loses all
+'bands with other' abilities": the `SuppressStaticEffect…` records as payloads) are floating layer-6 effects too, so a
+grant older than a removal is gone and a newer one stays; a rules restriction added as a non-ability
+(`CharacteristicState.addNonAbilityEffect`) is never removed. Readers ask the layered state
+(`computeStaticBonus(...).grantedEffects()`, `grantedActivatedAbilities()`, `losesAllAbilities()`,
+`GrantedTriggeredAbilitySupport`); the permanent's own abilities precede every effect, so readers of printed abilities
+may ask `GameData.losesAllAbilitiesByEffect` / `removesOwnStaticAbility` instead. "Then this creature loses this ability"
+is a `LoseThisActivatedAbilityEffect` naming the ability object, with no end (`GameData.hasLostActivatedAbility`). A
+departed permanent's last-known copy records whether it had lost its printed abilities
+(`Permanent.lastKnownLostPrintedAbilities`) and the departure the abilities granted it as the layers left them. Cipher's grant
+lasts while the encoded card stays exiled (`WHILE_SOURCE_CARD_EXILED`, CR 702.99c). Perpetual abilities and keywords
+(`GameData.perpetualAbilities`, `perpetualActivatedAbilities`, `perpetualKeywords`) are part of the card: the pass seeds
+them, so any "loses all abilities" removes them, and seeds none while the permanent is face down (CR 708.2a). Tests give and read these through `testutil.PermanentGrants`
+(`abilityUntilEndOfTurn`, `ability`, `loseAllAbilitiesUntilEndOfTurn`, `grantedTriggerEffects`,
+`grantedActivatedAbilities`).
+
 An effect on a card outside the battlefield ("you may play that card this turn", "it gains flashback until end of
 turn", "it is revealed until your next turn") is on that card through `onCard` (`affectedCardId`); it ends as the card
 leaves its zone, where the engine calls `GameData.endFloatingEffectsOnCard`, because the card becomes a new object
@@ -551,7 +569,8 @@ what the effect kept on its permanent (a copy's card, a tap restriction, mirrore
 `UNTIL_END_OF_CONTROLLERS_NEXT_UPKEEP`, CR 500.5), `TurnEvent.Cleanup` (`UNTIL_END_OF_TURN`,
 `UNTIL_END_OF_YOUR_NEXT_TURN` control effects included, CR 514.2; Runed Terror's per-player share), `StepEvent`
 (`UNTIL_CONTROLLERS_NEXT_UPKEEP`, `UNTIL_NEXT_END_STEP`), `TapEvent.UntappedDuringUntapStep`
-(`UNTIL_CONTROLLERS_NEXT_UNTAP_STEP`), `SpellEvent.Cast` (the spell-cast ends) and `ActionEvent.Planeswalked`
+(`UNTIL_CONTROLLERS_NEXT_UNTAP_STEP`), `PermanentChangeEvent` turning a permanent face up (`WHILE_FACE_DOWN`),
+`SpellEvent.Cast` (the spell-cast ends) and `ActionEvent.Planeswalked`
 (`UNTIL_PLANESWALK`). A test ends a duration the same way: `gd.rulesEvents.occur(new TurnEvent.Cleanup(...))`.
 A "for as long as" duration (CR 611.2b) ends as its condition stops holding, so it ends where the state changes, not
 at a batch: the engine tells the clock `sourceLeft` (`PermanentRemovalService`, the orphaned-Aura sweep),

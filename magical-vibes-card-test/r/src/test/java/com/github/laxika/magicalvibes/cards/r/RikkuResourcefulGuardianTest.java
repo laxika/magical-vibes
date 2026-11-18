@@ -212,7 +212,7 @@ class RikkuResourcefulGuardianTest extends BaseCardTest {
     void noTriggerAfterLosingAbilities() {
         Permanent rikku = addCreatureReady(player1, new RikkuResourcefulGuardian());
         Permanent target = addCreatureReady(player1, new AirElemental());
-        rikku.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, rikku);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

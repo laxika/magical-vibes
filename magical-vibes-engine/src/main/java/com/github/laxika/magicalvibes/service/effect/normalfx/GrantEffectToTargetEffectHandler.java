@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -87,18 +88,17 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
         // "If it doesn't have [ability], it gains that ability" — grant at most once (Musician).
         // Some abilities intentionally add another instance each time they resolve (Bushido).
         if (e.skipIfAlreadyPresent()
-                && (alreadyHasGrantedEffect(target, e.grantedAbility(), e.grantedEffect())
+                && (alreadyHasGrantedEffect(gameData, target, e.grantedAbility(), e.grantedEffect())
                 || alreadyHasRampage(gameData, target, e.grantedAbility(), e.grantedEffect()))) {
             return;
         }
 
-        if (Duration.UNTIL_END_OF_TURN.equals(e.duration())) {
-            target.addTemporaryAbility(e.grantedAbility());
-        } else if (Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(e.duration())) {
-            target.addUntilNextUpkeepAbility(entry.getControllerId(), e.grantedAbility());
-        } else {
-            target.addPersistentAbility(e.grantedAbility());
-        }
+        // "Until your next upkeep" ends at the upkeep of the effect's controller; with no stated duration the
+        // grant lasts until the permanent leaves (CR 611.2a).
+        Duration duration = Duration.UNTIL_END_OF_TURN.equals(e.duration())
+                || Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(e.duration())
+                ? e.duration() : Duration.PERMANENT;
+        gameData.grantAbilityToPermanent(entry, e.grantedAbility(), target.getId(), duration);
 
         String durationText = Duration.UNTIL_END_OF_TURN.equals(e.duration()) ? " until end of turn"
                 : Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(e.duration()) ? " until your next upkeep" : "";
@@ -113,17 +113,16 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
                 target.getCard().getName(), durationText);
     }
 
-    private static boolean alreadyHasGrantedEffect(Permanent target, Ability ability, CardEffect granted) {
+    private boolean alreadyHasGrantedEffect(GameData gameData, Permanent target, Ability ability,
+                                            CardEffect granted) {
+        List<CardEffect> grantedEffects = gameQueryService.computeStaticBonus(gameData, target).grantedEffects();
         if (ability instanceof StaticAbility) {
-            return target.getCard().getStaticEffects().contains(granted)
-                    || target.getPersistentStaticEffects().contains(granted)
-                    || target.getTemporaryStaticEffects().contains(granted);
+            return target.getCard().getStaticEffects().contains(granted) || grantedEffects.contains(granted);
         }
         if (ability instanceof TriggeredAbility triggered) {
             Trigger trigger = triggered.conditions().getFirst().trigger();
             return target.getCard().getTriggerEffects(trigger).contains(granted)
-                    || target.getPersistentTriggerEffects(trigger).contains(granted)
-                    || target.getTemporaryTriggerEffects(trigger).contains(granted);
+                    || grantedTriggerEffects(grantedEffects, trigger).contains(granted);
         }
         return false;
     }
@@ -135,17 +134,22 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
                 || !triggered.hasTrigger(becomesBlocked)) {
             return false;
         }
-        if (containsRampage(target.getCard().getTriggerEffects(becomesBlocked))
-                || containsRampage(target.getPersistentTriggerEffects(becomesBlocked))
-                || containsRampage(target.getTemporaryTriggerEffects(becomesBlocked))) {
-            return true;
+        return containsRampage(target.getCard().getTriggerEffects(becomesBlocked))
+                || containsRampage(grantedTriggerEffects(
+                gameQueryService.computeStaticBonus(gameData, target).grantedEffects(), becomesBlocked));
+    }
+
+    /** The effects of the granted triggered abilities among {@code grantedEffects} that have {@code trigger}. */
+    private static List<CardEffect> grantedTriggerEffects(List<CardEffect> grantedEffects, Trigger trigger) {
+        List<CardEffect> effects = new ArrayList<>();
+        for (CardEffect effect : grantedEffects) {
+            if (effect instanceof GrantTriggeredAbilityEffect grant
+                    && grant.grantedAbility() instanceof TriggeredAbility grantedTriggered
+                    && grantedTriggered.hasTrigger(trigger)) {
+                effects.addAll(AbilityEffects.effectsOf(grantedTriggered));
+            }
         }
-        return gameQueryService.getGrantedEffects(gameData, target).stream()
-                .filter(GrantTriggeredAbilityEffect.class::isInstance)
-                .map(GrantTriggeredAbilityEffect.class::cast)
-                .anyMatch(effect -> effect.grantedAbility() instanceof TriggeredAbility grantedTriggered
-                        && grantedTriggered.hasTrigger(becomesBlocked)
-                        && effect.grantedEffect() instanceof RampageEffect);
+        return effects;
     }
 
     private static boolean containsRampage(Iterable<CardEffect> effects) {

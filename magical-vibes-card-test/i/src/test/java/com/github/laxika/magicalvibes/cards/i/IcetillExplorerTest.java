@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -151,7 +152,7 @@ class IcetillExplorerTest extends BaseCardTest {
     void losingAllAbilitiesRemovesTheAdditionalLandAllowance() {
         var explorer = harness.addToBattlefieldAndReturn(player1, new IcetillExplorer());
         harness.setHand(player1, List.of(new Forest(), new Forest()));
-        explorer.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, explorer);
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();

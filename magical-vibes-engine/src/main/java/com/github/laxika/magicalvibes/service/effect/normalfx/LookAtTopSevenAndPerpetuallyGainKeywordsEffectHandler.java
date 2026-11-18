@@ -117,7 +117,6 @@ public class LookAtTopSevenAndPerpetuallyGainKeywordsEffectHandler implements No
         }
 
         for (CardEffect protectionEffect : protectionEffects) {
-            source.addPersistentAbility(StaticAbility.of(protectionEffect));
             if (perpetualCard != null) {
                 addPerpetualStaticEffect(gameData, perpetualCard.getId(), protectionEffect);
             }

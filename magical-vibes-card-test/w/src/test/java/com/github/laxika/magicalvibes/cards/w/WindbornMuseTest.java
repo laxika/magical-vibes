@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -26,7 +27,7 @@ class WindbornMuseTest extends BaseCardTest {
     @DisplayName("Windborn Muse's attack tax disappears when it loses all abilities")
     void attackTaxDisappearsWhenMuseLosesAllAbilities() {
         Permanent muse = harness.addToBattlefieldAndReturn(player2, new WindbornMuse());
-        muse.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, muse);
         addCreatureReady(player1, new GrizzlyBears());
 
         assertThatCode(() -> declareAttackersAndPrepareBlockers(List.of(0))).doesNotThrowAnyException();

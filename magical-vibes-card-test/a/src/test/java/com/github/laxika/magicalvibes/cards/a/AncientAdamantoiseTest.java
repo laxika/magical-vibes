@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.Tonberry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -101,7 +102,7 @@ class AncientAdamantoiseTest extends BaseCardTest {
     @DisplayName("Losing its abilities stops redirecting damage from other permanents")
     void losingAbilitiesStopsPermanentDamageRedirection() {
         Permanent ancient = addCreatureReady(player2, new AncientAdamantoise());
-        ancient.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, ancient);
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);

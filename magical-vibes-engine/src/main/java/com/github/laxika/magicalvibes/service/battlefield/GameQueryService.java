@@ -683,7 +683,7 @@ public class GameQueryService {
         if (bf == null) return false;
         for (Permanent perm : bf) {
             if (!perm.isFaceDown()
-                    && !perm.isLosesAllAbilitiesUntilEndOfTurn()
+                    && !gameData.losesAllAbilitiesByEffect(perm)
                     && staticEffectsIncludingTemporary(gameData, perm, playerId).stream()
                     .anyMatch(matcher)) {
                 return true;
@@ -859,7 +859,7 @@ public class GameQueryService {
         }
         return activeBattlefield.stream()
                 .filter(source -> !source.isFaceDown())
-                .filter(source -> !source.isLosesAllAbilitiesUntilEndOfTurn()
+                .filter(source -> !gameData.losesAllAbilitiesByEffect(source)
                         && !computeStaticBonus(gameData, source).losesAllAbilities())
                 .flatMap(source -> source.getCard().getStaticEffects().stream())
                 .anyMatch(OpponentsPermanentsCantBeTurnedFaceUpEffect.class::isInstance);
@@ -994,7 +994,7 @@ public class GameQueryService {
         }
         long[] latest = {-1};
         gameData.forEachPermanent((controllerId, source) -> (source.isFaceDown()
-                || source.isLosesAllAbilitiesUntilEndOfTurn()
+                || gameData.losesAllAbilitiesByEffect(source)
                 || (!isStaticEvaluationActive() && computeStaticBonus(gameData, source).losesAllAbilities())
                 ? java.util.stream.Stream.<CardEffect>empty()
                 : source.getCard().getStaticEffects().stream())
@@ -1509,14 +1509,14 @@ public class GameQueryService {
         }
         CharacteristicState activeState = LayerSystemService.activeStateFor(permanent.getId());
         if (activeState != null) {
-            if (permanent.isLosesAllAbilitiesUntilEndOfTurn() || activeState.isLosesAllAbilities()) {
+            if (gameData.losesAllAbilitiesByEffect(permanent) || activeState.isLosesAllAbilities()) {
                 return Set.of();
             }
         } else {
             LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
             try {
                 CharacteristicState state = pass.board().states().get(permanent.getId());
-                if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                if (gameData.losesAllAbilitiesByEffect(permanent)
                         || state != null && state.isLosesAllAbilities()) {
                     return Set.of();
                 }
@@ -2067,7 +2067,7 @@ public class GameQueryService {
             return Optional.empty();
         }
         for (Permanent permanent : battlefield) {
-            if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)) {
                 continue;
             }
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {
@@ -2824,7 +2824,7 @@ public class GameQueryService {
     public boolean graveyardCardsHaveLostAllAbilities(GameData gameData) {
         return boardScan(gameData, new BoardScan(BoardScan.Kind.GRAVEYARD_CARDS_LOSE_ALL_ABILITIES, null), () ->
                 gameData.anyPermanentMatches(permanent -> !permanent.isFaceDown()
-                        && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                        && !gameData.losesAllAbilitiesByEffect(permanent)
                         && permanent.getCard().getStaticEffects().stream()
                         .anyMatch(GraveyardCardsLoseAllAbilitiesEffect.class::isInstance)
                         && !hasLayeredAllAbilitiesLost(gameData, permanent)));
@@ -2925,7 +2925,7 @@ public class GameQueryService {
             }
             for (Permanent permanent : entry.getValue()) {
                 if (permanent.isFaceDown()
-                        || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                        || gameData.losesAllAbilitiesByEffect(permanent)
                         || computeStaticBonus(gameData, permanent).losesAllAbilities()) {
                     continue;
                 }
@@ -3020,7 +3020,7 @@ public class GameQueryService {
         }
         for (Permanent source : battlefield) {
             if (source.isFaceDown()
-                    || source.isStaticEffectSuppressed(LookAtFaceDownCreaturesEffect.class)) {
+                    || gameData.removesOwnStaticAbility(source.getId(), LookAtFaceDownCreaturesEffect.class)) {
                 continue;
             }
             StaticBonus bonus = computeStaticBonus(gameData, source);
@@ -3102,9 +3102,6 @@ public class GameQueryService {
             return false;
         }
         return chosen.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream().anyMatch(candidate -> candidate == ability)
-                || chosen.getPersistentGrantedActivatedAbilities().stream().anyMatch(candidate -> candidate == ability)
-                || chosen.getTemporaryActivatedAbilities().stream().anyMatch(candidate -> candidate == ability)
-                || chosen.getUntilNextTurnActivatedAbilities().stream().anyMatch(candidate -> candidate == ability)
                 || computeStaticBonus(gameData, chosen).grantedActivatedAbilities().stream()
                 .anyMatch(candidate -> candidate == ability);
     }
@@ -3383,7 +3380,7 @@ public class GameQueryService {
     public boolean damageDoesNotCauseLifeLoss(GameData gameData, UUID playerId) {
         return activeStaticEffects(gameData, playerId, DamageDoesNotCauseLifeLossEffect.class).stream()
                 .anyMatch(active -> !active.source().isFaceDown()
-                        && !active.source().isLosesAllAbilitiesUntilEndOfTurn());
+                        && !gameData.losesAllAbilitiesByEffect(active.source()));
     }
 
     /**
@@ -4157,7 +4154,7 @@ public class GameQueryService {
      */
     public Set<String> bandsWithOtherNames(GameData gameData, Permanent permanent) {
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
-        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+        if (gameData.losesAllAbilitiesByEffect(permanent)
                 || bonus.losesAllAbilities()
                 || bonus.losesAllNonManaAbilities()) {
             return Set.of();
@@ -4168,10 +4165,7 @@ public class GameQueryService {
                 .collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 
-    /**
-     * The static effects of {@code effectType} the permanent has right now, printed or granted by another
-     * permanent. An effect that removes them until end of turn only affects these (CR 611.2c).
-     */
+    /** The static effects of {@code effectType} the permanent has right now, its own or granted to it. */
     public List<CardEffect> currentStaticEffectsOfType(GameData gameData, Permanent permanent,
                                                        Class<? extends CardEffect> effectType) {
         List<CardEffect> effects = new ArrayList<>(staticEffectsIncludingTemporary(
@@ -4188,12 +4182,12 @@ public class GameQueryService {
         List<BandsWithOtherEffect> effects = new ArrayList<>();
         effects.addAll(staticEffectsIncludingTemporary(
                 gameData, permanent, findPermanentController(gameData, permanent.getId())).stream()
-                .filter(effect -> !permanent.isStaticEffectSuppressed(effect))
+                .filter(effect -> !gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass()))
                 .filter(BandsWithOtherEffect.class::isInstance)
                 .map(BandsWithOtherEffect.class::cast)
                 .toList());
+        // The layered pass already removed the granted ones a later removal took away (CR 613.7).
         effects.addAll(bonus.grantedEffects().stream()
-                .filter(effect -> !permanent.isStaticEffectSuppressed(effect))
                 .filter(BandsWithOtherEffect.class::isInstance)
                 .map(BandsWithOtherEffect.class::cast)
                 .toList());
@@ -4406,10 +4400,10 @@ public class GameQueryService {
             List<CardColorLayerEffect> colorLayerEffects = new ArrayList<>();
             for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
                 for (Permanent permanent : battlefield.getValue()) {
-                    if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                            || permanent.isLosesAllAbilitiesPermanently()) continue;
+                    if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)
+                            || gameData.losesAllAbilitiesByEffect(permanent)) continue;
                     for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                        if (permanent.isStaticEffectSuppressed(effect.getClass())) continue;
+                        if (gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())) continue;
                         Set<CardColor> colors = null;
                         if (effect instanceof AllCardsAreColorlessEffect) {
                             colors = Set.of();
@@ -4924,7 +4918,7 @@ public class GameQueryService {
      * This does NOT block spells â€” only activated and triggered abilities.
      */
     public boolean cantBeTargetOfOpponentAbilities(GameData gameData, Permanent permanent) {
-        if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()
+        if (!gameData.losesAllAbilitiesByEffect(permanent)
                 && !computeStaticBonus(gameData, permanent).losesAllAbilities()) {
             if (permanent.getCard().getStaticEffects().stream()
                     .anyMatch(GameQueryService::isOpponentAbilityRestriction)) {
@@ -4956,7 +4950,7 @@ public class GameQueryService {
                                                          UUID sourceControllerId) {
         UUID targetControllerId = findPermanentController(gameData, target.getId());
         List<CardEffect> restrictions = new ArrayList<>();
-        if (!target.isLosesAllAbilitiesUntilEndOfTurn()
+        if (!gameData.losesAllAbilitiesByEffect(target)
                 && !computeStaticBonus(gameData, target).losesAllAbilities()) {
             restrictions.addAll(target.getCard().getStaticEffects());
         }
@@ -5075,7 +5069,7 @@ public class GameQueryService {
         }
 
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
-        if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()
+        if (!gameData.losesAllAbilitiesByEffect(permanent)
                 && !bonus.losesAllAbilities()
                 && permanent.getCard().getStaticEffects().stream()
                 .anyMatch(OwnEffectsCantAffectSourceEffect.class::isInstance)) {
@@ -5141,7 +5135,7 @@ public class GameQueryService {
             for (Permanent permanent : battlefield) {
                 if (permanent.getCard().getStaticEffects().stream()
                         .anyMatch(IgnoreOpponentHexproofEffect.class::isInstance)
-                        && !permanent.isStaticEffectSuppressed(IgnoreOpponentHexproofEffect.class)
+                        && !gameData.removesOwnStaticAbility(permanent.getId(), IgnoreOpponentHexproofEffect.class)
                         && !hasLostAllAbilities(gameData, permanent)) {
                     return true;
                 }
@@ -5307,8 +5301,11 @@ public class GameQueryService {
         int result = count;
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                for (CardEffect effect : staticEffectsIncludingTemporary(
-                        gameData, permanent, controllerId)) {
+                // Its own replacement abilities and those granted to it, as the layers leave them (CR 613.1f).
+                List<CardEffect> replacementEffects = new ArrayList<>(staticEffectsIncludingTemporary(
+                        gameData, permanent, controllerId));
+                replacementEffects.addAll(computeStaticBonus(gameData, permanent).grantedEffects());
+                for (CardEffect effect : replacementEffects) {
                     if (effect instanceof CounterReplacementEffect replacement
                             && (!replacement.appliesOnlyToModularAbility() || modularAbility)
                             && !replacement.appliesToAllPermanents()
@@ -5474,7 +5471,6 @@ public class GameQueryService {
         }
         List<CardEffect> declaredEffects = new ArrayList<>(
                 LayerSystemService.currentCard(gameData, permanent).getStaticEffects());
-        declaredEffects.addAll(permanent.getTemporaryStaticEffects());
         if (declaredEffects.isEmpty() || hasLostPrintedAbilities(gameData, permanent)) {
             return List.of();
         }
@@ -5887,7 +5883,7 @@ public class GameQueryService {
                 gameData, permanent, controllerId)) {
             if (effect instanceof CounterLimitEffect limit
                     && limit.counterType() == counterType
-                    && !permanent.isStaticEffectSuppressed(effect.getClass())) {
+                    && !gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())) {
                 maximum = Math.min(maximum, limit.maximum());
             }
         }
@@ -6137,14 +6133,39 @@ public class GameQueryService {
         if (!computeStaticBonus(gameData, creature).losesAllAbilities()) {
             if (!creature.isFaceDown() && creature.getCard().getStaticEffects().stream()
                     .anyMatch(e -> e instanceof BlockabilityRestrictionEffect r && r.cantBeBlocked())) return true;
-            if (creature.getTemporaryStaticEffects().stream()
-                    .anyMatch(e -> e instanceof BlockabilityRestrictionEffect r && r.cantBeBlocked())) return true;
-            if (creature.getPersistentStaticEffects().stream()
-                    .anyMatch(e -> e instanceof BlockabilityRestrictionEffect r && r.cantBeBlocked())) return true;
         }
+        if (computeStaticBonus(gameData, creature).grantedEffects().stream()
+                .anyMatch(e -> e instanceof BlockabilityRestrictionEffect r && r.cantBeBlocked())) return true;
         if (hasAuraWithEffect(gameData, creature, CantBeBlockedEffect.class)) return true;
         if (hasGrantedEffect(gameData, creature, CantBeBlockedEffect.class)) return true;
         return controllerMakesMatchingCreaturesUnblockable(gameData, creature);
+    }
+
+    /**
+     * Whether {@code permanent} has cumulative upkeep (CR 702.24a), for "that doesn't have cumulative upkeep": its
+     * card's, or granted to it as the layers leave it.
+     */
+    public boolean hasCumulativeUpkeep(GameData gameData, Permanent permanent) {
+        Trigger yourUpkeep = com.github.laxika.magicalvibes.model.trigger.Triggers.upkeep(
+                com.github.laxika.magicalvibes.model.trigger.ActivePlayer.YOU);
+        if (permanent.getCard().getTriggerEffects(yourUpkeep, Zone.BATTLEFIELD).stream()
+                .anyMatch(com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect.class::isInstance)) {
+            return true;
+        }
+        if (gameData == null) {
+            return false;
+        }
+        for (CardEffect granted : computeStaticBonus(gameData, permanent).grantedEffects()) {
+            if (granted instanceof com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect
+                    || granted instanceof GrantTriggeredAbilityEffect grant
+                    && grant.grantedAbility() instanceof TriggeredAbility triggered
+                    && triggered.hasTrigger(yourUpkeep)
+                    && com.github.laxika.magicalvibes.model.AbilityEffects.effectsOf(triggered).stream()
+                    .anyMatch(com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect.class::isInstance)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Reconfigure permits a creature Equipment to attach through any attachment effect. */
@@ -6154,9 +6175,6 @@ public class GameQueryService {
         if (!permanent.isFaceDown() && !hasLostPrintedAbilities(gameData, permanent)) {
             abilities.addAll(permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
         }
-        abilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
-        abilities.addAll(permanent.getTemporaryActivatedAbilities());
-        abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
         return abilities.stream().flatMap(ability -> ability.getEffects().stream())
                 .anyMatch(effect -> effect instanceof EquipEffect equip && equip.permitsCreatureEquipment());
     }
@@ -6647,8 +6665,6 @@ public class GameQueryService {
             return false;
         }
         List<CardEffect> effects = new ArrayList<>(creature.getCard().getStaticEffects());
-        effects.addAll(creature.getTemporaryStaticEffects());
-        effects.addAll(creature.getPersistentStaticEffects());
         effects.addAll(computeStaticBonus(gameData, creature).grantedEffects());
         return effects.stream().anyMatch(effect ->
                 effect instanceof AssignCombatDamageWithToughnessEffect assign
@@ -7639,7 +7655,7 @@ public class GameQueryService {
                 } else if (floating.effect() instanceof GrantSubtypeEffect grant && !grant.overriding()) {
                     accumulator.addGrantedSubtype(grant.subtype());
                 } else if (floating.effect() instanceof GrantKeywordEffect grant
-                        && !target.isLosesAllAbilitiesUntilEndOfTurn()) {
+                        && !gameData.losesAllAbilitiesByEffect(target)) {
                     accumulator.addKeywords(grant.keywords());
                 } else if (floating.effect() instanceof RemoveKeywordEffect removal) {
                     accumulator.removeKeyword(removal.keyword());
@@ -7775,7 +7791,7 @@ public class GameQueryService {
             // still be the complete set â€” reconstruct it with the legacy Permanent.hasKeyword
             // semantics plus the accumulator's grants.
             Set<Keyword> mergedKeywords = new HashSet<>(accumulator.getKeywords());
-            if (!target.isLosesAllAbilitiesUntilEndOfTurn()) {
+            if (!gameData.losesAllAbilitiesByEffect(target)) {
                 mergedKeywords.addAll(target.getCard().getKeywords());
             }
             mergedKeywords.removeAll(accumulator.getRemovedKeywords());
@@ -7894,7 +7910,7 @@ public class GameQueryService {
                 return true;
             }
         }
-        if (target.isLosesAllAbilitiesUntilEndOfTurn() || bonus.losesAllAbilities() || bonus.printedProtectionRemoved()) {
+        if (gameData.losesAllAbilitiesByEffect(target) || bonus.losesAllAbilities() || bonus.printedProtectionRemoved()) {
             return false;
         }
         return target.getChosenPlayerIds().contains(sourceControllerId)
@@ -8246,14 +8262,6 @@ public class GameQueryService {
                 protectedTypes.addAll(protection.protectionFromCardTypes());
             }
         }
-        // Protection gained perpetually (Priest of Possibility) is a persistent static effect of the card.
-        for (CardEffect effect : target.getPersistentStaticEffects()) {
-            if (effect instanceof ProtectionGrantingEffect protection
-                    && !hasLostPrintedProtection(gameData, target)) {
-                if (protection.protectsFromEverything()) return true;
-                protectedTypes.addAll(protection.protectionFromCardTypes());
-            }
-        }
         // Protection granted by another permanent's static effect (e.g. Spirit Mantle via
         // GrantEffectEffect(ProtectionFromCardTypesEffect, ENCHANTED_CREATURE)).
         for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
@@ -8277,15 +8285,14 @@ public class GameQueryService {
      * card's card types (the source's natural types). Granted protection is read from the layered
      * state by {@link #hasProtectionFromSourceCardTypes(GameData, Permanent, Card)}.
      */
-    private boolean hasPrintedProtectionFromSourceCardTypes(Permanent target, Card sourceCard) {
+    private boolean hasPrintedProtectionFromSourceCardTypes(GameData gameData, Permanent target, Card sourceCard) {
         if (target == null) {
             return false;
         }
         Set<CardType> protectedTypes = EnumSet.noneOf(CardType.class);
         List<CardEffect> printedEffects = new ArrayList<>();
-        if (!target.isFaceDown() && !target.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (!target.isFaceDown() && !gameData.losesAllAbilitiesByEffect(target)) {
             printedEffects.addAll(target.getCard().getStaticEffects());
-            printedEffects.addAll(target.getPersistentStaticEffects());
         }
         for (CardEffect effect : printedEffects) {
             if (effect instanceof ProtectionGrantingEffect protection) {
@@ -8315,7 +8322,7 @@ public class GameQueryService {
                 || hasProtectionFromMonocolored(gameData, target, sourceCard)) {
             return true;
         }
-        if (hasPrintedProtectionFromSourceCardTypes(target, sourceCard)
+        if (hasPrintedProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 && !hasLostPrintedProtection(gameData, target)) {
             return true;
         }
@@ -8796,7 +8803,7 @@ public class GameQueryService {
             return false;
         }
         List<CardEffect> effects = new ArrayList<>(computeStaticBonus(gameData, target).grantedEffects());
-        if (!target.isFaceDown() && !target.isLosesAllAbilitiesUntilEndOfTurn()
+        if (!target.isFaceDown() && !gameData.losesAllAbilitiesByEffect(target)
                 && !computeStaticBonus(gameData, target).losesAllAbilities()
                 && !hasLostPrintedProtection(gameData, target)) {
             effects.addAll(getActiveStaticEffects(gameData, target));
@@ -8846,7 +8853,7 @@ public class GameQueryService {
             return true;
         }
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
-        if (bonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+        if (bonus.losesAllAbilities() || gameData.losesAllAbilitiesByEffect(permanent)
                 || !bonus.removedKeywords().isEmpty()
                 || !bonus.grantedEffects().isEmpty() || !bonus.grantedActivatedAbilities().isEmpty()) {
             return true;
@@ -9427,7 +9434,7 @@ public class GameQueryService {
      * unaffected. Scans both the permanent's own STATIC effects and effects granted to it.
      */
     public boolean cantBeTargetedByAnySpell(GameData gameData, Permanent target) {
-        boolean ownAbilitiesActive = !target.isLosesAllAbilitiesUntilEndOfTurn()
+        boolean ownAbilitiesActive = !gameData.losesAllAbilitiesByEffect(target)
                 && !computeStaticBonus(gameData, target).losesAllAbilities();
         if (ownAbilitiesActive) {
             for (CardEffect effect : target.getCard().getStaticEffects()) {
@@ -9461,7 +9468,7 @@ public class GameQueryService {
      */
     public boolean cantBeTargetedByWallOnlySources(GameData gameData, Permanent target) {
         StaticBonus bonus = computeStaticBonus(gameData, target);
-        if (target.isLosesAllAbilitiesUntilEndOfTurn() || bonus.losesAllAbilities()) {
+        if (gameData.losesAllAbilitiesByEffect(target) || bonus.losesAllAbilities()) {
             return false;
         }
         if (target.getCard().getStaticEffects().stream()
@@ -9665,7 +9672,7 @@ public class GameQueryService {
         if (hasKeyword(gameData, permanent, Keyword.HEXPROOF)) {
             return true;
         }
-        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (gameData.losesAllAbilitiesByEffect(permanent)) {
             return false;
         }
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
@@ -10020,9 +10027,9 @@ public class GameQueryService {
             return false;
         }
         for (Permanent permanent : battlefield) {
-            if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+            if (gameData.losesAllAbilitiesByEffect(permanent)
                     || computeStaticBonus(gameData, permanent).losesAllAbilities()
-                    || permanent.isStaticEffectSuppressed(PlayerHasProtectionFromOpponentsEffect.class)) {
+                    || gameData.removesOwnStaticAbility(permanent.getId(), PlayerHasProtectionFromOpponentsEffect.class)) {
                 continue;
             }
             if (permanent.getCard().getStaticEffects().stream()
@@ -10113,7 +10120,7 @@ public class GameQueryService {
                             .filter(GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect.class::isInstance)
                             .map(GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect.class::cast)
                             .findFirst().orElse(null);
-            if (effect != null && !permanent.isStaticEffectSuppressed(effect.getClass())
+            if (effect != null && !gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())
                     && sourceTypes.contains(permanent.getChosenCardType())) {
                 return true;
             }
@@ -10195,7 +10202,7 @@ public class GameQueryService {
         for (Permanent perm : bf) {
             if (perm.getId().equals(recipient.getId())) continue;
             if (!perm.isFaceDown()
-                    && !perm.isLosesAllAbilitiesUntilEndOfTurn()
+                    && !gameData.losesAllAbilitiesByEffect(perm)
                     && staticEffectsIncludingTemporary(gameData, perm, controllerId).stream()
                     .anyMatch(SpellDamagePreventionEffect.class::isInstance)) {
                 return true;
@@ -10370,18 +10377,18 @@ public class GameQueryService {
                 for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     if (effect instanceof HalveAllDamageEffect
                             && !hasLostAllAbilities(gameData, permanent)
-                            && !permanent.isStaticEffectSuppressed(effect.getClass())) {
+                            && !gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())) {
                         result[0] /= 2;
                     }
                     if (recipientPlayerId != null && recipientPlayerId.equals(controllerId)
                             && effect instanceof PlayerDamageReplacementEffect replacement
                             && !hasLostAllAbilities(gameData, permanent)
-                            && !permanent.isStaticEffectSuppressed(effect.getClass())) {
+                            && !gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())) {
                         result[0] = replacement.replaceDamage(entry, result[0]);
                     }
                     if (effect instanceof ReplaceDamageAboveThresholdEffect replacement
                             && !hasLostAllAbilities(gameData, permanent)
-                            && !permanent.isStaticEffectSuppressed(effect.getClass())
+                            && !gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())
                             && result[0] >= replacement.threshold()) {
                         result[0] = replacement.replacementDamage();
                     }
@@ -10417,7 +10424,7 @@ public class GameQueryService {
                 return;
             }
             for (Permanent permanent : battlefield) {
-                if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+                if (gameData.losesAllAbilitiesByEffect(permanent)) {
                     continue;
                 }
                 StaticBonus bonus = computeStaticBonus(gameData, permanent);
@@ -10426,7 +10433,7 @@ public class GameQueryService {
                 }
                 for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     if (effect instanceof OjerAxonilDamageReplacementEffect
-                            && !permanent.isStaticEffectSuppressed(effect.getClass())) {
+                            && !gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())) {
                         int power = getEffectivePower(gameData, permanent);
                         if (power > result[0]) {
                             result[0] = power;
@@ -10684,7 +10691,7 @@ public class GameQueryService {
             return true;
         }
         return gameData.simultaneousDyingCreatures.values().stream()
-                .filter(permanent -> !permanent.isLosesAllAbilitiesUntilEndOfTurn())
+                .filter(permanent -> !gameData.losesAllAbilitiesByEffect(permanent))
                 .anyMatch(permanent -> permanent.getCard().getStaticEffects().stream()
                         .anyMatch(CreatureDyingDontCauseTriggersEffect.class::isInstance));
     }
@@ -10776,7 +10783,7 @@ public class GameQueryService {
         if (battlefield == null) return 0;
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+            if (gameData.losesAllAbilitiesByEffect(permanent)) continue;
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof AdditionalSpellCopyEffect) {
                     count++;
@@ -10949,7 +10956,7 @@ public class GameQueryService {
 
         int count = 0;
         for (Permanent staticSource : battlefield) {
-            if (staticSource.isLosesAllAbilitiesUntilEndOfTurn()) {
+            if (gameData.losesAllAbilitiesByEffect(staticSource)) {
                 continue;
             }
             for (CardEffect effect : staticSource.getCard().getStaticEffects()) {
@@ -11048,7 +11055,7 @@ public class GameQueryService {
 
     private int countAdditionalCreatureDeathEffects(Permanent staticSource, Permanent triggeringPermanent,
                                                      FilterContext filterContext) {
-        if (staticSource.isLosesAllAbilitiesUntilEndOfTurn()) return 0;
+        if (filterContext.gameData().losesAllAbilitiesByEffect(staticSource)) return 0;
 
         int count = 0;
         for (CardEffect effect : staticSource.getCard().getStaticEffects()) {
@@ -11063,7 +11070,7 @@ public class GameQueryService {
 
     private int countAdditionalEmblemCreatureDeathEffects(GameData gameData, UUID controllerId,
                                                             Permanent staticSource) {
-        if (staticSource.isLosesAllAbilitiesUntilEndOfTurn()
+        if (gameData.losesAllAbilitiesByEffect(staticSource)
                 || !staticSource.isAttached()) {
             return 0;
         }
@@ -11073,7 +11080,7 @@ public class GameQueryService {
             equippedCreature = gameData.simultaneousDyingCreatures.get(staticSource.getAttachedTo());
         }
         if (equippedCreature == null || !isCreature(gameData, equippedCreature)
-                || equippedCreature.isLosesAllAbilitiesUntilEndOfTurn()) return 0;
+                || gameData.losesAllAbilitiesByEffect(equippedCreature)) return 0;
 
         UUID equippedCreatureController = gameData.findControllerOf(equippedCreature);
         if (equippedCreatureController == null) {
@@ -11854,9 +11861,9 @@ public class GameQueryService {
             if (!entry.getKey().equals(playerId)
                     && entry.getValue().stream().anyMatch(permanent -> {
                         StaticBonus bonus = computeStaticBonus(gameData, permanent);
-                        if (permanent.isLosesAllAbilitiesUntilEndOfTurn() || bonus.losesAllAbilities()
+                        if (gameData.losesAllAbilitiesByEffect(permanent) || bonus.losesAllAbilities()
                                 || bonus.losesAllNonManaAbilities()
-                                || permanent.isStaticEffectSuppressed(RequireFlagbearerTargetEffect.class)) {
+                                || gameData.removesOwnStaticAbility(permanent.getId(), RequireFlagbearerTargetEffect.class)) {
                             return false;
                         }
                         return staticEffectsIncludingTemporary(gameData, permanent, entry.getKey()).stream()
@@ -12230,7 +12237,7 @@ public class GameQueryService {
         List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (!sourceControllerId.equals(controllerId)) return;
-            if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+            if (gameData.losesAllAbilitiesByEffect(permanent)
                     || !printsStaticEffect(gameData, permanent, SourceOpponentDamageBonusEffect.class)
                     || computeStaticBonus(gameData, permanent).losesAllAbilities()) return;
             forEachStaticEffect(permanent, (effect, instance) -> {
@@ -13525,7 +13532,7 @@ public class GameQueryService {
                     continue;
                 }
                 for (CardEffect effect : source.getCard().getStaticEffects()) {
-                    if (source.isStaticEffectSuppressed(effect.getClass())) {
+                    if (gameData.removesOwnStaticAbility(source.getId(), effect.getClass())) {
                         continue;
                     }
                     CardEffect activeEffect = staticEffectConditionResolver.resolve(
@@ -13562,13 +13569,13 @@ public class GameQueryService {
     public boolean hasActiveStaticEffect(GameData gameData, Permanent source,
                                          Class<? extends CardEffect> effectType) {
         UUID controllerId = findPermanentController(gameData, source.getId());
-        if (controllerId == null || source.isFaceDown() || source.isStaticEffectSuppressed(effectType)
+        if (controllerId == null || source.isFaceDown() || gameData.removesOwnStaticAbility(source.getId(), effectType)
                 || LayerSystemService.currentCard(gameData, source).getStaticEffects().isEmpty()
                 || hasLostPrintedAbilities(gameData, source)) return false;
         return source.getCard().getStaticEffects().stream()
-                .filter(effect -> !source.isStaticEffectSuppressed(effect.getClass()))
+                .filter(effect -> !gameData.removesOwnStaticAbility(source.getId(), effect.getClass()))
                 .map(effect -> staticEffectConditionResolver.resolve(gameData, source, controllerId, effect))
-                .filter(effect -> effect != null && !source.isStaticEffectSuppressed(effect.getClass()))
+                .filter(effect -> effect != null && !gameData.removesOwnStaticAbility(source.getId(), effect.getClass()))
                 .anyMatch(effectType::isInstance);
     }
 
@@ -13955,7 +13962,7 @@ public class GameQueryService {
             return false;
         }
         Permanent source = findPermanentById(gameData, effect.sourcePermanentId());
-        return source != null && (source.isLosesAllAbilitiesUntilEndOfTurn()
+        return source != null && (gameData.losesAllAbilitiesByEffect(source)
                 || computeStaticBonus(gameData, source).losesAllAbilities());
     }
 
@@ -14106,7 +14113,7 @@ public class GameQueryService {
      * read the granted ability instead of the printed one.
      */
     public boolean hasLostAllAbilities(GameData gameData, Permanent permanent) {
-        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (gameData.losesAllAbilitiesByEffect(permanent)) {
             return true;
         }
         CharacteristicState activeState = LayerSystemService.activeStateFor(permanent.getId());
@@ -14127,7 +14134,7 @@ public class GameQueryService {
         LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
         try {
             CharacteristicState state = pass.board().states().get(permanent.getId());
-            return state == null ? !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+            return state == null ? !gameData.losesAllAbilitiesByEffect(permanent)
                     : !state.isAbilityGainProhibited()
                     && (!state.isLosesAllAbilities() || grantTimestamp > state.getLosesAllAbilitiesTimestamp())
                     && (!state.isLosesAllNonManaAbilities()
@@ -14138,7 +14145,7 @@ public class GameQueryService {
     }
 
     public boolean hasLostPrintedAbilities(GameData gameData, Permanent permanent) {
-        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (gameData.losesAllAbilitiesByEffect(permanent)) {
             return true;
         }
         CharacteristicState activeState = LayerSystemService.activeStateFor(permanent.getId());
@@ -14170,7 +14177,7 @@ public class GameQueryService {
 
     /** Whether a suspected permanent still has the menace and can't-block abilities. */
     public boolean hasSuspectedAbilities(GameData gameData, Permanent permanent) {
-        if (!permanent.isSuspected() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (!permanent.isSuspected() || gameData.losesAllAbilitiesByEffect(permanent)) {
             return false;
         }
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
@@ -14209,13 +14216,9 @@ public class GameQueryService {
             return false;
         }
 
-        // Check temporary ability loss (e.g. Merfolk Trickster)
-        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
-            return false;
-        }
-
-        // Continuous ability loss strips printed mana abilities, but later-timestamp grants
-        // (e.g. Imprisoned in the Moon's "{T}: Add {C}") still work.
+        // A "loses all abilities" effect, static (Imprisoned in the Moon) or resolved (Merfolk Trickster), strips the
+        // printed mana abilities and those granted before it; a mana ability granted after it still works (CR 613.1f,
+        // 613.7).
         StaticBonus staticBonus = computeStaticBonus(gameData, permanent);
         if (staticBonus.losesAllAbilities()) {
             boolean hasGrantedMana = staticBonus.grantedActivatedAbilities().stream()

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SuppressStaticEffectOnTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +31,9 @@ public class SuppressStaticEffectOnTargetUntilEndOfTurnEffectHandler implements 
         }
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target != null) {
-            // Only the effects the permanent has as this resolves are removed; one it gains afterwards
-            // (a Guildhouse entering later) is unaffected.
-            gameQueryService.currentStaticEffectsOfType(gameData, target,
-                            ((SuppressStaticEffectOnTargetUntilEndOfTurnEffect) effect).effectType())
-                    .forEach(target::suppressStaticEffectInstanceUntilEndOfTurn);
+            // A layer-6 removal at this effect's timestamp: an ability another permanent grants afterwards (a
+            // Guildhouse entering later) is newer and stays (CR 613.7).
+            gameData.addEffectOnPermanent(entry, effect, target.getId(), Duration.UNTIL_END_OF_TURN);
         }
     }
 }

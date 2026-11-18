@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -95,7 +96,7 @@ class AttackCollectorAbilityStackObjectTest extends BaseCardTest {
     @DisplayName("An attack ability of two effects a creature has until end of turn is one stack object")
     void temporaryAttackAbilityIsOneStackObject() {
         Permanent raider = addCreatureReady(player1, watcher("Borrowed Raider"));
-        raider.addTemporaryAbility(new TriggeredAbility(Triggers.attacks(), TriggerOptions.DEFAULT,
+        PermanentGrants.abilityUntilEndOfTurn(gd, raider, new TriggeredAbility(Triggers.attacks(), TriggerOptions.DEFAULT,
                 List.of(new EffectRegistration(new DrawCardEffect(1)), new EffectRegistration(new GainLifeEffect(1)))));
 
         declareAttackers(player1, List.of(0));
@@ -209,9 +210,9 @@ class AttackCollectorAbilityStackObjectTest extends BaseCardTest {
     @DisplayName("An ability of two effects a permanent has until end of turn for \"a creature you control attacks\" is one stack object")
     void temporaryAllyCreatureAttacksAbilityIsOneStackObject() {
         Permanent marshal = addCreatureReady(player1, watcher("Acting Marshal"));
-        marshal.addTemporaryAbility(new TriggeredAbility(Triggers.creatureYouControlAttacks(), TriggerOptions.DEFAULT,
+        PermanentGrants.abilityUntilEndOfTurn(gd, marshal, new TriggeredAbility(Triggers.creatureYouControlAttacks(), TriggerOptions.DEFAULT,
                 List.of(new EffectRegistration(new DrawCardEffect(1)), new EffectRegistration(new GainLifeEffect(1)))));
-        marshal.addTemporaryAbility(new TriggeredAbility(Triggers.creatureYouControlAttacks(), TriggerOptions.DEFAULT,
+        PermanentGrants.abilityUntilEndOfTurn(gd, marshal, new TriggeredAbility(Triggers.creatureYouControlAttacks(), TriggerOptions.DEFAULT,
                 List.of(new EffectRegistration(new GainLifeEffect(2)))));
 
         declareAttackers(player1, List.of(0));

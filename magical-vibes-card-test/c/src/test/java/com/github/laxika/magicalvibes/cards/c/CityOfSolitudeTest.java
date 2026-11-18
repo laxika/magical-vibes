@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LightningStorm;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -89,7 +90,7 @@ class CityOfSolitudeTest extends BaseCardTest {
     @DisplayName("Losing City of Solitude's abilities removes its restriction")
     void losingAllAbilitiesRemovesRestriction() {
         Permanent city = harness.addToBattlefieldAndReturn(player1, new CityOfSolitude());
-        city.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, city);
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 

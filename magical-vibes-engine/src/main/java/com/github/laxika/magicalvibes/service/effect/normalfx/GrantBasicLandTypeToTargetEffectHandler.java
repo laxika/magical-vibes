@@ -104,14 +104,13 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
                     UUID.randomUUID(), sourceName, sourcePermanentId, controllerId,
                     new GrantSubtypeEffect(subtype, GrantScope.TARGET),
                     targetLand.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
-            targetLand.getTemporaryActivatedAbilities().add(manaAbility);
+            gameData.grantAbilityToPermanent(sourceName, sourcePermanentId, controllerId, manaAbility,
+                    targetLand.getId(), Duration.UNTIL_END_OF_TURN);
         } else {
-            // Permanent: survives turn resets. Stored on the Permanent, never on the Card —
-            // the Card instance is shared with AI simulation copies, so mutating it here
-            // would leak a simulated grant into the real game.
             gameData.addEffectOnPermanent(sourceName, sourcePermanentId, controllerId,
                     new GrantSubtypeEffect(subtype, GrantScope.TARGET), targetLand.getId(), Duration.PERMANENT);
-            targetLand.getPersistentGrantedActivatedAbilities().add(manaAbility);
+            gameData.grantAbilityToPermanent(sourceName, sourcePermanentId, controllerId, manaAbility,
+                    targetLand.getId(), Duration.PERMANENT);
         }
     }
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -44,7 +45,7 @@ class IronBarbHellionTest extends BaseCardTest {
     @DisplayName("Can block after losing all abilities")
     void canBlockAfterLosingAllAbilities() {
         Permanent blocker = addCreatureReady(player2, new IronBarbHellion());
-        blocker.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, blocker);
         addCreatureReady(player1, new IronBarbHellion());
         declareAttackersAndPrepareBlockers(List.of(0));
 

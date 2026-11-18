@@ -34,12 +34,7 @@ package com.github.laxika.magicalvibes.model;
 public enum EndOfTurnStateField {
 
     BLOCKED_WITHOUT_BLOCKERS(Kind.FLAG),
-    TEMPORARY_ABILITIES(Kind.LIST),
     SADDLED(Kind.FLAG),
-    LOSES_ALL_ABILITIES(Kind.FLAG),
-    SUPPRESSED_STATIC_EFFECT_TYPES(Kind.SET),
-    SUPPRESSED_STATIC_EFFECT_INSTANCES(Kind.IDENTITY_LIST),
-    TEMPORARY_ACTIVATED_ABILITIES(Kind.LIST),
     TEXT_REPLACEMENTS(Kind.LIST),
     TIMES_REGENERATED(Kind.ADDITIVE),
     TAPPED_PERMANENTS_FOR_ABILITY(Kind.LIST),
@@ -72,9 +67,7 @@ public enum EndOfTurnStateField {
         LIST,
         /** A map of {@code int} counts by key (per-key doublings, extra activations, one-shot colour
          *  shields): each player keeps their per-key delta, never more than what is left for that key. */
-        COUNTS,
-        /** A list compared by identity (CR 611.2c effect instances). */
-        IDENTITY_LIST
+        COUNTS
     }
 
     private final Kind kind;

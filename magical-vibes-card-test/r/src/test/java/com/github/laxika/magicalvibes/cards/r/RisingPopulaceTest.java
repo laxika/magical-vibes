@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AjaniGoldmane;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -85,7 +86,7 @@ class RisingPopulaceTest extends BaseCardTest {
     @Test
     void doesNotTriggerWhileItsAbilitiesAreLost() {
         Permanent populace = harness.addToBattlefieldAndReturn(player1, new RisingPopulace());
-        populace.setLosesAllAbilitiesUntilEndOfTurn(true);
+        PermanentGrants.loseAllAbilitiesUntilEndOfTurn(gd, populace);
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
