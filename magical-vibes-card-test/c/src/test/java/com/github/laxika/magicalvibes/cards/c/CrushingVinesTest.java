@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.n.NephaliaSeakite;
 import com.github.laxika.magicalvibes.cards.e.ErdwalRipper;
 import com.github.laxika.magicalvibes.cards.w.WolfhuntersQuiver;
@@ -136,7 +137,7 @@ class CrushingVinesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castInstant(player1, 0, 0, target.getId());
-        target.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, target, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Nephalia Seakite");

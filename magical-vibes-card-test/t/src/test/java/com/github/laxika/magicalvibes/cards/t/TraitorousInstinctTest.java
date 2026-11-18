@@ -39,7 +39,7 @@ class TraitorousInstinctTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
         assertThat(harness.getGameQueryService().getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, target)).isEqualTo(2);
@@ -57,7 +57,7 @@ class TraitorousInstinctTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
         assertThat(harness.getGameQueryService().getEffectivePower(gd, target)).isEqualTo(2);
     }
@@ -102,7 +102,7 @@ class TraitorousInstinctTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(harness.getGameQueryService().getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, target)).isEqualTo(2);
 
@@ -110,7 +110,7 @@ class TraitorousInstinctTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(harness.getGameQueryService().getEffectivePower(gd, target)).isEqualTo(2);
     }
 
@@ -127,7 +127,7 @@ class TraitorousInstinctTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(target.getPowerModifier()).isZero();
         harness.assertInGraveyard(player1, "Traitorous Instinct");
     }

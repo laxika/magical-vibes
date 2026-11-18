@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.d.DivineOffering;
@@ -106,7 +107,7 @@ class SpineOfIshSahTest extends BaseCardTest {
 
         // Grant indestructible before ETB resolves
         Permanent target = findPermanent(player2, "Grizzly Bears");
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
 
         // Resolve ETB
         harness.passBothPriorities();

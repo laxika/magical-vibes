@@ -28,7 +28,7 @@ class BlitzballShotTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(5);
         assertThat(bears.getEffectiveToughness()).isEqualTo(5);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -43,7 +43,7 @@ class BlitzballShotTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -79,7 +79,7 @@ class BlitzballShotTest extends BaseCardTest {
 
         assertThat(bears.getEffectivePower()).isEqualTo(5);
         assertThat(bears.getEffectiveToughness()).isEqualTo(5);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
         harness.assertInGraveyard(player1, "Blitzball Shot");
     }
 
@@ -95,7 +95,7 @@ class BlitzballShotTest extends BaseCardTest {
 
         assertThat(bears.getEffectivePower()).isEqualTo(8);
         assertThat(bears.getEffectiveToughness()).isEqualTo(8);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -103,6 +103,6 @@ class BlitzballShotTest extends BaseCardTest {
 
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
     }
 }

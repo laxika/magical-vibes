@@ -32,7 +32,7 @@ class FurnaceReinsTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -107,13 +107,13 @@ class FurnaceReinsTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test

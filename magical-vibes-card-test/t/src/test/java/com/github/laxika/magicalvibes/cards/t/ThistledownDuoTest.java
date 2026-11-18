@@ -57,12 +57,12 @@ class ThistledownDuoTest extends BaseCardTest {
     @Test
     @DisplayName("Casting a blue spell gives Thistledown Duo flying until end of turn")
     void blueSpellGrantsFlying() {
-        assertThat(duo().hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.FLYING)).isFalse();
 
         castBlueSpell();
         harness.passBothPriorities(); // resolve the trigger
 
-        assertThat(duo().hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -74,7 +74,7 @@ class ThistledownDuoTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(duo().getPowerModifier()).isEqualTo(0);
-        assertThat(duo().hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -96,12 +96,12 @@ class ThistledownDuoTest extends BaseCardTest {
     void flyingWearsOff() {
         castBlueSpell();
         harness.passBothPriorities();
-        assertThat(duo().hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.FLYING)).isTrue();
 
         resolveAllTriggers();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(duo().hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -123,22 +123,22 @@ class ThistledownDuoTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(original.getPowerModifier()).isZero();
-        assertThat(original.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, original, Keyword.FLYING)).isFalse();
         resolveAllTriggers();
 
         assertThat(original.getPowerModifier()).isEqualTo(1);
         assertThat(original.getToughnessModifier()).isEqualTo(1);
-        assertThat(original.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, original, Keyword.FLYING)).isTrue();
         Permanent newlyCast = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> !permanent.getId().equals(original.getId()))
                 .findFirst().orElseThrow();
         assertThat(newlyCast.getPowerModifier()).isZero();
-        assertThat(newlyCast.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, newlyCast, Keyword.FLYING)).isFalse();
 
         harness.passUntil(TurnStep.CLEANUP);
         assertThat(original.getPowerModifier()).isZero();
         assertThat(original.getToughnessModifier()).isZero();
-        assertThat(original.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, original, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -151,7 +151,7 @@ class ThistledownDuoTest extends BaseCardTest {
 
         assertThat(duo().getPowerModifier()).isEqualTo(2);
         assertThat(duo().getToughnessModifier()).isEqualTo(2);
-        assertThat(duo().hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -165,7 +165,7 @@ class ThistledownDuoTest extends BaseCardTest {
 
         assertThat(duo().getPowerModifier()).isZero();
         assertThat(duo().getToughnessModifier()).isZero();
-        assertThat(duo().hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -175,6 +175,6 @@ class ThistledownDuoTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(duo().getPowerModifier()).isZero();
-        assertThat(duo().hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.FLYING)).isFalse();
     }
 }

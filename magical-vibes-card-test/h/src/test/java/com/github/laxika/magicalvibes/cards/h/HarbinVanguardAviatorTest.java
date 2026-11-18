@@ -67,7 +67,7 @@ class HarbinVanguardAviatorTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, harbin)).isEqualTo(harbinPower + 1);
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(soldierPower + 1);
-        assertThat(soldier.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -90,7 +90,7 @@ class HarbinVanguardAviatorTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, harbin)).isEqualTo(harbinPower + 1);
         assertThat(gqs.getEffectivePower(gd, remainingSoldier)).isEqualTo(soldierPower + 1);
-        assertThat(remainingSoldier.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, remainingSoldier, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -111,7 +111,7 @@ class HarbinVanguardAviatorTest extends BaseCardTest {
         });
 
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(soldierPower + 1);
-        assertThat(soldier.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -132,12 +132,12 @@ class HarbinVanguardAviatorTest extends BaseCardTest {
 
             assertThat(gqs.getEffectivePower(gd, earlyCreature)).isEqualTo(earlyPower + 1);
             assertThat(gqs.getEffectiveToughness(gd, earlyCreature)).isEqualTo(earlyToughness + 1);
-            assertThat(earlyCreature.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, earlyCreature, Keyword.FLYING)).isTrue();
 
             Permanent lateCreature = addCreatureReady(player1, new GrizzlyBears());
             assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(earlyPower);
             assertThat(gqs.getEffectiveToughness(gd, lateCreature)).isEqualTo(earlyToughness);
-            assertThat(lateCreature.hasKeyword(Keyword.FLYING)).isFalse();
+            assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.FLYING)).isFalse();
 
             harness.forceStep(TurnStep.END_STEP);
             harness.clearPriorityPassed();
@@ -145,9 +145,9 @@ class HarbinVanguardAviatorTest extends BaseCardTest {
 
             assertThat(gqs.getEffectivePower(gd, earlyCreature)).isEqualTo(earlyPower);
             assertThat(gqs.getEffectiveToughness(gd, earlyCreature)).isEqualTo(earlyToughness);
-            assertThat(earlyCreature.hasKeyword(Keyword.FLYING)).isFalse();
+            assertThat(gqs.hasKeyword(gd, earlyCreature, Keyword.FLYING)).isFalse();
             assertThat(gqs.getEffectivePower(gd, harbin)).isEqualTo(harbinPower);
-            assertThat(harbin.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, harbin, Keyword.FLYING)).isTrue();
         });
     }
 
@@ -171,14 +171,14 @@ class HarbinVanguardAviatorTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, harbin)).isEqualTo(harbinPower + 1);
         assertThat(gqs.getEffectiveToughness(gd, harbin)).isEqualTo(harbinToughness + 1);
-        assertThat(harbin.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(soldier1.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(soldier2.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(soldier3.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(soldier4.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, harbin, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, soldier1, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, soldier2, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, soldier3, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, soldier4, Keyword.FLYING)).isTrue();
         assertThat(gqs.getEffectivePower(gd, nonattackingCreature)).isEqualTo(nonattackingCreaturePower + 1);
-        assertThat(nonattackingCreature.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(opponentCreature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nonattackingCreature, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -198,6 +198,6 @@ class HarbinVanguardAviatorTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, harbin)).isEqualTo(harbinPower);
         assertThat(gqs.getEffectiveToughness(gd, harbin)).isEqualTo(harbinToughness);
-        assertThat(soldier.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FLYING)).isFalse();
     }
 }

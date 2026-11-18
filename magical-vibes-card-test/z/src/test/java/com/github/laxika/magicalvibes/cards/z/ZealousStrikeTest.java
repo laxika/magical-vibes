@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.ScrollOfAvacyn;
 import com.github.laxika.magicalvibes.cards.m.MoorlandInquisitor;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,7 +32,7 @@ class ZealousStrikeTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(2);
         assertThat(creature.getToughnessModifier()).isEqualTo(2);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -49,7 +50,7 @@ class ZealousStrikeTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test

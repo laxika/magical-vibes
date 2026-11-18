@@ -28,9 +28,9 @@ class WojekHalberdiersTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(halberdiers.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(attacker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(otherAttacker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, halberdiers, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherAttacker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -42,7 +42,7 @@ class WojekHalberdiersTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(halberdiers.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, halberdiers, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -54,13 +54,13 @@ class WojekHalberdiersTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
-        assertThat(halberdiers.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, halberdiers, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(halberdiers.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, halberdiers, Keyword.FIRST_STRIKE)).isFalse();
     }
     @Test
     @DisplayName("Attacking alone does not trigger battalion despite other creatures being present")
@@ -72,7 +72,7 @@ class WojekHalberdiersTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(halberdiers.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, halberdiers, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -86,10 +86,10 @@ class WojekHalberdiersTest extends BaseCardTest {
         declareAttackers(player1, List.of(1, 2, 3));
         resolveAllTriggers();
 
-        assertThat(halberdiers.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(firstAttacker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(secondAttacker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(thirdAttacker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, halberdiers, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, firstAttacker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondAttacker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, thirdAttacker, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -103,11 +103,11 @@ class WojekHalberdiersTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1, 2));
         assertThat(gd.stack).isNotEmpty();
-        assertThat(halberdiers.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, halberdiers, Keyword.FIRST_STRIKE)).isFalse();
         harness.castAndResolveInstant(player2, 0, otherAttacker.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(otherAttacker);
         resolveAllTriggers();
 
-        assertThat(halberdiers.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, halberdiers, Keyword.FIRST_STRIKE)).isTrue();
     }
 }

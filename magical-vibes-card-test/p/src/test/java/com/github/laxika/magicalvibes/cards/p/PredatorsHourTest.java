@@ -34,7 +34,7 @@ class PredatorsHourTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(attacker.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.MENACE)).isTrue();
 
         attacker.setAttacking(true);
         resolveCombat();
@@ -69,15 +69,15 @@ class PredatorsHourTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(ownCreature.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(opponentCreature.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.MENACE)).isFalse();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.MENACE)).isFalse();
     }
 
     @Test
@@ -90,7 +90,7 @@ class PredatorsHourTest extends BaseCardTest {
         Permanent laterCreature = addCreatureReady(player1, new GrizzlyBears());
         Card topCard = new Forest();
         harness.setLibrary(player2, List.of(topCard));
-        assertThat(laterCreature.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.MENACE)).isFalse();
 
         laterCreature.setAttacking(true);
         resolveCombat();
@@ -140,7 +140,7 @@ class PredatorsHourTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(attacker.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.MENACE)).isFalse();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

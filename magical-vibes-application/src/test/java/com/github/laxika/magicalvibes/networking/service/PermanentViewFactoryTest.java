@@ -110,13 +110,12 @@ class PermanentViewFactoryTest {
     // ── Keywords ──────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("Granted, until-next-turn and static bonus keywords all land in one granted set")
+    @DisplayName("The layered keywords land in the granted set")
     void keywordSourcesAreMerged() {
         Permanent creature = new Permanent(card("Grizzly Bears", CardType.CREATURE));
-        creature.getGrantedKeywords().add(Keyword.FLYING);
-        creature.getUntilNextTurnKeywords().add(Keyword.VIGILANCE);
 
-        PermanentView view = factory.create(creature, 0, 0, Set.of(Keyword.TRAMPLE), false, List.of());
+        PermanentView view = factory.create(creature, 0, 0,
+                Set.of(Keyword.FLYING, Keyword.VIGILANCE, Keyword.TRAMPLE), false, List.of());
 
         assertThat(view.grantedKeywords())
                 .containsExactlyInAnyOrder(Keyword.FLYING, Keyword.VIGILANCE, Keyword.TRAMPLE);
@@ -126,11 +125,9 @@ class PermanentViewFactoryTest {
     @DisplayName("Removed keywords are reported separately and stripped from the granted set")
     void removedKeywordsAreExcludedFromGranted() {
         Permanent creature = new Permanent(card("Grizzly Bears", CardType.CREATURE));
-        creature.getGrantedKeywords().add(Keyword.FLYING);
-        creature.getRemovedKeywords().add(Keyword.FLYING);
 
         PermanentView view = factory.create(creature, 0, 0, Set.of(), false, List.of(), Set.of(), List.of(),
-                Set.of(), false, false, false, Set.of(Keyword.FIRST_STRIKE));
+                Set.of(), false, false, false, Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE));
 
         assertThat(view.removedKeywords()).containsExactlyInAnyOrder(Keyword.FLYING, Keyword.FIRST_STRIKE);
         assertThat(view.grantedKeywords()).doesNotContain(Keyword.FLYING);
@@ -140,9 +137,9 @@ class PermanentViewFactoryTest {
     @DisplayName("A keyword re-granted after its removal (later CR 613.7 timestamp) is not shown as removed")
     void keywordRegrantedAfterRemovalWins() {
         Permanent creature = new Permanent(card("Grizzly Bears", CardType.CREATURE));
-        creature.getRemovedKeywords().add(Keyword.FLYING);
 
-        PermanentView view = factory.create(creature, 0, 0, Set.of(Keyword.FLYING), false, List.of());
+        PermanentView view = factory.create(creature, 0, 0, Set.of(Keyword.FLYING), false, List.of(), Set.of(),
+                List.of(), Set.of(), false, false, false, Set.of(Keyword.FLYING));
 
         assertThat(view.removedKeywords()).doesNotContain(Keyword.FLYING);
         assertThat(view.grantedKeywords()).contains(Keyword.FLYING);

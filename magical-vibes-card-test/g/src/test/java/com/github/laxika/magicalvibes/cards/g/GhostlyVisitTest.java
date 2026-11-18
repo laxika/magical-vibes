@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.ShuFootSoldiers;
 import com.github.laxika.magicalvibes.cards.w.WeiInfantry;
@@ -113,7 +114,7 @@ class GhostlyVisitTest extends BaseCardTest {
     @DisplayName("Ghostly Visit cannot destroy an indestructible creature")
     void cannotDestroyIndestructibleCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
-        creature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new GhostlyVisit()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 

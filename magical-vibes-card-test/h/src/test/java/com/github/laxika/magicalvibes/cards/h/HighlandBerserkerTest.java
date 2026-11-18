@@ -36,10 +36,10 @@ class HighlandBerserkerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent enteringAlly = findPermanent(player1, "Highland Berserker");
-        assertThat(existingAlly.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(enteringAlly.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(nonAlly.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(opposingAlly.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, existingAlly, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enteringAlly, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonAlly, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingAlly, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -57,8 +57,8 @@ class HighlandBerserkerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent enteringBerserker = findPermanent(player1, "Highland Berserker");
-        assertThat(existingBerserker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(enteringBerserker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, existingBerserker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enteringBerserker, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -72,7 +72,7 @@ class HighlandBerserkerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(findPermanent(player1, "Highland Berserker").hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Highland Berserker"), Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -86,7 +86,7 @@ class HighlandBerserkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(berserker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, berserker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -101,13 +101,13 @@ class HighlandBerserkerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent berserker = findPermanent(player1, "Highland Berserker");
-        assertThat(berserker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, berserker, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(berserker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, berserker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -123,7 +123,7 @@ class HighlandBerserkerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(berserker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, berserker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -142,7 +142,7 @@ class HighlandBerserkerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(ally.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(berserker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, berserker, Keyword.FIRST_STRIKE)).isFalse();
     }
 }

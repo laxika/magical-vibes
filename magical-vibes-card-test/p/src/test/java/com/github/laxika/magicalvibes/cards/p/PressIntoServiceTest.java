@@ -36,7 +36,7 @@ class PressIntoServiceTest extends BaseCardTest {
         assertThat(supportedSecond.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(stolen.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(stolen.getId()));
-        assertThat(stolen.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, stolen, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(stolen.getId())).isTrue();
     }
 
@@ -51,7 +51,7 @@ class PressIntoServiceTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of(stolen.getId(), supported.getId()));
 
         assertThat(supported.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(stolen.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, stolen, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -64,7 +64,7 @@ class PressIntoServiceTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of(stolen.getId()));
 
         assertThat(stolen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(stolen.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, stolen, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -77,7 +77,7 @@ class PressIntoServiceTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of(stolen.getId(), stolen.getId()));
 
         assertThat(stolen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(stolen.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, stolen, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -94,7 +94,7 @@ class PressIntoServiceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(stolen.getId()));
-        assertThat(stolen.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, stolen, Keyword.HASTE)).isFalse();
         assertThat(stolen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(supported.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -138,7 +138,7 @@ class PressIntoServiceTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
 
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
     }
@@ -156,7 +156,7 @@ class PressIntoServiceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(supported.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(supported.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, supported, Keyword.HASTE)).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(supported);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(supported);
     }
@@ -178,7 +178,7 @@ class PressIntoServiceTest extends BaseCardTest {
         assertThat(supported.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(stolen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(stolen.isTapped()).isFalse();
-        assertThat(stolen.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, stolen, Keyword.HASTE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(stolen);
     }
 

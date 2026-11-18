@@ -77,14 +77,14 @@ class SummonTitanTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -167,7 +167,7 @@ class SummonTitanTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         harness.assertNotOnBattlefield(player1, "Summon: Titan");
         harness.assertInGraveyard(player1, "Summon: Titan");
 
@@ -188,7 +188,7 @@ class SummonTitanTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test

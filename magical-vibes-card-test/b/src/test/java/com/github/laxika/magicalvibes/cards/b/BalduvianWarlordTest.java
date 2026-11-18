@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranOutrider;
 import com.github.laxika.magicalvibes.cards.t.TauntingElf;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -75,7 +76,7 @@ class BalduvianWarlordTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new KjeldoranOutrider());
 
         setUpCombat(formerAttacker, blocker);
-        formerAttacker.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, formerAttacker, Keyword.FLYING);
 
         harness.activateAbility(player2, indexOf(player2, warlord), null,
                 blocker.getId());
@@ -95,7 +96,7 @@ class BalduvianWarlordTest extends BaseCardTest {
         Permanent otherBlocker = addCreatureReady(player2, new KjeldoranOutrider());
 
         setUpCombat(attacker, List.of(blocker, otherBlocker));
-        attacker.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.FLYING);
 
         harness.activateAbility(player2, indexOf(player2, firstWarlord), null, otherBlocker.getId());
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);

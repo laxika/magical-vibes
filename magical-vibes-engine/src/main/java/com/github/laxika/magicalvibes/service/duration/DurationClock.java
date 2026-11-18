@@ -346,10 +346,6 @@ public class DurationClock {
                     phasingService.phaseInHeld(gameData, affected.getId(), held.tapsOnPhaseIn());
             case TapRestrictionEffect restriction when restriction.preventsTappingUnlessAttacking() ->
                     affected.removeTapRestriction(effect.id());
-            case GrantKeywordEffect grant when Duration.UNTIL_YOUR_NEXT_TURN.equals(grant.duration()) ->
-                    // The grant ends at its controller's turn even when the creature changed controllers, so the
-                    // keywords mirrored on the permanent can't wait for its own controller's turn.
-                    affected.getUntilNextTurnKeywords().removeAll(grant.keywords());
             case MakeTargetCopyOfTargetCreatureUntilNextTurnEffect ignored -> {
                 // A newer copy effect overwrites the copy's controller, so an older one ending first must not revert
                 // the card out from under the newer one.

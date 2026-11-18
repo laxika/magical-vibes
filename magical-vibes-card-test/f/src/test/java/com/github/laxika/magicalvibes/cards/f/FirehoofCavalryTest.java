@@ -26,7 +26,7 @@ class FirehoofCavalryTest extends BaseCardTest {
 
         assertThat(cavalry.getPowerModifier()).isEqualTo(2);
         assertThat(cavalry.getToughnessModifier()).isEqualTo(0);
-        assertThat(cavalry.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -43,7 +43,7 @@ class FirehoofCavalryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(cavalry.getPowerModifier()).isEqualTo(0);
-        assertThat(cavalry.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -60,9 +60,9 @@ class FirehoofCavalryTest extends BaseCardTest {
 
         assertThat(cavalry.getPowerModifier()).isEqualTo(4);
         assertThat(cavalry.getToughnessModifier()).isZero();
-        assertThat(cavalry.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isTrue();
         assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -78,7 +78,7 @@ class FirehoofCavalryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(cavalry.getPowerModifier()).isEqualTo(2);
-        assertThat(cavalry.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isTrue();
         assertThat(cavalry.isTapped()).isTrue();
     }
 
@@ -94,7 +94,7 @@ class FirehoofCavalryTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(cavalry.getPowerModifier()).isZero();
-        assertThat(cavalry.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isFalse();
     }
 
     private Permanent addReadyCavalry() {

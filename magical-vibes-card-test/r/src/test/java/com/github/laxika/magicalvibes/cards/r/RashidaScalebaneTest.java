@@ -191,7 +191,7 @@ class RashidaScalebaneTest extends BaseCardTest {
         addCreatureReady(player1, new RashidaScalebane());
         Permanent dragon = addCreatureReady(player2, new ShivanDragon());
         dragon.setBlocking(true);
-        dragon.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, dragon, Keyword.INDESTRUCTIBLE);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

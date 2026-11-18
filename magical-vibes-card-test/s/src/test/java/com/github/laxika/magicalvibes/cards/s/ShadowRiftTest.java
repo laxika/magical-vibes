@@ -31,7 +31,7 @@ class ShadowRiftTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, turtle.getId());
 
-        assertThat(turtle.hasKeyword(Keyword.SHADOW)).isTrue();
+        assertThat(gqs.hasKeyword(gd, turtle, Keyword.SHADOW)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
@@ -48,7 +48,7 @@ class ShadowRiftTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(turtle.hasKeyword(Keyword.SHADOW)).isFalse();
+        assertThat(gqs.hasKeyword(gd, turtle, Keyword.SHADOW)).isFalse();
     }
 
     @Test
@@ -113,7 +113,7 @@ class ShadowRiftTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.hasKeyword(Keyword.SHADOW)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHADOW)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }

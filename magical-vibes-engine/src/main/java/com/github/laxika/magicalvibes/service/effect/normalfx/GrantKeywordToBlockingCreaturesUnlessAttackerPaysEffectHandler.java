@@ -108,7 +108,6 @@ public class GrantKeywordToBlockingCreaturesUnlessAttackerPaysEffectHandler impl
                     || gameQueryService.cantHaveOrGainKeyword(gameData, blocker, effect.keyword())) {
                 continue;
             }
-            blocker.getGrantedKeywords().add(effect.keyword());
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(), grant,
                     blocker.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));

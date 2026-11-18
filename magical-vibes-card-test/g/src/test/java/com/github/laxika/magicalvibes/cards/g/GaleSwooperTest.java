@@ -30,7 +30,7 @@ class GaleSwooperTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(permanent(targetId).hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, permanent(targetId), Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -45,7 +45,7 @@ class GaleSwooperTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(permanent(targetId).hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, permanent(targetId), Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -59,13 +59,13 @@ class GaleSwooperTest extends BaseCardTest {
         harness.castCreature(player1, 0, targetId);
 
         resolveAllTriggers();
-        assertThat(permanent(targetId).hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, permanent(targetId), Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(permanent(targetId).hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, permanent(targetId), Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -100,8 +100,8 @@ class GaleSwooperTest extends BaseCardTest {
         harness.castCreature(player1, 0, targetId);
         resolveAllTriggers();
 
-        assertThat(permanent(targetId).hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(permanent(otherId).hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, permanent(targetId), Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, permanent(otherId), Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -118,7 +118,7 @@ class GaleSwooperTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getId().equals(sourceId));
         resolveAllTriggers();
 
-        assertThat(permanent(targetId).hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, permanent(targetId), Keyword.FLYING)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 

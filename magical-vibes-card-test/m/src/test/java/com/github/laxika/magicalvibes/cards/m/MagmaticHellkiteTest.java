@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.r.RuggedHighlands;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -114,7 +115,7 @@ class MagmaticHellkiteTest extends BaseCardTest {
     @DisplayName("Still searches when the target land is indestructible")
     void searchesDespiteIndestructibleLand() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new RuggedHighlands());
-        land.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, land, Keyword.INDESTRUCTIBLE);
         harness.setLibrary(player2, List.of(new Forest()));
         prepareCast();
         harness.castCreature(player1, 0, List.of(land.getId()));

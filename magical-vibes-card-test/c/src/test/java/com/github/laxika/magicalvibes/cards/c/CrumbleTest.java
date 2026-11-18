@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -55,7 +56,7 @@ class CrumbleTest extends BaseCardTest {
     @DisplayName("Crumble does not destroy an indestructible artifact, but its controller gains life")
     void gainsLifeWhenArtifactIsIndestructible() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new Crumble()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 

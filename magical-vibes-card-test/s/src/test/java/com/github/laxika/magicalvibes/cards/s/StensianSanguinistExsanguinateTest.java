@@ -29,7 +29,7 @@ class StensianSanguinistExsanguinateTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
         resolveAllTriggers();
 
-        assertThat(attacker.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isTrue();
         assertThat(sanguinist.isPrepared()).isTrue();
         UUID copyId = sanguinist.getPreparedSpellCardId();
         assertThat(copyId).isNotNull();
@@ -63,7 +63,7 @@ class StensianSanguinistExsanguinateTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         resolveCombat();

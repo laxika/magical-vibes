@@ -30,7 +30,7 @@ class AntlerSkulkinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.PERSIST)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.PERSIST)).isTrue();
     }
 
     @Test
@@ -43,7 +43,7 @@ class AntlerSkulkinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.PERSIST)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.PERSIST)).isTrue();
     }
 
     @Test
@@ -55,13 +55,13 @@ class AntlerSkulkinTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.PERSIST)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.PERSIST)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.PERSIST)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.PERSIST)).isFalse();
     }
 
     @Test
@@ -102,7 +102,7 @@ class AntlerSkulkinTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player2, "Ballynock Trapper");
         assertThat(returned.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(returned.hasKeyword(Keyword.PERSIST)).isFalse();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.PERSIST)).isFalse();
         harness.assertNotInGraveyard(player2, "Ballynock Trapper");
     }
 
@@ -152,7 +152,7 @@ class AntlerSkulkinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.PERSIST)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.PERSIST)).isTrue();
         assertThat(skulkin.isTapped()).isTrue();
     }
     @Test

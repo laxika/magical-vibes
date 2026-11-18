@@ -178,8 +178,7 @@ public class TurnCleanupService {
 
     /**
      * Resets all "until end of turn" modifiers on permanents (power/toughness
-     * modifiers, granted keywords, damage-prevention and regeneration shields,
-     * animation flags) and clears global damage-prevention state.
+     * modifiers and the other "until end of turn" stores) and clears global damage-prevention state.
      *
      * @param gameData the current game state to modify
      */

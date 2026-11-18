@@ -36,7 +36,7 @@ class SoratamiRainshaperTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
     }
 
     @Test
@@ -86,7 +86,7 @@ class SoratamiRainshaperTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Rainshaper"), 0, source.getId());
         harness.passBothPriorities();
 
-        assertThat(source.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.SHROUD)).isTrue();
     }
 
     @Test
@@ -129,13 +129,13 @@ class SoratamiRainshaperTest extends BaseCardTest {
 
         harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Rainshaper"), 0, creature.getId());
         harness.passBothPriorities();
-        assertThat(creature.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isFalse();
     }
 
     @Test
@@ -170,7 +170,7 @@ class SoratamiRainshaperTest extends BaseCardTest {
         harness.assertInHand(player1, "Island");
         harness.passBothPriorities();
 
-        assertThat(source.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.SHROUD)).isTrue();
         assertThat(source.isTapped()).isTrue();
     }
 
@@ -187,7 +187,7 @@ class SoratamiRainshaperTest extends BaseCardTest {
 
         harness.activateAbility(player1, battlefieldIndex(player1, "Soratami Rainshaper"), 0, creature.getId());
         harness.passBothPriorities();
-        assertThat(creature.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Wandering Ones");
@@ -211,7 +211,7 @@ class SoratamiRainshaperTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Soratami Rainshaper");
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
     }
 
     private int battlefieldIndex(Player owner, String name) {

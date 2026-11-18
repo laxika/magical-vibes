@@ -64,11 +64,11 @@ class AgathaOfTheVileCauldronTest extends BaseCardTest {
         assertThat(agatha.getPowerModifier()).isZero();
         assertThat(ownDummy.getPowerModifier()).isEqualTo(1);
         assertThat(ownDummy.getToughnessModifier()).isEqualTo(1);
-        assertThat(ownDummy.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(ownDummy.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownDummy, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownDummy, Keyword.HASTE)).isTrue();
         assertThat(opponentDummy.getPowerModifier()).isZero();
-        assertThat(opponentDummy.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(opponentDummy.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentDummy, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentDummy, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -76,8 +76,8 @@ class AgathaOfTheVileCauldronTest extends BaseCardTest {
 
         assertThat(ownDummy.getPowerModifier()).isZero();
         assertThat(ownDummy.getToughnessModifier()).isZero();
-        assertThat(ownDummy.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(ownDummy.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownDummy, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownDummy, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -128,11 +128,11 @@ class AgathaOfTheVileCauldronTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(agatha.getPowerModifier()).isEqualTo(3);
-        assertThat(agatha.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(agatha.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, agatha, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, agatha, Keyword.HASTE)).isFalse();
         assertThat(dummy.getPowerModifier()).isEqualTo(1);
-        assertThat(dummy.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(dummy.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dummy, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dummy, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -149,11 +149,11 @@ class AgathaOfTheVileCauldronTest extends BaseCardTest {
 
         assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
         assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
-        assertThat(beforeResolution.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(beforeResolution.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.HASTE)).isTrue();
         assertThat(afterResolution.getPowerModifier()).isZero();
         assertThat(afterResolution.getToughnessModifier()).isZero();
-        assertThat(afterResolution.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(afterResolution.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.HASTE)).isFalse();
     }
 }

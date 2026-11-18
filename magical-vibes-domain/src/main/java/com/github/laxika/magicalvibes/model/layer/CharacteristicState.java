@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromNonSubtypeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import lombok.Getter;
 import lombok.Setter;
@@ -403,10 +405,21 @@ public class CharacteristicState {
         removedProtectionColors.addAll(colors);
     }
 
+    /**
+     * Applies a "loses all protection" effect: removes every protection ability accumulated so far, the granted ones
+     * included. Protection granted by a later effect (a later timestamp, CR 613.7) is added afterwards and stays.
+     */
     public void removeAllProtection() {
         protectionColors.clear();
+        grantedStaticEffects.removeIf(effect -> !nonAbilityEffects.contains(effect) && isProtectionAbility(effect));
         removedProtectionColors.addAll(EnumSet.allOf(CardColor.class));
         protectionRemoved = true;
+    }
+
+    private static boolean isProtectionAbility(CardEffect effect) {
+        return effect instanceof ProtectionGrantingEffect
+                || effect instanceof ProtectionFromNonSubtypeCreaturesEffect
+                || effect instanceof GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect;
     }
 
     public boolean isProtectionRemoved() {

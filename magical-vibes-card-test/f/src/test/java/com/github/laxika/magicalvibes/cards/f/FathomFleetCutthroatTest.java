@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -151,7 +152,7 @@ class FathomFleetCutthroatTest extends BaseCardTest {
 
         // Grant indestructible before ETB resolves
         Permanent target = findPermanent(player2, "Looming Altisaur");
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
 
         // Resolve ETB → creature survives
         harness.passBothPriorities();

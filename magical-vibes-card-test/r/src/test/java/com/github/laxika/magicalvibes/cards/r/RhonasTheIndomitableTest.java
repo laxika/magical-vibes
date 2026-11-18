@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -84,7 +85,7 @@ class RhonasTheIndomitableTest extends BaseCardTest {
         assertThat(bears.getPowerModifier()).isEqualTo(2);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
         assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -105,7 +106,7 @@ class RhonasTheIndomitableTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test
@@ -121,7 +122,7 @@ class RhonasTheIndomitableTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -191,7 +192,7 @@ class RhonasTheIndomitableTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(bears.getEffectivePower()).isEqualTo(6);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.TRAMPLE);
     }
 
     @Test

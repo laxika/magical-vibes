@@ -76,7 +76,7 @@ class KirdChieftainTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -89,13 +89,13 @@ class KirdChieftainTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -122,7 +122,7 @@ class KirdChieftainTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, chieftain)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, chieftain)).isEqualTo(7);
-        assertThat(chieftain.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, chieftain, Keyword.TRAMPLE)).isTrue();
         assertThat(chieftain.isTapped()).isFalse();
     }
 
@@ -140,7 +140,7 @@ class KirdChieftainTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -153,7 +153,7 @@ class KirdChieftainTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, chieftain)).isEqualTo(3);
-        assertThat(chieftain.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, chieftain, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -181,6 +181,6 @@ class KirdChieftainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 }

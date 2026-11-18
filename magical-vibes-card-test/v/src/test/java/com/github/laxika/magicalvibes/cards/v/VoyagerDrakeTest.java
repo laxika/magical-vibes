@@ -26,7 +26,7 @@ class VoyagerDrakeTest extends BaseCardTest {
         castVoyagerDrake(List.of());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(bear.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -38,7 +38,7 @@ class VoyagerDrakeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -52,8 +52,8 @@ class VoyagerDrakeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, second.getId());
         harness.passBothPriorities();
 
-        assertThat(first.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(second.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -66,7 +66,7 @@ class VoyagerDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(bear.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
         harness.assertOnBattlefield(player1, "Voyager Drake");
     }
 
@@ -81,8 +81,8 @@ class VoyagerDrakeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(chosen.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(unchosen.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, unchosen, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -92,11 +92,11 @@ class VoyagerDrakeTest extends BaseCardTest {
         castVoyagerDrake(List.of("{U}"));
         harness.handlePermanentChosen(player1, bear.getId());
         harness.passBothPriorities();
-        assertThat(bear.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(bear.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -114,7 +114,7 @@ class VoyagerDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(targets).allSatisfy(target ->
-                assertThat(target.hasKeyword(Keyword.FLYING)).isTrue());
+                assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue());
     }
 
     private void castVoyagerDrake(List<String> payments) {

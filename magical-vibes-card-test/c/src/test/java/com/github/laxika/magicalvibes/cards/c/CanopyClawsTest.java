@@ -32,12 +32,12 @@ class CanopyClawsTest extends BaseCardTest {
         UUID targetId = hawk.getId();
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(hawk.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, hawk, Keyword.FLYING)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(hawk.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hawk, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -50,7 +50,7 @@ class CanopyClawsTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Suntail Hawk");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(findPermanent(player1, "Suntail Hawk").hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Suntail Hawk"), Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -63,7 +63,7 @@ class CanopyClawsTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Benevolent Bodyguard");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(findPermanent(player2, "Benevolent Bodyguard").hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player2, "Benevolent Bodyguard"), Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -76,7 +76,7 @@ class CanopyClawsTest extends BaseCardTest {
         UUID targetId = hawk.getId();
         harness.castAndResolveFlashback(player1, 0, targetId);
 
-        assertThat(hawk.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, hawk, Keyword.FLYING)).isFalse();
         harness.assertNotInGraveyard(player1, "Canopy Claws");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Canopy Claws"));
@@ -104,13 +104,13 @@ class CanopyClawsTest extends BaseCardTest {
         UUID targetId = hawk.getId();
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(hawk.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, hawk, Keyword.FLYING)).isFalse();
         harness.assertInGraveyard(player1, "Canopy Claws");
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(hawk.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hawk, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -123,8 +123,8 @@ class CanopyClawsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, targetedHawk.getId());
 
-        assertThat(targetedHawk.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(otherHawk.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, targetedHawk, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherHawk, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -136,7 +136,7 @@ class CanopyClawsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, groundCreature.getId());
 
-        assertThat(groundCreature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, groundCreature, Keyword.FLYING)).isFalse();
         harness.assertInGraveyard(player1, "Canopy Claws");
     }
 

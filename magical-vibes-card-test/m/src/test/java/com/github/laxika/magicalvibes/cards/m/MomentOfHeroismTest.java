@@ -52,7 +52,7 @@ class MomentOfHeroismTest extends BaseCardTest {
         assertThat(griffin.getToughnessModifier()).isEqualTo(2);
         assertThat(griffin.getEffectivePower()).isEqualTo(4);
         assertThat(griffin.getEffectiveToughness()).isEqualTo(4);
-        assertThat(griffin.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, griffin, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -72,7 +72,7 @@ class MomentOfHeroismTest extends BaseCardTest {
 
         assertThat(griffin.getPowerModifier()).isEqualTo(0);
         assertThat(griffin.getToughnessModifier()).isEqualTo(0);
-        assertThat(griffin.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, griffin, Keyword.LIFELINK)).isFalse();
     }
 
     @Test

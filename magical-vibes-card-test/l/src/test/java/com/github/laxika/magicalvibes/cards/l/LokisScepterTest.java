@@ -32,7 +32,7 @@ class LokisScepterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.VILLAIN)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
@@ -51,7 +51,7 @@ class LokisScepterTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.VILLAIN)).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
@@ -98,7 +98,7 @@ class LokisScepterTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.BEAR)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.VILLAIN)).isTrue();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -113,7 +114,7 @@ class PierceTheSkyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castInstant(player1, 0, flyer.getId());
-        flyer.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, flyer, Keyword.FLYING);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(flyer);
@@ -126,7 +127,7 @@ class PierceTheSkyTest extends BaseCardTest {
     @DisplayName("Pierce the Sky can target a creature with granted flying")
     void canTargetCreatureWithGrantedFlying() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.FLYING);
         harness.setHand(player1, List.of(new PierceTheSky()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 

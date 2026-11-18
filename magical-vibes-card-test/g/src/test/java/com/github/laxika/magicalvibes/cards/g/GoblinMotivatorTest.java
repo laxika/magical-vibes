@@ -26,7 +26,7 @@ class GoblinMotivatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -38,7 +38,7 @@ class GoblinMotivatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -49,13 +49,13 @@ class GoblinMotivatorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -77,14 +77,14 @@ class GoblinMotivatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
 
         assertThat(motivator.isTapped()).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
 
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -106,7 +106,7 @@ class GoblinMotivatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, motivator.getId());
         harness.passBothPriorities();
 
-        assertThat(motivator.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, motivator, Keyword.HASTE)).isTrue();
         assertThat(motivator.isTapped()).isTrue();
     }
 
@@ -122,7 +122,7 @@ class GoblinMotivatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(newMotivator.isTapped()).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -135,7 +135,7 @@ class GoblinMotivatorTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(motivator.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -162,8 +162,8 @@ class GoblinMotivatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(other.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
         assertThat(motivator.isTapped()).isTrue();
     }
 }

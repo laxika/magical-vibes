@@ -71,14 +71,13 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                         && !predicateEvaluationService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
                     continue;
                 }
-                // Layer-6 floating effect as well as the legacy bucket, so a grant resolving after
-                // an "all creatures you control lose all abilities" on the same entry survives it
-                // (CR 613.7 timestamp order) — Dragonshift overloaded.
+                // A layer-6 floating effect, so a grant resolving after an "all creatures you control
+                // lose all abilities" on the same entry survives it (CR 613.7 timestamp order) —
+                // Dragonshift overloaded.
                 Set<Keyword> grantableKeywords = grantableKeywords(gameData, permanent, grant.keywords());
                 if (grantableKeywords.isEmpty()) {
                     continue;
                 }
-                addLegacyBucket(permanent, grant.duration(), grantableKeywords);
                 gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
                         entry.getCard().getName(), null, entry.getControllerId(),
                         new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, grant.filter(), grant.duration(), grant.grantCondition()),
@@ -108,7 +107,6 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 if (grantableKeywords.isEmpty()) {
                     continue;
                 }
-                addLegacyBucket(permanent, grant.duration(), grantableKeywords);
                 gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
                         entry.getCard().getName(), null, entry.getControllerId(),
                         new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, null,
@@ -173,7 +171,6 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                     if (grantableKeywords.isEmpty()) {
                         continue;
                     }
-                    addLegacyBucket(permanent, grant.duration(), grantableKeywords);
                     gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
                             entry.getCard().getName(), null, entry.getControllerId(),
                             new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, grant.filter(),
@@ -218,7 +215,6 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             if (grantableKeywords.isEmpty()) {
                 return;
             }
-            addLegacyBucket(target, grant.duration(), grantableKeywords);
             gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
                     entry.getCard().getName(), null, entry.getControllerId(),
                     new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, null,
@@ -252,7 +248,6 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 if (grantableKeywords.isEmpty()) {
                     return;
                 }
-                addLegacyBucket(permanent, grant.duration(), grantableKeywords);
                 gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                         entry.getCard().getName(), null, entry.getControllerId(),
                         new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, null,
@@ -285,8 +280,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 if (grantableKeywords.isEmpty()) {
                     return;
                 }
-                addLegacyBucket(permanent, grant.duration(), grantableKeywords);
-                // Layer-6 floating effect as well, so a grant resolving after an earlier "loses all
+                // A layer-6 floating effect, so a grant resolving after an earlier "loses all
                 // abilities" effect on the land survives it (CR 613.7 timestamp order).
                 gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
                         entry.getCard().getName(), null, entry.getControllerId(),
@@ -343,13 +337,9 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
 
-            // CR 613 layer engine: one-shot keyword grants to explicit permanents are floating
-            // layer-6 effects with their own timestamp — a grant resolving after a "loses all
-            // abilities" or keyword removal survives it (and vice versa). The legacy bucket is
-            // still written for direct Permanent.hasKeyword callers; the layered pass seeds it
-            // and then replays this grant at its real timestamp.
-            // Source-linked grants live only as floating effects: the legacy
-            // buckets are both cleared by turn cleanup, which would silently end the grant.
+            // One-shot keyword grants to explicit permanents are floating layer-6 effects with
+            // their own timestamp: a grant resolving after a "loses all abilities" or keyword
+            // removal survives it, and vice versa (CR 613.7).
             Set<Keyword> grantableKeywords = grantableKeywords(gameData, target, grant.keywords());
             if (grantableKeywords.isEmpty()) {
                 continue;
@@ -359,7 +349,6 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         for (Map.Entry<Permanent, Set<Keyword>> resolved : grants.entrySet()) {
             Permanent target = resolved.getKey();
             Set<Keyword> grantableKeywords = resolved.getValue();
-            addLegacyBucket(target, grant.duration(), grantableKeywords);
             GrantKeywordEffect resolvedGrant = new GrantKeywordEffect(grantableKeywords, grant.scope(), grant.filter(), grant.duration(), grant.grantCondition());
             UUID floatingSourceId = sourceLinked(grant.duration())
                     ? entry.getSourcePermanentId()
@@ -416,7 +405,6 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
 
-            addLegacyBucket(permanent, grant.duration(), grantableKeywords);
             UUID floatingSourceId = sourceLinked(grant.duration())
                     ? entry.getSourcePermanentId()
                     : null;
@@ -447,7 +435,6 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        addLegacyBucket(permanent, Duration.UNTIL_END_OF_TURN, grantableKeywords);
         gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
                 sourceName, null, controllerId,
                 new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET),
@@ -486,27 +473,9 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
         return bandmates;
     }
 
-    private void addLegacyBucket(Permanent permanent, Duration duration, Set<Keyword> keywords) {
-        if (!sourceLinked(duration)
-                && !Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)
-                && !Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(duration)
-                && !Duration.UNTIL_END_OF_COMBAT.equals(duration)
-                && !Duration.PERMANENT.equals(duration)) {
-            keywords.stream().filter(keyword -> keyword != Keyword.FLANKING)
-                    .forEach(bucketFor(permanent, duration)::add);
-        }
-    }
-
     private boolean sourceLinked(Duration duration) {
         return Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(duration)
                 || Duration.WHILE_SOURCE_REMAINS.equals(duration);
-    }
-
-    private Set<Keyword> bucketFor(Permanent permanent, Duration duration) {
-        if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
-            return permanent.getUntilNextTurnKeywords();
-        }
-        return permanent.getGrantedKeywords();
     }
 
     private Set<Keyword> grantableKeywords(GameData gameData, Permanent permanent, Set<Keyword> keywords) {
@@ -555,7 +524,6 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             if (grantableKeywords.isEmpty()) {
                 continue;
             }
-            addLegacyBucket(target, grant.duration(), grantableKeywords);
             gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
                     entry.getCard().getName(), null, entry.getControllerId(),
                     new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, grant.filter(),

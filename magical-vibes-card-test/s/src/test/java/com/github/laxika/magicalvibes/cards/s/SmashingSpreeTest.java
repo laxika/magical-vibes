@@ -27,7 +27,7 @@ class SmashingSpreeTest extends BaseCardTest {
 
         assertThat(attacker.getEffectivePower()).isEqualTo(5);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(5);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -42,7 +42,7 @@ class SmashingSpreeTest extends BaseCardTest {
 
         assertThat(attacker.getEffectivePower()).isEqualTo(2);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -73,7 +73,7 @@ class SmashingSpreeTest extends BaseCardTest {
 
         assertThat(attacker.getEffectivePower()).isEqualTo(5);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(5);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -90,7 +90,7 @@ class SmashingSpreeTest extends BaseCardTest {
 
         assertThat(attacker.getEffectivePower()).isEqualTo(2);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Smashing Spree");
     }
 
@@ -105,7 +105,7 @@ class SmashingSpreeTest extends BaseCardTest {
 
         assertThat(attacker.getEffectivePower()).isEqualTo(5);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(5);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
     private Permanent addAttacker() {

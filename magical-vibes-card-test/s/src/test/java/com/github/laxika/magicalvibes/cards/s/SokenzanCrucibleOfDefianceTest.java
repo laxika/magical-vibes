@@ -49,7 +49,7 @@ class SokenzanCrucibleOfDefianceTest extends BaseCardTest {
 
         List<Permanent> spirits = findPermanents(player1, "Spirit");
         assertThat(spirits).hasSize(2);
-        assertThat(spirits).allMatch(permanent -> permanent.hasKeyword(Keyword.HASTE));
+        assertThat(spirits).allMatch(permanent -> gqs.hasKeyword(gd, permanent, Keyword.HASTE));
         harness.assertInGraveyard(player1, "Sokenzan, Crucible of Defiance");
     }
 
@@ -65,11 +65,11 @@ class SokenzanCrucibleOfDefianceTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        assertThat(findPermanents(player1, "Spirit")).allMatch(permanent -> permanent.hasKeyword(Keyword.HASTE));
+        assertThat(findPermanents(player1, "Spirit")).allMatch(permanent -> gqs.hasKeyword(gd, permanent, Keyword.HASTE));
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(findPermanents(player1, "Spirit")).allMatch(permanent -> !permanent.hasKeyword(Keyword.HASTE));
+        assertThat(findPermanents(player1, "Spirit")).allMatch(permanent -> !gqs.hasKeyword(gd, permanent, Keyword.HASTE));
     }
 
     @Test
@@ -98,7 +98,7 @@ class SokenzanCrucibleOfDefianceTest extends BaseCardTest {
             assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
             assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
             assertThat(token.isTapped()).isFalse();
-            assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         });
         assertThat(findPermanents(player2, "Spirit")).isEmpty();
     }
@@ -187,12 +187,12 @@ class SokenzanCrucibleOfDefianceTest extends BaseCardTest {
 
         List<Permanent> spirits = findPermanents(player1, "Spirit");
         assertThat(spirits).hasSize(2);
-        assertThat(spirits).allMatch(token -> token.hasKeyword(Keyword.HASTE));
+        assertThat(spirits).allMatch(token -> gqs.hasKeyword(gd, token, Keyword.HASTE));
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
 
         harness.passUntil(player1, TurnStep.UPKEEP);
 
         assertThat(findPermanents(player1, "Spirit")).hasSize(2)
-                .allMatch(token -> !token.hasKeyword(Keyword.HASTE));
+                .allMatch(token -> !gqs.hasKeyword(gd, token, Keyword.HASTE));
     }
 }

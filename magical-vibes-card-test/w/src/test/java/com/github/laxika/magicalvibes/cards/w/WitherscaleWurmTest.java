@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PowerOfFire;
 import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -30,7 +31,7 @@ class WitherscaleWurmTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(attacker.getGrantedKeywords()).contains(Keyword.WITHER);
+        assertThat(PermanentGrants.keywordsOf(gd, attacker)).contains(Keyword.WITHER);
     }
 
     @Test
@@ -44,7 +45,7 @@ class WitherscaleWurmTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
-        assertThat(blocker.getGrantedKeywords()).contains(Keyword.WITHER);
+        assertThat(PermanentGrants.keywordsOf(gd, blocker)).contains(Keyword.WITHER);
     }
 
     @Test

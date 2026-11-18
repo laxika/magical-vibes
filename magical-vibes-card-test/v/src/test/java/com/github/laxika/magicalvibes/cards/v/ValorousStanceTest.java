@@ -38,7 +38,7 @@ class ValorousStanceTest extends BaseCardTest {
             harness.passBothPriorities();
 
             Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-            assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
         }
 
         @Test
@@ -57,7 +57,7 @@ class ValorousStanceTest extends BaseCardTest {
             harness.passBothPriorities();
 
             Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-            assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
         }
     }
 

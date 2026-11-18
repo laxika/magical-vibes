@@ -893,7 +893,6 @@ public class TokenCopySupport {
                         ActivePlayer.ANY);
             }
             if (effect.grantHaste() && effect.hasteUntilEndOfTurn()) {
-                tokenPermanent.getGrantedKeywords().add(Keyword.HASTE);
                 gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                         entry.getCard().getName(), null, entry.getControllerId(),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),

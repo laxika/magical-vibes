@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GaeasAnthem;
 import com.github.laxika.magicalvibes.cards.s.SerraSphinx;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -60,7 +61,7 @@ class PongifyTest extends BaseCardTest {
     @DisplayName("Creates an Ape even when the target is indestructible")
     void createsTokenWhenTargetIsIndestructible() {
         Permanent sphinx = harness.addToBattlefieldAndReturn(player2, new SerraSphinx());
-        sphinx.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, sphinx, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new Pongify()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 

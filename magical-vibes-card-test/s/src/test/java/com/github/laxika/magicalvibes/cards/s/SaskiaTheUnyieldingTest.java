@@ -38,7 +38,7 @@ class SaskiaTheUnyieldingTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(saskia.getProtectionFromPlayerIdsPermanently()).containsExactly(player1.getId());
+        assertThat(saskia.getChosenPlayerIds()).containsExactly(player1.getId());
     }
 
     private Permanent castSaskia() {

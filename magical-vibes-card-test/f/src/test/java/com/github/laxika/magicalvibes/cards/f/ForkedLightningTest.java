@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
@@ -154,7 +155,7 @@ class ForkedLightningTest extends BaseCardTest {
         harness.castSorcery(player1, 0, Map.of(
                 protectedTarget.getId(), 2,
                 legalTarget.getId(), 2));
-        protectedTarget.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, protectedTarget, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         assertThat(protectedTarget.getMarkedDamage()).isZero();
@@ -181,7 +182,7 @@ class ForkedLightningTest extends BaseCardTest {
         Permanent legalTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.castSorcery(player1, 0, Map.of(protectedTarget.getId(), 3, legalTarget.getId(), 1));
-        protectedTarget.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, protectedTarget, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -199,7 +200,7 @@ class ForkedLightningTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.castSorcery(player1, 0, Map.of(target.getId(), 4));
-        target.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");

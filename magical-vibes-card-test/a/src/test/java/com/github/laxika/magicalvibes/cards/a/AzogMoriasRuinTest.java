@@ -98,7 +98,7 @@ class AzogMoriasRuinTest extends BaseCardTest {
     @Test
     void amassesAndDrawsEvenWhenYourCreatureIsIndestructible() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         harness.setLibrary(player1, List.of(new Forest()));
 
         castAzog(target.getId());

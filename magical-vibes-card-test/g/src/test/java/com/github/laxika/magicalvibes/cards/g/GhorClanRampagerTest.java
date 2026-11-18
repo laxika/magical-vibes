@@ -36,7 +36,7 @@ class GhorClanRampagerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(bears.getEffectivePower()).isEqualTo(6);
         assertThat(bears.getEffectiveToughness()).isEqualTo(6);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
         harness.assertInGraveyard(player1, "Ghor-Clan Rampager");
     }
 
@@ -61,7 +61,7 @@ class GhorClanRampagerTest extends BaseCardTest {
 
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -96,13 +96,13 @@ class GhorClanRampagerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).hasSize(1);
         assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(attacker.getEffectivePower()).isEqualTo(6);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(6);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -124,7 +124,7 @@ class GhorClanRampagerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(attacker.getEffectivePower()).isEqualTo(2);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Ghor-Clan Rampager");
     }
 

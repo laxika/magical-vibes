@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FrilledSandwalla;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,7 +32,7 @@ class AerialGuideTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, otherAttacker.getId());
         harness.passBothPriorities();
 
-        assertThat(otherAttacker.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, otherAttacker)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -48,13 +49,13 @@ class AerialGuideTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, otherAttacker.getId());
         harness.passBothPriorities();
 
-        assertThat(otherAttacker.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, otherAttacker)).contains(Keyword.FLYING);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(otherAttacker.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, otherAttacker)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -98,7 +99,7 @@ class AerialGuideTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(guide.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, guide)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -111,7 +112,7 @@ class AerialGuideTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(attacker.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, attacker)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -125,7 +126,7 @@ class AerialGuideTest extends BaseCardTest {
         attacker.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(attacker.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, attacker)).doesNotContain(Keyword.FLYING);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -141,6 +142,6 @@ class AerialGuideTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(guide.getCard());
         harness.passBothPriorities();
 
-        assertThat(attacker.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, attacker)).contains(Keyword.FLYING);
     }
 }

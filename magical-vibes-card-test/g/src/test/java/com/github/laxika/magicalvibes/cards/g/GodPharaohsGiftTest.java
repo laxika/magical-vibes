@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ApocalypseDemon;
 import com.github.laxika.magicalvibes.cards.a.AvenOfEnduringHope;
 import com.github.laxika.magicalvibes.cards.h.HinterlandLogger;
@@ -92,7 +93,7 @@ class GodPharaohsGiftTest extends BaseCardTest {
         assertThat(token.getCard().getToughness()).isEqualTo(4);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
-        assertThat(token.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, token)).contains(Keyword.HASTE);
         assertThat(token.getCard().getKeywords()).doesNotContain(Keyword.HASTE);
     }
 
@@ -143,7 +144,7 @@ class GodPharaohsGiftTest extends BaseCardTest {
 
         harness.assertLife(player1, 23);
         Permanent token = findToken(player1, "Aven of Enduring Hope");
-        assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
     }
@@ -159,7 +160,7 @@ class GodPharaohsGiftTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         Permanent token = findToken(player1, "Grizzly Bears");
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -168,7 +169,7 @@ class GodPharaohsGiftTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
-        assertThat(token.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
     }
@@ -226,7 +227,7 @@ class GodPharaohsGiftTest extends BaseCardTest {
 
         assertThat(token.isTransformed()).isTrue();
         assertThat(token.getCard().getName()).isEqualTo("Timber Shredder");
-        assertThat(token.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
@@ -267,7 +268,7 @@ class GodPharaohsGiftTest extends BaseCardTest {
         Permanent token = findToken(player1, "Apocalypse Demon");
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
-        assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -291,10 +292,10 @@ class GodPharaohsGiftTest extends BaseCardTest {
             assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(4);
             assertThat(copy.getCard().getColor()).isEqualTo(CardColor.BLACK);
             assertThat(copy.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
-            assertThat(copy.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, copy, Keyword.HASTE)).isTrue();
         });
         assertThat(tokensNamed("Soldier")).hasSize(2)
-                .allSatisfy(soldier -> assertThat(soldier.hasKeyword(Keyword.HASTE)).isTrue());
+                .allSatisfy(soldier -> assertThat(gqs.hasKeyword(gd, soldier, Keyword.HASTE)).isTrue());
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class).attackerIndices())
                 .hasSize(4);

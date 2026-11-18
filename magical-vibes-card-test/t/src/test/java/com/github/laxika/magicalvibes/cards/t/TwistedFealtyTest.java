@@ -27,7 +27,7 @@ class TwistedFealtyTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(permanent -> permanent.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         Permanent role = findPermanent(player1, "Wicked");
         assertThat(role.getCard().isToken()).isTrue();
@@ -58,7 +58,7 @@ class TwistedFealtyTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(permanent -> permanent.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(role.getAttachedTo()).isEqualTo(target.getId());
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isFalse();
@@ -104,9 +104,9 @@ class TwistedFealtyTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(stolen).doesNotContain(enchanted);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchanted);
         assertThat(stolen.isTapped()).isFalse();
-        assertThat(stolen.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, stolen, Keyword.HASTE)).isTrue();
         assertThat(enchanted.isTapped()).isTrue();
-        assertThat(enchanted.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, enchanted, Keyword.HASTE)).isFalse();
         assertThat(findPermanent(player1, "Wicked").getAttachedTo()).isEqualTo(enchanted.getId());
         assertThat(gqs.getEffectivePower(gd, stolen)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(4);
@@ -121,7 +121,7 @@ class TwistedFealtyTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(permanent -> permanent.getId().equals(target.getId()));
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(findPermanent(player1, "Wicked").getAttachedTo()).isEqualTo(target.getId());
     }
 
@@ -138,7 +138,7 @@ class TwistedFealtyTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(stolen);
         assertThat(stolen.isTapped()).isFalse();
-        assertThat(stolen.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, stolen, Keyword.HASTE)).isTrue();
         assertThat(findPermanents(player1, "Wicked")).isEmpty();
     }
 
@@ -155,7 +155,7 @@ class TwistedFealtyTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchanted);
         assertThat(enchanted.isTapped()).isTrue();
-        assertThat(enchanted.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, enchanted, Keyword.HASTE)).isFalse();
         assertThat(findPermanent(player1, "Wicked").getAttachedTo()).isEqualTo(enchanted.getId());
         assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(4);
     }

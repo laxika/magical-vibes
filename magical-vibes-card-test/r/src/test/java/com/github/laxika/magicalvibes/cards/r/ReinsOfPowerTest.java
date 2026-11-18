@@ -34,8 +34,8 @@ class ReinsOfPowerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(ownCreature);
         assertThat(ownCreature.isTapped()).isFalse();
         assertThat(opposingCreature.isTapped()).isFalse();
-        assertThat(ownCreature.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(opposingCreature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -68,8 +68,8 @@ class ReinsOfPowerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingCreature);
-        assertThat(ownCreature.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(opposingCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.HASTE)).isFalse();
     }
 
     @Test

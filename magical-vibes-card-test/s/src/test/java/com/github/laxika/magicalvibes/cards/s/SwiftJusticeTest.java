@@ -32,8 +32,8 @@ class SwiftJusticeTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getEffectivePower()).isEqualTo(3);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -48,7 +48,7 @@ class SwiftJusticeTest extends BaseCardTest {
 
         Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -67,8 +67,8 @@ class SwiftJusticeTest extends BaseCardTest {
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
     }
 
     @Test

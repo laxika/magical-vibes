@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArcumsAstrolabe;
 import com.github.laxika.magicalvibes.cards.l.LavaDart;
 import com.github.laxika.magicalvibes.cards.u.UniversalAutomaton;
@@ -44,7 +45,7 @@ class GiverOfRunesTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "COLORLESS");
 
-        assertThat(target.isProtectionFromColorlessUntilEndOfTurn()).isTrue();
+        assertThat(PermanentGrants.hasProtectionFromColorless(gd, target)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, target, null)).isTrue();
     }
 
@@ -98,7 +99,7 @@ class Mh1GiverOfRunesTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         assertThat(giver.isTapped()).isTrue();
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.RED);
     }
 
     @Test
@@ -112,7 +113,7 @@ class Mh1GiverOfRunesTest extends BaseCardTest {
         harness.handleListChoice(player1, "COLORLESS");
 
         assertThat(giver.isTapped()).isTrue();
-        assertThat(target.isProtectionFromColorlessUntilEndOfTurn()).isTrue();
+        assertThat(PermanentGrants.hasProtectionFromColorless(gd, target)).isTrue();
     }
 
     @Test
@@ -142,11 +143,11 @@ class Mh1GiverOfRunesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLUE");
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.BLUE);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).doesNotContain(CardColor.BLUE);
     }
 
     @Test
@@ -200,8 +201,8 @@ class Mh1GiverOfRunesTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        assertThat(target.isProtectionFromColorlessUntilEndOfTurn()).isFalse();
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).isEmpty();
+        assertThat(PermanentGrants.hasProtectionFromColorless(gd, target)).isFalse();
     }
 
     @Test
@@ -285,6 +286,6 @@ class Mh1GiverOfRunesTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).containsExactly(CardColor.WHITE);
     }
 }

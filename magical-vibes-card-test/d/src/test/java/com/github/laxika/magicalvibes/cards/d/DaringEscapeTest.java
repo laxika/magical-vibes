@@ -34,7 +34,7 @@ class DaringEscapeTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(1);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
 
@@ -59,7 +59,7 @@ class DaringEscapeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -91,7 +91,7 @@ class DaringEscapeTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(1);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .containsExactly(topCard);
 
@@ -115,7 +115,7 @@ class DaringEscapeTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(1);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Daring Escape");

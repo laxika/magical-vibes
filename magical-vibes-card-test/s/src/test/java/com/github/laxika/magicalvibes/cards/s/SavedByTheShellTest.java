@@ -27,9 +27,9 @@ class SavedByTheShellTest extends BaseCardTest {
         castSavedByTheShell(target);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -43,9 +43,9 @@ class SavedByTheShellTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -110,9 +110,9 @@ class SavedByTheShellTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 

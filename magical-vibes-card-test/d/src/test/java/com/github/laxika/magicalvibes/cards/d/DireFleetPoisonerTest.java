@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
 import com.github.laxika.magicalvibes.cards.s.SailorOfMeans;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -32,7 +33,7 @@ class DireFleetPoisonerTest extends BaseCardTest {
 
         assertThat(pirate.getEffectivePower()).isEqualTo(3);
         assertThat(pirate.getEffectiveToughness()).isEqualTo(3);
-        assertThat(pirate.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, pirate)).contains(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -49,7 +50,7 @@ class DireFleetPoisonerTest extends BaseCardTest {
 
         assertThat(pirate.getEffectivePower()).isEqualTo(2);
         assertThat(pirate.getEffectiveToughness()).isEqualTo(2);
-        assertThat(pirate.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, pirate)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -119,7 +120,7 @@ class DireFleetPoisonerTest extends BaseCardTest {
 
         assertThat(pirate.getEffectivePower()).isEqualTo(2);
         assertThat(pirate.getEffectiveToughness()).isEqualTo(2);
-        assertThat(pirate.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, pirate)).doesNotContain(Keyword.DEATHTOUCH);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -138,7 +139,7 @@ class DireFleetPoisonerTest extends BaseCardTest {
 
         assertThat(pirate.getEffectivePower()).isEqualTo(2);
         assertThat(pirate.getEffectiveToughness()).isEqualTo(2);
-        assertThat(pirate.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, pirate)).doesNotContain(Keyword.DEATHTOUCH);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -158,7 +159,7 @@ class DireFleetPoisonerTest extends BaseCardTest {
 
         assertThat(pirate.getEffectivePower()).isEqualTo(3);
         assertThat(pirate.getEffectiveToughness()).isEqualTo(3);
-        assertThat(pirate.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, pirate)).contains(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -174,7 +175,7 @@ class DireFleetPoisonerTest extends BaseCardTest {
 
         assertThat(pirate.getEffectivePower()).isEqualTo(3);
         assertThat(pirate.getEffectiveToughness()).isEqualTo(3);
-        assertThat(pirate.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, pirate)).contains(Keyword.DEATHTOUCH);
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.Set;
+import java.util.EnumSet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -74,11 +76,13 @@ public class MagmasaurUpkeepSupport {
             // The damage keeps the keywords the creature had on the battlefield (CR 608.2h), including ones
             // granted by an Aura that leaves with it, so lifelink and deathtouch still apply to the blast.
             lastKnownSource = new Permanent(source);
+            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
             for (Keyword keyword : DAMAGE_KEYWORDS) {
                 if (gameQueryService.hasKeyword(gameData, source, keyword)) {
-                    lastKnownSource.getGrantedKeywords().add(keyword);
+                    keywords.add(keyword);
                 }
             }
+            lastKnownSource.setLastKnownKeywords(keywords);
         }
         if (source != null) {
             destructionSupport.sacrificeAndLog(gameData, source, controllerId);

@@ -35,7 +35,7 @@ class DestinedLeadTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         harness.assertInGraveyard(player1, "Destined // Lead");
     }
 
@@ -54,7 +54,7 @@ class DestinedLeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -140,7 +140,7 @@ class DestinedLeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test

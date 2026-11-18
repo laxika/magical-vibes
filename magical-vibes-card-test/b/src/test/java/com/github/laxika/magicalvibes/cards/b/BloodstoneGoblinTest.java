@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AcademyDrake;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -37,7 +38,7 @@ class BloodstoneGoblinTest extends BaseCardTest {
 
         assertThat(goblin.getPowerModifier()).isEqualTo(1);
         assertThat(goblin.getToughnessModifier()).isEqualTo(1);
-        assertThat(goblin.getGrantedKeywords()).contains(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, goblin)).contains(Keyword.MENACE);
     }
 
     @Test
@@ -58,7 +59,7 @@ class BloodstoneGoblinTest extends BaseCardTest {
 
         assertThat(goblin.getPowerModifier()).isEqualTo(0);
         assertThat(goblin.getToughnessModifier()).isEqualTo(0);
-        assertThat(goblin.getGrantedKeywords()).doesNotContain(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, goblin)).doesNotContain(Keyword.MENACE);
     }
 
     @Test
@@ -77,7 +78,7 @@ class BloodstoneGoblinTest extends BaseCardTest {
 
         assertThat(goblin.getPowerModifier()).isEqualTo(0);
         assertThat(goblin.getToughnessModifier()).isEqualTo(0);
-        assertThat(goblin.getGrantedKeywords()).doesNotContain(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, goblin)).doesNotContain(Keyword.MENACE);
     }
 
     @Test
@@ -129,7 +130,7 @@ class BloodstoneGoblinTest extends BaseCardTest {
 
         assertThat(goblin.getPowerModifier()).isEqualTo(0);
         assertThat(goblin.getToughnessModifier()).isEqualTo(0);
-        assertThat(goblin.getGrantedKeywords()).doesNotContain(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, goblin)).doesNotContain(Keyword.MENACE);
     }
 
     @Test
@@ -144,12 +145,12 @@ class BloodstoneGoblinTest extends BaseCardTest {
         harness.castKickedInstant(player1, 0, target.getId());
 
         assertThat(goblin.getPowerModifier()).isZero();
-        assertThat(goblin.getGrantedKeywords()).doesNotContain(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, goblin)).doesNotContain(Keyword.MENACE);
         harness.passBothPriorities();
 
         assertThat(goblin.getPowerModifier()).isEqualTo(1);
         assertThat(goblin.getToughnessModifier()).isEqualTo(1);
-        assertThat(goblin.getGrantedKeywords()).contains(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, goblin)).contains(Keyword.MENACE);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.stack).hasSize(1);
     }
@@ -168,7 +169,7 @@ class BloodstoneGoblinTest extends BaseCardTest {
 
         assertThat(goblin.getPowerModifier()).isEqualTo(1);
         assertThat(goblin.getToughnessModifier()).isEqualTo(1);
-        assertThat(goblin.getGrantedKeywords()).contains(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, goblin)).contains(Keyword.MENACE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -195,7 +196,7 @@ class BloodstoneGoblinTest extends BaseCardTest {
         for (Permanent goblin : List.of(first, second)) {
             assertThat(goblin.getPowerModifier()).isEqualTo(1);
             assertThat(goblin.getToughnessModifier()).isEqualTo(1);
-            assertThat(goblin.getGrantedKeywords()).contains(Keyword.MENACE);
+            assertThat(PermanentGrants.keywordsOf(gd, goblin)).contains(Keyword.MENACE);
         }
         assertThat(gd.stack).hasSize(1);
     }
@@ -223,7 +224,7 @@ class BloodstoneGoblinTest extends BaseCardTest {
 
         assertThat(remaining.getPowerModifier()).isEqualTo(1);
         assertThat(remaining.getToughnessModifier()).isEqualTo(1);
-        assertThat(remaining.getGrantedKeywords()).contains(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, remaining)).contains(Keyword.MENACE);
         assertThat(gd.stack).hasSize(1);
     }
 }

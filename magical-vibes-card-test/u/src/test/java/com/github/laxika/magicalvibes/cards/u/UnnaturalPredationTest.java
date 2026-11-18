@@ -54,7 +54,7 @@ class UnnaturalPredationTest extends BaseCardTest {
         assertThat(wolf.getToughnessModifier()).isEqualTo(1);
         assertThat(wolf.getEffectivePower()).isEqualTo(3);
         assertThat(wolf.getEffectiveToughness()).isEqualTo(3);
-        assertThat(wolf.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -74,7 +74,7 @@ class UnnaturalPredationTest extends BaseCardTest {
         Permanent wolf = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(wolf.getPowerModifier()).isEqualTo(0);
         assertThat(wolf.getToughnessModifier()).isEqualTo(0);
-        assertThat(wolf.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -109,10 +109,10 @@ class UnnaturalPredationTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(3);
         assertThat(target.getEffectiveToughness()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Unnatural Predation");
     }
 
@@ -128,7 +128,7 @@ class UnnaturalPredationTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -136,7 +136,7 @@ class UnnaturalPredationTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -151,6 +151,6 @@ class UnnaturalPredationTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(artifact.getPowerModifier()).isZero();
-        assertThat(artifact.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.TRAMPLE)).isFalse();
     }
 }

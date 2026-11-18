@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -26,8 +27,8 @@ class DemoralizeTest extends BaseCardTest {
 
         castDemoralize();
 
-        assertThat(ownCreature.getGrantedKeywords()).contains(Keyword.MENACE);
-        assertThat(opposingCreature.getGrantedKeywords()).contains(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, ownCreature)).contains(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, opposingCreature)).contains(Keyword.MENACE);
     }
 
     @Test

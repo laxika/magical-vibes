@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.Terror;
@@ -32,7 +33,7 @@ class BlossomingDefenseTest extends BaseCardTest {
         assertThat(bears.getToughnessModifier()).isEqualTo(2);
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(bears.getEffectiveToughness()).isEqualTo(4);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.HEXPROOF);
     }
 
     @Test
@@ -47,7 +48,7 @@ class BlossomingDefenseTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.HEXPROOF);
     }
 
     @Test
@@ -78,7 +79,7 @@ class BlossomingDefenseTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Terror");
         assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.HEXPROOF);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -104,7 +105,7 @@ class BlossomingDefenseTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isEqualTo(4);
         assertThat(bears.getToughnessModifier()).isEqualTo(4);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.HEXPROOF);
     }
 
     @Test
@@ -136,7 +137,7 @@ class BlossomingDefenseTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Blossoming Defense");
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.HEXPROOF);
         assertThat(gd.stack).isEmpty();
     }
 

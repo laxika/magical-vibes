@@ -27,7 +27,7 @@ class BlightwingWhelpTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(whelp.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, whelp, Keyword.HASTE)).isTrue();
     }
 
     @Test

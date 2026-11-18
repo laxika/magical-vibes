@@ -37,7 +37,7 @@ class JasonBrightGlowingProphetTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
         assertThat(jason.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(jason.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, jason, Keyword.FLYING)).isTrue();
         harness.assertInGraveyard(player1, "Glowing One");
     }
 
@@ -127,7 +127,7 @@ class JasonBrightGlowingProphetTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
         harness.assertInGraveyard(player1, "Jason Bright, Glowing Prophet");
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -175,11 +175,11 @@ class JasonBrightGlowingProphetTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, jason.getId());
         harness.handlePermanentChosen(player1, fodder.getId());
         resolveAllTriggers();
-        assertThat(jason.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, jason, Keyword.FLYING)).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(jason.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, jason, Keyword.FLYING)).isFalse();
         assertThat(jason.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 

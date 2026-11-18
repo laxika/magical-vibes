@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.d.DragonScarredBear;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -30,7 +31,7 @@ class CenterSoulTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.handleListChoice(player1, "RED");
 
-        assertThat(bear.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bear)).contains(CardColor.RED);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
     }
@@ -56,7 +57,7 @@ class CenterSoulTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         assertThat(gd.findExiledCard(card.getId())).isNull();
-        assertThat(bear.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bear)).contains(CardColor.BLUE);
         harness.assertInGraveyard(player1, "Center Soul");
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }
@@ -120,7 +121,7 @@ class CenterSoulTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.handleListChoice(player1, "WHITE");
 
-        assertThat(bear.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bear)).containsExactly(CardColor.WHITE);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         harness.assertNotInGraveyard(player1, "Center Soul");
     }
@@ -140,6 +141,6 @@ class CenterSoulTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasProtectionFrom(gd, bear, CardColor.BLACK)).isFalse();
-        assertThat(bear.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, bear)).isEmpty();
     }
 }

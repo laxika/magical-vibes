@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SpiritFlare;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -99,15 +100,15 @@ class GrotesqueHybridTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(hybrid.getGrantedKeywords()).contains(Keyword.FLYING);
-        assertThat(hybrid.getProtectionFromColorsUntilEndOfTurn())
+        assertThat(PermanentGrants.keywordsOf(gd, hybrid)).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.protectionColorsOf(gd, hybrid))
                 .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(hybrid.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
-        assertThat(hybrid.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.keywordsOf(gd, hybrid)).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.protectionColorsOf(gd, hybrid)).isEmpty();
     }
 }

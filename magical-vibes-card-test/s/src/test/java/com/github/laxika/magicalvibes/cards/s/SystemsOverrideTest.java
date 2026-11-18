@@ -34,7 +34,7 @@ class SystemsOverrideTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
     }
 
@@ -92,7 +92,7 @@ class SystemsOverrideTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 
@@ -139,7 +139,7 @@ class SystemsOverrideTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(spacecraft);
         assertThat(spacecraft.isTapped()).isFalse();
-        assertThat(spacecraft.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, spacecraft, Keyword.HASTE)).isTrue();
         assertThat(spacecraft.getCounterCount(CounterType.CHARGE)).isEqualTo(10);
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();

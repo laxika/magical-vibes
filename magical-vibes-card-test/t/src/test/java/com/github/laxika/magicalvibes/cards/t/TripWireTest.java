@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.ShuCavalry;
 import com.github.laxika.magicalvibes.cards.s.ShuDefender;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -64,7 +65,7 @@ class TripWireTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castSorcery(player1, 0, List.of(horseman.getId()));
-        horseman.getRemovedKeywords().add(Keyword.HORSEMANSHIP);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, horseman, Keyword.HORSEMANSHIP);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -94,7 +95,7 @@ class TripWireTest extends BaseCardTest {
     @DisplayName("Does not destroy an indestructible creature with horsemanship")
     void indestructibleCreatureSurvives() {
         Permanent horseman = harness.addToBattlefieldAndReturn(player2, new ShuCavalry());
-        horseman.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, horseman, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new TripWire()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 

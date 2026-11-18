@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -208,7 +209,7 @@ class HyenaUmbraTest extends BaseCardTest {
     void indestructibleCreatureKeepsAura() {
         Permanent creature = addCreatureReady(player1, new LagacLizard());
         Permanent aura = attachUmbra(creature);
-        creature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.INDESTRUCTIBLE);
         creature.setMarkedDamage(4);
 
         harness.runStateBasedActions();

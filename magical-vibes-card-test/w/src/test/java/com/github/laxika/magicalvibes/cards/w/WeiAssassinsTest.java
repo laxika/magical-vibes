@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -73,7 +74,7 @@ class WeiAssassinsTest extends BaseCardTest {
     @DisplayName("ETB does not destroy an indestructible creature")
     void etbDoesNotDestroyIndestructibleCreature() {
         Permanent infantry = harness.addToBattlefieldAndReturn(player2, new WeiInfantry());
-        infantry.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, infantry, Keyword.INDESTRUCTIBLE);
 
         castWeiAssassins(player2.getId());
         harness.passBothPriorities(); // resolve creature spell
@@ -98,7 +99,7 @@ class WeiAssassinsTest extends BaseCardTest {
     @DisplayName("Opponent may choose an indestructible creature and keep both creatures")
     void opponentMayChooseIndestructibleCreature() {
         Permanent infantry = harness.addToBattlefieldAndReturn(player2, new WeiInfantry());
-        infantry.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, infantry, Keyword.INDESTRUCTIBLE);
         Permanent eliteCompanions = harness.addToBattlefieldAndReturn(player2, new WeiEliteCompanions());
 
         castWeiAssassins(player2.getId());
@@ -120,7 +121,7 @@ class WeiAssassinsTest extends BaseCardTest {
     @DisplayName("Opponent can choose a creature with shroud because only the opponent is targeted")
     void chosenCreatureDoesNotNeedToBeTargetable() {
         Permanent infantry = harness.addToBattlefieldAndReturn(player2, new WeiInfantry());
-        infantry.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, infantry, Keyword.SHROUD);
         Permanent eliteCompanions = harness.addToBattlefieldAndReturn(player2, new WeiEliteCompanions());
 
         castWeiAssassins(player2.getId());

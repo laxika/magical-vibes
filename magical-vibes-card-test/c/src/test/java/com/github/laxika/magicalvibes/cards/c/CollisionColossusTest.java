@@ -64,14 +64,14 @@ class CollisionColossusTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(6);
         assertThat(target.getEffectiveToughness()).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -118,7 +118,7 @@ class CollisionColossusTest extends BaseCardTest {
 
         assertThat(other.getEffectivePower()).isEqualTo(2);
         assertThat(other.getEffectiveToughness()).isEqualTo(2);
-        assertThat(other.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Collision // Colossus");
     }

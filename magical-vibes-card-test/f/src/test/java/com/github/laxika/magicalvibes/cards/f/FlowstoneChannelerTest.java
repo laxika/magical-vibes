@@ -33,7 +33,7 @@ class FlowstoneChannelerTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(-1);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(channeler.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Ashcoat Bear");
     }
@@ -57,7 +57,7 @@ class FlowstoneChannelerTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -102,13 +102,13 @@ class FlowstoneChannelerTest extends BaseCardTest {
         assertThat(channeler.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(channeler.getPowerModifier()).isZero();
-        assertThat(channeler.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, channeler, Keyword.HASTE)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(channeler.getPowerModifier()).isEqualTo(1);
         assertThat(channeler.getToughnessModifier()).isEqualTo(-1);
-        assertThat(channeler.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, channeler, Keyword.HASTE)).isTrue();
     }
 
     @Test

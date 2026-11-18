@@ -74,7 +74,7 @@ class BringerOfTheRedDawnTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
     }
 
@@ -91,7 +91,7 @@ class BringerOfTheRedDawnTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
@@ -110,7 +110,7 @@ class BringerOfTheRedDawnTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 
@@ -130,7 +130,7 @@ class BringerOfTheRedDawnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 
@@ -203,7 +203,7 @@ class BringerOfTheRedDawnTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         harness.assertOnBattlefield(player1, "Dross Crocodile");
         harness.assertNotOnBattlefield(player2, "Dross Crocodile");
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
     }
 
@@ -223,7 +223,7 @@ class BringerOfTheRedDawnTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(bringer.isTapped()).isFalse();
-        assertThat(bringer.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bringer, Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player1, "Bringer of the Red Dawn");
     }
 }

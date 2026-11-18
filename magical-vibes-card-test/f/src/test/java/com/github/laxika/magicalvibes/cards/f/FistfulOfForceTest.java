@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.cards.s.SylvanEchoes;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -49,7 +50,7 @@ class FistfulOfForceTest extends BaseCardTest {
         Permanent target = findPermanent(player1, "Woodland Changeling");
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test
@@ -65,7 +66,7 @@ class FistfulOfForceTest extends BaseCardTest {
         Permanent target = findPermanent(player2, "Woodland Changeling");
         assertThat(target.getPowerModifier()).isEqualTo(4);
         assertThat(target.getToughnessModifier()).isEqualTo(4);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.TRAMPLE);
         assertThat(gd.playerDecks.get(player1.getId()).getLast()).isInstanceOf(WoodlandChangeling.class);
         harness.assertInGraveyard(player1, "Fistful of Force");
     }
@@ -121,7 +122,7 @@ class FistfulOfForceTest extends BaseCardTest {
         Permanent target = findPermanent(player1, "Woodland Changeling");
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test
@@ -168,7 +169,7 @@ class FistfulOfForceTest extends BaseCardTest {
         Permanent bear = findPermanent(player1, "Woodland Changeling");
         assertThat(bear.getPowerModifier()).isEqualTo(4);
         assertThat(bear.getToughnessModifier()).isEqualTo(4);
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -185,7 +186,7 @@ class FistfulOfForceTest extends BaseCardTest {
         Permanent bear = findPermanent(player1, "Woodland Changeling");
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isEqualTo(2);
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test
@@ -206,7 +207,7 @@ class FistfulOfForceTest extends BaseCardTest {
         Permanent bear = findPermanent(player1, "Woodland Changeling");
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test

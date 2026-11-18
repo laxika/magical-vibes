@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FolkOfAnHavva;
 import com.github.laxika.magicalvibes.cards.r.Roterothopter;
 import com.github.laxika.magicalvibes.cards.t.Torture;
@@ -77,7 +78,7 @@ class WillowPriestessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent folk = findPermanent(player1, "Folk of An-Havva");
-        assertThat(folk.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, folk)).contains(CardColor.BLACK);
     }
 
     @Test
@@ -92,7 +93,7 @@ class WillowPriestessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent folk = findPermanent(player2, "Folk of An-Havva");
-        assertThat(folk.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, folk)).contains(CardColor.BLACK);
     }
 
     @Test
@@ -107,14 +108,14 @@ class WillowPriestessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent folk = findPermanent(player1, "Folk of An-Havva");
-        assertThat(folk.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, folk)).contains(CardColor.BLACK);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(folk.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, folk)).doesNotContain(CardColor.BLACK);
     }
 
     @Test
@@ -205,7 +206,7 @@ class WillowPriestessTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, priestess.getId());
         harness.passBothPriorities();
 
-        assertThat(priestess.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, priestess)).contains(CardColor.BLACK);
         assertThat(priestess.isTapped()).isTrue();
     }
 

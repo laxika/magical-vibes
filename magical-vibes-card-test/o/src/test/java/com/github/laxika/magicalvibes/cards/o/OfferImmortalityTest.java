@@ -32,8 +32,8 @@ class OfferImmortalityTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -50,8 +50,8 @@ class OfferImmortalityTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -63,10 +63,10 @@ class OfferImmortalityTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(other.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(other.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test

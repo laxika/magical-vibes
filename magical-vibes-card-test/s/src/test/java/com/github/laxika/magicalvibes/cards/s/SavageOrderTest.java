@@ -40,7 +40,7 @@ class SavageOrderTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Colossal Dreadmaw");
         Permanent found = findPermanent(player1, "Frenzied Raptor");
         assertThat(found).isNotNull();
-        assertThat(found.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, found, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -56,13 +56,13 @@ class SavageOrderTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(found.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, found, Keyword.INDESTRUCTIBLE)).isTrue();
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(found.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, found, Keyword.INDESTRUCTIBLE)).isTrue();
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
-        assertThat(found.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, found, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -95,7 +95,7 @@ class SavageOrderTest extends BaseCardTest {
         Permanent found = findPermanent(player1, "Colossal Dreadmaw");
         assertThat(found).isNotNull();
         assertThat(found.isTapped()).isFalse();
-        assertThat(found.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, found, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test

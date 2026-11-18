@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -54,11 +55,11 @@ class SorrowsPathTest extends BaseCardTest {
         Permanent path = harness.addToBattlefieldAndReturn(player1, new SorrowsPath());
         Permanent groundAttacker = addCreatureReady(player1, new Lurker());
         Permanent flyingAttacker = addCreatureReady(player1, new Lurker());
-        flyingAttacker.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, flyingAttacker, Keyword.FLYING);
         Permanent blockerA = addCreatureReady(player2, new Lurker());
         Permanent blockerB = addCreatureReady(player2, new Lurker());
         setupCombat(groundAttacker, flyingAttacker);
-        blockerB.getGrantedKeywords().add(Keyword.REACH);
+        PermanentGrants.keywordUntilEndOfTurn(gd, blockerB, Keyword.REACH);
         assignBlocker(blockerA, groundAttacker);
         assignBlocker(blockerB, flyingAttacker);
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChromaticSphere;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -63,7 +64,7 @@ class ArtifactMutationTest extends BaseCardTest {
     @DisplayName("Creates Saprolings even when the artifact is indestructible")
     void createsSaprolingsWhenArtifactIsIndestructible() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AlloyGolem());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new ArtifactMutation()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);

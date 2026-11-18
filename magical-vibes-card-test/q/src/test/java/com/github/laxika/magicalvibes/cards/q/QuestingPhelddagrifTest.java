@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AncientSpider;
 import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -76,7 +77,7 @@ class QuestingPhelddagrifTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(phelddagrif.getProtectionFromColorsUntilEndOfTurn())
+        assertThat(PermanentGrants.protectionColorsOf(gd, phelddagrif))
                 .containsExactlyInAnyOrder(CardColor.BLACK, CardColor.RED);
         harness.assertLife(player2, 22);
         harness.assertLife(player1, 20);
@@ -94,7 +95,7 @@ class QuestingPhelddagrifTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(phelddagrif.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, phelddagrif)).isEmpty();
     }
 
     @Test
@@ -106,7 +107,7 @@ class QuestingPhelddagrifTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(phelddagrif.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, phelddagrif)).contains(Keyword.FLYING);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
 
@@ -156,7 +157,7 @@ class QuestingPhelddagrifTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, phelddagrif)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, phelddagrif)).isEqualTo(4);
-        assertThat(phelddagrif.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, phelddagrif)).isEmpty();
         assertThat(gqs.hasKeyword(gd, phelddagrif, Keyword.FLYING)).isFalse();
         assertThat(findPermanents(player2, "Hippo")).isEmpty();
         harness.assertLife(player2, 20);

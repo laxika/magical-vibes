@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DwarvenMauler;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -79,7 +80,7 @@ class BilbosDeadlySliceTest extends BaseCardTest {
     @Test
     void indestructibleCreatureSurvives() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new DwarvenMauler());
-        creature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new BilbosDeadlySlice()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -113,7 +114,7 @@ class BilbosDeadlySliceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castInstant(player1, 0, creature.getId());
-        creature.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Dwarven Mauler");

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.e.EagerConstruct;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -74,7 +75,7 @@ class NoxiousGearhulkTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
 
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);

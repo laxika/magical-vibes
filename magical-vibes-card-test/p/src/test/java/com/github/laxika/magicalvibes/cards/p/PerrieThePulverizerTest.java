@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -48,7 +49,7 @@ class PerrieThePulverizerTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -71,12 +72,12 @@ class PerrieThePulverizerTest extends BaseCardTest {
 
         assertThat(perrie.getPowerModifier()).isZero();
         assertThat(perrie.getToughnessModifier()).isZero();
-        assertThat(perrie.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, perrie)).contains(Keyword.TRAMPLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(perrie.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, perrie)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test
@@ -98,14 +99,14 @@ class PerrieThePulverizerTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.TRAMPLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.TRAMPLE);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
 
@@ -125,6 +126,6 @@ class PerrieThePulverizerTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.TRAMPLE);
     }
 }

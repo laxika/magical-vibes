@@ -32,7 +32,7 @@ class SylvanSafekeeperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Krosan Verge");
-        assertThat(warthog.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warthog, Keyword.SHROUD)).isTrue();
     }
 
     @Test
@@ -63,12 +63,12 @@ class SylvanSafekeeperTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, warthog.getId());
         harness.passBothPriorities();
-        assertThat(warthog.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warthog, Keyword.SHROUD)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(warthog.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, warthog, Keyword.SHROUD)).isFalse();
     }
 
     @Test
@@ -116,7 +116,7 @@ class SylvanSafekeeperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, warthog.getId());
         harness.passBothPriorities();
 
-        assertThat(warthog.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warthog, Keyword.SHROUD)).isTrue();
         harness.addToBattlefield(player1, new KrosanVerge());
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, warthog.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -135,12 +135,12 @@ class SylvanSafekeeperTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Krosan Verge");
         harness.assertNotOnBattlefield(player1, "Krosan Verge");
-        assertThat(safekeeper.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, safekeeper, Keyword.SHROUD)).isFalse();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(safekeeper.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, safekeeper, Keyword.SHROUD)).isTrue();
         assertThat(safekeeper.isTapped()).isTrue();
     }
 
@@ -171,12 +171,12 @@ class SylvanSafekeeperTest extends BaseCardTest {
         harness.castInstant(player2, 0, warthog.getId());
         harness.activateAbility(player1, 0, null, warthog.getId());
         harness.passBothPriorities();
-        assertThat(warthog.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warthog, Keyword.SHROUD)).isTrue();
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Guided Strike");
         harness.assertNotInHand(player2, "Giant Warthog");
-        assertThat(warthog.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, warthog, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 }

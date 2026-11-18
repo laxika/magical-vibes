@@ -26,16 +26,16 @@ class HeadlongRushTest extends BaseCardTest {
 
         castHeadlongRush();
 
-        assertThat(ownAttacker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(opponentAttacker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(ownNonAttacker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(opponentNonAttacker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownAttacker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentAttacker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownNonAttacker, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentNonAttacker, Keyword.FIRST_STRIKE)).isFalse();
 
         ownNonAttacker.setAttacking(true);
         opponentNonAttacker.setAttacking(true);
 
-        assertThat(ownNonAttacker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(opponentNonAttacker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownNonAttacker, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentNonAttacker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -46,13 +46,13 @@ class HeadlongRushTest extends BaseCardTest {
 
         castHeadlongRush();
 
-        assertThat(attacker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -64,7 +64,7 @@ class HeadlongRushTest extends BaseCardTest {
         castHeadlongRush();
         attacker.setAttacking(false);
 
-        assertThat(attacker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -81,8 +81,8 @@ class HeadlongRushTest extends BaseCardTest {
         newAttacker.setAttacking(true);
         harness.passBothPriorities();
 
-        assertThat(removedAttacker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(newAttacker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, removedAttacker, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, newAttacker, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -93,7 +93,7 @@ class HeadlongRushTest extends BaseCardTest {
         castHeadlongRush();
         creature.setAttacking(true);
 
-        assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Headlong Rush");
     }

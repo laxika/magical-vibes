@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -32,7 +33,7 @@ class MakeAStandTest extends BaseCardTest {
         for (Permanent p : creaturesOf(player1.getId())) {
             assertThat(p.getEffectivePower()).isEqualTo(3);
             assertThat(p.getEffectiveToughness()).isEqualTo(2);
-            assertThat(p.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+            assertThat(PermanentGrants.keywordsOf(gd, p)).contains(Keyword.INDESTRUCTIBLE);
         }
     }
 
@@ -48,7 +49,7 @@ class MakeAStandTest extends BaseCardTest {
 
         for (Permanent p : creaturesOf(player2.getId())) {
             assertThat(p.getEffectivePower()).isEqualTo(2);
-            assertThat(p.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+            assertThat(PermanentGrants.keywordsOf(gd, p)).doesNotContain(Keyword.INDESTRUCTIBLE);
         }
     }
 
@@ -83,7 +84,7 @@ class MakeAStandTest extends BaseCardTest {
 
         for (Permanent p : creaturesOf(player1.getId())) {
             assertThat(p.getPowerModifier()).isEqualTo(0);
-            assertThat(p.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+            assertThat(PermanentGrants.keywordsOf(gd, p)).doesNotContain(Keyword.INDESTRUCTIBLE);
         }
     }
 
@@ -100,10 +101,10 @@ class MakeAStandTest extends BaseCardTest {
         Permanent newcomer = creaturesOf(player1.getId()).getLast();
 
         assertThat(original.getEffectivePower()).isEqualTo(3);
-        assertThat(original.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, original)).contains(Keyword.INDESTRUCTIBLE);
         assertThat(newcomer.getEffectivePower()).isEqualTo(2);
         assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
-        assertThat(newcomer.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, newcomer)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -119,7 +120,7 @@ class MakeAStandTest extends BaseCardTest {
         Permanent creature = creaturesOf(player1.getId()).getFirst();
         assertThat(creature.getEffectivePower()).isEqualTo(3);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -135,7 +136,7 @@ class MakeAStandTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GreenwoodSentinel());
         Permanent creature = creaturesOf(player1.getId()).getFirst();
         assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     private List<Permanent> creaturesOf(java.util.UUID playerId) {

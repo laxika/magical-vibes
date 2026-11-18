@@ -32,13 +32,13 @@ class SurgeOfStrengthTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Storm Shaman");
         harness.assertNotInGraveyard(player1, "Surge of Strength");
         assertThat(druid.getPowerModifier()).isZero();
-        assertThat(druid.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, druid, Keyword.TRAMPLE)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(druid.getEffectivePower()).isEqualTo(5);
         assertThat(druid.getEffectiveToughness()).isEqualTo(2);
-        assertThat(druid.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, druid, Keyword.TRAMPLE)).isTrue();
         harness.assertInGraveyard(player1, "Surge of Strength");
     }
 
@@ -68,7 +68,7 @@ class SurgeOfStrengthTest extends BaseCardTest {
         Permanent resolvedDruid = findPermanent(player1, "Fyndhorn Druid");
         assertThat(resolvedDruid.getEffectivePower()).isEqualTo(5);
         assertThat(resolvedDruid.getEffectiveToughness()).isEqualTo(2);
-        assertThat(resolvedDruid.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, resolvedDruid, Keyword.TRAMPLE)).isTrue();
         harness.assertInGraveyard(player1, "Fyndhorn Druid");
     }
 
@@ -84,7 +84,7 @@ class SurgeOfStrengthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(druid.getEffectivePower()).isEqualTo(5);
-        assertThat(druid.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, druid, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -100,7 +100,7 @@ class SurgeOfStrengthTest extends BaseCardTest {
 
         Permanent resolvedDruid = findPermanent(player1, "Fyndhorn Druid");
         assertThat(resolvedDruid.getEffectivePower()).isEqualTo(5);
-        assertThat(resolvedDruid.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, resolvedDruid, Keyword.TRAMPLE)).isTrue();
         harness.assertInGraveyard(player1, "Storm Shaman");
     }
 
@@ -121,7 +121,7 @@ class SurgeOfStrengthTest extends BaseCardTest {
 
         Permanent resolvedDruid = findPermanent(player1, "Fyndhorn Druid");
         assertThat(resolvedDruid.getPowerModifier()).isEqualTo(0);
-        assertThat(resolvedDruid.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, resolvedDruid, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test

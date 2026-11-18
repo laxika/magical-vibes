@@ -4063,11 +4063,10 @@ public class PredicateEvaluationService {
      * Protection from a color without consulting {@code GameQueryService.computeStaticBonus}:
      * the in-flight layer-6 state when a CR 613 pass is running (it already carries the
      * permanent's own printed protection plus any grants applied so far), the printed static
-     * ability otherwise, plus until-end-of-turn grants either way.
+     * ability otherwise.
      */
     private boolean hasRecursionSafeProtectionFrom(Permanent permanent, CardColor color) {
         if (color == null) return false;
-        if (permanent.getProtectionFromColorsUntilEndOfTurn().contains(color)) return true;
         CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
         if (layered != null) {
             return layered.hasProtectionColor(color);
@@ -5040,8 +5039,7 @@ public class PredicateEvaluationService {
             case PermanentNameInPredicate p ->
                     state.getName() != null && p.cardNames().contains(state.getName());
             case PermanentHasProtectionFromColorPredicate p ->
-                    state.hasProtectionColor(p.color())
-                            || permanent.getProtectionFromColorsUntilEndOfTurn().contains(p.color());
+                    state.hasProtectionColor(p.color());
             case PermanentHasSupertypePredicate p ->
                     hasSupertype(permanent, gameData, p.supertype());
             case PermanentIsHistoricPredicate ignored ->

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlack;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -99,7 +100,7 @@ class StenchOfEvilTest extends BaseCardTest {
     void indestructiblePlainsAreNotCounted() {
         Permanent indestructiblePlains =
                 harness.addToBattlefieldAndReturn(player2, new SnowCoveredPlains());
-        indestructiblePlains.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, indestructiblePlains, Keyword.INDESTRUCTIBLE);
         harness.addToBattlefield(player2, new SnowCoveredPlains());
         int life2 = gd.playerLifeTotals.get(player2.getId());
         castStenchOfEvil();

@@ -34,7 +34,7 @@ class FistsOfFlameTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         harness.assertInHand(player1, "Snow-Covered Forest");
 
         harness.forceStep(TurnStep.END_STEP);
@@ -42,7 +42,7 @@ class FistsOfFlameTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -76,7 +76,7 @@ class FistsOfFlameTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(3);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         harness.assertInHand(player1, "Snow-Covered Forest");
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
@@ -120,7 +120,7 @@ class FistsOfFlameTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(5);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 }

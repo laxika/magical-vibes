@@ -28,7 +28,7 @@ class FrenziedFugueTest extends BaseCardTest {
 
         assertThat(controls(player1, target)).isTrue();
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
     }
 
@@ -41,7 +41,7 @@ class FrenziedFugueTest extends BaseCardTest {
         endTheTurn();
 
         assertThat(controls(player2, target)).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 
@@ -58,7 +58,7 @@ class FrenziedFugueTest extends BaseCardTest {
 
         assertThat(controls(player1, target)).isTrue();
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -75,7 +75,7 @@ class FrenziedFugueTest extends BaseCardTest {
 
         assertThat(controls(player2, target)).isTrue();
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     private void castFrenziedFugue(Permanent target) {

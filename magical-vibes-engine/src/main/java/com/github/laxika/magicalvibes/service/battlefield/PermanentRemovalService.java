@@ -2329,7 +2329,7 @@ public class PermanentRemovalService {
                 if (gameQueryService.hasKeyword(gameData, target, Keyword.LIFELINK)) {
                     // Lifelink granted by an attachment falls off with it, so the permanent's last known
                     // information keeps it for damage its leave-the-battlefield ability deals.
-                    target.getGrantedKeywords().add(Keyword.LIFELINK);
+                    target.setLastKnownKeywords(Set.of(Keyword.LIFELINK));
                 }
                 Card lastKnownCard = removalSnapshot != null ? removalSnapshot.getCard()
                         : snapshotEffectivePermanentCard(gameData, target);

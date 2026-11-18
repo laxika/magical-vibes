@@ -479,6 +479,20 @@ changes are not effects: the pass seeds them from `GameData.perpetualKeywords`, 
 `perpetualCardSubtypes` and `perpetualCreatureTypeReplacedCardIds` by the permanent's own card, as part of its
 characteristics. Tests give and read these grants through `testutil.PermanentGrants`.
 
+**Keyword and protection grants with a duration.** "Gains flying until end of turn", "loses flying", "gains hexproof
+until your next turn", "gains protection from red / from artifacts / from colorless / from each of your opponents /
+from creatures your opponents control until end of turn" are floating effects on the permanent with the stated
+`Duration` (CR 611.2a), applied in layer 6 in timestamp order with the static ones (CR 613.1f, 613.7):
+`GrantKeywordEffect` and `RemoveKeywordEffect` (`GrantScope.TARGET`), `ProtectionFromColorsEffect(colors,
+GrantScope.TARGET)`, and `GrantEffectEffect(protection, GrantScope.TARGET)` for `ProtectionFromCardTypesEffect`,
+`ProtectionFromColorlessEffect`, `ProtectionFromPlayersEffect` (players fixed as it resolves),
+`ProtectionFromNonSubtypeCreaturesEffect` and `GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect` (its
+"opponents" are read at each check). A "loses all abilities" or "loses all protection" removes only the grants older
+than it; `CharacteristicState.removeAllProtection` drops the protection abilities granted so far. Readers ask the
+layered queries (`GameQueryService.hasKeyword`, `hasProtectionFrom…`, `computeStaticBonus(...).grantedEffects()`);
+`Permanent.hasKeyword` is intrinsic only. The player chosen as a permanent enters (True-Name Nemesis, Guardian Archon)
+is `Permanent.chosenPlayerIds`, read by `ProtectionFromChosenPlayerEffect`.
+
 An effect on a card outside the battlefield ("you may play that card this turn", "it gains flashback until end of
 turn", "it is revealed until your next turn") is on that card through `onCard` (`affectedCardId`); it ends as the card
 leaves its zone, where the engine calls `GameData.endFloatingEffectsOnCard`, because the card becomes a new object
@@ -816,14 +830,15 @@ authoritative per-step record; this section is the reconciled summary.
 
 ### Known limitations
 
-- **Dual-write fields remain** for P/T modifiers, keywords, protection and abilities:
+- **Dual-write fields remain** for P/T modifiers and abilities:
   one-shot handlers write legacy `Permanent` fields AND the floating effect; the fields feed
   LKI, mid-pass predicate leaves, null-`GameData` fallbacks, and views. One-shot colours, card
-  types, subtypes (land and creature type setters, lost subtypes) and animations are floating
-  effects only, applied in timestamp order (CR 613.7) with no legacy precedence; `Permanent`'s
+  types, subtypes (land and creature type setters, lost subtypes), animations, keyword grants and
+  removals and protection grants are floating effects only, applied in timestamp order (CR 613.7) with no legacy precedence; `Permanent`'s
   `getEffectiveColor(s)` and the `GameData`-less type checks are intrinsic only. A departed
   snapshot carries the layered colours and types copied at departure, and `computeStaticBonus`
-  folds the floating card-type and subtype grants still on its id (CR 608.2h).
+  folds the floating card-type, subtype and keyword grants and keyword removals still on its id, plus
+  the keywords baked into `Permanent.lastKnownKeywords` (CR 608.2h).
 - **Flag-only 7b stragglers**: the AWAKENING-counter 8/8 (counters carry no timestamp) — any
   real 7b entry beats it regardless of relative order.
 - **LKI misses layered state**: a dying creature's last-known power
@@ -1018,10 +1033,10 @@ The layer-6 board also keeps engine-internal source attribution for non-keyword 
 through `GrantEffectEffect` and for direct scoped protection grants from Auras/Equipment. View
 construction filters that provenance against the final layered ability state, formats the
 surviving effects as `GrantedAbilityView` records, and sends only their display text/source name
-— raw `CardEffect` records never cross the wire. Chosen-color protection, legacy temporary color
-and non-subtype protection, and temporary unblockability are projected from their final runtime
-state; source attribution is omitted when legacy storage did not retain it.
-One-shot pumps stored on the `Permanent` (`powerModifier`, until-EOT keyword buckets) are
+— raw `CardEffect` records never cross the wire. Chosen-color protection and temporary
+unblockability are projected from their final runtime state; source attribution is omitted when
+legacy storage did not retain it.
+One-shot pumps stored on the `Permanent` (`powerModifier`) are
 deliberately un-attributed — the client reconciles them as an "Other effects" remainder
 against the aggregate fields, which stay authoritative. Pinned by `ModifierExplanationTest`.
 - **AI simulation copies start cold**: `simulationCopy()` builds a fresh `GameData` and never

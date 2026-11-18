@@ -45,7 +45,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         assertThat(token).isNotNull();
         assertThat(token.getEffectivePower()).isEqualTo(3);
         assertThat(token.getEffectiveToughness()).isEqualTo(1);
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -65,7 +65,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
 
         Permanent token = token();
         assertThat(token).isNotNull();
-        assertThat(token.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -99,13 +99,13 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(token().hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token(), Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(token().hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token(), Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -121,7 +121,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(token()).isNotNull();
-        assertThat(token().hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token(), Keyword.HASTE)).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -163,7 +163,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(token()).isNotNull();
-        assertThat(token().hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token(), Keyword.HASTE)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -195,7 +195,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(token()).isNotNull();
-        assertThat(token().hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token(), Keyword.HASTE)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -211,7 +211,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(token()).isNotNull();
-        assertThat(token().hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token(), Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -226,7 +226,7 @@ class RebellionOfTheFlamekinTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(token()).isNotNull();
-        assertThat(token().hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token(), Keyword.HASTE)).isFalse();
     }
 
     private void prepareOpponentsClash() {

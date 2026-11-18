@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,7 +32,7 @@ class TheBeamtownBulliesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player2, "Grizzly Bears");
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, returned)).contains(Keyword.HASTE);
         assertThat(als.getMustAttackRequirementCount(gd, returned)).isEqualTo(1);
         assertThat(gd.stolenCreatures).containsEntry(returned.getId(), player1.getId());
         assertThat(DelayedPermanentMoves.waiting(gd))

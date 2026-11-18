@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -28,12 +29,12 @@ class BloodskyBerserkerTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(berserker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(berserker.getGrantedKeywords()).doesNotContain(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserker)).doesNotContain(Keyword.MENACE);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(berserker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(berserker.getGrantedKeywords()).contains(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserker)).contains(Keyword.MENACE);
     }
 
     @Test
@@ -52,7 +53,7 @@ class BloodskyBerserkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(berserker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(berserker.getGrantedKeywords()).doesNotContain(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserker)).doesNotContain(Keyword.MENACE);
     }
 
     @Test
@@ -67,7 +68,7 @@ class BloodskyBerserkerTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(berserker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(berserker.getGrantedKeywords()).contains(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserker)).contains(Keyword.MENACE);
     }
 
     @Test
@@ -79,7 +80,7 @@ class BloodskyBerserkerTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(berserker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(berserker.getGrantedKeywords()).doesNotContain(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserker)).doesNotContain(Keyword.MENACE);
 
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -88,7 +89,7 @@ class BloodskyBerserkerTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(berserker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(berserker.getGrantedKeywords()).contains(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserker)).contains(Keyword.MENACE);
     }
 
     @Test
@@ -104,7 +105,7 @@ class BloodskyBerserkerTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(berserker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(berserker.getGrantedKeywords()).contains(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserker)).contains(Keyword.MENACE);
     }
 
     @Test
@@ -121,7 +122,7 @@ class BloodskyBerserkerTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(berserker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(berserker.getGrantedKeywords()).doesNotContain(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserker)).doesNotContain(Keyword.MENACE);
     }
 
     @Test
@@ -136,17 +137,17 @@ class BloodskyBerserkerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(berserker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(berserker.getGrantedKeywords()).doesNotContain(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserker)).doesNotContain(Keyword.MENACE);
 
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(berserker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(berserker.getGrantedKeywords()).doesNotContain(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserker)).doesNotContain(Keyword.MENACE);
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(berserker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(berserker.getGrantedKeywords()).contains(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserker)).contains(Keyword.MENACE);
     }
 
     @Test
@@ -166,6 +167,6 @@ class BloodskyBerserkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(otherBerserker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(otherBerserker.getGrantedKeywords()).doesNotContain(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, otherBerserker)).doesNotContain(Keyword.MENACE);
     }
 }

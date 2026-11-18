@@ -30,7 +30,7 @@ class ElvishHerderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -42,7 +42,7 @@ class ElvishHerderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, herder.getId());
         harness.passBothPriorities();
 
-        assertThat(herder.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, herder, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -55,7 +55,7 @@ class ElvishHerderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -88,13 +88,13 @@ class ElvishHerderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -120,13 +120,13 @@ class ElvishHerderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, first.getId());
         harness.activateAbility(player1, 0, null, second.getId());
-        assertThat(first.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(second.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isFalse();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(first.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
         assertThat(herder.isTapped()).isTrue();
     }
 
@@ -144,7 +144,7 @@ class ElvishHerderTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Elvish Herder");
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -162,7 +162,7 @@ class ElvishHerderTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Bull Hippo");
         harness.assertInHand(player1, "Bull Hippo");
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 }

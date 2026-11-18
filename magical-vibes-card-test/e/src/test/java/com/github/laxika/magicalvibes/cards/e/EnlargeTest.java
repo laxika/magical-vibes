@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -31,7 +32,7 @@ class EnlargeTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getEffectivePower()).isEqualTo(9);
         assertThat(bears.getEffectiveToughness()).isEqualTo(9);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.TRAMPLE);
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 
@@ -47,7 +48,7 @@ class EnlargeTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.TRAMPLE);
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 

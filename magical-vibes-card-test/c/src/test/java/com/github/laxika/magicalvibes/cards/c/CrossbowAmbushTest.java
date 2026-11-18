@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudArcher;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudFalcon;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -29,9 +30,9 @@ class CrossbowAmbushTest extends BaseCardTest {
 
         Permanent creatureEnteringLater = addCreatureReady(player1, new SkyshroudArcher());
 
-        assertThat(ownCreature.getGrantedKeywords()).contains(Keyword.REACH);
-        assertThat(opponentCreature.getGrantedKeywords()).doesNotContain(Keyword.REACH);
-        assertThat(creatureEnteringLater.getGrantedKeywords()).doesNotContain(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, ownCreature)).contains(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, opponentCreature)).doesNotContain(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, creatureEnteringLater)).doesNotContain(Keyword.REACH);
     }
 
     @Test
@@ -41,13 +42,13 @@ class CrossbowAmbushTest extends BaseCardTest {
 
         harness.castFromHand(player1, new CrossbowAmbush(), "{G}");
         harness.passBothPriorities();
-        assertThat(ownCreature.getGrantedKeywords()).contains(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, ownCreature)).contains(Keyword.REACH);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getGrantedKeywords()).doesNotContain(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, ownCreature)).doesNotContain(Keyword.REACH);
     }
 
     @Test
@@ -72,13 +73,13 @@ class CrossbowAmbushTest extends BaseCardTest {
 
         harness.castFromHand(player1, new CrossbowAmbush(), "{G}");
         Permanent secondCreature = addCreatureReady(player1, new SkyshroudArcher());
-        assertThat(firstCreature.getGrantedKeywords()).doesNotContain(Keyword.REACH);
-        assertThat(secondCreature.getGrantedKeywords()).doesNotContain(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, firstCreature)).doesNotContain(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, secondCreature)).doesNotContain(Keyword.REACH);
 
         harness.passBothPriorities();
 
-        assertThat(firstCreature.getGrantedKeywords()).contains(Keyword.REACH);
-        assertThat(secondCreature.getGrantedKeywords()).contains(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, firstCreature)).contains(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, secondCreature)).contains(Keyword.REACH);
     }
 
     @Test
@@ -91,6 +92,6 @@ class CrossbowAmbushTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         Permanent laterCreature = addCreatureReady(player1, new SkyshroudArcher());
-        assertThat(laterCreature.getGrantedKeywords()).doesNotContain(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, laterCreature)).doesNotContain(Keyword.REACH);
     }
 }

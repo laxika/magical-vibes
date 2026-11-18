@@ -34,7 +34,7 @@ class InvoluntaryEmploymentTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
@@ -50,7 +50,7 @@ class InvoluntaryEmploymentTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
@@ -106,7 +106,7 @@ class InvoluntaryEmploymentTest extends BaseCardTest {
         castInvoluntaryEmployment(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }

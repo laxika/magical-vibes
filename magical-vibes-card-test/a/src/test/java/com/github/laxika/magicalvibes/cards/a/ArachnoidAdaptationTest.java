@@ -29,7 +29,7 @@ class ArachnoidAdaptationTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
     }
 
     @Test
@@ -45,7 +45,7 @@ class ArachnoidAdaptationTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
     }
 
     @Test
@@ -71,11 +71,11 @@ class ArachnoidAdaptationTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
         assertThat(other.isTapped()).isTrue();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
     }
 
     @Test
@@ -96,7 +96,7 @@ class ArachnoidAdaptationTest extends BaseCardTest {
         assertThat(other.isTapped()).isTrue();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
     }
 
     private void castArachnoidAdaptation(Permanent target) {

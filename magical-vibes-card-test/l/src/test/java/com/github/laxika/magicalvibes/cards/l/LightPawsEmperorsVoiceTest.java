@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ClawingTorment;
 import com.github.laxika.magicalvibes.cards.i.IntercessorsArrest;
 import com.github.laxika.magicalvibes.cards.s.ShortCircuit;
@@ -162,7 +163,7 @@ class LightPawsEmperorsVoiceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.castEnchantment(player1, 0, otherCreature.getId());
         harness.passBothPriorities();
-        lightPaws.getProtectionFromColorsUntilEndOfTurn().add(CardColor.BLACK);
+        PermanentGrants.protectionFromColorUntilEndOfTurn(gd, lightPaws, CardColor.BLACK);
 
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);

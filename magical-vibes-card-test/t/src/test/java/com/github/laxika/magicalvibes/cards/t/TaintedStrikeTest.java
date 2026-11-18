@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
@@ -41,7 +42,7 @@ class TaintedStrikeTest extends BaseCardTest {
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
         assertThat(bear.getEffectivePower()).isEqualTo(3);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.INFECT);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.INFECT);
     }
 
     @Test
@@ -63,7 +64,7 @@ class TaintedStrikeTest extends BaseCardTest {
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.INFECT);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.INFECT);
     }
 
     @Test
@@ -121,7 +122,7 @@ class TaintedStrikeTest extends BaseCardTest {
         Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(1);
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.INFECT);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.INFECT);
     }
 
     @Test

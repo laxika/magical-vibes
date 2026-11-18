@@ -34,8 +34,8 @@ class LightfootTechniqueTest extends BaseCardTest {
 
         Permanent leopard = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(leopard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(leopard.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(leopard.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, leopard, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, leopard, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -54,8 +54,8 @@ class LightfootTechniqueTest extends BaseCardTest {
 
         Permanent leopard = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(leopard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(leopard.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(leopard.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, leopard, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, leopard, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -84,11 +84,11 @@ class LightfootTechniqueTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(ownCreature.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(ownCreature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -103,14 +103,14 @@ class LightfootTechniqueTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 }

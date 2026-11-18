@@ -37,7 +37,7 @@ class VisionQuestTest extends BaseCardTest {
 
         Permanent found = findPermanent(player1, "Ornithopter");
         assertThat(found.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(found.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, found, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -56,7 +56,7 @@ class VisionQuestTest extends BaseCardTest {
 
         Permanent found = findPermanent(player1, "Ornithopter");
         assertThat(found.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(found.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, found, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -68,7 +68,7 @@ class VisionQuestTest extends BaseCardTest {
 
         castVisionQuest(4);
 
-        assertThat(findPermanent(player1, "Grizzly Bears").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.HASTE)).isFalse();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -82,7 +82,7 @@ class VisionQuestTest extends BaseCardTest {
         castVisionQuest(4);
         harness.handleMultipleCardsChosen(player1, List.of());
 
-        assertThat(findPermanent(player1, "Grizzly Bears").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.HASTE)).isFalse();
         harness.assertNotOnBattlefield(player1, "Ornithopter");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -102,7 +102,7 @@ class VisionQuestTest extends BaseCardTest {
 
         Permanent found = findPermanent(player1, "Viv Vision, Teen Synthezoid");
         assertThat(found.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(found.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, found, Keyword.HASTE)).isFalse();
         harness.assertNotInGraveyard(player1, "Viv Vision, Teen Synthezoid");
     }
 
@@ -136,15 +136,15 @@ class VisionQuestTest extends BaseCardTest {
         castVisionQuest(4);
         harness.handleMultipleCardsChosen(player1, List.of(ornithopter.getId()));
 
-        assertThat(findPermanent(player1, "Ornithopter").hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(findPermanent(player1, "Grizzly Bears").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Ornithopter"), Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.HASTE)).isFalse();
         harness.assertNotInGraveyard(player1, "Ornithopter");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(findPermanent(player1, "Ornithopter").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Ornithopter"), Keyword.HASTE)).isFalse();
         assertThat(findPermanent(player1, "Ornithopter").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(4);
     }

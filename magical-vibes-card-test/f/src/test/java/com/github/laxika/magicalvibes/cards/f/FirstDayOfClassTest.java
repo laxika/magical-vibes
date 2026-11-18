@@ -36,7 +36,7 @@ class FirstDayOfClassTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Spined Karok");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -54,7 +54,7 @@ class FirstDayOfClassTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player2, "Spined Karok");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -74,7 +74,7 @@ class FirstDayOfClassTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Spined Karok");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -106,7 +106,7 @@ class FirstDayOfClassTest extends BaseCardTest {
         castFirstDayOfClass();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -121,8 +121,8 @@ class FirstDayOfClassTest extends BaseCardTest {
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(first.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -136,7 +136,7 @@ class FirstDayOfClassTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -151,7 +151,7 @@ class FirstDayOfClassTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -172,7 +172,7 @@ class FirstDayOfClassTest extends BaseCardTest {
         Permanent creature = harness.enterBattlefieldAndReturn(player1, new SpinedKarok());
         harness.passBothPriorities();
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
 
     private void castFirstDayOfClass() {

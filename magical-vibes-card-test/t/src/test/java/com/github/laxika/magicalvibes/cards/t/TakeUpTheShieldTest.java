@@ -27,8 +27,8 @@ class TakeUpTheShieldTest extends BaseCardTest {
         castTakeUpTheShield(target);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -42,8 +42,8 @@ class TakeUpTheShieldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -66,8 +66,8 @@ class TakeUpTheShieldTest extends BaseCardTest {
         castTakeUpTheShield(target);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -83,8 +83,8 @@ class TakeUpTheShieldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(replacement.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(replacement.hasKeyword(Keyword.LIFELINK)).isFalse();
-        assertThat(replacement.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Take Up the Shield");
     }

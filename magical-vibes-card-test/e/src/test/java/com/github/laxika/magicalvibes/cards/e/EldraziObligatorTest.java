@@ -34,7 +34,7 @@ class EldraziObligatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
@@ -52,7 +52,7 @@ class EldraziObligatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
     }
@@ -71,7 +71,7 @@ class EldraziObligatorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         gs.advanceStep(gd);
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(target.getId()));
     }
@@ -102,7 +102,7 @@ class EldraziObligatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         harness.assertOnBattlefield(player2, "Canopy Gorger");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
     }
@@ -119,7 +119,7 @@ class EldraziObligatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player1, "Canopy Gorger");
     }
 
@@ -192,7 +192,7 @@ class EldraziObligatorTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Canopy Gorger");
         harness.assertNotOnBattlefield(player1, "Eldrazi Obligator");
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 

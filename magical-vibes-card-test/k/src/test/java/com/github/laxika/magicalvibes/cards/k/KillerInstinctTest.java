@@ -29,7 +29,7 @@ class KillerInstinctTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent creature = findPermanent(player1, "Gristleback");
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 

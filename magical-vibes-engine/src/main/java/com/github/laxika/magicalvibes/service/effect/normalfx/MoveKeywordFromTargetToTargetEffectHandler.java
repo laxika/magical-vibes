@@ -57,7 +57,6 @@ public class MoveKeywordFromTargetToTargetEffectHandler implements NormalEffectH
 
         if (loser != null) {
             RemoveKeywordEffect remove = new RemoveKeywordEffect(keyword, GrantScope.TARGET);
-            loser.getRemovedKeywords().add(keyword);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), null, entry.getControllerId(), remove,
                     loser.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
@@ -67,7 +66,6 @@ public class MoveKeywordFromTargetToTargetEffectHandler implements NormalEffectH
 
         if (gainer != null) {
             GrantKeywordEffect grant = new GrantKeywordEffect(keyword, GrantScope.TARGET);
-            gainer.getGrantedKeywords().add(keyword);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), null, entry.getControllerId(), grant,
                     gainer.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));

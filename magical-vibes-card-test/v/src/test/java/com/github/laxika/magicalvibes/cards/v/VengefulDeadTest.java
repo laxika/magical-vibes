@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DecreeOfPain;
 import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
 import com.github.laxika.magicalvibes.cards.m.MistformWarchief;
@@ -23,7 +24,7 @@ class VengefulDeadTest extends BaseCardTest {
     @DisplayName("Each opponent loses 1 life when another Zombie dies")
     void triggersWhenAnotherZombieDies() {
         Permanent vengefulDead = harness.addToBattlefieldAndReturn(player1, new VengefulDead());
-        vengefulDead.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, vengefulDead, Keyword.INDESTRUCTIBLE);
         harness.addToBattlefield(player2, new TwistedAbomination());
         harness.setLife(player2, 20);
 
@@ -41,7 +42,7 @@ class VengefulDeadTest extends BaseCardTest {
     @DisplayName("A non-Zombie creature you control dying does not trigger")
     void doesNotTriggerForNonZombie() {
         Permanent vengefulDead = harness.addToBattlefieldAndReturn(player1, new VengefulDead());
-        vengefulDead.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, vengefulDead, Keyword.INDESTRUCTIBLE);
         harness.addToBattlefield(player1, new GoblinBrigand());
         harness.setLife(player2, 20);
 
@@ -88,7 +89,7 @@ class VengefulDeadTest extends BaseCardTest {
     @DisplayName("Another Zombie you control dying makes only your opponent lose life")
     void triggersWhenAnotherFriendlyZombieDies() {
         Permanent vengefulDead = harness.addToBattlefieldAndReturn(player1, new VengefulDead());
-        vengefulDead.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, vengefulDead, Keyword.INDESTRUCTIBLE);
         harness.addToBattlefield(player1, new TwistedAbomination());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
@@ -147,7 +148,7 @@ class VengefulDeadTest extends BaseCardTest {
     void triggersForCreatureThatBecameZombieBeforeDying() {
         addCreatureReady(player1, new MistformWarchief());
         Permanent vengefulDead = harness.addToBattlefieldAndReturn(player1, new VengefulDead());
-        vengefulDead.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, vengefulDead, Keyword.INDESTRUCTIBLE);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 

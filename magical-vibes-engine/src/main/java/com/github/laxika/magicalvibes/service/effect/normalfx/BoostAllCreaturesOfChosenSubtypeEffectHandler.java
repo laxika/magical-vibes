@@ -87,7 +87,6 @@ public class BoostAllCreaturesOfChosenSubtypeEffectHandler implements NormalEffe
                         .filter(keyword -> !gameQueryService.cantHaveOrGainKeyword(gameData, permanent, keyword))
                         .collect(Collectors.toSet());
                 if (!grantableKeywords.isEmpty()) {
-                    permanent.getGrantedKeywords().addAll(grantableKeywords);
                     gameData.addFloatingEffect(new FloatingContinuousEffect(
                             UUID.randomUUID(), entry.getCard().getName(), null, controllerId,
                             new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET),

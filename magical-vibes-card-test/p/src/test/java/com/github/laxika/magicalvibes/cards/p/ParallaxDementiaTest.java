@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.k.KorHaven;
 import com.github.laxika.magicalvibes.cards.s.SealOfCleansing;
 import com.github.laxika.magicalvibes.cards.s.SpinelessThug;
@@ -119,7 +120,7 @@ class ParallaxDementiaTest extends BaseCardTest {
         Permanent thug = addCreatureReady(player2, new SpinelessThug());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new ParallaxDementia());
         aura.setAttachedTo(thug.getId());
-        thug.getProtectionFromColorsUntilEndOfTurn().add(CardColor.BLACK);
+        PermanentGrants.protectionFromColorUntilEndOfTurn(gd, thug, CardColor.BLACK);
 
         assertThat(gqs.hasProtectionFrom(gd, thug, CardColor.BLACK)).isTrue();
         harness.runStateBasedActions();

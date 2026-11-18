@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
@@ -49,7 +50,7 @@ class WrathOfGodTest extends BaseCardTest {
     @DisplayName("Indestructible creatures survive Wrath of God")
     void indestructibleCreaturesSurvive() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        creature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.INDESTRUCTIBLE);
 
         castWrathOfGod();
 
@@ -90,7 +91,7 @@ class WrathOfGodTest extends BaseCardTest {
     @DisplayName("Shroud does not protect creatures from a spell that does not target")
     void destroysCreaturesWithShroud() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        creature.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.SHROUD);
 
         castWrathOfGod();
 

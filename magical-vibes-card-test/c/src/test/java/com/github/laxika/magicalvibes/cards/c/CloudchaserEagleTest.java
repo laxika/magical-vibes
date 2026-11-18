@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArmoredPegasus;
 import com.github.laxika.magicalvibes.cards.p.Propaganda;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -63,7 +64,7 @@ class CloudchaserEagleTest extends BaseCardTest {
     @DisplayName("ETB does not destroy an indestructible enchantment")
     void etbDoesNotDestroyIndestructibleEnchantment() {
         var propaganda = harness.addToBattlefieldAndReturn(player2, new Propaganda());
-        propaganda.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, propaganda, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new CloudchaserEagle()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 

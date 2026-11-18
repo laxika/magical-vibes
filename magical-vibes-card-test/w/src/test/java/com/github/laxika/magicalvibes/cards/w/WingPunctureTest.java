@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -182,7 +183,7 @@ class WingPunctureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WingPuncture()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castInstant(player1, 0, List.of(source.getId(), flyer.getId()));
-        flyer.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, flyer, Keyword.FLYING);
 
         harness.passBothPriorities();
 

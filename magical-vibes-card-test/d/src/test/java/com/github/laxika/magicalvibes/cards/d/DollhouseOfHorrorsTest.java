@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BondedConstruct;
 import com.github.laxika.magicalvibes.cards.c.CultivatorColossus;
 import com.github.laxika.magicalvibes.cards.f.ForebodingStatue;
@@ -46,7 +47,7 @@ class DollhouseOfHorrorsTest extends BaseCardTest {
         assertThat(token.getCard().getToughness()).isZero();
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
-        assertThat(token.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, token)).contains(Keyword.HASTE);
     }
 
     @Test
@@ -155,12 +156,12 @@ class DollhouseOfHorrorsTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
         Permanent token = token();
-        assertThat(token.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, token)).contains(Keyword.HASTE);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
-        assertThat(token.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, token)).doesNotContain(Keyword.HASTE);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
     }

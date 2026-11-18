@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -148,7 +149,7 @@ class SkyshroudArcherTest extends BaseCardTest {
         addReadyArcher(player1);
         Permanent wyvern = addCreatureReady(player2, new SilverWyvern());
         harness.activateAbility(player1, 0, null, wyvern.getId());
-        wyvern.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, wyvern, Keyword.FLYING);
 
         harness.passBothPriorities();
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -48,7 +49,7 @@ class HallowedBurialTest extends BaseCardTest {
     @DisplayName("Indestructible does not save a creature from Hallowed Burial")
     void indestructibleDoesNotSave() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.INDESTRUCTIBLE);
 
         harness.castFromHand(player1, new HallowedBurial(), "{3}{W}{W}");
         harness.passBothPriorities();
@@ -113,7 +114,7 @@ class HallowedBurialTest extends BaseCardTest {
     void shroudDoesNotSave() {
         GrizzlyBears card = new GrizzlyBears();
         Permanent bears = harness.addToBattlefieldAndReturn(player2, card);
-        bears.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.SHROUD);
         Forest libraryCard = new Forest();
         harness.setLibrary(player2, List.of(libraryCard));
 

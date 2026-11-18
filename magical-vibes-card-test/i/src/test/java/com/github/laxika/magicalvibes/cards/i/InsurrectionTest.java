@@ -32,8 +32,8 @@ class InsurrectionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCreature);
         assertThat(opponentCreature.isTapped()).isFalse();
         assertThat(ownCreature.isTapped()).isFalse();
-        assertThat(opponentCreature.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(ownCreature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentLand);
         assertThat(opponentLand.isTapped()).isTrue();
     }
@@ -49,7 +49,7 @@ class InsurrectionTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(laterCreature);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(laterCreature);
-        assertThat(laterCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -60,7 +60,7 @@ class InsurrectionTest extends BaseCardTest {
         Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new ElvishWarrior());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(laterCreature);
-        assertThat(laterCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -77,8 +77,8 @@ class InsurrectionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opponentLand);
         assertThat(ownLand.isTapped()).isTrue();
         assertThat(opponentLand.isTapped()).isTrue();
-        assertThat(ownLand.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(opponentLand.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownLand, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentLand, Keyword.HASTE)).isFalse();
         harness.assertInGraveyard(player1, "Insurrection");
     }
 
@@ -95,7 +95,7 @@ class InsurrectionTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(opponentCreature);
-        assertThat(opponentCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HASTE)).isFalse();
     }
 
     private void castInsurrection() {

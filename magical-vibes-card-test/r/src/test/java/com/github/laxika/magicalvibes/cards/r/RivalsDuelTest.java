@@ -51,8 +51,8 @@ class RivalsDuelTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, List.of(cricket.getId(), boggart.getId()));
 
-        cricket.getGrantedKeywords().add(Keyword.SHROUD);
-        boggart.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, cricket, Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, boggart, Keyword.SHROUD);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Order of the Golden Cricket");
@@ -72,7 +72,7 @@ class RivalsDuelTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, List.of(cricket.getId(), boggart.getId()));
 
-        boggart.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, boggart, Keyword.SHROUD);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Order of the Golden Cricket");
@@ -154,7 +154,7 @@ class RivalsDuelTest extends BaseCardTest {
     void firstStrikeDoesNotPreventMutualLethalFightDamage() {
         Permanent cricket = harness.addToBattlefieldAndReturn(player1, new OrderOfTheGoldenCricket());
         Permanent bandit = harness.addToBattlefieldAndReturn(player2, new StinkdrinkerBandit());
-        cricket.getGrantedKeywords().add(Keyword.FIRST_STRIKE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, cricket, Keyword.FIRST_STRIKE);
         harness.setHand(player1, List.of(new RivalsDuel()));
         harness.addMana(player1, ManaColor.RED, 4);
 
@@ -175,7 +175,7 @@ class RivalsDuelTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castSorcery(player1, 0, List.of(cricket.getId(), boggart.getId()));
-        cricket.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, cricket, Keyword.SHROUD);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Order of the Golden Cricket");

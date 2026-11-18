@@ -32,12 +32,12 @@ class TowerDefenseTest extends BaseCardTest {
         assertThat(p1a.getEffectivePower()).isEqualTo(2);
         assertThat(p1a.getEffectiveToughness()).isEqualTo(7);
         assertThat(p1b.getEffectiveToughness()).isEqualTo(7);
-        assertThat(p1a.hasKeyword(Keyword.REACH)).isTrue();
-        assertThat(p1b.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, p1a, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, p1b, Keyword.REACH)).isTrue();
 
         assertThat(p2.getEffectivePower()).isEqualTo(2);
         assertThat(p2.getEffectiveToughness()).isEqualTo(2);
-        assertThat(p2.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, p2, Keyword.REACH)).isFalse();
     }
 
     @Test
@@ -51,14 +51,14 @@ class TowerDefenseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getEffectiveToughness()).isEqualTo(7);
-        assertThat(creature.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.REACH)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.REACH)).isFalse();
     }
 
     @Test
@@ -73,10 +73,10 @@ class TowerDefenseTest extends BaseCardTest {
 
         assertThat(beforeResolution.getEffectivePower()).isEqualTo(2);
         assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(7);
-        assertThat(beforeResolution.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.REACH)).isTrue();
         assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
         assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
-        assertThat(afterResolution.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.REACH)).isFalse();
     }
 
     @Test
@@ -92,13 +92,13 @@ class TowerDefenseTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(12);
-        assertThat(creature.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.REACH)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.REACH)).isFalse();
     }
 }

@@ -29,7 +29,7 @@ class GiftOfStrengthTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(3);
         assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
     }
 
     @Test
@@ -47,7 +47,7 @@ class GiftOfStrengthTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
     }
 
     @Test
@@ -76,10 +76,10 @@ class GiftOfStrengthTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(6);
         assertThat(target.getToughnessModifier()).isEqualTo(6);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -87,6 +87,6 @@ class GiftOfStrengthTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
     }
 }

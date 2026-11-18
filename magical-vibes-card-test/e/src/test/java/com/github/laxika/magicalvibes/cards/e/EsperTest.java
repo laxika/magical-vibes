@@ -59,9 +59,9 @@ class EsperTest extends BaseCardTest {
 
         assertThat(gqs.isArtifact(gd, white)).isFalse();
         for (Permanent permanent : List.of(white, artifact)) {
-            assertThat(permanent.hasKeyword(Keyword.VIGILANCE)).isFalse();
-            assertThat(permanent.hasKeyword(Keyword.MENACE)).isFalse();
-            assertThat(permanent.hasKeyword(Keyword.LIFELINK)).isFalse();
+            assertThat(gqs.hasKeyword(gd, permanent, Keyword.VIGILANCE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, permanent, Keyword.MENACE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, permanent, Keyword.LIFELINK)).isFalse();
         }
     }
 
@@ -73,9 +73,9 @@ class EsperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.isArtifact(gd, white)).isTrue();
-        assertThat(white.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(white.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(white.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, white, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, white, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, white, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -98,19 +98,19 @@ class EsperTest extends BaseCardTest {
         assertThat(gqs.isArtifact(gd, opponentWhite)).isFalse();
 
         for (Permanent permanent : List.of(white, blue, black, artifact)) {
-            assertThat(permanent.hasKeyword(Keyword.VIGILANCE)).isTrue();
-            assertThat(permanent.hasKeyword(Keyword.MENACE)).isTrue();
-            assertThat(permanent.hasKeyword(Keyword.LIFELINK)).isTrue();
+            assertThat(gqs.hasKeyword(gd, permanent, Keyword.VIGILANCE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, permanent, Keyword.MENACE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, permanent, Keyword.LIFELINK)).isTrue();
         }
-        assertThat(green.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(opponentWhite.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, green, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentWhite, Keyword.MENACE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.isArtifact(gd, white)).isFalse();
-        assertThat(white.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(artifact.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, white, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.LIFELINK)).isFalse();
     }
 }

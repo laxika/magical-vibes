@@ -33,7 +33,7 @@ class ArborArmamentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
     }
 
     @Test
@@ -47,14 +47,14 @@ class ArborArmamentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
     }
 
     @Test
@@ -68,7 +68,7 @@ class ArborArmamentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(ownCreature.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.REACH)).isTrue();
     }
 
     @Test
@@ -114,15 +114,15 @@ class ArborArmamentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
         assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(other.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
     }
 }

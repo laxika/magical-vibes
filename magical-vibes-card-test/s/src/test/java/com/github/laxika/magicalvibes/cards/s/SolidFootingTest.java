@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.m.ManedServal;
 import com.github.laxika.magicalvibes.model.Card;
@@ -111,13 +112,13 @@ class SolidFootingTest extends BaseCardTest {
         attachAura(creature);
         assertThat(gqs.getEffectiveCombatDamage(gd, creature)).isEqualTo(5);
 
-        creature.getRemovedKeywords().add(Keyword.VIGILANCE);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, creature, Keyword.VIGILANCE);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
         assertThat(gqs.getEffectiveCombatDamage(gd, creature)).isEqualTo(2);
 
-        creature.getRemovedKeywords().remove(Keyword.VIGILANCE);
+        PermanentGrants.endKeywordRemovals(gd, creature, Keyword.VIGILANCE);
 
         assertThat(gqs.getEffectiveCombatDamage(gd, creature)).isEqualTo(5);
     }

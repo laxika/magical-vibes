@@ -73,7 +73,6 @@ public class ChooseTwoCreaturesByPowerDifferenceEffectHandler implements NormalE
         for (Permanent permanent : chosen) {
             permanent.setPowerModifier(permanent.getPowerModifier() + x);
             permanent.setToughnessModifier(permanent.getToughnessModifier() + x);
-            permanent.getGrantedKeywords().addAll(trampleGrant.keywords());
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceCardName, null,
                     entry.getControllerId(), trampleGrant, permanent.getId(), null, null,
                     Duration.UNTIL_END_OF_TURN, 0));

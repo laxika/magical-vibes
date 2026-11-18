@@ -40,8 +40,8 @@ class ScarbladesMaliceTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -90,8 +90,8 @@ class ScarbladesMaliceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -157,8 +157,8 @@ class ScarbladesMaliceTest extends BaseCardTest {
             assertThat(elf.getCard().getToughness()).isEqualTo(2);
             assertThat(elf.getCard().getColors()).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
             assertThat(elf.getCard().getSubtypes()).containsExactly(CardSubtype.ELF);
-            assertThat(elf.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-            assertThat(elf.hasKeyword(Keyword.LIFELINK)).isFalse();
+            assertThat(gqs.hasKeyword(gd, elf, Keyword.DEATHTOUCH)).isFalse();
+            assertThat(gqs.hasKeyword(gd, elf, Keyword.LIFELINK)).isFalse();
         });
         harness.assertNotOnBattlefield(player2, "Elf");
     }

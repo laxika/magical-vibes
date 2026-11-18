@@ -68,7 +68,7 @@ class HexgoldSlashTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new PaladinOfPredation());
         prepareHexgoldSlash();
         harness.castInstant(player1, 0, target.getId());
-        target.getRemovedKeywords().add(Keyword.TOXIC);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, target, Keyword.TOXIC);
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);

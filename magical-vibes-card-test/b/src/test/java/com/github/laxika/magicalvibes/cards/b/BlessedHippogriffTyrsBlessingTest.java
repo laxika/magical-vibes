@@ -26,13 +26,13 @@ class BlessedHippogriffTyrsBlessingTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -56,14 +56,14 @@ class BlessedHippogriffTyrsBlessingTest extends BaseCardTest {
         harness.castAdventure(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -79,8 +79,8 @@ class BlessedHippogriffTyrsBlessingTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(nonattacker.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonattacker, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -93,7 +93,7 @@ class BlessedHippogriffTyrsBlessingTest extends BaseCardTest {
         harness.castAdventure(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
 
         harness.forceActivePlayer(player1);

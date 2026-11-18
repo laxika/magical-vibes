@@ -31,7 +31,7 @@ class BigPlayTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -50,7 +50,7 @@ class BigPlayTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -78,7 +78,7 @@ class BigPlayTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(4);
         assertThat(target.getToughnessModifier()).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -87,7 +87,7 @@ class BigPlayTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -109,7 +109,7 @@ class BigPlayTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
         assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.assertInGraveyard(player1, "Big Play");
         assertThat(gd.stack).isEmpty();

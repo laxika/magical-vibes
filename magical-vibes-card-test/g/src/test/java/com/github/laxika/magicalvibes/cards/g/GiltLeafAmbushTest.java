@@ -77,7 +77,7 @@ class GiltLeafAmbushTest extends BaseCardTest {
 
         List<Permanent> tokens = elfWarriors();
         assertThat(tokens).hasSize(2);
-        assertThat(tokens).allSatisfy(t -> assertThat(t.hasKeyword(Keyword.DEATHTOUCH)).isTrue());
+        assertThat(tokens).allSatisfy(t -> assertThat(gqs.hasKeyword(gd, t, Keyword.DEATHTOUCH)).isTrue());
     }
 
     @Test
@@ -90,7 +90,7 @@ class GiltLeafAmbushTest extends BaseCardTest {
 
         List<Permanent> tokens = elfWarriors();
         assertThat(tokens).hasSize(2);
-        assertThat(tokens).allSatisfy(t -> assertThat(t.hasKeyword(Keyword.DEATHTOUCH)).isFalse());
+        assertThat(tokens).allSatisfy(t -> assertThat(gqs.hasKeyword(gd, t, Keyword.DEATHTOUCH)).isFalse());
     }
 
     @Test
@@ -101,7 +101,7 @@ class GiltLeafAmbushTest extends BaseCardTest {
 
         resolveKeepingRevealedCards();
 
-        assertThat(elfWarriors()).allSatisfy(t -> assertThat(t.hasKeyword(Keyword.DEATHTOUCH)).isTrue());
+        assertThat(elfWarriors()).allSatisfy(t -> assertThat(gqs.hasKeyword(gd, t, Keyword.DEATHTOUCH)).isTrue());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -109,7 +109,7 @@ class GiltLeafAmbushTest extends BaseCardTest {
 
         List<Permanent> tokens = elfWarriors();
         assertThat(tokens).hasSize(2);
-        assertThat(tokens).allSatisfy(t -> assertThat(t.hasKeyword(Keyword.DEATHTOUCH)).isFalse());
+        assertThat(tokens).allSatisfy(t -> assertThat(gqs.hasKeyword(gd, t, Keyword.DEATHTOUCH)).isFalse());
     }
 
     @Test
@@ -122,7 +122,7 @@ class GiltLeafAmbushTest extends BaseCardTest {
         resolveKeepingRevealedCards();
 
         assertThat(elfWarriors()).hasSize(2)
-                .allSatisfy(t -> assertThat(t.hasKeyword(Keyword.DEATHTOUCH)).isFalse());
+                .allSatisfy(t -> assertThat(gqs.hasKeyword(gd, t, Keyword.DEATHTOUCH)).isFalse());
     }
 
     @Test
@@ -136,7 +136,7 @@ class GiltLeafAmbushTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
         assertThat(elfWarriors()).hasSize(2)
-                .allSatisfy(t -> assertThat(t.hasKeyword(Keyword.DEATHTOUCH)).isFalse());
+                .allSatisfy(t -> assertThat(gqs.hasKeyword(gd, t, Keyword.DEATHTOUCH)).isFalse());
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
         gs.handleInteractionAnswer(gd, player2,
@@ -144,7 +144,7 @@ class GiltLeafAmbushTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, revealed);
         assertThat(elfWarriors()).hasSize(2)
-                .allSatisfy(t -> assertThat(t.hasKeyword(Keyword.DEATHTOUCH)).isTrue());
+                .allSatisfy(t -> assertThat(gqs.hasKeyword(gd, t, Keyword.DEATHTOUCH)).isTrue());
     }
 
     @Test
@@ -160,9 +160,9 @@ class GiltLeafAmbushTest extends BaseCardTest {
         resolveKeepingRevealedCards();
 
         assertThat(elfWarriors()).hasSize(4);
-        assertThat(previousTokens).allSatisfy(t -> assertThat(t.hasKeyword(Keyword.DEATHTOUCH)).isFalse());
+        assertThat(previousTokens).allSatisfy(t -> assertThat(gqs.hasKeyword(gd, t, Keyword.DEATHTOUCH)).isFalse());
         assertThat(elfWarriors().stream().filter(t -> !previousTokens.contains(t)).toList())
-                .hasSize(2).allSatisfy(t -> assertThat(t.hasKeyword(Keyword.DEATHTOUCH)).isTrue());
+                .hasSize(2).allSatisfy(t -> assertThat(gqs.hasKeyword(gd, t, Keyword.DEATHTOUCH)).isTrue());
     }
 
     @Test
@@ -177,7 +177,7 @@ class GiltLeafAmbushTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(elfWarriors()).hasSize(2)
-                .allSatisfy(t -> assertThat(t.hasKeyword(Keyword.DEATHTOUCH)).isTrue());
+                .allSatisfy(t -> assertThat(gqs.hasKeyword(gd, t, Keyword.DEATHTOUCH)).isTrue());
     }
 
     @Test
@@ -190,7 +190,7 @@ class GiltLeafAmbushTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         assertThat(elfWarriors()).hasSize(2)
-                .allSatisfy(t -> assertThat(t.hasKeyword(Keyword.DEATHTOUCH)).isFalse());
+                .allSatisfy(t -> assertThat(gqs.hasKeyword(gd, t, Keyword.DEATHTOUCH)).isFalse());
     }
 
     @Test
@@ -210,7 +210,7 @@ class GiltLeafAmbushTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
         assertThat(elfWarriors()).hasSize(2)
-                .allSatisfy(t -> assertThat(t.hasKeyword(Keyword.DEATHTOUCH)).isTrue());
+                .allSatisfy(t -> assertThat(gqs.hasKeyword(gd, t, Keyword.DEATHTOUCH)).isTrue());
     }
 
     @Test

@@ -44,8 +44,6 @@ public class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandl
         if (result == null) return;
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-        result.permanent().getGrantedKeywords().add(Keyword.HASTE);
-        // "It gains haste" has no duration, so it also survives the end-of-turn reset of granted keywords.
         gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
                 result.permanent().getId(), Duration.PERMANENT);
         if (((PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect) effect).exileIfItWouldLeave()) {

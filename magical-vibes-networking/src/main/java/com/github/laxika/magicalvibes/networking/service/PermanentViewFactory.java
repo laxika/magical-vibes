@@ -105,11 +105,8 @@ public class PermanentViewFactory {
      * shields the floating effects on it give it.
      */
     public PermanentView create(Permanent p, int bonusPower, int bonusToughness, Set<Keyword> bonusKeywords, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, Set<CardColor> staticGrantedColors, List<CardSubtype> staticGrantedSubtypes, Set<CardType> staticGrantedCardTypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, boolean cardTypeOverriding, Set<Keyword> staticRemovedKeywords, boolean losesAllAbilities, boolean losesAllNonManaAbilities, Set<CardSupertype> staticGrantedSupertypes, List<ModifierLine> modifierLines, List<Card> faceUpExiledWithCards, int faceDownExiledCount, String staticName, Set<CardSubtype> removedSubtypes, int regenerationShields) {
-        Set<Keyword> allKeywords = new HashSet<>(p.getGrantedKeywords());
-        allKeywords.addAll(p.getUntilNextTurnKeywords());
-        allKeywords.addAll(bonusKeywords);
-        Set<Keyword> allRemovedKeywords = new HashSet<>(p.getRemovedKeywords());
-        allRemovedKeywords.addAll(staticRemovedKeywords);
+        Set<Keyword> allKeywords = new HashSet<>(bonusKeywords);
+        Set<Keyword> allRemovedKeywords = new HashSet<>(staticRemovedKeywords);
         // When creature loses all abilities, add card's own keywords to removed set
         if (losesAllAbilities && !p.isFaceDown()) {
             allRemovedKeywords.addAll(p.getCard().getKeywords());

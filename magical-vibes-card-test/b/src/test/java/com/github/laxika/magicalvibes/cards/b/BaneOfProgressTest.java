@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
@@ -45,7 +46,7 @@ class BaneOfProgressTest extends BaseCardTest {
     @DisplayName("Counts only permanents actually destroyed")
     void doesNotCountIndestructiblePermanents() {
         Permanent indestructibleArtifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
-        indestructibleArtifact.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, indestructibleArtifact, Keyword.INDESTRUCTIBLE);
         harness.addToBattlefield(player1, new RuleOfLaw());
 
         Permanent bane = castBaneOfProgress();

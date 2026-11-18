@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlmostPerfect;
 import com.github.laxika.magicalvibes.cards.i.InfestingRadroach;
 import com.github.laxika.magicalvibes.cards.i.IntangibleVirtue;
@@ -133,9 +134,9 @@ class Vault13DwellersJourneyTest extends BaseCardTest {
         Permanent ownHexproof = harness.addToBattlefieldAndReturn(player1, new InfestingRadroach());
         Permanent opponentHexproof = harness.addToBattlefieldAndReturn(player2, new InfestingRadroach());
         Permanent shroud = harness.addToBattlefieldAndReturn(player1, new InfestingRadroach());
-        ownHexproof.getGrantedKeywords().add(Keyword.HEXPROOF);
-        opponentHexproof.getGrantedKeywords().add(Keyword.HEXPROOF);
-        shroud.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, ownHexproof, Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, opponentHexproof, Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, shroud, Keyword.SHROUD);
 
         triggerChapter();
         harness.passBothPriorities();

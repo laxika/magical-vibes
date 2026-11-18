@@ -28,7 +28,7 @@ class BuiltToSmashTest extends BaseCardTest {
 
         assertThat(peafowl.getPowerModifier()).isEqualTo(3);
         assertThat(peafowl.getToughnessModifier()).isEqualTo(3);
-        assertThat(peafowl.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, peafowl, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -40,7 +40,7 @@ class BuiltToSmashTest extends BaseCardTest {
 
         assertThat(grubs.getPowerModifier()).isEqualTo(3);
         assertThat(grubs.getToughnessModifier()).isEqualTo(3);
-        assertThat(grubs.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, grubs, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -55,7 +55,7 @@ class BuiltToSmashTest extends BaseCardTest {
 
         assertThat(peafowl.getPowerModifier()).isZero();
         assertThat(peafowl.getToughnessModifier()).isZero();
-        assertThat(peafowl.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, peafowl, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -84,7 +84,7 @@ class BuiltToSmashTest extends BaseCardTest {
 
         assertThat(attacker.getPowerModifier()).isEqualTo(3);
         assertThat(attacker.getToughnessModifier()).isEqualTo(3);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -100,7 +100,7 @@ class BuiltToSmashTest extends BaseCardTest {
 
         assertThat(attacker.getPowerModifier()).isZero();
         assertThat(attacker.getToughnessModifier()).isZero();
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Built to Smash");
     }
 

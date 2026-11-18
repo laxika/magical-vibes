@@ -31,7 +31,7 @@ class InTheWebOfWarTest extends BaseCardTest {
         Permanent mass = findPermanent(player1, "Gnarled Mass");
         assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, mass)).isEqualTo(3);
-        assertThat(mass.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mass, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -48,7 +48,7 @@ class InTheWebOfWarTest extends BaseCardTest {
 
         Permanent mass = findPermanent(player1, "Gnarled Mass");
         assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(3);
-        assertThat(mass.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mass, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -65,7 +65,7 @@ class InTheWebOfWarTest extends BaseCardTest {
                 .allSatisfy(mass -> {
                     assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(5);
                     assertThat(gqs.getEffectiveToughness(gd, mass)).isEqualTo(3);
-                    assertThat(mass.hasKeyword(Keyword.HASTE)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, mass, Keyword.HASTE)).isTrue();
                 });
     }
 
@@ -84,7 +84,7 @@ class InTheWebOfWarTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         Permanent mass = findPermanent(player2, "Gnarled Mass");
         assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(3);
-        assertThat(mass.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mass, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -99,7 +99,7 @@ class InTheWebOfWarTest extends BaseCardTest {
         Permanent mass = findPermanent(player1, "Gnarled Mass");
         assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, mass)).isEqualTo(3);
-        assertThat(mass.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mass, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -112,10 +112,10 @@ class InTheWebOfWarTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(3);
-        assertThat(existing.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.HASTE)).isFalse();
         Permanent entering = findPermanents(player1, "Gnarled Mass").get(1);
         assertThat(gqs.getEffectivePower(gd, entering)).isEqualTo(5);
-        assertThat(entering.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, entering, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -130,7 +130,7 @@ class InTheWebOfWarTest extends BaseCardTest {
         Permanent web = findPermanent(player1, "In the Web of War");
         assertThat(gqs.getEffectivePower(gd, web)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, web)).isEqualTo(5);
-        assertThat(web.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, web, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -148,9 +148,9 @@ class InTheWebOfWarTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, mass.getId());
         resolveAllTriggers();
 
-        assertThat(mass.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mass, Keyword.SHROUD)).isTrue();
         assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, mass)).isEqualTo(3);
-        assertThat(mass.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mass, Keyword.HASTE)).isTrue();
     }
 }

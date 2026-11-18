@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IchorWellspring;
@@ -154,7 +155,7 @@ class SaheeliRaiTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(clone.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
         assertThat(gqs.hasKeyword(gd, clone, Keyword.HASTE)).isFalse();
-        assertThat(clone.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, clone)).doesNotContain(Keyword.HASTE);
     }
 
     @Test

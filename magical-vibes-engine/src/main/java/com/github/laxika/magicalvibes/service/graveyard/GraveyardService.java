@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.graveyard;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCardsInsteadOfGraveyardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect;
@@ -1289,8 +1292,8 @@ public class GraveyardService {
 
     private boolean performSacrificeAuraAndGrantIndestructibleReplacement(
             GameData gameData, Permanent protectedPermanent, Permanent aura) {
-        protectedPermanent.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
         UUID controllerId = gameQueryService.findPermanentController(gameData, aura.getId());
+        gameData.addEffectOnPermanent(aura.getCard().getName(), aura.getId(), controllerId, new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET), protectedPermanent.getId(), Duration.UNTIL_END_OF_TURN);
         boolean[] removed = {false};
         departAuraForReplacement(gameData, new DepartureIntent(aura.getId(), DepartureCause.OTHER),
                 DepartureService.Hooks.afterEach((intent, permanent, snapshot, left) -> removed[0] = left));

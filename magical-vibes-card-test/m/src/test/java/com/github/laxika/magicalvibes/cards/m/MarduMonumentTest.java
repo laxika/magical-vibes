@@ -72,20 +72,20 @@ class MarduMonumentTest extends BaseCardTest {
         assertThat(warriors).hasSize(3).allSatisfy(warrior -> {
             assertThat(warrior.getEffectivePower()).isEqualTo(1);
             assertThat(warrior.getEffectiveToughness()).isEqualTo(1);
-            assertThat(warrior.hasKeyword(Keyword.MENACE)).isTrue();
-            assertThat(warrior.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, warrior, Keyword.MENACE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, warrior, Keyword.HASTE)).isTrue();
         });
 
         harness.passUntil(TurnStep.END_STEP);
         assertThat(warriors).allSatisfy(warrior -> {
-            assertThat(warrior.hasKeyword(Keyword.MENACE)).isTrue();
-            assertThat(warrior.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, warrior, Keyword.MENACE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, warrior, Keyword.HASTE)).isTrue();
         });
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(warriors).allSatisfy(warrior -> {
-            assertThat(warrior.hasKeyword(Keyword.MENACE)).isFalse();
-            assertThat(warrior.hasKeyword(Keyword.HASTE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, warrior, Keyword.MENACE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, warrior, Keyword.HASTE)).isFalse();
         });
     }
 

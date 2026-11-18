@@ -31,9 +31,9 @@ class AerieMysticsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mystics.hasKeyword(Keyword.SHROUD)).isTrue();
-        assertThat(ally.hasKeyword(Keyword.SHROUD)).isTrue();
-        assertThat(enemy.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mystics, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enemy, Keyword.SHROUD)).isFalse();
     }
 
     @Test
@@ -46,12 +46,12 @@ class AerieMysticsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mystics.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mystics, Keyword.SHROUD)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(mystics.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mystics, Keyword.SHROUD)).isFalse();
     }
 
     @Test
@@ -73,14 +73,14 @@ class AerieMysticsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(mystics.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mystics, Keyword.SHROUD)).isFalse();
         Permanent arrivingBeforeResolution = harness.addToBattlefieldAndReturn(player1, new ValeronOutlander());
         harness.passBothPriorities();
         Permanent arrivingAfterResolution = harness.addToBattlefieldAndReturn(player1, new ValeronOutlander());
 
-        assertThat(mystics.hasKeyword(Keyword.SHROUD)).isTrue();
-        assertThat(arrivingBeforeResolution.hasKeyword(Keyword.SHROUD)).isTrue();
-        assertThat(arrivingAfterResolution.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mystics, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, arrivingBeforeResolution, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, arrivingAfterResolution, Keyword.SHROUD)).isFalse();
     }
 
     @Test
@@ -93,13 +93,13 @@ class AerieMysticsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new ValeronOutlander());
-        assertThat(lateCreature.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.SHROUD)).isFalse();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mystics.hasKeyword(Keyword.SHROUD)).isTrue();
-        assertThat(lateCreature.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mystics, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.SHROUD)).isTrue();
         assertThat(mystics.isTapped()).isTrue();
     }
 
@@ -120,7 +120,7 @@ class AerieMysticsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, mystics.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(mystics.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mystics, Keyword.SHROUD)).isTrue();
     }
 
     @Test
@@ -134,7 +134,7 @@ class AerieMysticsTest extends BaseCardTest {
         harness.castInstant(player1, 0, mystics.getId());
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(mystics.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mystics, Keyword.SHROUD)).isTrue();
         harness.passBothPriorities();
 
         assertThat(mystics.getEffectivePower()).isEqualTo(originalPower);

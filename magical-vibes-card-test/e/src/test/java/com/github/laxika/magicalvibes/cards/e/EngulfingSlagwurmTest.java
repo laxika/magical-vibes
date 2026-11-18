@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -120,7 +121,7 @@ class EngulfingSlagwurmTest extends BaseCardTest {
         slagwurm.setAttacking(true);
 
         Permanent blocker = addCreatureReady(player2, new CarapaceForger());
-        blocker.getGrantedKeywords().add(com.github.laxika.magicalvibes.model.Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, blocker, com.github.laxika.magicalvibes.model.Keyword.INDESTRUCTIBLE);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

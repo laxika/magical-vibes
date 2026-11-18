@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import java.util.EnumSet;
 import com.github.laxika.magicalvibes.model.rules.DamageDealtEvent;
 
 import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
@@ -2214,11 +2215,13 @@ public class DamageTriggers {
      */
     private Permanent lastKnownDamageSource(GameData gameData, Permanent creature) {
         Permanent snapshot = new Permanent(creature);
+        Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
         for (Keyword keyword : List.of(Keyword.LIFELINK, Keyword.DEATHTOUCH, Keyword.INFECT, Keyword.WITHER)) {
             if (gameQueryService.hasKeyword(gameData, creature, keyword)) {
-                snapshot.getGrantedKeywords().add(keyword);
+                keywords.add(keyword);
             }
         }
+        snapshot.setLastKnownKeywords(keywords);
         return snapshot;
     }
 

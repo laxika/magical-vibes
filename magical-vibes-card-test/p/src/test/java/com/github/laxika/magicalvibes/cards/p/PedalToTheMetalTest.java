@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,7 +32,7 @@ class PedalToTheMetalTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(3);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -49,7 +50,7 @@ class PedalToTheMetalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -76,7 +77,7 @@ class PedalToTheMetalTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -92,8 +93,8 @@ class PedalToTheMetalTest extends BaseCardTest {
 
         assertThat(opponentBear.getPowerModifier()).isEqualTo(2);
         assertThat(opponentBear.getToughnessModifier()).isZero();
-        assertThat(opponentBear.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, opponentBear)).contains(Keyword.FIRST_STRIKE);
         assertThat(ownBear.getPowerModifier()).isZero();
-        assertThat(ownBear.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, ownBear)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 }

@@ -36,7 +36,7 @@ class EnduringCourageTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -56,7 +56,7 @@ class EnduringCourageTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -105,7 +105,7 @@ class EnduringCourageTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, enduring)).isEqualTo(3);
-        assertThat(enduring.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, enduring, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -116,7 +116,7 @@ class EnduringCourageTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(3);
-        assertThat(opponent.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -131,11 +131,11 @@ class EnduringCourageTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, entering)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, entering)).isEqualTo(3);
-        assertThat(entering.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, entering, Keyword.HASTE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
-        assertThat(first.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(second.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -155,7 +155,7 @@ class EnduringCourageTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, entering)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, entering)).isEqualTo(3);
-        assertThat(entering.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, entering, Keyword.HASTE)).isTrue();
 
         harness.setHand(player2, List.of(new Disenchant()));
         harness.addMana(player2, ManaColor.WHITE, 2);

@@ -70,8 +70,6 @@ public class ChooseOpponentForTargetingRelayEffectHandler implements NormalEffec
         if (secret) {
             source.getChosenPlayerIds().clear();
             source.getChosenPlayerIds().add(opponentId);
-            source.getProtectionFromPlayerIdsPermanently().clear();
-            source.getProtectionFromPlayerIdsPermanently().add(opponentId);
             source.setAsEntersPlayerChooserId(chooserId);
         }
     }

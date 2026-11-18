@@ -22,7 +22,7 @@ class WishfulMerfolkTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(merfolk.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, merfolk, Keyword.DEFENDER)).isFalse();
         assertThat(gqs.hasEffectiveSubtype(gd, merfolk, CardSubtype.HUMAN)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, merfolk, CardSubtype.MERFOLK)).isFalse();
         assertThat(als.canAttack(gd, merfolk, player1.getId())).isTrue();
@@ -39,7 +39,7 @@ class WishfulMerfolkTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(merfolk.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, merfolk, Keyword.DEFENDER)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, merfolk, CardSubtype.HUMAN)).isFalse();
         assertThat(gqs.hasEffectiveSubtype(gd, merfolk, CardSubtype.MERFOLK)).isTrue();
         assertThat(als.canAttack(gd, merfolk, player1.getId())).isFalse();
@@ -61,9 +61,9 @@ class WishfulMerfolkTest extends BaseCardTest {
 
         assertThat(als.canAttack(gd, merfolk, player1.getId())).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, merfolk, CardSubtype.HUMAN)).isTrue();
-        assertThat(other.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.DEFENDER)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, other, CardSubtype.HUMAN)).isFalse();
-        assertThat(opponent.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.DEFENDER)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, opponent, CardSubtype.HUMAN)).isFalse();
     }
 
@@ -79,7 +79,7 @@ class WishfulMerfolkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(merfolk.isTapped()).isTrue();
-        assertThat(merfolk.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, merfolk, Keyword.DEFENDER)).isFalse();
         assertThat(gqs.hasEffectiveSubtype(gd, merfolk, CardSubtype.HUMAN)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, merfolk, CardSubtype.MERFOLK)).isFalse();
     }

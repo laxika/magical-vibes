@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.Aurochs;
 import com.github.laxika.magicalvibes.cards.w.WindSpirit;
 import com.github.laxika.magicalvibes.model.Card;
@@ -122,7 +123,7 @@ class GiantTrapDoorSpiderTest extends BaseCardTest {
         payMana(player1);
 
         harness.activateAbility(player1, 0, null, attacker.getId());
-        attacker.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.FLYING);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(spider);

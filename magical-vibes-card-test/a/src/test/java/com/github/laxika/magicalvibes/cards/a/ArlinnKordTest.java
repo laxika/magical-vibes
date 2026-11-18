@@ -41,8 +41,8 @@ class ArlinnKordTest extends BaseCardTest {
             assertThat(arlinn.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
             assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
             assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
-            assertThat(target.hasKeyword(Keyword.VIGILANCE)).isTrue();
-            assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         }
 
         @Test
@@ -105,9 +105,9 @@ class ArlinnKordTest extends BaseCardTest {
             assertThat(arlinn.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
             assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
             assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
-            assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
             assertThat(gqs.getEffectivePower(gd, opp)).isEqualTo(2);
-            assertThat(opp.hasKeyword(Keyword.TRAMPLE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, opp, Keyword.TRAMPLE)).isFalse();
         }
     }
 

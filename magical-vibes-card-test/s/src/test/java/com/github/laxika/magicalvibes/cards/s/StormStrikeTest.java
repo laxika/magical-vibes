@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FeralMaaka;
 import com.github.laxika.magicalvibes.cards.g.GruulLocket;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -34,7 +35,7 @@ class StormStrikeTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(1);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
 
@@ -61,7 +62,7 @@ class StormStrikeTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -91,7 +92,7 @@ class StormStrikeTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FIRST_STRIKE);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).containsExactly(top);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
@@ -110,7 +111,7 @@ class StormStrikeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FIRST_STRIKE);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Storm Strike");

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -83,7 +84,7 @@ class ImperialAerosaurTest extends BaseCardTest {
         assertThat(companion.getToughnessModifier()).isEqualTo(1);
         assertThat(companion.getEffectivePower()).isEqualTo(4);
         assertThat(companion.getEffectiveToughness()).isEqualTo(2);
-        assertThat(companion.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, companion)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -102,7 +103,7 @@ class ImperialAerosaurTest extends BaseCardTest {
 
         Permanent companion = findPermanent(player1, "Raptor Companion");
         assertThat(companion.getPowerModifier()).isEqualTo(1);
-        assertThat(companion.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, companion)).contains(Keyword.FLYING);
 
         // Advance through the end step — cleanup resets modifiers and granted keywords
         harness.forceStep(TurnStep.END_STEP);
@@ -115,7 +116,7 @@ class ImperialAerosaurTest extends BaseCardTest {
         assertThat(companion.getToughnessModifier()).isEqualTo(0);
         assertThat(companion.getEffectivePower()).isEqualTo(3);
         assertThat(companion.getEffectiveToughness()).isEqualTo(1);
-        assertThat(companion.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, companion)).doesNotContain(Keyword.FLYING);
     }
 
     @Test

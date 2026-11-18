@@ -29,9 +29,9 @@ class PyreheartWolfTest extends BaseCardTest {
 
         attackWithWolf();
 
-        assertThat(wolf.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(opponentCreature.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.MENACE)).isFalse();
     }
 
     @Test
@@ -75,12 +75,12 @@ class PyreheartWolfTest extends BaseCardTest {
 
         attackWithWolf();
 
-        assertThat(bears.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(bears.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isFalse();
     }
 
     @Test
@@ -120,18 +120,18 @@ class PyreheartWolfTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
-        assertThat(wolf.hasKeyword(Keyword.MENACE)).isFalse();
-        assertThat(support.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, support, Keyword.MENACE)).isFalse();
 
         Permanent arrivingBeforeResolution = addCreatureReady(player1, new RussetWolves());
         harness.passBothPriorities();
 
-        assertThat(wolf.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(support.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(arrivingBeforeResolution.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, support, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, arrivingBeforeResolution, Keyword.MENACE)).isTrue();
 
         Permanent arrivingAfterResolution = addCreatureReady(player1, new RussetWolves());
-        assertThat(arrivingAfterResolution.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, arrivingAfterResolution, Keyword.MENACE)).isFalse();
     }
 
     @Test
@@ -146,7 +146,7 @@ class PyreheartWolfTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Pyreheart Wolf");
-        assertThat(support.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, support, Keyword.MENACE)).isTrue();
     }
 
     @Test

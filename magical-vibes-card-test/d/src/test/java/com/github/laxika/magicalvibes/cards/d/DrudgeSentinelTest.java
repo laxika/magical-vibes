@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.Eviscerate;
 import com.github.laxika.magicalvibes.cards.s.ShivanFire;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -29,7 +30,7 @@ class DrudgeSentinelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sentinel.isTapped()).isTrue();
-        assertThat(sentinel.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, sentinel)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -43,7 +44,7 @@ class DrudgeSentinelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sentinel.isTapped()).isTrue();
-        assertThat(sentinel.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, sentinel)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -68,7 +69,7 @@ class DrudgeSentinelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sentinel.isTapped()).isTrue();
-        assertThat(sentinel.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, sentinel)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test

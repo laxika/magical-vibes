@@ -38,8 +38,8 @@ class WarrenTorchmasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(torchmaster.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(torchmaster.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, torchmaster, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -54,7 +54,7 @@ class WarrenTorchmasterTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(torchmaster.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(torchmaster.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, torchmaster, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -70,14 +70,14 @@ class WarrenTorchmasterTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(torchmaster.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(torchmaster.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, torchmaster, Keyword.HASTE)).isFalse();
         harness.handlePermanentChosen(player1, torchmaster.getId());
-        assertThat(torchmaster.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, torchmaster, Keyword.HASTE)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(torchmaster.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, torchmaster, Keyword.HASTE)).isTrue();
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
-        assertThat(torchmaster.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, torchmaster, Keyword.HASTE)).isFalse();
         assertThat(torchmaster.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
@@ -96,7 +96,7 @@ class WarrenTorchmasterTest extends BaseCardTest {
 
         assertThat(torchmaster.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -145,7 +145,7 @@ class WarrenTorchmasterTest extends BaseCardTest {
 
         assertThat(torchmaster.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(bogle.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
-        assertThat(bogle.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bogle, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -168,6 +168,6 @@ class WarrenTorchmasterTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, torchmaster.getId());
         harness.passBothPriorities();
 
-        assertThat(torchmaster.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, torchmaster, Keyword.HASTE)).isTrue();
     }
 }

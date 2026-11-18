@@ -32,7 +32,7 @@ class VampiresZealTest extends BaseCardTest {
         assertThat(creature.getToughnessModifier()).isEqualTo(2);
         assertThat(creature.getEffectivePower()).isEqualTo(11);
         assertThat(creature.getEffectiveToughness()).isEqualTo(11);
-        assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -46,7 +46,7 @@ class VampiresZealTest extends BaseCardTest {
 
         assertThat(vampire.getPowerModifier()).isEqualTo(2);
         assertThat(vampire.getToughnessModifier()).isEqualTo(2);
-        assertThat(vampire.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -61,13 +61,13 @@ class VampiresZealTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         assertThat(vampire.getPowerModifier()).isEqualTo(2);
         assertThat(vampire.getToughnessModifier()).isEqualTo(2);
-        assertThat(vampire.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isTrue();
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(vampire.getPowerModifier()).isEqualTo(0);
         assertThat(vampire.getToughnessModifier()).isEqualTo(0);
-        assertThat(vampire.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -100,7 +100,7 @@ class VampiresZealTest extends BaseCardTest {
 
         assertThat(vampire.getPowerModifier()).isEqualTo(2);
         assertThat(vampire.getToughnessModifier()).isEqualTo(2);
-        assertThat(vampire.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -116,10 +116,10 @@ class VampiresZealTest extends BaseCardTest {
 
         assertThat(vampire.getEffectivePower()).isEqualTo(6);
         assertThat(vampire.getEffectiveToughness()).isEqualTo(6);
-        assertThat(vampire.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FIRST_STRIKE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -127,7 +127,7 @@ class VampiresZealTest extends BaseCardTest {
 
         assertThat(vampire.getPowerModifier()).isZero();
         assertThat(vampire.getToughnessModifier()).isZero();
-        assertThat(vampire.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, vampire, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -141,6 +141,6 @@ class VampiresZealTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(2);
         assertThat(creature.getToughnessModifier()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
     }
 }

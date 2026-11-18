@@ -55,7 +55,7 @@ class AdamantWillTest extends BaseCardTest {
         assertThat(bears.getToughnessModifier()).isEqualTo(2);
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(bears.getEffectiveToughness()).isEqualTo(4);
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -75,7 +75,7 @@ class AdamantWillTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -91,7 +91,7 @@ class AdamantWillTest extends BaseCardTest {
         Permanent creature = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(creature.getEffectivePower()).isEqualTo(4);
         assertThat(creature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -133,7 +133,7 @@ class AdamantWillTest extends BaseCardTest {
         assertThat(creature.getId()).isEqualTo(targetId);
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test

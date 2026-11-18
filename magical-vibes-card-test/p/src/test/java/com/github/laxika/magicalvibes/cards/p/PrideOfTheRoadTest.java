@@ -35,7 +35,7 @@ class PrideOfTheRoadTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -50,7 +50,7 @@ class PrideOfTheRoadTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, vehicle.getId());
         harness.passBothPriorities();
 
-        assertThat(vehicle.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vehicle, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -63,7 +63,7 @@ class PrideOfTheRoadTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(creature.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -87,11 +87,11 @@ class PrideOfTheRoadTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
-        assertThat(creature.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -103,7 +103,7 @@ class PrideOfTheRoadTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, pride.getId());
         harness.passBothPriorities();
 
-        assertThat(pride.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, pride, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -141,7 +141,7 @@ class PrideOfTheRoadTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(creature);
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -160,7 +160,7 @@ class PrideOfTheRoadTest extends BaseCardTest {
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(3);
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -179,7 +179,7 @@ class PrideOfTheRoadTest extends BaseCardTest {
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(4);
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -197,7 +197,7 @@ class PrideOfTheRoadTest extends BaseCardTest {
         harness.assertInHand(player1, "Marauding Mako");
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

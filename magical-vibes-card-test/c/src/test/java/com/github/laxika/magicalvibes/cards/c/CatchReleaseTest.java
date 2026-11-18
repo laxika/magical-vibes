@@ -47,7 +47,7 @@ class CatchReleaseTest extends BaseCardTest {
                 .extracting(Permanent::getId)
                 .contains(target.getId());
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -109,13 +109,13 @@ class CatchReleaseTest extends BaseCardTest {
         harness.castModalSorcery(player1, 0, CATCH, List.of(target.getId()));
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -132,7 +132,7 @@ class CatchReleaseTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Fountain of Youth");
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test

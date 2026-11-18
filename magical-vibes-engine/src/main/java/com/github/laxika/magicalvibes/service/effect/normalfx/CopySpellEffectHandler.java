@@ -108,7 +108,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
         StackEntry copyEntry = copySupport.createCopyStackEntry(targetEntry, copyCard, copyControllerId, targetEntry.getTargetId());
         if (copyEffect.tokenWithHaste()) {
             // The copy *gains* haste — it is not printed on the copied card. Carrying it on the
-            // entry (drained into the permanent's granted keywords at resolution) keeps it out of
+            // entry (a keyword grant on the permanent at resolution) keeps it out of
             // the copied card's printed keywords, so the UI shows it as granted.
             copyEntry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }

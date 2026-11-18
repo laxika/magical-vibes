@@ -29,7 +29,7 @@ class RageScarredBerserkerTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -56,7 +56,7 @@ class RageScarredBerserkerTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -73,7 +73,7 @@ class RageScarredBerserkerTest extends BaseCardTest {
 
         assertThat(berserker.getPowerModifier()).isEqualTo(1);
         assertThat(berserker.getToughnessModifier()).isZero();
-        assertThat(berserker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, berserker, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -93,7 +93,7 @@ class RageScarredBerserkerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(target);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(source.getCard());
         assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -113,7 +113,7 @@ class RageScarredBerserkerTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target.getCard());
         assertThat(source.getPowerModifier()).isZero();
         assertThat(source.getToughnessModifier()).isZero();
-        assertThat(source.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -129,7 +129,7 @@ class RageScarredBerserkerTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         harness.assertInGraveyard(player2, "Drag to the Underworld");
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 4);
@@ -152,12 +152,12 @@ class RageScarredBerserkerTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.INDESTRUCTIBLE)).isFalse();
         for (Permanent source : findPermanents(player1, "Rage-Scarred Berserker")) {
             assertThat(source.getPowerModifier()).isZero();
-            assertThat(source.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, source, Keyword.INDESTRUCTIBLE)).isFalse();
         }
         assertThat(gd.stack).isEmpty();
     }

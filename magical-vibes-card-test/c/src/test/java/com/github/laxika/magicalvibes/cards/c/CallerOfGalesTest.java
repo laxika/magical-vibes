@@ -26,7 +26,7 @@ class CallerOfGalesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -38,13 +38,13 @@ class CallerOfGalesTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
     private void addAbilityMana() {
@@ -61,11 +61,11 @@ class CallerOfGalesTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         assertThat(source.isTapped()).isTrue();
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(source.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -77,7 +77,7 @@ class CallerOfGalesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, source.getId());
         harness.passBothPriorities();
 
-        assertThat(source.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -92,7 +92,7 @@ class CallerOfGalesTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -105,7 +105,7 @@ class CallerOfGalesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(source.isTapped()).isFalse();
-        assertThat(source.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -116,7 +116,7 @@ class CallerOfGalesTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(source.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -128,7 +128,7 @@ class CallerOfGalesTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(source.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FLYING)).isFalse();
     }
 
     private Permanent addReadyCallerOfGales(Player player) {

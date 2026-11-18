@@ -31,8 +31,8 @@ class ToxinAnalysisTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent maverick = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(maverick.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(maverick.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, maverick, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, maverick, Keyword.LIFELINK)).isTrue();
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
     }
 
@@ -50,8 +50,8 @@ class ToxinAnalysisTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         Permanent maverick = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(maverick.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(maverick.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, maverick, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, maverick, Keyword.LIFELINK)).isFalse();
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
     }
 
@@ -76,8 +76,8 @@ class ToxinAnalysisTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent target = findPermanent(player2, "Rubblebelt Maverick");
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
         assertThat(findPermanents(player2, "Clue")).isEmpty();
     }

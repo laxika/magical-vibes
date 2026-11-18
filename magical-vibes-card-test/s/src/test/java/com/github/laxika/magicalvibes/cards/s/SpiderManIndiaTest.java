@@ -35,7 +35,7 @@ class SpiderManIndiaTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -55,7 +55,7 @@ class SpiderManIndiaTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -115,7 +115,7 @@ class SpiderManIndiaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(spiderMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(spiderMan.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, spiderMan, Keyword.FLYING)).isTrue();
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         harness.passBothPriorities();
@@ -136,7 +136,7 @@ class SpiderManIndiaTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Spider-Man India");
         Permanent spiderMan = findPermanent(player1, "Spider-Man India");
         assertThat(spiderMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(spiderMan.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, spiderMan, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -156,7 +156,7 @@ class SpiderManIndiaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(spiderMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(spiderMan.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, spiderMan, Keyword.FLYING)).isFalse();
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
@@ -207,7 +207,7 @@ class SpiderManIndiaTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(spiderMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(spiderMan.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, spiderMan, Keyword.FLYING)).isFalse();
     }
 
     @Test

@@ -56,7 +56,6 @@ public class GrantFlyingToTargetCreatureOrPlayerEffectHandler implements NormalE
             return;
         }
 
-        target.getGrantedKeywords().add(Keyword.FLYING);
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                 new GrantKeywordEffect(

@@ -49,8 +49,8 @@ class KithkinZephyrnautTest extends BaseCardTest {
 
         assertThat(zephyrnaut.getPowerModifier()).isEqualTo(2);
         assertThat(zephyrnaut.getToughnessModifier()).isEqualTo(2);
-        assertThat(zephyrnaut.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(zephyrnaut.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.VIGILANCE)).isTrue();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
 
@@ -70,8 +70,8 @@ class KithkinZephyrnautTest extends BaseCardTest {
 
         assertThat(zephyrnaut.getPowerModifier()).isZero();
         assertThat(zephyrnaut.getToughnessModifier()).isZero();
-        assertThat(zephyrnaut.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(zephyrnaut.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -85,7 +85,7 @@ class KithkinZephyrnautTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(zephyrnaut.getPowerModifier()).isZero();
-        assertThat(zephyrnaut.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -125,8 +125,8 @@ class KithkinZephyrnautTest extends BaseCardTest {
 
         assertThat(zephyrnaut.getPowerModifier()).isEqualTo(2);
         assertThat(zephyrnaut.getToughnessModifier()).isEqualTo(2);
-        assertThat(zephyrnaut.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(zephyrnaut.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.VIGILANCE)).isTrue();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
 
@@ -141,8 +141,8 @@ class KithkinZephyrnautTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(zephyrnaut.getPowerModifier()).isZero();
-        assertThat(zephyrnaut.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(zephyrnaut.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -161,8 +161,8 @@ class KithkinZephyrnautTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(zephyrnaut.getToughnessModifier()).isZero();
-        assertThat(zephyrnaut.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(zephyrnaut.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, zephyrnaut, Keyword.VIGILANCE)).isFalse();
     }
 
 }

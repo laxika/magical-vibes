@@ -39,8 +39,8 @@ class OverwhelmingStampedeTest extends BaseCardTest {
         assertThat(bears.getEffectivePower()).isEqualTo(5);
         assertThat(bears.getEffectiveToughness()).isEqualTo(5);
 
-        assertThat(hillGiant.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hillGiant, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -55,7 +55,7 @@ class OverwhelmingStampedeTest extends BaseCardTest {
 
         assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
         assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponentCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -82,7 +82,7 @@ class OverwhelmingStampedeTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(4);  // 2 + 2 (greatest power is 2)
         assertThat(creature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -90,7 +90,7 @@ class OverwhelmingStampedeTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -110,7 +110,7 @@ class OverwhelmingStampedeTest extends BaseCardTest {
         // CR 107.1b: X is the greatest power (-1), which is floored to 0 for the +X/+X boost
         assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(-1);
         assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(6);
-        assertThat(wall.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -129,8 +129,8 @@ class OverwhelmingStampedeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(10);
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(8);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(giant.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -152,6 +152,6 @@ class OverwhelmingStampedeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(3);
-        assertThat(later.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.TRAMPLE)).isFalse();
     }
 }

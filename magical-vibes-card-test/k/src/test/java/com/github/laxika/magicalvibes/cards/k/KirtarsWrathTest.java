@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -91,7 +92,7 @@ class KirtarsWrathTest extends BaseCardTest {
     @DisplayName("Indestructible creatures survive Kirtar's Wrath")
     void indestructibleCreaturesSurvive() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new DuskImp());
-        creature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new KirtarsWrath()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 

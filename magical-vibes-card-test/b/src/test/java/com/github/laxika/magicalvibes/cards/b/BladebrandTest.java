@@ -31,7 +31,7 @@ class BladebrandTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -62,7 +62,7 @@ class BladebrandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test
@@ -90,7 +90,7 @@ class BladebrandTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gd.playerBattlefields.get(player2.getId()).getFirst(), Keyword.DEATHTOUCH)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

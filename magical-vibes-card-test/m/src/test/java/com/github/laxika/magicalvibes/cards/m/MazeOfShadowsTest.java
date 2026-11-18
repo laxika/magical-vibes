@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DauthiSlayer;
 import com.github.laxika.magicalvibes.cards.s.SearingTouch;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
@@ -159,7 +160,7 @@ class MazeOfShadowsTest extends BaseCardTest {
         attacker.tap();
 
         harness.activateAbility(player1, 0, 1, null, attacker.getId());
-        attacker.getRemovedKeywords().add(Keyword.SHADOW);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, attacker, Keyword.SHADOW);
         harness.passBothPriorities();
 
         assertThat(attacker.isTapped()).isTrue();

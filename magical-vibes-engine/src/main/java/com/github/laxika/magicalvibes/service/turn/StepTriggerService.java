@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -986,7 +987,7 @@ public class StepTriggerService {
             }
             perm.setEnteredFromExile(true);
             if (pending.grantHaste()) {
-                perm.getGrantedKeywords().add(Keyword.HASTE);
+                gameData.addEffectOnPermanent(pending.card().getName(), null, controllerId, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), perm.getId(), Duration.UNTIL_END_OF_TURN);
             }
             if (card.getId().equals(pending.card().getId())) {
                 primaryPermanent = perm;

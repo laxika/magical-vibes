@@ -45,9 +45,9 @@ class LairwatchGiantTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(trigger.getSourcePermanentId()).isEqualTo(giant.getId());
 
-        assertThat(giant.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FIRST_STRIKE)).isFalse();
         resolveAllTriggers();
-        assertThat(giant.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -61,7 +61,7 @@ class LairwatchGiantTest extends BaseCardTest {
 
         assertThat(gd.stack)
                 .noneMatch(e -> e.getCard().getName().equals("Lairwatch Giant"));
-        assertThat(giant.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -77,12 +77,12 @@ class LairwatchGiantTest extends BaseCardTest {
                 new BlockerAssignment(0, 1)
         ));
         resolveAllTriggers();
-        assertThat(giant.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(giant.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -122,8 +122,8 @@ class LairwatchGiantTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
 
-        assertThat(multiBlocker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(singleBlocker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, multiBlocker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, singleBlocker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test

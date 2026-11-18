@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.SafeholdElite;
 import com.github.laxika.magicalvibes.model.Card;
@@ -35,7 +36,7 @@ class PaleWayfarerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class) != null).isTrue();
         harness.handleListChoice(player1, "RED");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.RED);
         // Paying {Q} untapped the source.
         assertThat(wayfarer.isTapped()).isFalse();
     }
@@ -56,7 +57,7 @@ class PaleWayfarerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class) != null).isTrue();
         harness.handleListChoice(player2, "GREEN");
 
-        assertThat(opponentCreature.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.GREEN);
+        assertThat(PermanentGrants.protectionColorsOf(gd, opponentCreature)).contains(CardColor.GREEN);
     }
 
     @Test
@@ -100,13 +101,13 @@ class PaleWayfarerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.RED);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).doesNotContain(CardColor.RED);
     }
 
     @Test
@@ -119,12 +120,12 @@ class PaleWayfarerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, wayfarer.getId());
 
         assertThat(wayfarer.isTapped()).isFalse();
-        assertThat(wayfarer.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, wayfarer)).isEmpty();
 
         harness.passBothPriorities();
         harness.handleListChoice(player1, "WHITE");
 
-        assertThat(wayfarer.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, wayfarer)).contains(CardColor.WHITE);
     }
 
     @Test

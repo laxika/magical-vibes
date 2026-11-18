@@ -35,7 +35,7 @@ class MsBumbleflowerTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentDraw);
         assertThat(targetCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(targetCreature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, targetCreature, Keyword.FLYING)).isTrue();
         assertThat(msBumbleflower.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -56,7 +56,7 @@ class MsBumbleflowerTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
         assertThat(targetCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(targetCreature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, targetCreature, Keyword.FLYING)).isTrue();
     }
 
     private void castAndResolveTrigger(Permanent targetCreature) {

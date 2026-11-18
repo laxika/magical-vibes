@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -50,7 +51,7 @@ class OblivionStoneTest extends BaseCardTest {
         markedCreature.setCounterCount(CounterType.FATE, 1);
         markedCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Permanent indestructibleCreature = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
-        indestructibleCreature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, indestructibleCreature, Keyword.INDESTRUCTIBLE);
         Permanent unmarkedCreature = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
         Permanent markedLand = harness.addToBattlefieldAndReturn(player2, new Forest());
         markedLand.setCounterCount(CounterType.FATE, 1);

@@ -28,8 +28,8 @@ class FullBoreTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isEqualTo(3);
         assertThat(bears.getToughnessModifier()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -42,8 +42,8 @@ class FullBoreTest extends BaseCardTest {
 
         assertThat(knight.getPowerModifier()).isEqualTo(3);
         assertThat(knight.getToughnessModifier()).isEqualTo(2);
-        assertThat(knight.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(knight.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -61,8 +61,8 @@ class FullBoreTest extends BaseCardTest {
 
         assertThat(knight.getPowerModifier()).isEqualTo(3);
         assertThat(knight.getToughnessModifier()).isEqualTo(2);
-        assertThat(knight.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(knight.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -77,8 +77,8 @@ class FullBoreTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -104,8 +104,8 @@ class FullBoreTest extends BaseCardTest {
 
         assertThat(knight.getPowerModifier()).isEqualTo(6);
         assertThat(knight.getToughnessModifier()).isEqualTo(4);
-        assertThat(knight.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(knight.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -115,8 +115,8 @@ class FullBoreTest extends BaseCardTest {
         Permanent knight = findPermanent(player1, "Knight Luminary");
         castFullBore(knight);
 
-        assertThat(knight.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(knight.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -124,8 +124,8 @@ class FullBoreTest extends BaseCardTest {
 
         assertThat(knight.getPowerModifier()).isEqualTo(0);
         assertThat(knight.getToughnessModifier()).isEqualTo(0);
-        assertThat(knight.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(knight.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -146,8 +146,8 @@ class FullBoreTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isEqualTo(0);
         assertThat(other.getPowerModifier()).isEqualTo(0);
         assertThat(other.getToughnessModifier()).isEqualTo(0);
-        assertThat(other.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(other.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
         harness.assertInGraveyard(player1, "Full Bore");
     }
 

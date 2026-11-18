@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,7 +28,7 @@ class StarlingAerialAllyTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -38,13 +39,13 @@ class StarlingAerialAllyTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -86,7 +87,7 @@ class StarlingAerialAllyTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, starling);
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -101,7 +102,7 @@ class StarlingAerialAllyTest extends BaseCardTest {
         Permanent returned = harness.addToBattlefieldAndReturn(player1, target.getCard());
         harness.passBothPriorities();
 
-        assertThat(returned.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, returned)).doesNotContain(Keyword.FLYING);
         assertThat(gd.stack).isEmpty();
     }
     private void castStarling(java.util.UUID targetId) {

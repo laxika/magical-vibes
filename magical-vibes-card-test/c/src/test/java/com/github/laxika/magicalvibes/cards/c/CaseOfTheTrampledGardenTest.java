@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -100,7 +101,7 @@ class CaseOfTheTrampledGardenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(attacker.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, attacker)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -218,7 +219,7 @@ class CaseOfTheTrampledGardenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(attacker.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, attacker)).contains(Keyword.TRAMPLE);
     }
 
     @Test

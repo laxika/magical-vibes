@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BleedDry;
 import com.github.laxika.magicalvibes.cards.m.MassiveMight;
 import com.github.laxika.magicalvibes.cards.s.SporebackWolf;
@@ -157,7 +158,7 @@ class HalanaAndAlenaPartnersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.HASTE);
         assertThat(gd.stack).isEmpty();
     }
 

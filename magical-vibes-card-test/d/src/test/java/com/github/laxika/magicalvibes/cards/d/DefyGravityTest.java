@@ -31,13 +31,13 @@ class DefyGravityTest extends BaseCardTest {
         UUID targetId = bodyguard.getId();
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(bodyguard.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bodyguard, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bodyguard.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bodyguard, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -50,7 +50,7 @@ class DefyGravityTest extends BaseCardTest {
         UUID targetId = bodyguard.getId();
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        assertThat(bodyguard.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bodyguard, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -63,7 +63,7 @@ class DefyGravityTest extends BaseCardTest {
         UUID targetId = bodyguard.getId();
         harness.castAndResolveFlashback(player1, 0, targetId);
 
-        assertThat(bodyguard.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bodyguard, Keyword.FLYING)).isTrue();
         harness.assertNotInGraveyard(player1, "Defy Gravity");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Defy Gravity"));
@@ -89,7 +89,7 @@ class DefyGravityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DefyGravity()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, creature.getId());
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -100,19 +100,19 @@ class DefyGravityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
         harness.assertInGraveyard(player1, "Defy Gravity");
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveFlashback(player1, 0, creature.getId());
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
         harness.assertNotInGraveyard(player1, "Defy Gravity");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Defy Gravity"));
@@ -120,7 +120,7 @@ class DefyGravityTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -137,7 +137,7 @@ class DefyGravityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Cabal Trainee");
-        assertThat(survivor.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, survivor, Keyword.FLYING)).isFalse();
         harness.assertNotInGraveyard(player1, "Defy Gravity");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Defy Gravity"));

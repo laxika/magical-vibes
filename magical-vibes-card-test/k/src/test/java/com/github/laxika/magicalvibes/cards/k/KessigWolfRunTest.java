@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
@@ -71,7 +72,7 @@ class KessigWolfRunTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(creature.getPowerModifier()).isEqualTo(3);
         assertThat(creature.getToughnessModifier()).isEqualTo(0);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -88,7 +89,7 @@ class KessigWolfRunTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(creature.getPowerModifier()).isEqualTo(0);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -131,7 +132,7 @@ class KessigWolfRunTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.TRAMPLE);
     }
 
     @Test

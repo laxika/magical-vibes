@@ -25,7 +25,7 @@ class LocthwainGargoyleTest extends BaseCardTest {
 
         assertThat(gargoyle.getPowerModifier()).isEqualTo(2);
         assertThat(gargoyle.getToughnessModifier()).isZero();
-        assertThat(gargoyle.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -39,7 +39,7 @@ class LocthwainGargoyleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gargoyle.getPowerModifier()).isEqualTo(4);
-        assertThat(gargoyle.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -56,7 +56,7 @@ class LocthwainGargoyleTest extends BaseCardTest {
 
         assertThat(gargoyle.getPowerModifier()).isZero();
         assertThat(gargoyle.getToughnessModifier()).isZero();
-        assertThat(gargoyle.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -79,7 +79,7 @@ class LocthwainGargoyleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gargoyle.getPowerModifier()).isEqualTo(2);
-        assertThat(gargoyle.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isTrue();
         assertThat(gargoyle.isTapped()).isTrue();
     }
 
@@ -93,16 +93,16 @@ class LocthwainGargoyleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gargoyle.getPowerModifier()).isZero();
-        assertThat(gargoyle.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(gargoyle.getPowerModifier()).isEqualTo(2);
-        assertThat(gargoyle.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gargoyle, Keyword.FLYING)).isTrue();
         assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
         assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.FLYING)).isFalse();
     }
 
     private Permanent addReadyGargoyle(Player player) {

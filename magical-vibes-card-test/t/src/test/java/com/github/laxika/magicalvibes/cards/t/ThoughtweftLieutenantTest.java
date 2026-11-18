@@ -29,7 +29,7 @@ class ThoughtweftLieutenantTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, recipient)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, recipient)).isEqualTo(3);
-        assertThat(recipient.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, recipient, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -46,7 +46,7 @@ class ThoughtweftLieutenantTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, recipient)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, recipient)).isEqualTo(3);
-        assertThat(recipient.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, recipient, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -61,7 +61,7 @@ class ThoughtweftLieutenantTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, recipient)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, recipient)).isEqualTo(2);
-        assertThat(recipient.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, recipient, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -99,7 +99,7 @@ class ThoughtweftLieutenantTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, recipient)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, recipient)).isEqualTo(2);
-        assertThat(recipient.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, recipient, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -114,7 +114,7 @@ class ThoughtweftLieutenantTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, lieutenant)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, lieutenant)).isEqualTo(3);
-        assertThat(lieutenant.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, lieutenant, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -128,7 +128,7 @@ class ThoughtweftLieutenantTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gqs.getEffectivePower(gd, lieutenant)).isEqualTo(2);
-        assertThat(lieutenant.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, lieutenant, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -147,7 +147,7 @@ class ThoughtweftLieutenantTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, recipient)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, recipient)).isEqualTo(3);
-        assertThat(recipient.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, recipient, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -167,7 +167,7 @@ class ThoughtweftLieutenantTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, recipient)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, recipient)).isEqualTo(3);
-        assertThat(recipient.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, recipient, Keyword.TRAMPLE)).isTrue();
     }
 
     private void setupLieutenantWithCreature() {

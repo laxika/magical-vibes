@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -43,7 +44,7 @@ class MarchOfSoulsTest extends BaseCardTest {
     void indestructibleCreaturesSurviveWithoutCreatingSpirits() {
         addCreatureReady(player1, new GrizzlyBears());
         Permanent indestructible = addCreatureReady(player2, new GrizzlyBears());
-        indestructible.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, indestructible, Keyword.INDESTRUCTIBLE);
 
         castMarchOfSouls();
 

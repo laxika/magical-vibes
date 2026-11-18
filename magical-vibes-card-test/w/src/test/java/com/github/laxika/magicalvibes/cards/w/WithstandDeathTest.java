@@ -51,7 +51,7 @@ class WithstandDeathTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent myr = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(myr.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -69,7 +69,7 @@ class WithstandDeathTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent myr = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(myr.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -101,7 +101,7 @@ class WithstandDeathTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Copper Myr"));
 
-        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gd.playerBattlefields.get(player2.getId()).getFirst(), Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test

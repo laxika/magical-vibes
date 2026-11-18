@@ -109,7 +109,7 @@ class PowerWordKillTest extends BaseCardTest {
     @Test
     void doesNotDestroyIndestructibleCreature() {
         Permanent ghoul = harness.addToBattlefieldAndReturn(player2, new SepulcherGhoul());
-        ghoul.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, ghoul, Keyword.INDESTRUCTIBLE);
 
         cast(ghoul);
 

@@ -49,7 +49,7 @@ class RageWeaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -62,7 +62,7 @@ class RageWeaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -75,7 +75,7 @@ class RageWeaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -87,13 +87,13 @@ class RageWeaverTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -160,8 +160,8 @@ class RageWeaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, greenTarget.getId());
         resolveAllTriggers();
 
-        assertThat(blackTarget.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(greenTarget.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, blackTarget, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, greenTarget, Keyword.HASTE)).isTrue();
         assertThat(weaver.isTapped()).isTrue();
     }
 
@@ -177,7 +177,7 @@ class RageWeaverTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(weaver.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -192,7 +192,7 @@ class RageWeaverTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(target.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -234,7 +234,7 @@ class RageWeaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(target.isTapped()).isTrue();
     }
 }

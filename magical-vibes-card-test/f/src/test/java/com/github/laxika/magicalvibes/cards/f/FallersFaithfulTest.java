@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.IntrepidTenderfoot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -108,7 +109,7 @@ class FallersFaithfulTest extends BaseCardTest {
     @DisplayName("An undamaged indestructible target survives and its controller still draws two")
     void indestructibleTargetStillDraws() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new IntrepidTenderfoot());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new IntrepidTenderfoot(), new IntrepidTenderfoot()));
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AssaultGriffin;
 import com.github.laxika.magicalvibes.cards.b.BurrentonForgeTender;
 import com.github.laxika.magicalvibes.cards.g.GarrukPrimalHunter;
@@ -92,7 +93,7 @@ class CircleOfFlameTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         assertThat(gd.stack).hasSize(1);
 
-        attacker.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.FLYING);
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(attacker.getMarkedDamage()).isEqualTo(1);
@@ -114,7 +115,7 @@ class CircleOfFlameTest extends BaseCardTest {
     @DisplayName("Shroud does not prevent the non-targeting damage ability")
     void damagesAttackerWithShroud() {
         Permanent attacker = setUpAttack(new RuneclawBear());
-        attacker.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.SHROUD);
 
         declareAttackers(player2, List.of(0));
         assertThat(gd.stack).hasSize(1);

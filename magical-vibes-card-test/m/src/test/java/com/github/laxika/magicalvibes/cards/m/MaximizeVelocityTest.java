@@ -30,7 +30,7 @@ class MaximizeVelocityTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(3);
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -46,7 +46,7 @@ class MaximizeVelocityTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -64,7 +64,7 @@ class MaximizeVelocityTest extends BaseCardTest {
 
         Permanent battlefieldBears = findPermanent(player1, "Grizzly Bears");
         assertThat(battlefieldBears.getEffectivePower()).isEqualTo(3);
-        assertThat(battlefieldBears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, battlefieldBears, Keyword.HASTE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(discarded.getId()));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -109,7 +109,7 @@ class MaximizeVelocityTest extends BaseCardTest {
 
         assertThat(bears.getEffectivePower()).isEqualTo(3);
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -144,7 +144,7 @@ class MaximizeVelocityTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
         assertThat(bears.getEffectivePower()).isEqualTo(3);
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 

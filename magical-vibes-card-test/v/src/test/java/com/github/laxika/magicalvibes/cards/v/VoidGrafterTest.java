@@ -25,7 +25,7 @@ class VoidGrafterTest extends BaseCardTest {
 
         castVoidGrafter(target);
 
-        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
     }
 
     @Test
@@ -39,7 +39,7 @@ class VoidGrafterTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
     }
 
     @Test
@@ -61,10 +61,10 @@ class VoidGrafterTest extends BaseCardTest {
 
         castVoidGrafter(target);
 
-        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> !permanent.getId().equals(target.getId()))
-                .allSatisfy(permanent -> assertThat(permanent.hasKeyword(Keyword.HEXPROOF)).isFalse());
+                .allSatisfy(permanent -> assertThat(gqs.hasKeyword(gd, permanent, Keyword.HEXPROOF)).isFalse());
     }
 
     @Test
@@ -76,7 +76,7 @@ class VoidGrafterTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Void Grafter");
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .singleElement().satisfies(permanent ->
-                        assertThat(permanent.hasKeyword(Keyword.HEXPROOF)).isFalse());
+                        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HEXPROOF)).isFalse());
         assertThat(gd.stack).isEmpty();
     }
 
@@ -92,7 +92,7 @@ class VoidGrafterTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Void Grafter");
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
-        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
     }
     private void castVoidGrafter(Permanent target) {
         harness.setHand(player1, List.of(new VoidGrafter()));

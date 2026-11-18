@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.MishrasFactory;
@@ -132,7 +133,7 @@ class DropOfHoneyTest extends BaseCardTest {
     @Test
     void excludesIndestructibleCreaturesFromMixedTie() {
         Permanent protectedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        protectedCreature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, protectedCreature, Keyword.INDESTRUCTIBLE);
         Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new DropOfHoney());
@@ -153,7 +154,7 @@ class DropOfHoneyTest extends BaseCardTest {
     @Test
     void doesNotDestroyLargerCreatureWhenLeastPowerIsIndestructible() {
         Permanent protectedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        protectedCreature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, protectedCreature, Keyword.INDESTRUCTIBLE);
         Permanent larger = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         harness.addToBattlefield(player1, new DropOfHoney());
 
@@ -168,7 +169,7 @@ class DropOfHoneyTest extends BaseCardTest {
     @Test
     void destroysCreatureWithShroudWithoutTargeting() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        creature.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.SHROUD);
         harness.addToBattlefield(player2, new HillGiant());
         harness.addToBattlefield(player1, new DropOfHoney());
 

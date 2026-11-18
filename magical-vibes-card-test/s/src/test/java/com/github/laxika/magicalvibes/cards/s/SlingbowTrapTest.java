@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.v.VampireNighthawk;
 import com.github.laxika.magicalvibes.model.Card;
@@ -119,7 +120,7 @@ class SlingbowTrapTest extends BaseCardTest {
     @DisplayName("A black attacker that lost flying does not enable the alternate cost")
     void blackAttackerWithoutFlyingDoesNotEnableAlternateCost() {
         Permanent blackAttacker = addAttacker(player2, new VampireNighthawk());
-        blackAttacker.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, blackAttacker, Keyword.FLYING);
         Permanent target = addAttacker(player2, new SuntailHawk());
         harness.setHand(player1, List.of(new SlingbowTrap()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -156,7 +157,7 @@ class SlingbowTrapTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castInstant(player1, 0, target.getId());
 
-        target.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, target, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Suntail Hawk");

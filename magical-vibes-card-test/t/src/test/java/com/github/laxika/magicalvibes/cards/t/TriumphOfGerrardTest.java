@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -226,7 +227,7 @@ class TriumphOfGerrardTest extends BaseCardTest {
 
         hillGiant = findPermanent(player1, "Hill Giant");
         assertThat(hillGiant).isNotNull();
-        assertThat(hillGiant.getGrantedKeywords()).contains(
+        assertThat(PermanentGrants.keywordsOf(gd, hillGiant)).contains(
                 Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK);
     }
 
@@ -294,7 +295,7 @@ class TriumphOfGerrardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(giant.getGrantedKeywords()).doesNotContain(
+        assertThat(PermanentGrants.keywordsOf(gd, giant)).doesNotContain(
                 Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK);
         if (chapter == 3) {
             harness.assertNotOnBattlefield(player1, "Triumph of Gerrard");
@@ -317,11 +318,11 @@ class TriumphOfGerrardTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Triumph of Gerrard");
-        assertThat(bears.getGrantedKeywords()).contains(
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(
                 Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(bears.getGrantedKeywords()).doesNotContain(
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(
                 Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK);
     }
 }

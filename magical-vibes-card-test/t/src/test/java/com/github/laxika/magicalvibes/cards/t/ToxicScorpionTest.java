@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.Abrade;
 import com.github.laxika.magicalvibes.cards.d.DawnhartDisciple;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -28,7 +29,7 @@ class ToxicScorpionTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -43,7 +44,7 @@ class ToxicScorpionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -88,7 +89,7 @@ class ToxicScorpionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(target);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.DEATHTOUCH);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -108,7 +109,7 @@ class ToxicScorpionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target).contains(replacement);
-        assertThat(replacement.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, replacement)).doesNotContain(Keyword.DEATHTOUCH);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -122,8 +123,8 @@ class ToxicScorpionTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
-        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.DEATHTOUCH);
         assertThat(gd.stack).isEmpty();
     }
 

@@ -115,7 +115,7 @@ class SerraPaladinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, reveka.getId());
         harness.passBothPriorities();
 
-        assertThat(reveka.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, reveka, Keyword.VIGILANCE)).isTrue();
         assertThat(paladin.isTapped()).isTrue();
     }
 
@@ -130,7 +130,7 @@ class SerraPaladinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, reveka.getId());
         harness.passBothPriorities();
 
-        assertThat(reveka.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, reveka, Keyword.VIGILANCE)).isTrue();
         assertThat(paladin.isTapped()).isTrue();
     }
 
@@ -144,12 +144,12 @@ class SerraPaladinTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, reveka.getId());
         harness.passBothPriorities();
-        assertThat(reveka.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, reveka, Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(reveka.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, reveka, Keyword.VIGILANCE)).isFalse();
         assertThat(paladin.isTapped()).isTrue();
     }
 

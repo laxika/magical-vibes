@@ -35,7 +35,7 @@ class ScamperingScorcherTest extends BaseCardTest {
                 .toList();
         assertThat(ownElementals).hasSize(4);
         assertThat(ownElementals).allSatisfy(elemental -> {
-            assertThat(elemental.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, elemental, Keyword.HASTE)).isTrue();
             assertThat(elemental.getCard().getSubtypes()).contains(CardSubtype.ELEMENTAL);
         });
         assertThat(ownElementals.stream()
@@ -43,9 +43,9 @@ class ScamperingScorcherTest extends BaseCardTest {
                         && elemental.getCard().getPower() == 1
                         && elemental.getCard().getToughness() == 1))
                 .hasSize(2);
-        assertThat(ownBear.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(opponentElemental.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(existingElemental.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownBear, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentElemental, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, existingElemental, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -57,10 +57,10 @@ class ScamperingScorcherTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(existingElemental.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, existingElemental, Keyword.HASTE)).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.ELEMENTAL)))
-                .allSatisfy(elemental -> assertThat(elemental.hasKeyword(Keyword.HASTE)).isFalse());
+                .allSatisfy(elemental -> assertThat(gqs.hasKeyword(gd, elemental, Keyword.HASTE)).isFalse());
     }
 
     @Test
@@ -71,7 +71,7 @@ class ScamperingScorcherTest extends BaseCardTest {
         Permanent laterElemental = harness.enterBattlefieldAndReturn(player1, new AirElemental());
         resolveAllTriggers();
 
-        assertThat(laterElemental.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterElemental, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -88,7 +88,7 @@ class ScamperingScorcherTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
                 .allSatisfy(token -> {
                     assertThat(token.getCard().isToken()).isTrue();
-                    assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
                 });
     }
 
@@ -107,12 +107,12 @@ class ScamperingScorcherTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(scorcher);
         resolveAllTriggers();
 
-        assertThat(scorcher.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(existingElemental.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, scorcher, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, existingElemental, Keyword.HASTE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()))
                 .hasSize(2)
-                .allSatisfy(token -> assertThat(token.hasKeyword(Keyword.HASTE)).isTrue());
+                .allSatisfy(token -> assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue());
     }
 
     private void castScamperingScorcher() {

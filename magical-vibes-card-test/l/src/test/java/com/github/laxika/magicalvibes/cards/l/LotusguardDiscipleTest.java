@@ -27,8 +27,8 @@ class LotusguardDiscipleTest extends BaseCardTest {
 
         castWithTarget(bears);
 
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -38,8 +38,8 @@ class LotusguardDiscipleTest extends BaseCardTest {
 
         castWithTarget(vehicle);
 
-        assertThat(vehicle.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(vehicle.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vehicle, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vehicle, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -52,8 +52,8 @@ class LotusguardDiscipleTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -77,13 +77,13 @@ class LotusguardDiscipleTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -98,8 +98,8 @@ class LotusguardDiscipleTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -115,8 +115,8 @@ class LotusguardDiscipleTest extends BaseCardTest {
         Permanent replacement = harness.addToBattlefieldAndReturn(player2, new LotusguardDisciple());
         harness.passBothPriorities();
 
-        assertThat(replacement.hasKeyword(Keyword.LIFELINK)).isFalse();
-        assertThat(replacement.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Lotusguard Disciple");
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FinalFlourish;
 import com.github.laxika.magicalvibes.cards.p.ProtocolKnight;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -28,7 +29,7 @@ class SigiledSentinelTest extends BaseCardTest {
         resolveEtbTargeting(knight);
 
         assertThat(knight.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(knight.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.VIGILANCE)).isTrue();
         assertThat(sentinel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -40,7 +41,7 @@ class SigiledSentinelTest extends BaseCardTest {
         resolveEtbTargeting(sentinel);
 
         assertThat(sentinel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(sentinel.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, sentinel)).doesNotContain(Keyword.VIGILANCE);
     }
 
     @Test
@@ -50,13 +51,13 @@ class SigiledSentinelTest extends BaseCardTest {
         castSigiledSentinel();
         resolveEtbTargeting(knight);
 
-        assertThat(knight.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(knight.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.VIGILANCE)).isFalse();
         assertThat(knight.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -69,7 +70,7 @@ class SigiledSentinelTest extends BaseCardTest {
         resolveEtbTargeting(target);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -89,7 +90,7 @@ class SigiledSentinelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
     }
 
     private Permanent castSigiledSentinel() {

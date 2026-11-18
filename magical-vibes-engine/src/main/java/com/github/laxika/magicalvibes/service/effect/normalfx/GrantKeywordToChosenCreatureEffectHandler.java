@@ -53,11 +53,6 @@ public class GrantKeywordToChosenCreatureEffectHandler implements NormalEffectHa
         }
 
         Set<Keyword> keywords = Set.of(grant.keyword());
-        if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
-            target.getUntilNextTurnKeywords().addAll(keywords);
-        } else {
-            target.getGrantedKeywords().addAll(keywords);
-        }
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                 new GrantKeywordEffect(keywords, GrantScope.TARGET, duration), target.getId(), null,

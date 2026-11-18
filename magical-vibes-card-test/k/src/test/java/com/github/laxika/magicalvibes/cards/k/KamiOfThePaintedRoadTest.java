@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DesperateRitual;
 import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
 import com.github.laxika.magicalvibes.cards.h.HarshDeceiver;
@@ -35,7 +36,7 @@ class KamiOfThePaintedRoadTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "RED");
 
-        assertThat(kami.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, kami)).contains(CardColor.RED);
     }
 
     @Test
@@ -50,7 +51,7 @@ class KamiOfThePaintedRoadTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLUE");
 
-        assertThat(kami.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, kami)).contains(CardColor.BLUE);
     }
 
     @Test
@@ -64,7 +65,7 @@ class KamiOfThePaintedRoadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(kami.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, kami)).isEmpty();
     }
 
     @Test
@@ -82,7 +83,7 @@ class KamiOfThePaintedRoadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(kami.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, kami)).isEmpty();
     }
 
     @Test

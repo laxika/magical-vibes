@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
@@ -33,7 +34,7 @@ class GuidedStrikeTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(1);
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.FIRST_STRIKE);
 
         List<Card> hand = harness.getGameData().playerHands.get(player1.getId());
         assertThat(hand).hasSize(1);
@@ -54,7 +55,7 @@ class GuidedStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -81,7 +82,7 @@ class GuidedStrikeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(creature.getPowerModifier()).isEqualTo(1);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test

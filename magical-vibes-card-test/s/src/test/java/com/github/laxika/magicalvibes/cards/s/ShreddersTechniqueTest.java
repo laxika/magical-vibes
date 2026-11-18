@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.v.VernalEquinox;
@@ -55,7 +56,7 @@ class ShreddersTechniqueTest extends BaseCardTest {
     @Test
     void indestructibleEnchantmentDoesNotCauseLifeLoss() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new VernalEquinox());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
 
         castNormally(target.getId());
 

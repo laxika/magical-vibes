@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -111,7 +112,7 @@ class ArmorOfShadowsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
         assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     private void cast(Permanent target) {

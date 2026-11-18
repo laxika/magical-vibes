@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -72,7 +74,8 @@ public class PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffect
 
         Permanent permanent = new Permanent(targetCard);
         permanent.setEnteredFromGraveyardOwnerId(entry.getControllerId());
-        permanent.getGrantedKeywords().add(Keyword.HASTE);
+        gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                    permanent.getId(), Duration.UNTIL_END_OF_TURN);
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent, enterTappedTypes);
         graveyardReturnSupport.trackStolenCreature(

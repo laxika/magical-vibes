@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ColossodonYearling;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -27,12 +28,12 @@ class KolaghanStormsingerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.HASTE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -59,10 +60,10 @@ class KolaghanStormsingerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(stormsinger));
         harness.handlePermanentChosen(player1, target.getId());
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.HASTE);
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.HASTE);
         assertThat(als.canAttack(gd, target, player1.getId())).isTrue();
     }
 
@@ -78,7 +79,7 @@ class KolaghanStormsingerTest extends BaseCardTest {
         Permanent stormsinger = findPermanent(player1, "Kolaghan Stormsinger");
         assertThat(stormsinger.isFaceDown()).isFalse();
         assertThat(stormsinger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.HASTE);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }

@@ -32,8 +32,8 @@ class KarametrasBlessingTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(bear.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -70,8 +70,8 @@ class KarametrasBlessingTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(bear.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -103,8 +103,8 @@ class KarametrasBlessingTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -118,8 +118,8 @@ class KarametrasBlessingTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(2);
         assertThat(creature.getToughnessModifier()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -160,8 +160,8 @@ class KarametrasBlessingTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(2);
         assertThat(creature.getToughnessModifier()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -204,8 +204,8 @@ class KarametrasBlessingTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(2);
         assertThat(creature.getToughnessModifier()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -241,7 +241,7 @@ class KarametrasBlessingTest extends BaseCardTest {
     private void assertProtectedAndBoosted(Permanent creature) {
         assertThat(creature.getPowerModifier()).isEqualTo(2);
         assertThat(creature.getToughnessModifier()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
 import com.github.laxika.magicalvibes.cards.s.SunSentinel;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -32,7 +33,7 @@ class MajesticHeliopterusTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -52,7 +53,7 @@ class MajesticHeliopterusTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -68,7 +69,7 @@ class MajesticHeliopterusTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -139,7 +140,7 @@ class MajesticHeliopterusTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -154,6 +155,6 @@ class MajesticHeliopterusTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING);
     }
 }

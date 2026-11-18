@@ -200,7 +200,7 @@ class WaveElementalTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 0, null, targetThatGainsFlying.getId());
 
         harness.passBothPriorities();
-        assertThat(targetThatGainsFlying.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, targetThatGainsFlying, Keyword.FLYING)).isTrue();
 
         harness.passBothPriorities();
 

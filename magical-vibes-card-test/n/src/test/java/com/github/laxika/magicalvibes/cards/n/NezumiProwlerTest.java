@@ -26,10 +26,10 @@ class NezumiProwlerTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new BronzeplateBoar());
         castProwler(target);
 
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(opponentCreature.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(opponentCreature.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -38,15 +38,15 @@ class NezumiProwlerTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new BronzeplateBoar());
         castProwler(target);
 
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -88,8 +88,8 @@ class NezumiProwlerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, prowler.getId());
         resolveAllTriggers();
 
-        assertThat(prowler.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(prowler.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, prowler, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, prowler, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -114,8 +114,8 @@ class NezumiProwlerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, prowler.getId());
         resolveAllTriggers();
 
-        assertThat(prowler.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(prowler.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, prowler, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, prowler, Keyword.LIFELINK)).isTrue();
     }
 
     @Test

@@ -37,8 +37,8 @@ class FirjasRetributionTest extends BaseCardTest {
         assertThat(token.getCard().getToughness()).isEqualTo(4);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ANGEL, CardSubtype.WARRIOR);
-        assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(token.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -72,14 +72,14 @@ class FirjasRetributionTest extends BaseCardTest {
 
         triggerAndResolveChapter(saga);
 
-        assertThat(angel.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(nonAngel.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonAngel, Keyword.DOUBLE_STRIKE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(angel.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test

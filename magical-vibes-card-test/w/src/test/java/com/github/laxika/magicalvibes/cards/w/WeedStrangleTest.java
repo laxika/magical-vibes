@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.k.KnightOfMeadowgrain;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -112,7 +113,7 @@ class WeedStrangleTest extends BaseCardTest {
     @DisplayName("An indestructible target survives but a clash win still gains life")
     void indestructibleTargetStillGrantsLife() {
         Permanent creature = prepareTargetCreature();
-        creature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.INDESTRUCTIBLE);
         stackClashWinForCaster();
         harness.castAndResolveSorcery(player1, 0, creature.getId());
         finishClash();
@@ -142,7 +143,7 @@ class WeedStrangleTest extends BaseCardTest {
         Permanent creature = prepareTargetCreature();
         stackClashWinForCaster();
         harness.castSorcery(player1, 0, creature.getId());
-        creature.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.HEXPROOF);
         harness.passBothPriorities();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertOnBattlefield(player2, "Knight of Meadowgrain");

@@ -30,7 +30,7 @@ class SubterfugeTest extends BaseCardTest {
         harness.castCreature(player1, 0, bears.getId());
         resolveAllTriggers();
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
         int handBefore = gd.playerHands.get(player1.getId()).size();
         bears.setAttacking(true);
         harness.setLife(player2, 20);
@@ -52,13 +52,13 @@ class SubterfugeTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, bears.getId());
         resolveAllTriggers();
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
         int handBefore = gd.playerHands.get(player1.getId()).size();
         bears.setAttacking(true);
         bears.setAttackTarget(player2.getId());

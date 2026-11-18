@@ -66,7 +66,7 @@ class ShuYunTheSilentTempestTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -82,7 +82,7 @@ class ShuYunTheSilentTempestTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -110,14 +110,14 @@ class ShuYunTheSilentTempestTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(shuYun.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, shuYun, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, shuYun)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, shuYun)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(shuYun.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, shuYun, Keyword.DOUBLE_STRIKE)).isFalse();
         assertThat(gqs.getEffectivePower(gd, shuYun)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, shuYun)).isEqualTo(2);
     }
@@ -136,7 +136,7 @@ class ShuYunTheSilentTempestTest extends BaseCardTest {
             }
         }
 
-        assertThat(shuYun.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, shuYun, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, shuYun)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, shuYun)).isEqualTo(4);
         harness.assertLife(player2, 16);
@@ -154,7 +154,7 @@ class ShuYunTheSilentTempestTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(shuYun.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, shuYun, Keyword.DOUBLE_STRIKE)).isFalse();
         assertThat(gqs.getEffectivePower(gd, shuYun)).isEqualTo(4);
     }
 

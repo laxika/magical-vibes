@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PortentTracker;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -24,7 +25,7 @@ class SerpentBladeAssailantTest extends BaseCardTest {
         resolveEtbTargeting(tracker);
 
         assertThat(tracker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(tracker.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, tracker, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -36,7 +37,7 @@ class SerpentBladeAssailantTest extends BaseCardTest {
         resolveEtbTargeting(assailant);
 
         assertThat(assailant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(assailant.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, assailant)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -50,7 +51,7 @@ class SerpentBladeAssailantTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(tracker.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, tracker, Keyword.DEATHTOUCH)).isFalse();
         assertThat(tracker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -63,8 +64,8 @@ class SerpentBladeAssailantTest extends BaseCardTest {
         resolveEtbTargeting(tracker);
 
         assertThat(tracker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(tracker.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(findPermanent(player1, "Serpent-Blade Assailant").hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, tracker, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Serpent-Blade Assailant"), Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -80,7 +81,7 @@ class SerpentBladeAssailantTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Serpent-Blade Assailant");
         assertThat(tracker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(tracker.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, tracker, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -96,7 +97,7 @@ class SerpentBladeAssailantTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Portent Tracker");
         assertThat(assailant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(assailant.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, assailant)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
     private void castAssailant() {

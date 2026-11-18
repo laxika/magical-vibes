@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FleshToDust;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,7 +32,7 @@ class AltacBloodseekerTest extends BaseCardTest {
         Permanent bloodseeker = findBloodseeker();
         assertThat(bloodseeker.getPowerModifier()).isEqualTo(2);
         assertThat(bloodseeker.getToughnessModifier()).isEqualTo(0);
-        assertThat(bloodseeker.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE, Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bloodseeker)).contains(Keyword.FIRST_STRIKE, Keyword.HASTE);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -49,7 +50,7 @@ class AltacBloodseekerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         Permanent bloodseeker = findBloodseeker();
         assertThat(bloodseeker.getPowerModifier()).isEqualTo(0);
-        assertThat(bloodseeker.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE, Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bloodseeker)).doesNotContain(Keyword.FIRST_STRIKE, Keyword.HASTE);
     }
 
     @Test
@@ -65,13 +66,13 @@ class AltacBloodseekerTest extends BaseCardTest {
 
         Permanent bloodseeker = findBloodseeker();
         assertThat(bloodseeker.getPowerModifier()).isEqualTo(2);
-        assertThat(bloodseeker.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE, Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bloodseeker)).contains(Keyword.FIRST_STRIKE, Keyword.HASTE);
 
         harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(bloodseeker.getPowerModifier()).isEqualTo(0);
         assertThat(bloodseeker.getToughnessModifier()).isEqualTo(0);
-        assertThat(bloodseeker.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE, Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bloodseeker)).doesNotContain(Keyword.FIRST_STRIKE, Keyword.HASTE);
     }
 
     @Test
@@ -92,7 +93,7 @@ class AltacBloodseekerTest extends BaseCardTest {
         Permanent bloodseeker = findBloodseeker();
         assertThat(bloodseeker.getPowerModifier()).isEqualTo(4);
         assertThat(bloodseeker.getToughnessModifier()).isEqualTo(0);
-        assertThat(bloodseeker.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE, Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bloodseeker)).contains(Keyword.FIRST_STRIKE, Keyword.HASTE);
     }
 
     @Test
@@ -111,7 +112,7 @@ class AltacBloodseekerTest extends BaseCardTest {
 
         Permanent replacement = findBloodseeker();
         assertThat(replacement.getPowerModifier()).isEqualTo(0);
-        assertThat(replacement.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE, Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, replacement)).doesNotContain(Keyword.FIRST_STRIKE, Keyword.HASTE);
     }
 
     private void destroyBear() {

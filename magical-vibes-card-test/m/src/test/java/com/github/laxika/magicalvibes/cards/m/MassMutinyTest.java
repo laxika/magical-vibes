@@ -31,7 +31,7 @@ class MassMutinyTest extends BaseCardTest {
         assertThat(bear.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bear);
-        assertThat(bear.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(bear.getId())).isTrue();
     }
 
@@ -48,7 +48,7 @@ class MassMutinyTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
-        assertThat(bear.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(bear.getId())).isFalse();
     }
 
@@ -93,7 +93,7 @@ class MassMutinyTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(creature.getId())).isFalse();
     }
 
@@ -109,10 +109,10 @@ class MassMutinyTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(chosen);
         assertThat(chosen.isTapped()).isFalse();
-        assertThat(chosen.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.HASTE)).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(unselected);
         assertThat(unselected.isTapped()).isTrue();
-        assertThat(unselected.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, unselected, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -129,7 +129,7 @@ class MassMutinyTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
         assertThat(creature.isTapped()).isTrue();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(creature.getId())).isFalse();
         harness.assertInGraveyard(player1, "Mass Mutiny");
     }

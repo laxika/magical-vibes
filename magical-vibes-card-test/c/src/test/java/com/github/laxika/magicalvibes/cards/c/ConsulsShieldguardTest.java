@@ -45,7 +45,7 @@ class ConsulsShieldguardTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
-        assertThat(seedsculptor.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, seedsculptor, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -61,7 +61,7 @@ class ConsulsShieldguardTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.getOrDefault(player1.getId(), 0)).isZero();
-        assertThat(seedsculptor.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, seedsculptor, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -100,7 +100,7 @@ class ConsulsShieldguardTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
-        assertThat(seedsculptor.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, seedsculptor, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -133,7 +133,7 @@ class ConsulsShieldguardTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
-        assertThat(seedsculptor.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, seedsculptor, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -152,13 +152,13 @@ class ConsulsShieldguardTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
-        assertThat(seedsculptor.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, seedsculptor, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(seedsculptor.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, seedsculptor, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
     }
 }

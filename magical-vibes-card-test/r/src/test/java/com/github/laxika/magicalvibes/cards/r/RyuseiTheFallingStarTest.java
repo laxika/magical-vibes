@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -59,8 +60,8 @@ class RyuseiTheFallingStarTest extends BaseCardTest {
         ryusei.setMarkedDamage(5);
         harness.runStateBasedActions();
 
-        bears.getGrantedKeywords().add(Keyword.FLYING);
-        elemental.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, elemental, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");

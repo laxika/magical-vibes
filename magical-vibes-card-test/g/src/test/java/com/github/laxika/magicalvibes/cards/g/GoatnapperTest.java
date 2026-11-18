@@ -54,7 +54,7 @@ class GoatnapperTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(goat.isTapped()).isFalse();
-        assertThat(goat.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, goat, Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player1, "Avian Changeling");
         harness.assertNotOnBattlefield(player2, "Avian Changeling");
         assertThat(gd.isStolenUntilEndOfTurn(goat.getId())).isTrue();
@@ -73,7 +73,7 @@ class GoatnapperTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(goat.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, goat, Keyword.HASTE)).isFalse();
         harness.assertOnBattlefield(player2, "Avian Changeling");
         harness.assertNotOnBattlefield(player1, "Avian Changeling");
         assertThat(gd.isStolenUntilEndOfTurn(goat.getId())).isFalse();
@@ -113,7 +113,7 @@ class GoatnapperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(goat.isTapped()).isFalse();
-        assertThat(goat.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, goat, Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player1, "Avian Changeling");
         harness.assertNotOnBattlefield(player2, "Avian Changeling");
     }
@@ -153,14 +153,14 @@ class GoatnapperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(goat.isTapped()).isFalse();
-        assertThat(goat.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, goat, Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player1, "Avian Changeling");
         harness.assertNotOnBattlefield(player2, "Avian Changeling");
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(goat.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, goat, Keyword.HASTE)).isFalse();
         harness.assertOnBattlefield(player2, "Avian Changeling");
         harness.assertNotOnBattlefield(player1, "Avian Changeling");
     }

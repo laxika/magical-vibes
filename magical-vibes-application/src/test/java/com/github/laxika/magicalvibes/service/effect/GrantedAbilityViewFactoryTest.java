@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCount
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromNonSubtypeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.networking.model.GrantedAbilityView;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -91,12 +92,10 @@ class GrantedAbilityViewFactoryTest {
         card.addStaticEffect(new ProtectionFromChosenColorEffect());
         Permanent permanent = new Permanent(card);
         permanent.setChosenColor(CardColor.RED);
-        permanent.getProtectionFromColorsUntilEndOfTurn().add(CardColor.GREEN);
-        permanent.getProtectionFromColorsUntilEndOfTurn().add(CardColor.BLACK);
 
         List<GrantedAbilityView> views = factory.create(
                 permanent,
-                bonus(Set.of(CardColor.BLACK, CardColor.RED), List.of()),
+                bonus(Set.of(CardColor.BLACK, CardColor.RED, CardColor.GREEN), List.of()),
                 List.of(), false);
 
         assertThat(views).containsExactly(
@@ -108,15 +107,14 @@ class GrantedAbilityViewFactoryTest {
     @DisplayName("Projects runtime unblockable and non-subtype protection")
     void projectsRuntimeGrantedAbilities() {
         Permanent permanent = permanent("Creature");
-        permanent.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()
-                .add(CardSubtype.HUMAN);
 
-        List<GrantedAbilityView> views =
-                factory.create(permanent, bonus(Set.of(), List.of()), List.of(), true);
+        List<GrantedAbilityView> views = factory.create(permanent,
+                bonus(Set.of(), List.of(new ProtectionFromNonSubtypeCreaturesEffect(CardSubtype.HUMAN))),
+                List.of(), true);
 
         assertThat(views).containsExactly(
-                new GrantedAbilityView("Can't be blocked", null),
-                new GrantedAbilityView("Protection from non-Human creatures", null));
+                new GrantedAbilityView("Protection from non-Human creatures", null),
+                new GrantedAbilityView("Can't be blocked", null));
     }
 
     @Test

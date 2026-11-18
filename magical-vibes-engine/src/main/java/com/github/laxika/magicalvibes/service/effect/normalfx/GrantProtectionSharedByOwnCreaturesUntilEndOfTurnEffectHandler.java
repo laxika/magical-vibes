@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromNonSubtypeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -73,13 +75,6 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
                         new GrantEffectEffect(protection, GrantScope.TARGET), recipient.getId(), null, null,
                         Duration.UNTIL_END_OF_TURN, 0));
             }
-            recipient.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()
-                    .addAll(creatures.stream()
-                            .flatMap(source -> source.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().stream())
-                            .toList());
-            if (creatures.stream().anyMatch(Permanent::isProtectionFromOpponentCreaturesUntilEndOfTurn)) {
-                recipient.setProtectionFromOpponentCreaturesUntilEndOfTurn(true);
-            }
         }
 
         gameLogService.append(gameData, GameLog.builder()
@@ -95,7 +90,6 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
                                             Set<CardEffect> protectionEffects) {
         GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, creature);
         protectionColors.addAll(bonus.protectionColors());
-        protectionColors.addAll(creature.getProtectionFromColorsUntilEndOfTurn());
 
         if (!bonus.losesAllAbilities()) {
             for (CardEffect staticEffect : creature.getCard().getStaticEffects()) {
@@ -111,12 +105,10 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
         for (CardEffect grantedEffect : bonus.grantedEffects()) {
             if (grantedEffect instanceof ProtectionGrantingEffect protection) {
                 addProtectionAbility(protection, protectionColors, protectionEffects);
+            } else if (grantedEffect instanceof ProtectionFromNonSubtypeCreaturesEffect
+                    || grantedEffect instanceof GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect) {
+                protectionEffects.add(grantedEffect);
             }
-        }
-
-        if (!creature.getProtectionFromCardTypes().isEmpty()) {
-            protectionEffects.add(new ProtectionFromCardTypesEffect(
-                    Set.copyOf(creature.getProtectionFromCardTypes())));
         }
     }
 

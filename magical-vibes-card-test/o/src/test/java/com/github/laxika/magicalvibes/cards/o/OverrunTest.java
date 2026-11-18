@@ -34,12 +34,12 @@ class OverrunTest extends BaseCardTest {
         assertThat(p1a.getEffectiveToughness()).isEqualTo(5);
         assertThat(p1b.getEffectivePower()).isEqualTo(4);
         assertThat(p1b.getEffectiveToughness()).isEqualTo(5);
-        assertThat(p1a.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(p1b.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, p1a, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, p1b, Keyword.TRAMPLE)).isTrue();
 
         assertThat(p2.getEffectivePower()).isEqualTo(1);
         assertThat(p2.getEffectiveToughness()).isEqualTo(2);
-        assertThat(p2.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, p2, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -78,7 +78,7 @@ class OverrunTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(4);
         assertThat(creature.getEffectiveToughness()).isEqualTo(5);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -86,7 +86,7 @@ class OverrunTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(1);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -101,10 +101,10 @@ class OverrunTest extends BaseCardTest {
 
         assertThat(existingCreature.getEffectivePower()).isEqualTo(4);
         assertThat(existingCreature.getEffectiveToughness()).isEqualTo(5);
-        assertThat(existingCreature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, existingCreature, Keyword.TRAMPLE)).isTrue();
         assertThat(laterCreature.getEffectivePower()).isEqualTo(1);
         assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(laterCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -117,7 +117,7 @@ class OverrunTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(4);
         assertThat(creature.getEffectiveToughness()).isEqualTo(5);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -132,7 +132,7 @@ class OverrunTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(7);
         assertThat(creature.getEffectiveToughness()).isEqualTo(8);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -140,7 +140,7 @@ class OverrunTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(1);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test

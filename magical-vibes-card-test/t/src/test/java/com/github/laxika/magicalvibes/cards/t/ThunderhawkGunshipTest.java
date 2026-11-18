@@ -29,7 +29,7 @@ class ThunderhawkGunshipTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(2);
-        assertThat(tokens).allMatch(token -> token.hasKeyword(Keyword.VIGILANCE));
+        assertThat(tokens).allMatch(token -> gqs.hasKeyword(gd, token, Keyword.VIGILANCE));
     }
 
     @Test
@@ -47,8 +47,8 @@ class ThunderhawkGunshipTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 2));
         resolveAllTriggers();
 
-        assertThat(attacker.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(nonAttacker.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonAttacker, Keyword.FLYING)).isFalse();
         assertThat(crew.isTapped()).isTrue();
         assertThat(vehicle.isTapped()).isTrue();
     }

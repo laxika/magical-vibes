@@ -31,7 +31,7 @@ class ConqueringManticoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player1, "Lagac Lizard");
         harness.assertNotOnBattlefield(player2, "Lagac Lizard");
     }
@@ -48,7 +48,7 @@ class ConqueringManticoreTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         harness.assertOnBattlefield(player2, "Lagac Lizard");
         harness.assertNotOnBattlefield(player1, "Lagac Lizard");
     }
@@ -85,7 +85,7 @@ class ConqueringManticoreTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Lagac Lizard");
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -103,7 +103,7 @@ class ConqueringManticoreTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Lagac Lizard");
         harness.assertOnBattlefield(player2, "Lagac Lizard");
         assertThat(other.isTapped()).isTrue();
-        assertThat(other.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

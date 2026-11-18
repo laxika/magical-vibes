@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -48,7 +49,7 @@ class TurnToDustTest extends BaseCardTest {
     @DisplayName("Turn to Dust adds green mana even when the target Equipment is indestructible")
     void addsManaWhenEquipmentIsIndestructible() {
         Permanent equipment = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
-        equipment.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, equipment, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new TurnToDust()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -102,7 +103,7 @@ class TurnToDustTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castInstant(player1, 0, equipment.getId());
-        equipment.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, equipment, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Leonin Scimitar");

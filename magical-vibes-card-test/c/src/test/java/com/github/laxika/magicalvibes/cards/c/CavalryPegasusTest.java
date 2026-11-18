@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BronzeSable;
 import com.github.laxika.magicalvibes.cards.t.TravelingPhilosopher;
 import com.github.laxika.magicalvibes.cards.v.VoyagesEnd;
@@ -30,9 +31,9 @@ class CavalryPegasusTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(attackingHuman.getGrantedKeywords()).contains(Keyword.FLYING);
-        assertThat(attackingNonHuman.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
-        assertThat(nonattackingHuman.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, attackingHuman)).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, attackingNonHuman)).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, nonattackingHuman)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -44,11 +45,11 @@ class CavalryPegasusTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(attackingHuman.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, attackingHuman)).contains(Keyword.FLYING);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(attackingHuman.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, attackingHuman)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -60,7 +61,7 @@ class CavalryPegasusTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(human.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, human)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -80,7 +81,7 @@ class CavalryPegasusTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Cavalry Pegasus");
-        assertThat(human.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, human)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -93,7 +94,7 @@ class CavalryPegasusTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent laterHuman = harness.enterBattlefieldAndReturn(player1, new TravelingPhilosopher());
 
-        assertThat(attackingHuman.getGrantedKeywords()).contains(Keyword.FLYING);
-        assertThat(laterHuman.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, attackingHuman)).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, laterHuman)).doesNotContain(Keyword.FLYING);
     }
 }

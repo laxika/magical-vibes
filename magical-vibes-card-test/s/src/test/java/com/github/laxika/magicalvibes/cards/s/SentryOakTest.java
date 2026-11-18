@@ -59,7 +59,7 @@ class SentryOakTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownNextCard, winningCard);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingNextCard, losingCard);
         assertThat(sentryOak().getPowerModifier()).isEqualTo(2);
-        assertThat(sentryOak().hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, sentryOak(), Keyword.DEFENDER)).isFalse();
     }
 
     @Test
@@ -75,7 +75,7 @@ class SentryOakTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(sentryOak().getPowerModifier()).isEqualTo(2);
-        assertThat(sentryOak().hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, sentryOak(), Keyword.DEFENDER)).isFalse();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -92,7 +92,7 @@ class SentryOakTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         assertThat(sentryOak().getPowerModifier()).isEqualTo(0);
-        assertThat(sentryOak().hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sentryOak(), Keyword.DEFENDER)).isTrue();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
     @Test
@@ -110,7 +110,7 @@ class SentryOakTest extends BaseCardTest {
         Permanent oak = sentryOak();
         assertThat(oak.getPowerModifier()).isEqualTo(2);
         assertThat(oak.getToughnessModifier()).isEqualTo(0);
-        assertThat(oak.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, oak, Keyword.DEFENDER)).isFalse();
     }
 
     @Test
@@ -126,7 +126,7 @@ class SentryOakTest extends BaseCardTest {
 
         Permanent oak = sentryOak();
         assertThat(oak.getPowerModifier()).isEqualTo(0);
-        assertThat(oak.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, oak, Keyword.DEFENDER)).isTrue();
     }
 
     @Test
@@ -142,7 +142,7 @@ class SentryOakTest extends BaseCardTest {
 
         Permanent oak = sentryOak();
         assertThat(oak.getPowerModifier()).isEqualTo(0);
-        assertThat(oak.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, oak, Keyword.DEFENDER)).isTrue();
     }
 
     @Test
@@ -157,7 +157,7 @@ class SentryOakTest extends BaseCardTest {
 
         Permanent oak = sentryOak();
         assertThat(oak.getPowerModifier()).isEqualTo(0);
-        assertThat(oak.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, oak, Keyword.DEFENDER)).isTrue();
     }
 
     @Test
@@ -186,12 +186,12 @@ class SentryOakTest extends BaseCardTest {
 
         Permanent oak = sentryOak();
         assertThat(oak.getPowerModifier()).isEqualTo(2);
-        assertThat(oak.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, oak, Keyword.DEFENDER)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player1, TurnStep.CLEANUP);
 
         assertThat(oak.getPowerModifier()).isEqualTo(0);
-        assertThat(oak.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, oak, Keyword.DEFENDER)).isTrue();
     }
 }

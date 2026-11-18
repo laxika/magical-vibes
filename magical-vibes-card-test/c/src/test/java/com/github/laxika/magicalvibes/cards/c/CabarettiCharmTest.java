@@ -85,16 +85,16 @@ class CabarettiCharmTest extends BaseCardTest {
 
         assertThat(ownBear.getEffectivePower()).isEqualTo(3);
         assertThat(ownBear.getEffectiveToughness()).isEqualTo(3);
-        assertThat(ownBear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownBear, Keyword.TRAMPLE)).isTrue();
         assertThat(opposingBear.getEffectivePower()).isEqualTo(2);
-        assertThat(opposingBear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingBear, Keyword.TRAMPLE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(ownBear.getEffectivePower()).isEqualTo(2);
         assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(ownBear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownBear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -173,7 +173,7 @@ class CabarettiCharmTest extends BaseCardTest {
         assertThat(originalCitizens).allSatisfy(citizen -> {
             assertThat(citizen.getEffectivePower()).isEqualTo(2);
             assertThat(citizen.getEffectiveToughness()).isEqualTo(2);
-            assertThat(citizen.hasKeyword(Keyword.TRAMPLE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, citizen, Keyword.TRAMPLE)).isTrue();
         });
         List<Permanent> laterCitizens = findPermanents(player1, "Citizen").stream()
                 .filter(citizen -> !originalCitizens.contains(citizen))
@@ -181,7 +181,7 @@ class CabarettiCharmTest extends BaseCardTest {
         assertThat(laterCitizens).hasSize(2).allSatisfy(citizen -> {
             assertThat(citizen.getEffectivePower()).isEqualTo(1);
             assertThat(citizen.getEffectiveToughness()).isEqualTo(1);
-            assertThat(citizen.hasKeyword(Keyword.TRAMPLE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, citizen, Keyword.TRAMPLE)).isFalse();
         });
     }
 }

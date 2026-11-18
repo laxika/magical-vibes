@@ -30,13 +30,13 @@ class DuskLegionSergeantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sergeant);
-        assertThat(vampire.hasKeyword(Keyword.PERSIST)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.PERSIST)).isFalse();
+        assertThat(gqs.hasKeyword(gd, vampire, Keyword.PERSIST)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.PERSIST)).isFalse();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(vampire.hasKeyword(Keyword.PERSIST)).isFalse();
+        assertThat(gqs.hasKeyword(gd, vampire, Keyword.PERSIST)).isFalse();
     }
 
     @Test
@@ -53,8 +53,8 @@ class DuskLegionSergeantTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Dusk Legion Sergeant");
         harness.passBothPriorities();
 
-        assertThat(token.hasKeyword(Keyword.PERSIST)).isFalse();
-        assertThat(opponent.hasKeyword(Keyword.PERSIST)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.PERSIST)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.PERSIST)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -68,8 +68,8 @@ class DuskLegionSergeantTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.enterBattlefieldAndReturn(player1, new DuskLegionSergeant());
 
-        assertThat(beforeResolution.hasKeyword(Keyword.PERSIST)).isTrue();
-        assertThat(afterResolution.hasKeyword(Keyword.PERSIST)).isFalse();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.PERSIST)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.PERSIST)).isFalse();
     }
 
     @Test
@@ -89,7 +89,7 @@ class DuskLegionSergeantTest extends BaseCardTest {
         assertThat(returned).isNotNull();
         assertThat(returned.getId()).isNotEqualTo(vampire.getId());
         assertThat(returned.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        assertThat(returned.hasKeyword(Keyword.PERSIST)).isFalse();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.PERSIST)).isFalse();
         returned.setMarkedDamage(1);
         harness.runStateBasedActions();
         assertThat(gd.stack).isEmpty();
@@ -105,7 +105,7 @@ class DuskLegionSergeantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(vampire.hasKeyword(Keyword.PERSIST)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vampire, Keyword.PERSIST)).isTrue();
 
         vampire.setMarkedDamage(1);
         harness.runStateBasedActions();

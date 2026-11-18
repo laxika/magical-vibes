@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -91,7 +92,7 @@ class HomingLightningTest extends BaseCardTest {
     void damagesSameNameCreatureWithHexproofWithoutTargetingIt() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
         Permanent other = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
-        other.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, other, Keyword.HEXPROOF);
 
         castHomingLightning(target.getId());
 

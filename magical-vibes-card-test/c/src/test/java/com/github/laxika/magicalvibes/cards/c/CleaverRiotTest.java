@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,7 +32,7 @@ class CleaverRiotTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         assertThat(battlefield).hasSize(2);
         for (Permanent p : battlefield) {
-            assertThat(p.getGrantedKeywords()).contains(Keyword.DOUBLE_STRIKE);
+            assertThat(PermanentGrants.keywordsOf(gd, p)).contains(Keyword.DOUBLE_STRIKE);
         }
     }
 
@@ -47,7 +48,7 @@ class CleaverRiotTest extends BaseCardTest {
 
         List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
         for (Permanent p : p2Battlefield) {
-            assertThat(p.getGrantedKeywords()).doesNotContain(Keyword.DOUBLE_STRIKE);
+            assertThat(PermanentGrants.keywordsOf(gd, p)).doesNotContain(Keyword.DOUBLE_STRIKE);
         }
     }
 
@@ -66,7 +67,7 @@ class CleaverRiotTest extends BaseCardTest {
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
-            assertThat(p.getGrantedKeywords()).doesNotContain(Keyword.DOUBLE_STRIKE);
+            assertThat(PermanentGrants.keywordsOf(gd, p)).doesNotContain(Keyword.DOUBLE_STRIKE);
         }
     }
 

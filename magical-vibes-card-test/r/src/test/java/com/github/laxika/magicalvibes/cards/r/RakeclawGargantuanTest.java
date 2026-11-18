@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AgonyWarp;
 import com.github.laxika.magicalvibes.cards.g.Godsire;
 import com.github.laxika.magicalvibes.cards.c.CylianElf;
@@ -29,7 +30,7 @@ class RakeclawGargantuanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, source.getId());
         harness.passBothPriorities();
 
-        assertThat(source.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, source)).contains(Keyword.FIRST_STRIKE);
         assertThat(source.isTapped()).isTrue();
     }
 
@@ -42,7 +43,7 @@ class RakeclawGargantuanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -57,7 +58,7 @@ class RakeclawGargantuanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -74,7 +75,7 @@ class RakeclawGargantuanTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(target.getId(), elf.getId()));
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.FIRST_STRIKE);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -97,7 +98,7 @@ class RakeclawGargantuanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.findPermanentById(gd, target.getId()).getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, gqs.findPermanentById(gd, target.getId())))
                 .contains(Keyword.FIRST_STRIKE);
     }
 
@@ -110,14 +111,14 @@ class RakeclawGargantuanTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(gqs.findPermanentById(gd, target.getId()).getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, gqs.findPermanentById(gd, target.getId())))
                 .contains(Keyword.FIRST_STRIKE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.findPermanentById(gd, target.getId()).getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, gqs.findPermanentById(gd, target.getId())))
                 .doesNotContain(Keyword.FIRST_STRIKE);
     }
 

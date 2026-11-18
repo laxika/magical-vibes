@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.ReachThroughMists;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.cards.y.YamabushisFlame;
@@ -34,7 +35,7 @@ class BlessedBreathTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         Permanent wanderingOnes = findPermanent(player1, "Wandering Ones");
-        assertThat(wanderingOnes.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, wanderingOnes)).contains(CardColor.RED);
     }
 
     @Test
@@ -63,7 +64,7 @@ class BlessedBreathTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         Permanent wanderingOnes = findPermanent(player1, "Wandering Ones");
-        assertThat(wanderingOnes.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, wanderingOnes)).contains(CardColor.BLUE);
         harness.assertInHand(player1, "Blessed Breath");
     }
 
@@ -96,11 +97,11 @@ class BlessedBreathTest extends BaseCardTest {
         harness.handleListChoice(player1, "WHITE");
 
         harness.forceStep(TurnStep.END_STEP);
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.WHITE);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).isEmpty();
     }
 
     @Test

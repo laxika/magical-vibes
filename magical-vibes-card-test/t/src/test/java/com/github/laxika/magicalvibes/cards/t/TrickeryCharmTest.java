@@ -31,7 +31,7 @@ class TrickeryCharmTest extends BaseCardTest {
 
         castCharm(player1, 0, creature.getId());
 
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -40,13 +40,13 @@ class TrickeryCharmTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
 
         castCharm(player1, 0, creature.getId());
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -158,7 +158,7 @@ class TrickeryCharmTest extends BaseCardTest {
 
         castCharm(player1, 0, creature.getId());
 
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
         harness.assertInGraveyard(player1, "Trickery Charm");
     }
 

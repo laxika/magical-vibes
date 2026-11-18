@@ -37,7 +37,7 @@ class NectarFaerieTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Faerie Harbinger").hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Faerie Harbinger"), Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -51,7 +51,7 @@ class NectarFaerieTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Elvish Visionary").hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Elvish Visionary"), Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -69,7 +69,7 @@ class NectarFaerieTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Elvish Visionary").hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Elvish Visionary"), Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -95,9 +95,9 @@ class NectarFaerieTest extends BaseCardTest {
 
         assertThat(faerie.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
-        assertThat(faerie.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, faerie, Keyword.LIFELINK)).isFalse();
         harness.passBothPriorities();
-        assertThat(faerie.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, faerie, Keyword.LIFELINK)).isTrue();
     }
 
     @Test

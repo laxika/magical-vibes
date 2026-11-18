@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
@@ -694,7 +696,7 @@ public class LibraryChoiceHandlerService {
                     var landEquilibriumPlan = playerId.equals(battlefieldControllerId) ? null
                             : landEquilibriumSupport.findPlan(gameData, playerId, perm);
                     if (grantHaste) {
-                        perm.getGrantedKeywords().add(Keyword.HASTE);
+                        gameData.addEffectOnPermanent(null, null, battlefieldControllerId, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), perm.getId(), Duration.UNTIL_END_OF_TURN);
                     }
                     if (toBattlefieldTapped) perm.tap();
                     Runnable placeCard = () -> battlefieldEntryService.putPermanentOntoBattlefield(
@@ -3071,7 +3073,7 @@ public class LibraryChoiceHandlerService {
                 perm.setFaceDownAsCloaked();
             }
             if (grantHaste) {
-                perm.getGrantedKeywords().add(Keyword.HASTE);
+                gameData.addEffectOnPermanent(null, null, puttingPlayerId, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), perm.getId(), Duration.UNTIL_END_OF_TURN);
             }
             if (tapped) perm.tap();
             Runnable placeCard = () -> battlefieldEntryService.putPermanentOntoBattlefield(

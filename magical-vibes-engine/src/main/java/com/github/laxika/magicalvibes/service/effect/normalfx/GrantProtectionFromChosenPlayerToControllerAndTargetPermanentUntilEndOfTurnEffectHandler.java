@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -38,15 +42,15 @@ public class GrantProtectionFromChosenPlayerToControllerAndTargetPermanentUntilE
             return;
         }
 
-        UUID chosenPlayerId = source.getProtectionFromPlayerIdsPermanently().stream()
-                .findFirst().orElse(null);
+        UUID chosenPlayerId = source.getChosenPlayerIds().stream().findFirst().orElse(null);
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (chosenPlayerId == null || target == null
                 || !entry.getControllerId().equals(gameQueryService.findPermanentController(gameData, target.getId()))) {
             return;
         }
 
-        target.getProtectionFromPlayerIdsUntilEndOfTurn().add(chosenPlayerId);
+        gameData.addEffectOnPermanent(entry, new GrantEffectEffect(new ProtectionFromPlayersEffect(Set.of(chosenPlayerId), false), GrantScope.TARGET),
+                target.getId(), Duration.UNTIL_END_OF_TURN);
         gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
                 entry.getSourcePermanentId(), entry.getControllerId(),
                 new GrantProtectionFromChosenPlayerToControllerAndTargetPermanentUntilEndOfTurnEffect(chosenPlayerId),

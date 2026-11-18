@@ -433,7 +433,6 @@ public class BattlefieldPlacementService {
                         CounterType.PLUS_ONE_PLUS_ONE, request.riotCounters());
             }
             if (request.riotHaste()) {
-                permanent.getGrantedKeywords().add(Keyword.HASTE);
                 grantOnEntry(gameData, controllerId, permanent, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
             }
             applySpellEntryCounters(gameData, controllerId, permanent);
@@ -2149,7 +2148,8 @@ public class BattlefieldPlacementService {
      * Cards that print Sunburst place their counters through their own enter-with-counters effect.
      */
     private void applySpellGrantedSunburst(GameData gameData, UUID controllerId, Permanent permanent) {
-        if (!permanent.getGrantedKeywords().contains(Keyword.SUNBURST)
+        if (gameData.floatingEffectsOnPermanent(permanent.getId(), GrantKeywordEffect.class).stream()
+                .noneMatch(floating -> ((GrantKeywordEffect) floating.effect()).keywords().contains(Keyword.SUNBURST))
                 || permanent.getCard().getKeywords().contains(Keyword.SUNBURST)) {
             return;
         }
@@ -2191,7 +2191,6 @@ public class BattlefieldPlacementService {
             } else {
                 continue;
             }
-            permanent.getGrantedKeywords().add(enterWith.keyword());
             grantOnEntry(gameData, controllerId, permanent,
                     new GrantKeywordEffect(enterWith.keyword(), GrantScope.TARGET));
         }
@@ -2405,7 +2404,7 @@ public class BattlefieldPlacementService {
             if (gameData.spellsGrantedPermanentHasteOnEntry.remove(permanent.getCard().getId())) {
                 grantOnEntry(gameData, controllerId, permanent, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
             } else {
-                permanent.getGrantedKeywords().add(Keyword.HASTE);
+                gameData.addEffectOnPermanent(permanent.getCard().getName(), null, controllerId, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), permanent.getId(), Duration.UNTIL_END_OF_TURN);
             }
             log.info("Game {} - {} enters with haste (paid for with haste-granting mana)",
                     gameData.id, permanent.getCard().getName());

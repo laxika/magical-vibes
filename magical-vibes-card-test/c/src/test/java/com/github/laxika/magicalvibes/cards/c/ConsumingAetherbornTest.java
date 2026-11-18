@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WaryThespian;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -24,7 +25,7 @@ class ConsumingAetherbornTest extends BaseCardTest {
         resolveEtbTargeting(bears);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
         assertThat(aetherborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -36,7 +37,7 @@ class ConsumingAetherbornTest extends BaseCardTest {
         resolveEtbTargeting(aetherborn);
 
         assertThat(aetherborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(aetherborn.getGrantedKeywords()).doesNotContain(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, aetherborn)).doesNotContain(Keyword.LIFELINK);
     }
 
     @Test
@@ -50,7 +51,7 @@ class ConsumingAetherbornTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -63,7 +64,7 @@ class ConsumingAetherbornTest extends BaseCardTest {
         resolveEtbTargeting(target);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -79,7 +80,7 @@ class ConsumingAetherbornTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
     }
 
     private Permanent castConsumingAetherborn() {

@@ -29,13 +29,13 @@ class ForerunnerOfSlaughterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(forerunner.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -59,10 +59,10 @@ class ForerunnerOfSlaughterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, forerunner.getId());
 
-        assertThat(forerunner.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, forerunner, Keyword.HASTE)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(forerunner.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forerunner, Keyword.HASTE)).isTrue();
         assertThat(forerunner.isTapped()).isFalse();
     }
 
@@ -80,7 +80,7 @@ class ForerunnerOfSlaughterTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(forerunner.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -95,7 +95,7 @@ class ForerunnerOfSlaughterTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).add(target.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

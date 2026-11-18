@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.s.SecludedSteppe;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -35,10 +36,10 @@ class AkromasBlessingTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, "RED");
 
-        assertThat(ownCreature.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
-        assertThat(ownOtherCreature.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
-        assertThat(ownLand.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        assertThat(opposingCreature.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, ownCreature)).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, ownOtherCreature)).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, ownLand)).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, opposingCreature)).doesNotContain(CardColor.RED);
     }
 
     @Test
@@ -65,13 +66,13 @@ class AkromasBlessingTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLUE");
-        assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, creature)).contains(CardColor.BLUE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, creature)).doesNotContain(CardColor.BLUE);
     }
 
     @Test
@@ -104,7 +105,7 @@ class AkromasBlessingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Glory Seeker");
-        assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, creature)).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
     }
 
@@ -136,8 +137,8 @@ class AkromasBlessingTest extends BaseCardTest {
 
         Permanent later = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
 
-        assertThat(original.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
-        assertThat(later.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, original)).contains(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, later)).isEmpty();
     }
 
     @Test
@@ -149,6 +150,6 @@ class AkromasBlessingTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.GREEN);
+        assertThat(PermanentGrants.protectionColorsOf(gd, creature)).contains(CardColor.GREEN);
     }
 }

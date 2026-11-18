@@ -40,9 +40,9 @@ class TrompTheDomainsTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(5);
         assertThat(bear.getEffectiveToughness()).isEqualTo(5);
-        assertThat(otherBear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherBear, Keyword.TRAMPLE)).isTrue();
         assertThat(opponentBear.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentBear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentBear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -59,7 +59,7 @@ class TrompTheDomainsTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(3);
         assertThat(bear.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -78,7 +78,7 @@ class TrompTheDomainsTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -95,7 +95,7 @@ class TrompTheDomainsTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -116,7 +116,7 @@ class TrompTheDomainsTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(7);
         assertThat(bear.getEffectiveToughness()).isEqualTo(7);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -137,7 +137,7 @@ class TrompTheDomainsTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(4);
         assertThat(bear.getEffectiveToughness()).isEqualTo(4);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -159,10 +159,10 @@ class TrompTheDomainsTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(3);
         assertThat(bear.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
         assertThat(laterBear.getEffectivePower()).isEqualTo(2);
         assertThat(laterBear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(laterBear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterBear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -184,7 +184,7 @@ class TrompTheDomainsTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(3);
         assertThat(bear.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(enchantedBear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enchantedBear, Keyword.TRAMPLE)).isFalse();
     }
 }

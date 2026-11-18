@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BayFalcon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
@@ -39,8 +40,8 @@ class PrismaticBoonTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, "RED");
 
-        assertThat(falcon.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
-        assertThat(herder.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, falcon)).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, herder)).contains(CardColor.RED);
     }
 
     @Test
@@ -56,7 +57,7 @@ class PrismaticBoonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(theirs.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.GREEN);
+        assertThat(PermanentGrants.protectionColorsOf(gd, theirs)).contains(CardColor.GREEN);
     }
 
     @Test
@@ -122,10 +123,10 @@ class PrismaticBoonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLACK");
 
-        assertThat(falcon.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, falcon)).contains(CardColor.BLACK);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(falcon.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, falcon)).isEmpty();
     }
 
     @Test
@@ -162,8 +163,8 @@ class PrismaticBoonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
 
-        assertThat(herder.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.RED);
-        assertThat(falcon.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, herder)).containsExactly(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, falcon)).isEmpty();
     }
 
     @Test
@@ -202,6 +203,6 @@ class PrismaticBoonTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         assertThat(creatures).allSatisfy(creature ->
-                assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.RED));
+                assertThat(PermanentGrants.protectionColorsOf(gd, creature)).containsExactly(CardColor.RED));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.k.KolaghanAspirant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -112,7 +113,7 @@ class SurgeOfRighteousnessTest extends BaseCardTest {
     void gainsLifeIfTargetIsIndestructible() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new KolaghanAspirant());
         target.setAttacking(true);
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
 
         castAndResolve(target);
 

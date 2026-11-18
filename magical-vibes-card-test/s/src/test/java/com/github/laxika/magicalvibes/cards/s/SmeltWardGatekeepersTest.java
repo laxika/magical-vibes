@@ -34,7 +34,7 @@ class SmeltWardGatekeepersTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(bears.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(bears.getId()));
         assertThat(bears.isTapped()).isFalse();
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(bears.getId())).isTrue();
     }
 
@@ -125,7 +125,7 @@ class SmeltWardGatekeepersTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(bears.getId())).isFalse();
     }
 
@@ -143,7 +143,7 @@ class SmeltWardGatekeepersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -161,13 +161,13 @@ class SmeltWardGatekeepersTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(bears.getId())).isFalse();
     }
 
@@ -188,7 +188,7 @@ class SmeltWardGatekeepersTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(bears.isTapped()).isFalse();
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
     private void setUpTurn() {

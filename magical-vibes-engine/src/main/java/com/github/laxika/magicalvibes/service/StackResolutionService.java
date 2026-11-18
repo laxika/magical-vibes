@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReboundCastFromExileEffectHandler;
@@ -383,11 +385,11 @@ public class StackResolutionService {
     }
 
     /** Permanent enters with front-face identity; Disturb/siege-defeat flips current face to the back. */
-    private Permanent createEnteringPermanent(StackEntry entry, Card card, Card characteristics) {
-        return createEnteringPermanent(entry, card, characteristics, false);
+    private Permanent createEnteringPermanent(GameData gameData, StackEntry entry, Card card, Card characteristics) {
+        return createEnteringPermanent(gameData, entry, card, characteristics, false);
     }
 
-    private Permanent createEnteringPermanent(StackEntry entry, Card card, Card characteristics,
+    private Permanent createEnteringPermanent(GameData gameData, StackEntry entry, Card card, Card characteristics,
                                               boolean bestowAsAura) {
         Permanent perm = new Permanent(entry.getBestowOriginalCard() != null
                 ? entry.getBestowOriginalCard() : entry.getPhysicalCard());
@@ -416,7 +418,7 @@ public class StackResolutionService {
         perm.setCastSacrificedCard(entry.getSacrificedCard() != null
                 ? entry.getSacrificedCard() : entry.getSacrificedCardSnapshot());
         if (entry.isAlternateCost() && card.getKeywords().contains(Keyword.DASH)) {
-            perm.getGrantedKeywords().add(Keyword.HASTE);
+            gameData.addEffectOnPermanent(card.getName(), null, entry.getControllerId(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), perm.getId(), Duration.UNTIL_END_OF_TURN);
         }
         perm.setEscaped(entry.isCastWithEscape());
         perm.setWebSlingingReturnedCreatureManaValue(entry.getWebSlingingReturnedCreatureManaValue());
@@ -433,9 +435,18 @@ public class StackResolutionService {
         perm.setGiftPromised(entry.isGiftPromised());
         perm.setDelvedCards(entry.getDelvedCards());
         // Keywords the spell grants the permanent as it enters (Choreographed Sparks' hasty copy).
-        perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());
+        if (!entry.getGrantedKeywordsOnEntry().isEmpty()) {
+            gameData.addEffectOnPermanent(card.getName(), null, entry.getControllerId(),
+                    new GrantKeywordEffect(Set.copyOf(entry.getGrantedKeywordsOnEntry()), GrantScope.TARGET),
+                    perm.getId(), Duration.UNTIL_END_OF_TURN);
+        }
         // Keywords granted until the controller's next turn while the spell was on the stack (Jade Orb's hexproof).
-        perm.getUntilNextTurnKeywords().addAll(entry.getUntilNextTurnKeywordsOnEntry());
+        if (!entry.getUntilNextTurnKeywordsOnEntry().isEmpty()) {
+            gameData.addEffectOnPermanent(card.getName(), null, entry.getControllerId(),
+                    new GrantKeywordEffect(Set.copyOf(entry.getUntilNextTurnKeywordsOnEntry()), GrantScope.TARGET,
+                            Duration.UNTIL_YOUR_NEXT_TURN),
+                    perm.getId(), Duration.UNTIL_YOUR_NEXT_TURN);
+        }
         // Bloodthirst granted while the spell was on the stack (Bloodlord of Vaasgoth).
         perm.setGrantedBloodthirst(entry.getGrantedBloodthirst());
         // Devour granted while the spell was on the stack (Jund).
@@ -752,7 +763,7 @@ public class StackResolutionService {
             return;
         }
 
-        Permanent perm = createEnteringPermanent(entry, card, characteristics);
+        Permanent perm = createEnteringPermanent(gameData, entry, card, characteristics);
         // CR 609.7a: a shield chosen for this permanent spell now tracks the permanent it became, so a later
         // bounce and recast of the same card (a new object) is not shielded.
         UUID spellCardId = entry.getCard().getId();
@@ -888,7 +899,7 @@ public class StackResolutionService {
         }
         emitSpellResolved(gameData, entry);
 
-        Permanent auraPerm = createEnteringPermanent(entry, card, card);
+        Permanent auraPerm = createEnteringPermanent(gameData, entry, card, card);
         auraPerm.setAttachedTo(graveyardCard.getId());
         putResolvedPermanentOntoBattlefield(gameData, controllerId, auraPerm, entry);
         queueWarpExileIfPresent(gameData, entry, auraPerm);
@@ -918,7 +929,7 @@ public class StackResolutionService {
         }
         emitSpellResolved(gameData, entry);
 
-        Permanent aura = createEnteringPermanent(entry, card, characteristics);
+        Permanent aura = createEnteringPermanent(gameData, entry, card, characteristics);
         aura.setAttachedTo(graveyardCard.getId());
         putResolvedPermanentOntoBattlefield(gameData, controllerId, aura, entry);
 
@@ -958,7 +969,7 @@ public class StackResolutionService {
                 disposeFizzledPermanentSpell(gameData, entry, card);
             } else {
                 emitSpellResolved(gameData, entry);
-                Permanent aura = createEnteringPermanent(entry, card, characteristics);
+                Permanent aura = createEnteringPermanent(gameData, entry, card, characteristics);
                 aura.setAttachedTo(handCard.getId());
                 putResolvedPermanentOntoBattlefield(gameData, controllerId, aura, entry);
                 queueWarpExileIfPresent(gameData, entry, aura);
@@ -1007,7 +1018,7 @@ public class StackResolutionService {
                 return;
             } else {
                 emitSpellResolved(gameData, entry);
-                Permanent perm = createEnteringPermanent(entry, card, characteristics);
+                Permanent perm = createEnteringPermanent(gameData, entry, card, characteristics);
                 perm.setAttachedTo(targetPlayerId);
                 putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
                 queueWarpExileIfPresent(gameData, entry, perm);
@@ -1038,7 +1049,7 @@ public class StackResolutionService {
             } else {
                 emitSpellResolved(gameData, entry);
                 Permanent perm = createEnteringPermanent(
-                        entry, card, characteristics, entry.getBestowOriginalCard() != null);
+                        gameData, entry, card, characteristics, entry.getBestowOriginalCard() != null);
                 perm.setAttachedTo(entry.getTargetId());
                 putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
                 queueWarpExileIfPresent(gameData, entry, perm);
@@ -1120,7 +1131,7 @@ public class StackResolutionService {
                                 .filter(ability -> ability.hasWatchedTrigger(Triggers.doorUnlocked()))
                                 .toList()));
             }
-            Permanent enchPerm = createEnteringPermanent(entry, card, enteringCharacteristics);
+            Permanent enchPerm = createEnteringPermanent(gameData, entry, card, enteringCharacteristics);
             if (card.getSelectedRoomDoor() != null) {
                 enchPerm.unlockRoomDoor(card.getSelectedRoomDoor());
             }
@@ -1204,7 +1215,7 @@ public class StackResolutionService {
             return;
         }
 
-        Permanent perm = createEnteringPermanent(entry, card, card);
+        Permanent perm = createEnteringPermanent(gameData, entry, card, card);
         controllerId = battlefieldEntryService.resolveEnteringController(gameData, controllerId, perm);
         putResolvedPermanentOntoBattlefield(gameData, controllerId, perm, entry);
         queueWarpExileIfPresent(gameData, entry, perm);
@@ -1240,7 +1251,7 @@ public class StackResolutionService {
             return;
         }
 
-        Permanent perm = createEnteringPermanent(entry, card, characteristics);
+        Permanent perm = createEnteringPermanent(gameData, entry, card, characteristics);
 
         // Gather Specimens (CR 614.1): an artifact creature that would enter under an opponent's
         // control instead enters under the gatherer's control. Resolve up front so the log, ETB

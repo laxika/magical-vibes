@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HealersHawk;
 import com.github.laxika.magicalvibes.cards.v.VernadiShieldmate;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -32,7 +33,7 @@ class RocChargerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, otherAttacker.getId());
         harness.passBothPriorities();
 
-        assertThat(otherAttacker.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, otherAttacker)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -49,13 +50,13 @@ class RocChargerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, otherAttacker.getId());
         harness.passBothPriorities();
 
-        assertThat(otherAttacker.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, otherAttacker)).contains(Keyword.FLYING);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(otherAttacker.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, otherAttacker)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -113,6 +114,6 @@ class RocChargerTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(charger.getCard());
         harness.passBothPriorities();
 
-        assertThat(otherAttacker.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, otherAttacker)).contains(Keyword.FLYING);
     }
 }

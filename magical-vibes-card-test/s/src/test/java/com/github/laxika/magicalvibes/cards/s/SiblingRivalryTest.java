@@ -32,7 +32,7 @@ class SiblingRivalryTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(permanent -> permanent.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(permanent -> permanent.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).filteredOn(
                 permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.POWERSTONE)
@@ -62,7 +62,7 @@ class SiblingRivalryTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(permanent -> permanent.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent -> permanent.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 
@@ -90,7 +90,7 @@ class SiblingRivalryTest extends BaseCardTest {
         castSiblingRivalry(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(countPermanents(player1, "Powerstone")).isEqualTo(1);
         assertThat(findPermanent(player1, "Powerstone").isTapped()).isTrue();
@@ -121,7 +121,7 @@ class SiblingRivalryTest extends BaseCardTest {
         target.tap();
         castSiblingRivalry(target);
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         Permanent powerstone = findPermanent(player1, "Powerstone");
         assertThat(powerstone.isTapped()).isTrue();
 
@@ -131,7 +131,7 @@ class SiblingRivalryTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target).contains(powerstone);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
     private void castSiblingRivalry(Permanent target) {
         harness.setHand(player1, List.of(new SiblingRivalry()));

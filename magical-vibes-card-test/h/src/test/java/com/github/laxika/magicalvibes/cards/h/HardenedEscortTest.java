@@ -47,9 +47,9 @@ class HardenedEscortTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(opponentCreature.getPowerModifier()).isEqualTo(0);
-        assertThat(opponentCreature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -67,7 +67,7 @@ class HardenedEscortTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -81,7 +81,7 @@ class HardenedEscortTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(escort.getPowerModifier()).isZero();
-        assertThat(escort.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, escort, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -95,9 +95,9 @@ class HardenedEscortTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -115,7 +115,7 @@ class HardenedEscortTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
         assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -134,9 +134,9 @@ class HardenedEscortTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
         assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test

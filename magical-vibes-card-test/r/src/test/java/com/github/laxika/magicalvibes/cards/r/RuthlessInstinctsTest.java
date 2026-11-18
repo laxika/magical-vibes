@@ -33,8 +33,8 @@ class RuthlessInstinctsTest extends BaseCardTest {
             cast(0, target);
 
             assertThat(target.isTapped()).isFalse();
-            assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
-            assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
         }
 
         @Test
@@ -48,8 +48,8 @@ class RuthlessInstinctsTest extends BaseCardTest {
             harness.clearPriorityPassed();
             harness.passBothPriorities();
 
-            assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
-            assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isFalse();
         }
 
         @Test
@@ -70,8 +70,8 @@ class RuthlessInstinctsTest extends BaseCardTest {
             cast(0, target);
 
             assertThat(target.isTapped()).isFalse();
-            assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
-            assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
         }
 
         @Test
@@ -83,8 +83,8 @@ class RuthlessInstinctsTest extends BaseCardTest {
 
             assertThat(target.isTapped()).isFalse();
             assertThat(target.isBlocking()).isTrue();
-            assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
-            assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
         }
     }
 
@@ -102,7 +102,7 @@ class RuthlessInstinctsTest extends BaseCardTest {
 
             assertThat(attacker.getPowerModifier()).isEqualTo(2);
             assertThat(attacker.getToughnessModifier()).isEqualTo(2);
-            assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
         }
 
         @Test
@@ -126,7 +126,7 @@ class RuthlessInstinctsTest extends BaseCardTest {
 
             assertThat(attacker.getPowerModifier()).isZero();
             assertThat(attacker.getToughnessModifier()).isZero();
-            assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
         }
 
         @Test
@@ -140,7 +140,7 @@ class RuthlessInstinctsTest extends BaseCardTest {
 
             assertThat(attacker.getPowerModifier()).isEqualTo(2);
             assertThat(attacker.getToughnessModifier()).isEqualTo(2);
-            assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
             assertThat(attacker.isTapped()).isTrue();
         }
 
@@ -155,7 +155,7 @@ class RuthlessInstinctsTest extends BaseCardTest {
 
             assertThat(attacker.getPowerModifier()).isZero();
             assertThat(attacker.getToughnessModifier()).isZero();
-            assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
             assertThat(gd.stack).isEmpty();
         }
     }

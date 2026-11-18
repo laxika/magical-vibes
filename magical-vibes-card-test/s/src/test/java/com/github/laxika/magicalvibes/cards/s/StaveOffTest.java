@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -37,7 +38,7 @@ class StaveOffTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bears)).contains(CardColor.RED);
     }
 
     @Test
@@ -52,7 +53,7 @@ class StaveOffTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bears)).contains(CardColor.BLUE);
     }
 
     @Test
@@ -66,8 +67,8 @@ class StaveOffTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.GREEN);
-        assertThat(bystander.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.GREEN);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bystander)).isEmpty();
     }
 
     @Test
@@ -86,7 +87,7 @@ class StaveOffTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bears)).doesNotContain(CardColor.RED);
     }
 
     @Test
@@ -110,7 +111,7 @@ class StaveOffTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleListChoice(player1, color);
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.valueOf(color));
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).containsExactly(CardColor.valueOf(color));
         harness.assertInGraveyard(player1, "Stave Off");
     }
 
@@ -127,7 +128,7 @@ class StaveOffTest extends BaseCardTest {
                 .isInstanceOf(RuntimeException.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, "RED");
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).containsExactly(CardColor.RED);
     }
 
     @Test

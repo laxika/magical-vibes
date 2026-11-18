@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArmoredArmadillo;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -33,7 +34,7 @@ class CunningCoyoteTest extends BaseCardTest {
         assertThat(armadillo.getToughnessModifier()).isEqualTo(1);
         assertThat(armadillo.getEffectivePower()).isEqualTo(1);
         assertThat(armadillo.getEffectiveToughness()).isEqualTo(5);
-        assertThat(armadillo.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, armadillo)).contains(Keyword.HASTE);
     }
 
     @Test
@@ -54,7 +55,7 @@ class CunningCoyoteTest extends BaseCardTest {
         assertThat(armadillo.getToughnessModifier()).isZero();
         assertThat(armadillo.getEffectivePower()).isZero();
         assertThat(armadillo.getEffectiveToughness()).isEqualTo(4);
-        assertThat(armadillo.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, armadillo)).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -70,14 +71,14 @@ class CunningCoyoteTest extends BaseCardTest {
 
         assertThat(existingCoyote.getPowerModifier()).isEqualTo(1);
         assertThat(existingCoyote.getToughnessModifier()).isEqualTo(1);
-        assertThat(existingCoyote.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, existingCoyote)).contains(Keyword.HASTE);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> !permanent.getId().equals(existingCoyote.getId()))
                 .singleElement()
                 .satisfies(coyote -> {
                     assertThat(coyote.getPowerModifier()).isZero();
                     assertThat(coyote.getToughnessModifier()).isZero();
-                    assertThat(coyote.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+                    assertThat(PermanentGrants.keywordsOf(gd, coyote)).doesNotContain(Keyword.HASTE);
                 });
     }
 
@@ -124,7 +125,7 @@ class CunningCoyoteTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isZero();
         assertThat(armadillo.getPowerModifier()).isZero();
-        assertThat(armadillo.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, armadillo)).doesNotContain(Keyword.HASTE);
         assertThatThrownBy(() -> harness.castFromExile(player1, coyote.getId(), armadillo.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("turn it became plotted");
@@ -139,7 +140,7 @@ class CunningCoyoteTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Cunning Coyote");
         assertThat(armadillo.getPowerModifier()).isEqualTo(1);
         assertThat(armadillo.getToughnessModifier()).isEqualTo(1);
-        assertThat(armadillo.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, armadillo)).contains(Keyword.HASTE);
         assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isEqualTo(1);
     }
 
@@ -175,7 +176,7 @@ class CunningCoyoteTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.HASTE);
         assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
                 .satisfies(remaining -> {
                     assertThat(remaining.getPowerModifier()).isZero();

@@ -25,8 +25,8 @@ class ForTheEmperorTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(3);
         assertThat(creature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(creature.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(creature.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -46,8 +46,8 @@ class ForTheEmperorTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(1);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(creature.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -78,13 +78,13 @@ class ForTheEmperorTest extends BaseCardTest {
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(ownCreature.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(ownCreature.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.LIFELINK)).isTrue();
 
         assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
         assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponentCreature.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(opponentCreature.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -100,8 +100,8 @@ class ForTheEmperorTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(1);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(creature.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -115,10 +115,10 @@ class ForTheEmperorTest extends BaseCardTest {
         Permanent laterCreature = addCreatureReady(player1, new WoodlandDruid());
 
         assertThat(existingCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(existingCreature.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(existingCreature.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, existingCreature, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, existingCreature, Keyword.LIFELINK)).isTrue();
         assertThat(laterCreature.getEffectivePower()).isEqualTo(1);
-        assertThat(laterCreature.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(laterCreature.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.LIFELINK)).isFalse();
     }
 }

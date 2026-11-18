@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -206,7 +207,7 @@ class KutzilMalametExemplarTest extends BaseCardTest {
         addKutzil();
         Permanent attacker = addReadyAttacker();
         attacker.setPowerModifier(1);
-        attacker.getGrantedKeywords().add(Keyword.DOUBLE_STRIKE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.DOUBLE_STRIKE);
         Card firstCard = new GrizzlyBears();
         Card secondCard = new GrizzlyBears();
         Card thirdCard = new GrizzlyBears();

@@ -39,8 +39,8 @@ class TwistAllegianceTest extends BaseCardTest {
         assertThat(controls(player1.getId(), land.getId())).isTrue();
         assertThat(mine.isTapped()).isFalse();
         assertThat(theirs.isTapped()).isFalse();
-        assertThat(mine.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(theirs.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, theirs, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -57,8 +57,8 @@ class TwistAllegianceTest extends BaseCardTest {
         assertThat(controls(player2.getId(), theirs.getId())).isTrue();
         assertThat(mine.isTapped()).isTrue();
         assertThat(theirs.isTapped()).isTrue();
-        assertThat(mine.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(theirs.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, theirs, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -77,8 +77,8 @@ class TwistAllegianceTest extends BaseCardTest {
 
         assertThat(controls(player1.getId(), mine.getId())).isTrue();
         assertThat(controls(player2.getId(), theirs.getId())).isTrue();
-        assertThat(mine.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(theirs.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, theirs, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -102,7 +102,7 @@ class TwistAllegianceTest extends BaseCardTest {
 
         assertThat(controls(player2.getId(), mine.getId())).isTrue();
         assertThat(mine.isTapped()).isFalse();
-        assertThat(mine.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -115,7 +115,7 @@ class TwistAllegianceTest extends BaseCardTest {
 
         assertThat(controls(player1.getId(), theirs.getId())).isTrue();
         assertThat(theirs.isTapped()).isFalse();
-        assertThat(theirs.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, theirs, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -134,7 +134,7 @@ class TwistAllegianceTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(mine);
         for (Permanent creature : List.of(mine, first, second)) {
             assertThat(creature.isTapped()).isFalse();
-            assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
         }
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -136,7 +137,7 @@ class CrystalSprayTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, recipient.getId());
         harness.passBothPriorities();
 
-        assertThat(recipient.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.GREEN);
+        assertThat(PermanentGrants.protectionColorsOf(gd, recipient)).containsExactly(CardColor.GREEN);
         assertThat(gqs.hasProtectionFrom(gd, recipient, CardColor.GREEN)).isTrue();
     }
 

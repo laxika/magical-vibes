@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.PyromancersGauntlet;
@@ -85,7 +86,7 @@ class CutPropulsionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CutPropulsion()));
         addMana();
         harness.castInstant(player1, 0, target.getId());
-        target.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, target, Keyword.FLYING);
 
         harness.passBothPriorities();
 

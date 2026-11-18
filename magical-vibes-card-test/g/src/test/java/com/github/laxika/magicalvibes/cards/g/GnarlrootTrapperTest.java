@@ -63,7 +63,7 @@ class GnarlrootTrapperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, elves.getId());
         harness.passBothPriorities();
 
-        assertThat(elves.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, elves, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -84,7 +84,7 @@ class GnarlrootTrapperTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(elves.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, elves, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test
@@ -144,7 +144,7 @@ class GnarlrootTrapperTest extends BaseCardTest {
         elves.setAttacking(false);
         harness.passBothPriorities();
 
-        assertThat(elves.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, elves, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test

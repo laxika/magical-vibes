@@ -26,9 +26,9 @@ class FangrenPathcutterTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(pathcutter.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(attackingCreature.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(nonattackingCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, pathcutter, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attackingCreature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonattackingCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -40,8 +40,8 @@ class FangrenPathcutterTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(pathcutter.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(attackingCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, pathcutter, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attackingCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -53,13 +53,13 @@ class FangrenPathcutterTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(attackingCreature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attackingCreature, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attackingCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attackingCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -72,14 +72,14 @@ class FangrenPathcutterTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(pathcutter.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, pathcutter, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
 
         resolveAllTriggers();
 
-        assertThat(pathcutter.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(defender.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, pathcutter, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, defender, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -94,7 +94,7 @@ class FangrenPathcutterTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Fangren Pathcutter");
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -106,7 +106,7 @@ class FangrenPathcutterTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent laterCreature = addCreatureReady(player1, new DrossCrocodile());
 
-        assertThat(pathcutter.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(laterCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, pathcutter, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.TRAMPLE)).isFalse();
     }
 }

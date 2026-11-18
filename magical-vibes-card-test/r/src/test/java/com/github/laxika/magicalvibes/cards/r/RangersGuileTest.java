@@ -54,7 +54,7 @@ class RangersGuileTest extends BaseCardTest {
         assertThat(bears.getToughnessModifier()).isEqualTo(1);
         assertThat(bears.getEffectivePower()).isEqualTo(3);
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bears.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isTrue();
     }
 
 
@@ -75,7 +75,7 @@ class RangersGuileTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isFalse();
     }
 
 
@@ -126,7 +126,7 @@ class RangersGuileTest extends BaseCardTest {
 
         assertThat(wolf.getPowerModifier()).isZero();
         assertThat(wolf.getToughnessModifier()).isZero();
-        assertThat(wolf.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.HEXPROOF)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Ranger's Guile");
     }
@@ -166,6 +166,6 @@ class RangersGuileTest extends BaseCardTest {
         Permanent wolf = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(wolf.getPowerModifier()).isEqualTo(2);
         assertThat(wolf.getToughnessModifier()).isEqualTo(2);
-        assertThat(wolf.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.HEXPROOF)).isTrue();
     }
 }

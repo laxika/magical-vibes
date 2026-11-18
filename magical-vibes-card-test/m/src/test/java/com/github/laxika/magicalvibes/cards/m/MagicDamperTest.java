@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.j.JumboCactuar;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -30,7 +31,7 @@ class MagicDamperTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(1);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.HEXPROOF);
     }
 
     @Test
@@ -45,7 +46,7 @@ class MagicDamperTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.HEXPROOF);
     }
 
     @Test
@@ -84,11 +85,11 @@ class MagicDamperTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(1);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.HEXPROOF);
         assertThat(other.isTapped()).isTrue();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.HEXPROOF);
     }
 
     @Test
@@ -103,7 +104,7 @@ class MagicDamperTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.HEXPROOF);
     }
 
     @Test
@@ -122,7 +123,7 @@ class MagicDamperTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.HEXPROOF);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Magic Damper");
     }

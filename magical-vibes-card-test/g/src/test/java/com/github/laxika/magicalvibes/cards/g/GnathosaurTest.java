@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
@@ -35,7 +36,7 @@ class GnathosaurTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Spellbook");
 
         // Gnathosaur should have trample
-        assertThat(gnathosaur.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, gnathosaur)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -47,14 +48,14 @@ class GnathosaurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gnathosaur.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, gnathosaur)).contains(Keyword.TRAMPLE);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gnathosaur.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, gnathosaur)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test
@@ -125,14 +126,14 @@ class GnathosaurTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, spellbookId);
         harness.passBothPriorities();
 
-        assertThat(gnathosaur.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, gnathosaur)).contains(Keyword.TRAMPLE);
 
         // Second activation: 1 artifact left, auto-sacrificed
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         // Still has trample (granted twice, both active)
-        assertThat(gnathosaur.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, gnathosaur)).contains(Keyword.TRAMPLE);
 
         // Both artifacts should be gone
         harness.assertNotOnBattlefield(player1, "Spellbook");
@@ -151,13 +152,13 @@ class GnathosaurTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Spellbook");
         harness.assertInGraveyard(player1, "Spellbook");
         assertThat(gd.stack).hasSize(1);
-        assertThat(source.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
-        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, source)).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.TRAMPLE);
 
         harness.passBothPriorities();
 
-        assertThat(source.getGrantedKeywords()).contains(Keyword.TRAMPLE);
-        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, source)).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test
@@ -171,7 +172,7 @@ class GnathosaurTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Spellbook");
-        assertThat(gnathosaur.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, gnathosaur)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -186,7 +187,7 @@ class GnathosaurTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Spellbook");
         assertThat(gd.stack).isEmpty();
-        assertThat(gnathosaur.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, gnathosaur)).doesNotContain(Keyword.TRAMPLE);
     }
 
     private Permanent addReadyGnathosaur(Player player) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -53,7 +54,7 @@ class AssaultStrobeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -80,7 +81,7 @@ class AssaultStrobeTest extends BaseCardTest {
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        attacker.getGrantedKeywords().add(Keyword.DOUBLE_STRIKE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.DOUBLE_STRIKE);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -98,15 +99,15 @@ class AssaultStrobeTest extends BaseCardTest {
     void doubleStrikeRemovedAtEndOfTurn() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        bears.getGrantedKeywords().add(Keyword.DOUBLE_STRIKE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.DOUBLE_STRIKE);
 
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     // ===== Fizzle =====

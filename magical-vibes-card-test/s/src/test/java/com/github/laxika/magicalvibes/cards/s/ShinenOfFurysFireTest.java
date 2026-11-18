@@ -79,7 +79,7 @@ class ShinenOfFurysFireTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
         harness.assertInGraveyard(player1, "Shinen of Fury's Fire");
     }
 
@@ -109,7 +109,7 @@ class ShinenOfFurysFireTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
     @Test

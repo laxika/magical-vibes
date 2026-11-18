@@ -40,10 +40,10 @@ class VaultOfTheArchangelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bear1.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(bear1.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(bear2.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(bear2.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear1, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear1, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear2, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear2, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -57,10 +57,10 @@ class VaultOfTheArchangelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(ownBear.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(ownBear.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(opponentBear.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(opponentBear.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownBear, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownBear, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentBear, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentBear, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -73,13 +73,13 @@ class VaultOfTheArchangelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bear.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(bear.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(bear.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -96,13 +96,13 @@ class VaultOfTheArchangelTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
-        assertThat(creature.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(creature.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(creature.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -116,10 +116,10 @@ class VaultOfTheArchangelTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = addCreatureReady(player1, new DawntreaderElk());
 
-        assertThat(beforeResolution.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(beforeResolution.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(afterResolution.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(afterResolution.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.LIFELINK)).isFalse();
     }
 
     @Test

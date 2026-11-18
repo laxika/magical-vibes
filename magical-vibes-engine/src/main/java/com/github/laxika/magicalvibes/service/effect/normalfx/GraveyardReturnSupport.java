@@ -533,7 +533,8 @@ public class GraveyardReturnSupport {
                 controllerId) || targetCard.hasKeyword(Keyword.CHANGELING))) {
             Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             if (sourcePermanent != null) {
-                sourcePermanent.getGrantedKeywords().add(Keyword.HASTE);
+                gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                        sourcePermanent.getId(), Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData, GameLog.cardThen(sourcePermanent.getCard(),
                         " gains haste until end of turn."));
             }
@@ -2215,7 +2216,7 @@ public class GraveyardReturnSupport {
                 enterTapped, enterAttacking, enterWithCounter, grantIndestructible, false,
                 enterWithCounterCount, permanent -> {
                     if (grantHaste) {
-                        permanent.getGrantedKeywords().add(Keyword.HASTE);
+                        gameData.addEffectOnPermanent(card.getName(), null, controllerId, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), permanent.getId(), Duration.UNTIL_END_OF_TURN);
                     }
                 }, null);
     }
@@ -2667,16 +2668,19 @@ public class GraveyardReturnSupport {
         if (returnedPermanent == null || !effect.grantHaste() || !effect.hasteUntilEndOfTurn()) {
             return;
         }
-        boolean ended = false;
+        FloatingContinuousEffect ended = null;
         for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPermanent(returnedPermanent.getId(),
                 GrantKeywordEffect.class)) {
-            if (((GrantKeywordEffect) fe.effect()).keywords().equals(Set.of(Keyword.HASTE))) {
+            if (((GrantKeywordEffect) fe.effect()).keywords().equals(Set.of(Keyword.HASTE))
+                    && Duration.PERMANENT.equals(fe.duration())) {
                 gameData.endFloatingEffect(fe);
-                ended = true;
+                ended = fe;
             }
         }
-        if (ended) {
-            returnedPermanent.getGrantedKeywords().add(Keyword.HASTE);
+        if (ended != null) {
+            gameData.addEffectOnPermanent(ended.sourceCardName(), ended.sourcePermanentId(), ended.controllerId(),
+                    new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), returnedPermanent.getId(),
+                    Duration.UNTIL_END_OF_TURN);
         }
     }
 

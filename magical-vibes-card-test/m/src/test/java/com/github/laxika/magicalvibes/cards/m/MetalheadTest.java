@@ -71,16 +71,16 @@ class MetalheadTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Spellbook");
         assertThat(metalhead.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(metalhead.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(metalhead.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, metalhead, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, metalhead, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(metalhead.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(metalhead.hasKeyword(Keyword.MENACE)).isFalse();
-        assertThat(metalhead.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, metalhead, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, metalhead, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -125,14 +125,14 @@ class MetalheadTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Spellbook");
         harness.assertNotOnBattlefield(player1, "Spellbook");
         assertThat(metalhead.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(metalhead.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(metalhead.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, metalhead, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, metalhead, Keyword.MENACE)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(metalhead.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(metalhead.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(metalhead.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, metalhead, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, metalhead, Keyword.MENACE)).isTrue();
     }
 
     @Test

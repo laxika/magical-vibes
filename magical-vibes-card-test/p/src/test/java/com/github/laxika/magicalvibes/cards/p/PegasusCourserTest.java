@@ -46,7 +46,7 @@ class PegasusCourserTest extends BaseCardTest {
         // Resolve the triggered ability
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
     }
 
     @Test

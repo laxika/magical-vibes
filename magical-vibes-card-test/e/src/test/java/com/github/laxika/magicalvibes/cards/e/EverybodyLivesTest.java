@@ -28,10 +28,10 @@ class EverybodyLivesTest extends BaseCardTest {
 
         castEverybodyLives();
 
-        assertThat(ownCreature.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(ownCreature.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(opposingCreature.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(opposingCreature.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
         assertThat(gqs.playerHasHexproof(gd, player2.getId())).isTrue();
         assertThat(gqs.canPlayerLoseLife(gd, player1.getId())).isFalse();
@@ -85,8 +85,8 @@ class EverybodyLivesTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(creature.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gqs.playerHasHexproof(gd, player2.getId())).isFalse();
         assertThat(gqs.canPlayerLoseLife(gd, player2.getId())).isTrue();
         assertThat(gqs.canPlayerLoseGame(gd, player2.getId())).isTrue();

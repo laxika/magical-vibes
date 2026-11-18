@@ -28,11 +28,11 @@ class OrderOfTheGoldenCricketTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        assertThat(cricket.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, cricket, Keyword.FLYING)).isFalse();
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(cricket.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cricket, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -48,7 +48,7 @@ class OrderOfTheGoldenCricketTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(cricket.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, cricket, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -64,7 +64,7 @@ class OrderOfTheGoldenCricketTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(cricket.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, cricket, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -79,7 +79,7 @@ class OrderOfTheGoldenCricketTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleMayAbilityChosen(player1, true));
 
-        assertThat(cricket.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cricket, Keyword.FLYING)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
@@ -95,7 +95,7 @@ class OrderOfTheGoldenCricketTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleMayAbilityChosen(player1, true));
 
-        assertThat(cricket.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, cricket, Keyword.FLYING)).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
 
@@ -108,13 +108,13 @@ class OrderOfTheGoldenCricketTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(cricket.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cricket, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(cricket.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, cricket, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -130,9 +130,9 @@ class OrderOfTheGoldenCricketTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleMayAbilityChosen(player1, true));
 
-        assertThat(attacker.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(nonAttacker.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(defender.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonAttacker, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, defender, Keyword.FLYING)).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -149,7 +149,7 @@ class OrderOfTheGoldenCricketTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleMayAbilityChosen(player2, true));
 
-        assertThat(cricket.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cricket, Keyword.FLYING)).isTrue();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
@@ -165,7 +165,7 @@ class OrderOfTheGoldenCricketTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleMayAbilityChosen(player1, false));
 
-        assertThat(cricket.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, cricket, Keyword.FLYING)).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

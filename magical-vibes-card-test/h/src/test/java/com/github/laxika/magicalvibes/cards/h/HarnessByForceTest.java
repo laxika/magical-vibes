@@ -32,8 +32,8 @@ class HarnessByForceTest extends BaseCardTest {
 
         assertThat(first.isTapped()).isFalse();
         assertThat(second.isTapped()).isFalse();
-        assertThat(first.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getId)
                 .containsExactlyInAnyOrder(first.getId(), second.getId());
@@ -51,7 +51,7 @@ class HarnessByForceTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .extracting(Permanent::getId)
                 .contains(target.getId());
@@ -98,7 +98,7 @@ class HarnessByForceTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, List.of());
 
         assertThat(untouched.isTapped()).isTrue();
-        assertThat(untouched.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, untouched, Keyword.HASTE)).isFalse();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Harness by Force");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -112,7 +112,7 @@ class HarnessByForceTest extends BaseCardTest {
         castAndResolveHarnessByForce(List.of(target.getId()));
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
@@ -128,7 +128,7 @@ class HarnessByForceTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).containsAll(targets);
-        assertThat(targets).allSatisfy(target -> assertThat(target.hasKeyword(Keyword.HASTE)).isTrue());
+        assertThat(targets).allSatisfy(target -> assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue());
     }
 
     @Test
@@ -146,7 +146,7 @@ class HarnessByForceTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(remaining).doesNotContain(removed);
         assertThat(remaining.isTapped()).isFalse();
-        assertThat(remaining.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, remaining, Keyword.HASTE)).isTrue();
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
@@ -162,7 +162,7 @@ class HarnessByForceTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsAll(targets);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContainAnyElementsOf(targets);
-        assertThat(targets).allSatisfy(target -> assertThat(target.hasKeyword(Keyword.HASTE)).isTrue());
+        assertThat(targets).allSatisfy(target -> assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue());
     }
 
     private void castAndResolveHarnessByForce(List<UUID> targetIds) {

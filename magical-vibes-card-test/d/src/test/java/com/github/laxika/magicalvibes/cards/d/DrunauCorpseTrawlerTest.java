@@ -45,7 +45,7 @@ class DrunauCorpseTrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, trawler.getId());
         harness.passBothPriorities();
 
-        assertThat(trawler.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, trawler, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -58,7 +58,7 @@ class DrunauCorpseTrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, token.getId());
         harness.passBothPriorities();
 
-        assertThat(token.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -69,13 +69,13 @@ class DrunauCorpseTrawlerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, trawler.getId());
         harness.passBothPriorities();
-        assertThat(trawler.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, trawler, Keyword.DEATHTOUCH)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(trawler.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, trawler, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test
@@ -99,7 +99,7 @@ class DrunauCorpseTrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -112,7 +112,7 @@ class DrunauCorpseTrawlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, trawler.getId());
         harness.passBothPriorities();
 
-        assertThat(trawler.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, trawler, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -126,7 +126,7 @@ class DrunauCorpseTrawlerTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -140,7 +140,7 @@ class DrunauCorpseTrawlerTest extends BaseCardTest {
         Permanent returned = harness.addToBattlefieldAndReturn(player2, target.getCard());
         harness.passBothPriorities();
 
-        assertThat(returned.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.DEATHTOUCH)).isFalse();
     }
 
     private void castAndResolveTrawler() {

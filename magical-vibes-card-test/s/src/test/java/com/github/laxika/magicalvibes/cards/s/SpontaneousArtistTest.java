@@ -40,7 +40,7 @@ class SpontaneousArtistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -51,13 +51,13 @@ class SpontaneousArtistTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -95,11 +95,11 @@ class SpontaneousArtistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, artist.getId());
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
-        assertThat(artist.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, artist, Keyword.HASTE)).isFalse();
         harness.passBothPriorities();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
-        assertThat(artist.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, artist, Keyword.HASTE)).isTrue();
         assertThat(artist.isTapped()).isTrue();
     }
 
@@ -114,7 +114,7 @@ class SpontaneousArtistTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(artist.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
     }
 
@@ -130,7 +130,7 @@ class SpontaneousArtistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

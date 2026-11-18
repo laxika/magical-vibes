@@ -31,7 +31,7 @@ class ColossalMightTest extends BaseCardTest {
         assertThat(bears.getToughnessModifier()).isEqualTo(2);
         assertThat(bears.getEffectivePower()).isEqualTo(6);
         assertThat(bears.getEffectiveToughness()).isEqualTo(4);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -49,7 +49,7 @@ class ColossalMightTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -65,10 +65,10 @@ class ColossalMightTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(6);
         assertThat(target.getEffectiveToughness()).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(ownCreature.getPowerModifier()).isZero();
         assertThat(ownCreature.getToughnessModifier()).isZero();
-        assertThat(ownCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -84,13 +84,13 @@ class ColossalMightTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(10);
         assertThat(target.getEffectiveToughness()).isEqualTo(6);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 }

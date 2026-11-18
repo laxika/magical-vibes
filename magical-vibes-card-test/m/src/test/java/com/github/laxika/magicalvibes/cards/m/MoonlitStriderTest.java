@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GodsEyeGateToTheReikai;
 import com.github.laxika.magicalvibes.cards.k.KamiOfFalseHope;
 import com.github.laxika.magicalvibes.cards.k.KamiOfTatteredShoji;
@@ -36,7 +37,7 @@ class MoonlitStriderTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Moonlit Strider");
         Permanent palliator = findPermanent(player1, "Kitsune Palliator");
-        assertThat(palliator.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, palliator)).contains(CardColor.RED);
     }
 
     @Test
@@ -55,7 +56,7 @@ class MoonlitStriderTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         Permanent palliator = findPermanent(player1, "Kitsune Palliator");
-        assertThat(palliator.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, palliator)).isEmpty();
     }
 
     @Test
@@ -188,7 +189,7 @@ class MoonlitStriderTest extends BaseCardTest {
 
         resolveAllTriggers();
         harness.handleListChoice(player1, "WHITE");
-        assertThat(findPermanent(player1, "Kitsune Palliator").getProtectionFromColorsUntilEndOfTurn())
+        assertThat(PermanentGrants.protectionColorsOf(gd, findPermanent(player1, "Kitsune Palliator")))
                 .contains(CardColor.WHITE);
     }
 
@@ -211,7 +212,7 @@ class MoonlitStriderTest extends BaseCardTest {
 
         resolveAllTriggers();
         harness.handleListChoice(player1, "BLUE");
-        assertThat(findPermanent(player1, "Kitsune Palliator").getProtectionFromColorsUntilEndOfTurn())
+        assertThat(PermanentGrants.protectionColorsOf(gd, findPermanent(player1, "Kitsune Palliator")))
                 .contains(CardColor.BLUE);
     }
 

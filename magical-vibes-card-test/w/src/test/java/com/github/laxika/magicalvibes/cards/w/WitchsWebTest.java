@@ -34,7 +34,7 @@ class WitchsWebTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(3);
         assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
     }
 
     @Test
@@ -54,7 +54,7 @@ class WitchsWebTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
     }
 
     @Test
@@ -85,11 +85,11 @@ class WitchsWebTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(3);
         assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
         assertThat(other.isTapped()).isTrue();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
         harness.assertInGraveyard(player1, "Witch's Web");
     }
 
@@ -114,7 +114,7 @@ class WitchsWebTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Witch's Web");
     }

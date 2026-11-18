@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.l.LegionConquistador;
@@ -168,7 +169,7 @@ class BlindingFogTest extends BaseCardTest {
         harness.castFromHand(player1, new BlindingFog(), "{2}{G}");
         harness.passBothPriorities();
 
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HEXPROOF);
     }
 
     @Test
@@ -181,8 +182,8 @@ class BlindingFogTest extends BaseCardTest {
         harness.castFromHand(player1, new BlindingFog(), "{2}{G}");
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getGrantedKeywords()).contains(Keyword.HEXPROOF);
-        assertThat(opponentCreature.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, ownCreature)).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, opponentCreature)).doesNotContain(Keyword.HEXPROOF);
     }
 
     @Test
@@ -221,7 +222,7 @@ class BlindingFogTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Legion Conquistador");
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.HEXPROOF);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AbbeyGargoyles;
 import com.github.laxika.magicalvibes.cards.a.AysenAbbey;
 import com.github.laxika.magicalvibes.cards.f.FolkOfAnHavva;
@@ -110,7 +111,7 @@ class RootsTest extends BaseCardTest {
         assertThat(creature.isTapped()).isFalse();
         assertThat(gd.stack).hasSize(1);
 
-        creature.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.SHROUD);
         resolveAllTriggers();
 
         assertThat(creature.isTapped()).isTrue();
@@ -126,7 +127,7 @@ class RootsTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, creature.getId());
         resolveAllTriggers();
 
-        creature.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.FLYING);
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Roots")).isEmpty();

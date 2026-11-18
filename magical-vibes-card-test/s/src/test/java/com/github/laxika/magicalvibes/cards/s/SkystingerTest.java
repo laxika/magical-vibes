@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -75,7 +76,7 @@ class SkystingerTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.getEffectivePower(gd, skystinger)).isEqualTo(3);
-        attacker.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, attacker, Keyword.FLYING);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, skystinger)).isEqualTo(8);

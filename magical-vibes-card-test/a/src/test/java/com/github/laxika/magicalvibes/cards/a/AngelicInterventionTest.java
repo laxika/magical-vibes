@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BrittleEffigy;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
@@ -34,7 +35,7 @@ class AngelicInterventionTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.RED);
     }
 
     @Test
@@ -45,7 +46,7 @@ class AngelicInterventionTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "COLORLESS");
 
-        assertThat(target.isProtectionFromColorlessUntilEndOfTurn()).isTrue();
+        assertThat(PermanentGrants.hasProtectionFromColorless(gd, target)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, target, null)).isTrue();
         assertThat(gqs.hasProtectionFromSource(gd, target, new Permanent(new BrittleEffigy()))).isTrue();
     }
@@ -62,7 +63,7 @@ class AngelicInterventionTest extends BaseCardTest {
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.BLUE);
     }
 
     @Test
@@ -83,7 +84,7 @@ class AngelicInterventionTest extends BaseCardTest {
         castAt(target);
         harness.handleListChoice(player1, "WHITE");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.WHITE);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -119,7 +120,7 @@ class AngelicInterventionTest extends BaseCardTest {
         harness.handleListChoice(player1, "COLORLESS");
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.isProtectionFromColorlessUntilEndOfTurn()).isFalse();
+        assertThat(PermanentGrants.hasProtectionFromColorless(gd, target)).isFalse();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 

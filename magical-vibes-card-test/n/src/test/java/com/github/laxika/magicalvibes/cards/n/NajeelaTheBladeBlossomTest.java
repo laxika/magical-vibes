@@ -94,9 +94,9 @@ class NajeelaTheBladeBlossomTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(attacker.isTapped()).isFalse();
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(attacker.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(attacker.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.HASTE)).isTrue();
         assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
         assertThat(gd.additionalCombatPhasesOnly).isEqualTo(0);
     }

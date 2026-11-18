@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -40,7 +43,7 @@ public class GrantProtectionFromColorUntilEndOfTurnEffectHandler implements Norm
             }
             battlefield.stream()
                     .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                    .forEach(permanent -> grantProtection(permanent, e.color(), gameData));
+                    .forEach(permanent -> grantProtection(entry, permanent, e.color(), gameData));
             return;
         }
 
@@ -49,11 +52,12 @@ public class GrantProtectionFromColorUntilEndOfTurnEffectHandler implements Norm
             return;
         }
 
-        grantProtection(target, e.color(), gameData);
+        grantProtection(entry, target, e.color(), gameData);
     }
 
-    private void grantProtection(Permanent target, CardColor color, GameData gameData) {
-        target.getProtectionFromColorsUntilEndOfTurn().add(color);
+    private void grantProtection(StackEntry entry, Permanent target, CardColor color, GameData gameData) {
+        gameData.addEffectOnPermanent(entry, new ProtectionFromColorsEffect(Set.of(color), GrantScope.TARGET),
+                target.getId(), Duration.UNTIL_END_OF_TURN);
 
         String colorName = color.name().toLowerCase();
         gameLogService.append(gameData, GameLog.builder()

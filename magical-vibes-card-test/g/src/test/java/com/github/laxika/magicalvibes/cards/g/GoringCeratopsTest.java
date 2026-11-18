@@ -35,7 +35,7 @@ class GoringCeratopsTest extends BaseCardTest {
         // Resolve the triggered ability
         harness.passBothPriorities();
 
-        assertThat(companion.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, companion, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -59,7 +59,7 @@ class GoringCeratopsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // "Other creatures you control" includes non-attacking ones
-        assertThat(stayBack.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, stayBack, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -81,7 +81,7 @@ class GoringCeratopsTest extends BaseCardTest {
         // Resolve the triggered ability
         harness.passBothPriorities();
 
-        assertThat(opponentCreature.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -117,10 +117,10 @@ class GoringCeratopsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        assertThat(companion.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, companion, Keyword.DOUBLE_STRIKE)).isTrue();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(companion.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, companion, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -136,12 +136,12 @@ class GoringCeratopsTest extends BaseCardTest {
         gs.declareAttackers(gd, player1, List.of(0));
 
         Permanent earlyArrival = harness.enterBattlefieldAndReturn(player1, new RaptorCompanion());
-        assertThat(earlyArrival.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, earlyArrival, Keyword.DOUBLE_STRIKE)).isFalse();
         harness.passBothPriorities();
         Permanent lateArrival = harness.enterBattlefieldAndReturn(player1, new RaptorCompanion());
 
-        assertThat(earlyArrival.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(lateArrival.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, earlyArrival, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, lateArrival, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -162,6 +162,6 @@ class GoringCeratopsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Goring Ceratops");
-        assertThat(companion.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, companion, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 }

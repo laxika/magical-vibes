@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BogImp;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -132,7 +133,7 @@ class SeverSoulTest extends BaseCardTest {
     @DisplayName("Gains life even when an indestructible target survives")
     void gainsLifeWhenTargetIsIndestructible() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.INDESTRUCTIBLE);
 
         giveSpell();
         harness.castAndResolveSorcery(player1, 0, bears.getId());

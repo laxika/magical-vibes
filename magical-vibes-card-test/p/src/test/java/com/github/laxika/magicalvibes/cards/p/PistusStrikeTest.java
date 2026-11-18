@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -71,7 +72,7 @@ class PistusStrikeTest extends BaseCardTest {
     @Test
     void givesPoisonEvenWhenTargetIsIndestructible() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new LeoninSkyhunter());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new PistusStrike()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
@@ -90,7 +91,7 @@ class PistusStrikeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castInstant(player1, 0, target.getId());
-        target.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, target, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Leonin Skyhunter");

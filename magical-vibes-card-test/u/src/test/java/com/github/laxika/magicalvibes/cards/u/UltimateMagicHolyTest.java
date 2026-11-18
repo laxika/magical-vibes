@@ -33,9 +33,9 @@ class UltimateMagicHolyTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(ownCreature.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(ownArtifact.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(opposingCreature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownArtifact, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -97,7 +97,7 @@ class UltimateMagicHolyTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        assertThat(laterCreature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.INDESTRUCTIBLE)).isFalse();
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -106,7 +106,7 @@ class UltimateMagicHolyTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        assertThat(protectedCreature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, protectedCreature, Keyword.INDESTRUCTIBLE)).isFalse();
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -130,7 +130,7 @@ class UltimateMagicHolyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castFromExile(player1, holy.getId());
         harness.passBothPriorities();
-        assertThat(ownCreature.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock()));
         harness.addMana(player2, ManaColor.RED, 3);

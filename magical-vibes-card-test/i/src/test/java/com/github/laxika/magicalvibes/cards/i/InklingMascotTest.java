@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.Assassinate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -36,7 +37,7 @@ class InklingMascotTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Repartee trigger — grants flying, queues surveil may
         harness.handleMayAbilityChosen(player1, true); // surveil: put top card into graveyard
 
-        assertThat(mascot.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, mascot)).contains(Keyword.FLYING);
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
@@ -54,7 +55,7 @@ class InklingMascotTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false); // decline surveil
 
-        assertThat(mascot.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, mascot)).contains(Keyword.FLYING);
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
@@ -62,7 +63,7 @@ class InklingMascotTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(mascot.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, mascot)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -92,7 +93,7 @@ class InklingMascotTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(mascot.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, mascot)).contains(Keyword.FLYING);
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(giant);
         harness.passBothPriorities();
@@ -137,7 +138,7 @@ class InklingMascotTest extends BaseCardTest {
         harness.castInstant(player1, 0, giant.getId());
         harness.passBothPriorities();
 
-        assertThat(mascot.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, mascot)).contains(Keyword.FLYING);
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.stack).hasSize(1);
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -66,7 +67,7 @@ class GruesomeEncoreTest extends BaseCardTest {
 
         // Creature should have haste
         Permanent creature = findPermanent(player1, "Grizzly Bears");
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HASTE);
 
         // Creature should be marked for exile at end step
         assertThat(DelayedPermanentMoves.waiting(gd)).anyMatch(a ->

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -103,7 +104,7 @@ class IgniteDisorderTest extends BaseCardTest {
         Permanent legalTarget = harness.addToBattlefieldAndReturn(player2, new SoulWarden());
 
         harness.castInstant(player1, 0, Map.of(protectedTarget.getId(), 2, legalTarget.getId(), 1));
-        protectedTarget.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, protectedTarget, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         assertThat(protectedTarget.getMarkedDamage()).isZero();
@@ -147,7 +148,7 @@ class IgniteDisorderTest extends BaseCardTest {
         Permanent remainingTarget = harness.addToBattlefieldAndReturn(player2, new WindDrake());
 
         harness.castInstant(player1, 0, Map.of(protectedTarget.getId(), 2, remainingTarget.getId(), 1));
-        protectedTarget.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, protectedTarget, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Elite Vanguard");

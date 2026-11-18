@@ -25,7 +25,7 @@ class PeggyCarterSecretAgentTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -36,7 +36,7 @@ class PeggyCarterSecretAgentTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(peggy.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, peggy, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -47,13 +47,13 @@ class PeggyCarterSecretAgentTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(1));
         harness.passBothPriorities();
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -65,7 +65,7 @@ class PeggyCarterSecretAgentTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
 
         assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Peggy Carter, Secret Agent"));
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -77,8 +77,8 @@ class PeggyCarterSecretAgentTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(peggy.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, peggy, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -93,7 +93,7 @@ class PeggyCarterSecretAgentTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToHand(gd, peggy);
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
         harness.assertInHand(player1, "Peggy Carter, Secret Agent");
     }
 
@@ -106,10 +106,10 @@ class PeggyCarterSecretAgentTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         harness.passBothPriorities();
 
-        assertThat(peggy.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, peggy, Keyword.INDESTRUCTIBLE)).isFalse();
         harness.getPermanentRemovalService().removePermanentToHand(gd, peggy);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Peggy Carter, Secret Agent");
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 }

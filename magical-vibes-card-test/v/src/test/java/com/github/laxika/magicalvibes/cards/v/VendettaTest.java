@@ -52,7 +52,7 @@ class VendettaTest extends BaseCardTest {
     @DisplayName("Still causes life loss when the target is indestructible")
     void causesLifeLossWhenTargetIsIndestructible() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new LagacLizard());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
 
         castVendetta(target);
 

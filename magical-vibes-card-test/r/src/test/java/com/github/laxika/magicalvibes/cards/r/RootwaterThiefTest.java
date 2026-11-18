@@ -32,14 +32,14 @@ class RootwaterThiefTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
 
-        assertThat(thief.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(otherThief.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, thief, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherThief, Keyword.FLYING)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(thief.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, thief, Keyword.FLYING)).isFalse();
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
@@ -35,7 +36,7 @@ class RazorBarrierTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, "BLUE");
 
-        assertThat(land.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, land)).contains(CardColor.BLUE);
     }
 
     @Test
@@ -48,7 +49,7 @@ class RazorBarrierTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.handleListChoice(player1, "ARTIFACT");
 
-        assertThat(creature.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, creature)).contains(CardType.ARTIFACT);
     }
 
     @Test
@@ -74,12 +75,12 @@ class RazorBarrierTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.handleListChoice(player1, "RED");
 
-        assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, creature)).contains(CardColor.RED);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, creature)).isEmpty();
     }
 
     @Test
@@ -145,11 +146,11 @@ class RazorBarrierTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.handleListChoice(player1, "ARTIFACT");
-        assertThat(creature.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, creature)).contains(CardType.ARTIFACT);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(creature.getProtectionFromCardTypes()).isEmpty();
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, creature)).isEmpty();
     }
 }

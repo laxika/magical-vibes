@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -57,7 +58,7 @@ class BoilTest extends BaseCardTest {
     @DisplayName("Indestructible Islands survive Boil")
     void indestructibleIslandsSurvive() {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        island.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, island, Keyword.INDESTRUCTIBLE);
         harness.castFromHand(player1, new Boil(), "{3}{R}");
         harness.passBothPriorities();
 
@@ -81,7 +82,7 @@ class BoilTest extends BaseCardTest {
     @DisplayName("Indestructible Islands survive Boil")
     void indestructibleIslandSurvives() {
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
-        island.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, island, Keyword.INDESTRUCTIBLE);
 
         castBoilAndResolve();
 
@@ -93,9 +94,9 @@ class BoilTest extends BaseCardTest {
     @DisplayName("Hexproof and shroud do not save Islands from untargeted destruction")
     void destroysIslandsWithHexproofAndShroud() {
         Permanent hexproofIsland = harness.addToBattlefieldAndReturn(player1, new Island());
-        hexproofIsland.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, hexproofIsland, Keyword.HEXPROOF);
         Permanent shroudIsland = harness.addToBattlefieldAndReturn(player2, new Island());
-        shroudIsland.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, shroudIsland, Keyword.SHROUD);
 
         castBoilAndResolve();
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import java.util.List;
 
 import com.github.laxika.magicalvibes.cards.i.ImperialMoth;
@@ -34,7 +35,7 @@ class BefriendingTheMothsTest extends BaseCardTest {
 
         assertThat(ownCreature.getPowerModifier()).isEqualTo(1);
         assertThat(ownCreature.getToughnessModifier()).isEqualTo(1);
-        assertThat(ownCreature.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, ownCreature)).contains(Keyword.FLYING);
         assertThat(opposingCreature.getPowerModifier()).isZero();
 
         Permanent saga = findSaga();

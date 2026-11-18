@@ -475,7 +475,8 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
                         permanent.getId(), Duration.PERMANENT);
             } else {
-                permanent.getGrantedKeywords().add(Keyword.HASTE);
+                gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                        permanent.getId(), Duration.UNTIL_END_OF_TURN);
             }
         }
         if (effect.sacrificeAtEndStep()) {

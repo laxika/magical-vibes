@@ -38,9 +38,9 @@ class MobRuleTest extends BaseCardTest {
                 .contains(small.getId())
                 .doesNotContain(large.getId());
         assertThat(large.isTapped()).isFalse();
-        assertThat(large.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, large, Keyword.HASTE)).isTrue();
         assertThat(small.isTapped()).isTrue();
-        assertThat(small.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, small, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -64,9 +64,9 @@ class MobRuleTest extends BaseCardTest {
         assertThat(small.isTapped()).isFalse();
         assertThat(boundary.isTapped()).isFalse();
         assertThat(large.isTapped()).isTrue();
-        assertThat(small.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(boundary.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(large.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, small, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, boundary, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, large, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -83,7 +83,7 @@ class MobRuleTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .extracting(Permanent::getId)
                 .contains(target.getId());
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -97,7 +97,7 @@ class MobRuleTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player2, "Glorious Anthem");
     }
 
@@ -112,7 +112,7 @@ class MobRuleTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(creature.isTapped()).isFalse();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -126,9 +126,9 @@ class MobRuleTest extends BaseCardTest {
         cast(1);
 
         assertThat(small.isTapped()).isFalse();
-        assertThat(small.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, small, Keyword.HASTE)).isTrue();
         assertThat(large.isTapped()).isTrue();
-        assertThat(large.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, large, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -142,7 +142,7 @@ class MobRuleTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(small);
         assertThat(small.isTapped()).isTrue();
-        assertThat(small.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, small, Keyword.HASTE)).isFalse();
         harness.assertInGraveyard(player1, "Mob Rule");
     }
 

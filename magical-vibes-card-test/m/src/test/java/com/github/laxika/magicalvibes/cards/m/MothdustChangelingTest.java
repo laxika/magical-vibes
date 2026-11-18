@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BramblewoodParagon;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -82,7 +83,7 @@ class MothdustChangelingTest extends BaseCardTest {
 
         assertThat(warrior.isTapped()).isTrue();
         assertThat(changeling.isTapped()).isFalse();
-        assertThat(changeling.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, changeling)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -95,7 +96,7 @@ class MothdustChangelingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(changeling.isTapped()).isTrue();
-        assertThat(changeling.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, changeling)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -106,13 +107,13 @@ class MothdustChangelingTest extends BaseCardTest {
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(changeling);
         harness.activateAbility(player1, idx, null, null);
         harness.passBothPriorities();
-        assertThat(changeling.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, changeling)).contains(Keyword.FLYING);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(changeling.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, changeling)).doesNotContain(Keyword.FLYING);
     }
 
     @Test

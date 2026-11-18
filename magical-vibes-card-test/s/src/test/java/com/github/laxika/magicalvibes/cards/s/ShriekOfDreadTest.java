@@ -31,7 +31,7 @@ class ShriekOfDreadTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        assertThat(bears.hasKeyword(Keyword.FEAR)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FEAR)).isTrue();
     }
 
     @Test
@@ -42,7 +42,7 @@ class ShriekOfDreadTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.hasKeyword(Keyword.FEAR)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FEAR)).isTrue();
     }
 
     @Test
@@ -57,7 +57,7 @@ class ShriekOfDreadTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FEAR)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FEAR)).isFalse();
     }
 
     @Test
@@ -129,8 +129,8 @@ class ShriekOfDreadTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.hasKeyword(Keyword.FEAR)).isTrue();
-        assertThat(other.hasKeyword(Keyword.FEAR)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FEAR)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FEAR)).isFalse();
     }
 
     private Permanent addCreature() {

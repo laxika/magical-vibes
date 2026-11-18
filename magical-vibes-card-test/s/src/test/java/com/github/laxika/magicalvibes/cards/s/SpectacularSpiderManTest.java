@@ -25,13 +25,13 @@ class SpectacularSpiderManTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, spiderMan), 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(spiderMan.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, spiderMan, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(spiderMan.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, spiderMan, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -46,17 +46,17 @@ class SpectacularSpiderManTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Spectacular Spider-Man");
-        assertThat(ally.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(ally.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(opposing.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(opposing.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposing, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposing, Keyword.INDESTRUCTIBLE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ally.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(ally.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -81,10 +81,10 @@ class SpectacularSpiderManTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, indexOf(player1, spiderMan), 0, null, null);
-        assertThat(spiderMan.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, spiderMan, Keyword.FLYING)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(spiderMan.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, spiderMan, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -99,13 +99,13 @@ class SpectacularSpiderManTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Spectacular Spider-Man");
         harness.assertInGraveyard(player1, "Spectacular Spider-Man");
-        assertThat(ally.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(ally.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.INDESTRUCTIBLE)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(ally.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(ally.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -119,10 +119,10 @@ class SpectacularSpiderManTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = addCreatureReady(player1, new KravensCats());
 
-        assertThat(beforeResolution.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(beforeResolution.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(afterResolution.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(afterResolution.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -137,9 +137,9 @@ class SpectacularSpiderManTest extends BaseCardTest {
         Permanent replacement = harness.addToBattlefieldAndReturn(player1, new SpectacularSpiderMan());
         harness.passBothPriorities();
 
-        assertThat(replacement.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(replacement.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(replacement.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     private int indexOf(Player player, Permanent permanent) {

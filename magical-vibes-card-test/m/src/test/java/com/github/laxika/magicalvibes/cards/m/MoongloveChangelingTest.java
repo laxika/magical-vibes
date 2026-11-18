@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BramblewoodParagon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -29,7 +30,7 @@ class MoongloveChangelingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(changeling.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, changeling)).contains(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -62,13 +63,13 @@ class MoongloveChangelingTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(changeling.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, changeling)).contains(Keyword.DEATHTOUCH);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(changeling.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, changeling)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
     @Test

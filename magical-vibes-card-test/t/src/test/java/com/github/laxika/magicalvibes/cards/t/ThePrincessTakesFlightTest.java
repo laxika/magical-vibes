@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BesottedKnight;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -51,7 +52,7 @@ class ThePrincessTakesFlightTest extends BaseCardTest {
 
         assertThat(ownCreature.getPowerModifier()).isEqualTo(2);
         assertThat(ownCreature.getToughnessModifier()).isEqualTo(2);
-        assertThat(ownCreature.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, ownCreature)).contains(Keyword.FLYING);
     }
 
     @Test

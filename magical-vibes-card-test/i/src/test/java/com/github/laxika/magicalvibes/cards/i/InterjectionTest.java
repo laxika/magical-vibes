@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -33,7 +34,7 @@ class InterjectionTest extends BaseCardTest {
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isEqualTo(2);
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -53,7 +54,7 @@ class InterjectionTest extends BaseCardTest {
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -82,11 +83,11 @@ class InterjectionTest extends BaseCardTest {
         Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FIRST_STRIKE);
         Permanent other = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -104,7 +105,7 @@ class InterjectionTest extends BaseCardTest {
         Permanent replacement = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(replacement.getPowerModifier()).isZero();
         assertThat(replacement.getToughnessModifier()).isZero();
-        assertThat(replacement.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, replacement)).doesNotContain(Keyword.FIRST_STRIKE);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Interjection");
     }

@@ -27,7 +27,7 @@ class PymParticlesTest extends BaseCardTest {
 
         castPymParticles(target);
 
-        assertThat(target.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         harness.assertInHand(player1, "Forest");
     }
@@ -38,14 +38,14 @@ class PymParticlesTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castPymParticles(target);
 
-        assertThat(target.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
@@ -70,7 +70,7 @@ class PymParticlesTest extends BaseCardTest {
 
         castPymParticles(target);
 
-        assertThat(target.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         harness.assertInHand(player1, "Forest");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);

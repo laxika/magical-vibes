@@ -31,7 +31,7 @@ class AlexWilderRunawayTest extends BaseCardTest {
         assertThat(escapedAlex.isEscaped()).isTrue();
         assertThat(gqs.getEffectivePower(gd, escapedAlex)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, escapedAlex)).isEqualTo(3);
-        assertThat(escapedAlex.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, escapedAlex, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -45,7 +45,7 @@ class AlexWilderRunawayTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -58,7 +58,7 @@ class AlexWilderRunawayTest extends BaseCardTest {
 
         Permanent alex = findPermanent(player1, "Alex Wilder, Runaway");
         assertThat(gqs.getEffectivePower(gd, alex)).isEqualTo(1);
-        assertThat(alex.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, alex, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -70,7 +70,7 @@ class AlexWilderRunawayTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -80,7 +80,7 @@ class AlexWilderRunawayTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, alex)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, alex)).isEqualTo(3);
-        assertThat(alex.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, alex, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -94,7 +94,7 @@ class AlexWilderRunawayTest extends BaseCardTest {
 
         Permanent alex = findPermanent(player1, "Alex Wilder, Runaway");
         assertThat(gqs.getEffectivePower(gd, alex)).isEqualTo(3);
-        assertThat(alex.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, alex, Keyword.HASTE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.exiledCards).hasSize(3);
 
@@ -103,7 +103,7 @@ class AlexWilderRunawayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, alex)).isEqualTo(1);
-        assertThat(alex.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, alex, Keyword.HASTE)).isFalse();
     }
 
     @Test

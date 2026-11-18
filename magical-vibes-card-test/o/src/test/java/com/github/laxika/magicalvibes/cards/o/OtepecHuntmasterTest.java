@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FrenziedRaptor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RaptorHatchling;
@@ -104,7 +105,7 @@ class OtepecHuntmasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent raptor = findPermanent(player1, "Frenzied Raptor");
-        assertThat(raptor.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, raptor)).contains(Keyword.HASTE);
     }
 
     @Test
@@ -157,7 +158,7 @@ class OtepecHuntmasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent raptor = findPermanent(player2, "Frenzied Raptor");
-        assertThat(raptor.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, raptor)).contains(Keyword.HASTE);
     }
 
     @Test

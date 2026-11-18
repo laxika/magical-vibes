@@ -29,7 +29,7 @@ class ShellSkulkinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
     }
 
     @Test
@@ -42,7 +42,7 @@ class ShellSkulkinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
     }
 
     @Test
@@ -54,13 +54,13 @@ class ShellSkulkinTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isFalse();
     }
 
     @Test
@@ -122,7 +122,7 @@ class ShellSkulkinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
         assertThat(skulkin.isTapped()).isTrue();
     }
 
@@ -159,7 +159,7 @@ class ShellSkulkinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
     }
 
     @Test
@@ -174,7 +174,7 @@ class ShellSkulkinTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
     }
 
     @Test
@@ -189,7 +189,7 @@ class ShellSkulkinTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -205,7 +205,7 @@ class ShellSkulkinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, skulkin.getId());
         harness.passBothPriorities();
 
-        assertThat(skulkin.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, skulkin, Keyword.SHROUD)).isTrue();
     }
 
     private Permanent addReadySkulkin(Player player) {

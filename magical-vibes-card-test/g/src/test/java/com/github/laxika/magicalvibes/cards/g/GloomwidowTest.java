@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FaerieMacabre;
 import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -49,7 +50,7 @@ class GloomwidowTest extends BaseCardTest {
     void canBlockCreatureWithGrantedFlying() {
         Permanent widow = addCreatureReady(player2, new Gloomwidow());
         Permanent attacker = addCreatureReady(player1, new SafeholdSentry());
-        attacker.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.FLYING);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

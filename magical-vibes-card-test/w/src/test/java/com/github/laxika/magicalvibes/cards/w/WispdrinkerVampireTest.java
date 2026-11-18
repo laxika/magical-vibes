@@ -63,14 +63,14 @@ class WispdrinkerVampireTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(vampire.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(vampire.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(smallCreature.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        assertThat(smallCreature.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(largeCreature.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(largeCreature.hasKeyword(Keyword.LIFELINK)).isFalse();
-        assertThat(opponentCreature.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(opponentCreature.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, vampire, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vampire, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, smallCreature, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, smallCreature, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, largeCreature, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, largeCreature, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.LIFELINK)).isFalse();
     }
 
     @Test

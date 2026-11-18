@@ -25,7 +25,7 @@ class PrimarisChaplainTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(chaplain.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, chaplain, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(bears.getPowerModifier()).isEqualTo(1);
         assertThat(chaplain.getPowerModifier()).isZero();
     }
@@ -38,14 +38,14 @@ class PrimarisChaplainTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
-        assertThat(chaplain.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, chaplain, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(bears.getPowerModifier()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(chaplain.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, chaplain, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(bears.getPowerModifier()).isZero();
     }
 
@@ -58,7 +58,7 @@ class PrimarisChaplainTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(chaplain.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, chaplain, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(bears.getPowerModifier()).isZero();
     }
 
@@ -70,7 +70,7 @@ class PrimarisChaplainTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(chaplain.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, chaplain, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(chaplain.getPowerModifier()).isZero();
         assertThat(chaplain.getToughnessModifier()).isZero();
     }
@@ -85,10 +85,10 @@ class PrimarisChaplainTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(stayingBack.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, stayingBack, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(stayingBack.getPowerModifier()).isZero();
-        assertThat(opponent.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(opponent.getPowerModifier()).isZero();
     }
 
@@ -103,7 +103,7 @@ class PrimarisChaplainTest extends BaseCardTest {
         resolveAllTriggers();
 
         for (Permanent chaplain : List.of(first, second, third)) {
-            assertThat(chaplain.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, chaplain, Keyword.INDESTRUCTIBLE)).isTrue();
             assertThat(chaplain.getPowerModifier()).isEqualTo(2);
             assertThat(chaplain.getToughnessModifier()).isZero();
         }

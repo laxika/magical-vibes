@@ -86,7 +86,7 @@ class KeldonOverseerTest extends BaseCardTest {
 
             harness.assertOnBattlefield(player1, "Baloth Gorger");
             assertThat(target.isTapped()).isFalse();
-            assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         }
 
         @Test
@@ -99,7 +99,7 @@ class KeldonOverseerTest extends BaseCardTest {
 
             harness.assertOnBattlefield(player1, "Baloth Gorger");
             assertThat(target.isTapped()).isFalse();
-            assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         }
 
         @Test
@@ -145,7 +145,7 @@ class KeldonOverseerTest extends BaseCardTest {
             castKicked(target.getId());
             harness.passBothPriorities(); // resolve ETB trigger
 
-            assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         }
 
         @Test
@@ -163,7 +163,7 @@ class KeldonOverseerTest extends BaseCardTest {
                     .anyMatch(p -> p.getId().equals(target.getId()));
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .noneMatch(p -> p.getId().equals(target.getId()));
-            assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
             assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
         }
     }

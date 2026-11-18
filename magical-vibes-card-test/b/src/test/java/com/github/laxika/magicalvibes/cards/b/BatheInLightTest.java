@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GlassGolem;
 import com.github.laxika.magicalvibes.cards.s.SnappingDrake;
 import com.github.laxika.magicalvibes.cards.w.Watchwolf;
@@ -35,10 +36,10 @@ class BatheInLightTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "RED");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
-        assertThat(ownMatchingCreature.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
-        assertThat(opponentMatchingCreature.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
-        assertThat(differentColorCreature.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, ownMatchingCreature)).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, opponentMatchingCreature)).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, differentColorCreature)).doesNotContain(CardColor.RED);
     }
 
     @Test
@@ -53,9 +54,9 @@ class BatheInLightTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleListChoice(player1, "BLUE");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
-        assertThat(otherColorlessCreature.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
-        assertThat(coloredCreature.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, otherColorlessCreature)).doesNotContain(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, coloredCreature)).doesNotContain(CardColor.BLUE);
     }
 
     @Test
@@ -84,8 +85,8 @@ class BatheInLightTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleListChoice(player1, "WHITE");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
-        assertThat(matchingCreature.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, matchingCreature)).contains(CardColor.WHITE);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
     }
 
@@ -102,9 +103,9 @@ class BatheInLightTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLACK");
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player2, new Watchwolf());
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
-        assertThat(beforeResolution.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
-        assertThat(afterResolution.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, beforeResolution)).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, afterResolution)).doesNotContain(CardColor.BLACK);
     }
 
     @Test
@@ -117,12 +118,12 @@ class BatheInLightTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleListChoice(player1, "BLUE");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.BLUE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).doesNotContain(CardColor.BLUE);
     }
 }

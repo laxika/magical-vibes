@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AutomatedArtificer;
 import com.github.laxika.magicalvibes.cards.b.BruteSuit;
 import com.github.laxika.magicalvibes.model.Card;
@@ -63,7 +64,7 @@ class InvokeJusticeTest extends BaseCardTest {
     void shroudDoesNotPreventDistribution() {
         Card graveyardPermanent = new AutomatedArtificer();
         Permanent recipient = harness.addToBattlefieldAndReturn(player2, new AutomatedArtificer());
-        recipient.getGrantedKeywords().add(com.github.laxika.magicalvibes.model.Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, recipient, com.github.laxika.magicalvibes.model.Keyword.SHROUD);
         harness.setGraveyard(player1, List.of(graveyardPermanent));
         harness.setHand(player1, List.of(new InvokeJustice()));
         harness.addMana(player1, ManaColor.WHITE, 5);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
 import com.github.laxika.magicalvibes.cards.t.TwistedAbomination;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -88,7 +89,7 @@ class DragonFangsTest extends BaseCardTest {
     void returnDoesNotTargetTheEnteringCreature() {
         harness.setGraveyard(player1, List.of(new DragonFangs()));
         Permanent creature = harness.enterBattlefieldAndReturn(player2, new TwistedAbomination());
-        creature.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.SHROUD);
 
         resolveMayAbility(true);
 

@@ -40,10 +40,10 @@ class SunbringersTouchTest extends BaseCardTest {
 
         assertThat(leastToughCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(alreadyModifiedCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(leastToughCreature.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(alreadyModifiedCreature.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(withoutCounter.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(opponentCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, leastToughCreature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, alreadyModifiedCreature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, withoutCounter, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -58,13 +58,13 @@ class SunbringersTouchTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -79,15 +79,15 @@ class SunbringersTouchTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(first.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(counterBearer.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, counterBearer, Keyword.TRAMPLE)).isFalse();
         harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(first.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isFalse();
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(second.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(counterBearer.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, counterBearer, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -106,8 +106,8 @@ class SunbringersTouchTest extends BaseCardTest {
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(giant.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -118,9 +118,9 @@ class SunbringersTouchTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -132,10 +132,10 @@ class SunbringersTouchTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(opponent.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.TRAMPLE)).isFalse();
         Permanent laterCreature = addCreatureReady(player1, new GrizzlyBears());
         laterCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        assertThat(laterCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.TRAMPLE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 }

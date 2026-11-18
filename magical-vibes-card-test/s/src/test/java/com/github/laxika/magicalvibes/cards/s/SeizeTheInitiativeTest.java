@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
@@ -39,7 +40,7 @@ class SeizeTheInitiativeTest extends BaseCardTest {
         assertThat(bear.getToughnessModifier()).isEqualTo(1);
         assertThat(bear.getEffectivePower()).isEqualTo(3);
         assertThat(bear.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -62,7 +63,7 @@ class SeizeTheInitiativeTest extends BaseCardTest {
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -121,7 +122,7 @@ class SeizeTheInitiativeTest extends BaseCardTest {
         Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(1);
         assertThat(bear.getToughnessModifier()).isEqualTo(1);
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test

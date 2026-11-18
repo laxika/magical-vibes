@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.q.QuilledWolf;
 import com.github.laxika.magicalvibes.cards.s.SpectralShepherd;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -63,13 +64,13 @@ class RattlechainsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.HEXPROOF);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.HEXPROOF);
     }
 
     @Test
@@ -95,7 +96,7 @@ class RattlechainsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.HEXPROOF);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FarmerCotton;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -63,17 +64,17 @@ class BanquetGuestsTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(guests), null, null);
         harness.handlePermanentChosen(player1, food.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(food);
-        assertThat(guests.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, guests)).doesNotContain(Keyword.INDESTRUCTIBLE);
         resolveAllTriggers();
 
-        assertThat(guests.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, guests)).contains(Keyword.INDESTRUCTIBLE);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(food);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(guests.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, guests)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -140,7 +141,7 @@ class BanquetGuestsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(guests.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, guests)).doesNotContain(Keyword.INDESTRUCTIBLE);
         assertThat(gd.stack).isEmpty();
     }
 

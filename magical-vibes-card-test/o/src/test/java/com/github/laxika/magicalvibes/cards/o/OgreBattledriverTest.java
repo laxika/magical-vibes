@@ -33,7 +33,7 @@ class OgreBattledriverTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -51,7 +51,7 @@ class OgreBattledriverTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -70,7 +70,7 @@ class OgreBattledriverTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         Permanent wizard = findPermanent(player2, "Fugitive Wizard");
         assertThat(gqs.getEffectivePower(gd, wizard)).isEqualTo(1);
-        assertThat(wizard.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, wizard, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -82,7 +82,7 @@ class OgreBattledriverTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         Permanent ogre = findPermanent(player1, "Ogre Battledriver");
         assertThat(gqs.getEffectivePower(gd, ogre)).isEqualTo(3);
-        assertThat(ogre.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ogre, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -95,14 +95,14 @@ class OgreBattledriverTest extends BaseCardTest {
         Permanent beetles = findPermanent(player1, "Pincher Beetles");
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.getEffectivePower(gd, beetles)).isEqualTo(3);
-        assertThat(beetles.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, beetles, Keyword.HASTE)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, beetles)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, beetles)).isEqualTo(1);
-        assertThat(beetles.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beetles, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -121,7 +121,7 @@ class OgreBattledriverTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -141,7 +141,7 @@ class OgreBattledriverTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -165,6 +165,6 @@ class OgreBattledriverTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, returnedBears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, returnedBears)).isEqualTo(2);
-        assertThat(returnedBears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returnedBears, Keyword.HASTE)).isTrue();
     }
 }

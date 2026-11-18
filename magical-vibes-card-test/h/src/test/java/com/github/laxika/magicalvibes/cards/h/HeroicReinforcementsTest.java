@@ -35,15 +35,15 @@ class HeroicReinforcementsTest extends BaseCardTest {
             assertThat(soldier.isTapped()).isFalse();
             assertThat(soldier.getEffectivePower()).isEqualTo(2);
             assertThat(soldier.getEffectiveToughness()).isEqualTo(2);
-            assertThat(soldier.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, soldier, Keyword.HASTE)).isTrue();
         });
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(ownCreature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isTrue();
         assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
         assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponentCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -58,13 +58,13 @@ class HeroicReinforcementsTest extends BaseCardTest {
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(ownCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SOLDIER)))
                 .allSatisfy(soldier -> {
                     assertThat(soldier.getEffectivePower()).isEqualTo(1);
                     assertThat(soldier.getEffectiveToughness()).isEqualTo(1);
-                    assertThat(soldier.hasKeyword(Keyword.HASTE)).isFalse();
+                    assertThat(gqs.hasKeyword(gd, soldier, Keyword.HASTE)).isFalse();
                 });
     }
 
@@ -81,14 +81,14 @@ class HeroicReinforcementsTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
         assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(laterCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.HASTE)).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()))
                 .hasSize(2)
                 .allSatisfy(soldier -> {
                     assertThat(soldier.getEffectivePower()).isEqualTo(2);
                     assertThat(soldier.getEffectiveToughness()).isEqualTo(2);
-                    assertThat(soldier.hasKeyword(Keyword.HASTE)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, soldier, Keyword.HASTE)).isTrue();
                 });
     }
 
@@ -107,7 +107,7 @@ class HeroicReinforcementsTest extends BaseCardTest {
         assertThat(firstSoldiers).hasSize(2).allSatisfy(soldier -> {
             assertThat(soldier.getEffectivePower()).isEqualTo(3);
             assertThat(soldier.getEffectiveToughness()).isEqualTo(3);
-            assertThat(soldier.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, soldier, Keyword.HASTE)).isTrue();
         });
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -116,7 +116,7 @@ class HeroicReinforcementsTest extends BaseCardTest {
                 .allSatisfy(soldier -> {
                     assertThat(soldier.getEffectivePower()).isEqualTo(2);
                     assertThat(soldier.getEffectiveToughness()).isEqualTo(2);
-                    assertThat(soldier.hasKeyword(Keyword.HASTE)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, soldier, Keyword.HASTE)).isTrue();
                 });
     }
 

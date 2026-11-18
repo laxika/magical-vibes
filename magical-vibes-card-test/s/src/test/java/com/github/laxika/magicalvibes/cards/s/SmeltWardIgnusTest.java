@@ -34,7 +34,7 @@ class SmeltWardIgnusTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId).contains(target.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId).doesNotContain(target.getId());
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -55,7 +55,7 @@ class SmeltWardIgnusTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId).contains(target.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId).doesNotContain(target.getId());
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test

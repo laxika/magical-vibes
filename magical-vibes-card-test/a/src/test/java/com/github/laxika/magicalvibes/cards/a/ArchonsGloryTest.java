@@ -31,8 +31,8 @@ class ArchonsGloryTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -45,8 +45,8 @@ class ArchonsGloryTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Candy Trail");
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
@@ -82,8 +82,8 @@ class ArchonsGloryTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(sacrifice.getId()));
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -100,8 +100,8 @@ class ArchonsGloryTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -139,8 +139,8 @@ class ArchonsGloryTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -157,8 +157,8 @@ class ArchonsGloryTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -175,8 +175,8 @@ class ArchonsGloryTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Archon's Glory");
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -209,8 +209,8 @@ class ArchonsGloryTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().isToken());
         assertThat(target.getPowerModifier()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
     }
     private Permanent createKnightToken() {
         harness.setHand(player1, List.of(new HopefulVigil()));

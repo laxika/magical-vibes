@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
@@ -70,7 +71,7 @@ class RhonassMonumentTest extends BaseCardTest {
         assertThat(existing.getToughnessModifier()).isEqualTo(2);
         assertThat(existing.getEffectivePower()).isEqualTo(4);
         assertThat(existing.getEffectiveToughness()).isEqualTo(4);
-        assertThat(existing.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, existing)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -87,7 +88,7 @@ class RhonassMonumentTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the creature spell
 
         assertThat(existing.getPowerModifier()).isEqualTo(2);
-        assertThat(existing.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, existing)).contains(Keyword.TRAMPLE);
 
         // Advance to end step — modifiers and granted keywords reset
         harness.forceStep(TurnStep.END_STEP);
@@ -98,7 +99,7 @@ class RhonassMonumentTest extends BaseCardTest {
         assertThat(existing.getToughnessModifier()).isEqualTo(0);
         assertThat(existing.getEffectivePower()).isEqualTo(2);
         assertThat(existing.getEffectiveToughness()).isEqualTo(2);
-        assertThat(existing.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, existing)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test
@@ -165,7 +166,7 @@ class RhonassMonumentTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(existing.getPowerModifier()).isZero();
-        assertThat(existing.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, existing)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test
@@ -181,7 +182,7 @@ class RhonassMonumentTest extends BaseCardTest {
 
         assertThat(existing.getEffectivePower()).isEqualTo(4);
         assertThat(existing.getEffectiveToughness()).isEqualTo(4);
-        assertThat(existing.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, existing)).contains(Keyword.TRAMPLE);
         harness.assertNotOnBattlefield(player1, "Hill Giant");
     }
 
@@ -199,7 +200,7 @@ class RhonassMonumentTest extends BaseCardTest {
 
         assertThat(existing.getEffectivePower()).isEqualTo(4);
         assertThat(existing.getEffectiveToughness()).isEqualTo(4);
-        assertThat(existing.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, existing)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -220,6 +221,6 @@ class RhonassMonumentTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(resolved.getEffectivePower()).isEqualTo(2);
         assertThat(resolved.getEffectiveToughness()).isEqualTo(2);
-        assertThat(resolved.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, resolved)).doesNotContain(Keyword.TRAMPLE);
     }
 }

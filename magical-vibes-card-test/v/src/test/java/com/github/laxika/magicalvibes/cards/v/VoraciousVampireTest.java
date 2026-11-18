@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DuskLegionZealot;
 import com.github.laxika.magicalvibes.cards.m.MomentOfCraving;
 import com.github.laxika.magicalvibes.cards.o.OrazcaFrillback;
@@ -36,7 +37,7 @@ class VoraciousVampireTest extends BaseCardTest {
         Permanent vampire = findPermanent(player1, "Dusk Legion Zealot");
         assertThat(vampire.getPowerModifier()).isEqualTo(1);
         assertThat(vampire.getToughnessModifier()).isEqualTo(1);
-        assertThat(vampire.getGrantedKeywords()).contains(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, vampire)).contains(Keyword.MENACE);
     }
 
     @Test
@@ -58,7 +59,7 @@ class VoraciousVampireTest extends BaseCardTest {
 
         assertThat(vampire.getPowerModifier()).isZero();
         assertThat(vampire.getToughnessModifier()).isZero();
-        assertThat(vampire.getGrantedKeywords()).doesNotContain(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, vampire)).doesNotContain(Keyword.MENACE);
     }
 
     @Test

@@ -76,7 +76,6 @@ public class ChooseCreaturesWithDifferentPowersGrantDoubleStrikeEffectHandler
             if (gameQueryService.cantHaveOrGainKeyword(gameData, permanent, DOUBLE_STRIKE)) {
                 continue;
             }
-            permanent.getGrantedKeywords().add(DOUBLE_STRIKE);
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                     entry.getControllerId(), grant, permanent.getId(), null, null,

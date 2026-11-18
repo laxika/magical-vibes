@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.q.QuilledWolf;
 import com.github.laxika.magicalvibes.cards.j.JustTheWind;
@@ -35,7 +36,7 @@ class SurviveTheNightTest extends BaseCardTest {
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(1);
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.INDESTRUCTIBLE);
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
     }
 
@@ -57,7 +58,7 @@ class SurviveTheNightTest extends BaseCardTest {
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     @Test

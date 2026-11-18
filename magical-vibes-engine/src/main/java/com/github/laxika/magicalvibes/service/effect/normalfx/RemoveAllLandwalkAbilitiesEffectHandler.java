@@ -51,7 +51,6 @@ public class RemoveAllLandwalkAbilitiesEffectHandler implements NormalEffectHand
 
         gameData.endFloatingEffectsOnPermanent(target.getId(), CantBeBlockedIfDefenderControlsMatchingPermanentEffect.class);
         for (Keyword landwalk : Keyword.LANDWALK_MAP.keySet()) {
-            target.getRemovedKeywords().add(landwalk);
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                     new RemoveKeywordEffect(landwalk, GrantScope.TARGET), targetId, null, null,

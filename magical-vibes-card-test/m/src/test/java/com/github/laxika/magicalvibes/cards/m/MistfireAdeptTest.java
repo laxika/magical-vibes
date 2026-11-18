@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -40,7 +41,7 @@ class MistfireAdeptTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, adept)).isEqualTo(initialPower + 1);
         assertThat(gqs.getEffectiveToughness(gd, adept)).isEqualTo(initialToughness + 1);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -76,14 +77,14 @@ class MistfireAdeptTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, adept)).isEqualTo(initialPower + 1);
         assertThat(gqs.getEffectiveToughness(gd, adept)).isEqualTo(initialToughness + 1);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, adept)).isEqualTo(initialPower);
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -105,7 +106,7 @@ class MistfireAdeptTest extends BaseCardTest {
 
             assertThat(gqs.getEffectivePower(gd, adept)).isEqualTo(initialPower + casts);
             assertThat(gqs.getEffectiveToughness(gd, adept)).isEqualTo(initialToughness + casts);
-            assertThat(adept.getGrantedKeywords()).contains(Keyword.FLYING);
+            assertThat(PermanentGrants.keywordsOf(gd, adept)).contains(Keyword.FLYING);
         }
     }
 
@@ -125,6 +126,6 @@ class MistfireAdeptTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gqs.getEffectivePower(gd, adept)).isEqualTo(initialPower);
         assertThat(gqs.getEffectiveToughness(gd, adept)).isEqualTo(initialToughness);
-        assertThat(adept.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, adept)).doesNotContain(Keyword.FLYING);
     }
 }

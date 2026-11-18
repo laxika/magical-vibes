@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -76,8 +77,8 @@ class BindingTheOldGodsTest extends BaseCardTest {
         triggerChapter();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
-        assertThat(opponentsCreature.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, ownCreature)).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, opponentsCreature)).doesNotContain(Keyword.DEATHTOUCH);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();

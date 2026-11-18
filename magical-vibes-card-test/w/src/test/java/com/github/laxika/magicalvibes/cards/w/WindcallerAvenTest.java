@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.MotherBear;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -35,7 +36,7 @@ class WindcallerAvenTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         resolveAllTriggers();
 
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FLYING);
         harness.assertInGraveyard(player1, "Windcaller Aven");
         harness.assertInHand(player1, "Mother Bear");
     }
@@ -53,13 +54,13 @@ class WindcallerAvenTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         resolveAllTriggers();
 
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FLYING);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.FLYING);
     }
 
     @Test

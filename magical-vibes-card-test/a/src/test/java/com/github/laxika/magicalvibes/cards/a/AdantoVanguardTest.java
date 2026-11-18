@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.u.UnfriendlyFire;
 import com.github.laxika.magicalvibes.cards.w.WalkThePlank;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -52,7 +53,7 @@ class AdantoVanguardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
-        assertThat(vanguard.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, vanguard)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -78,7 +79,7 @@ class AdantoVanguardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(12);
-        assertThat(vanguard.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, vanguard)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -89,13 +90,13 @@ class AdantoVanguardTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(vanguard.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, vanguard)).contains(Keyword.INDESTRUCTIBLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(vanguard.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, vanguard)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -110,7 +111,7 @@ class AdantoVanguardTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        assertThat(vanguard.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, vanguard)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -139,11 +140,11 @@ class AdantoVanguardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.assertLife(player1, 16);
-        assertThat(vanguard.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, vanguard)).doesNotContain(Keyword.INDESTRUCTIBLE);
         harness.passBothPriorities();
 
-        assertThat(vanguard.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
-        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, vanguard)).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.INDESTRUCTIBLE);
         assertThat(vanguard.isTapped()).isTrue();
     }
 

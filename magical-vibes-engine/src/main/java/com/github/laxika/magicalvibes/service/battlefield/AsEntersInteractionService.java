@@ -399,8 +399,6 @@ public class AsEntersInteractionService {
             if (justEntered.getChosenPlayerIds().isEmpty() && validOpponentIds.size() == 1) {
                 UUID onlyOpponentId = validOpponentIds.getFirst();
                 justEntered.getChosenPlayerIds().add(onlyOpponentId);
-                justEntered.getProtectionFromPlayerIdsPermanently().clear();
-                justEntered.getProtectionFromPlayerIdsPermanently().add(onlyOpponentId);
                 justEntered.setRememberedTargetPlayerId(onlyOpponentId);
                 justEntered.setAsEntersPlayerChooserId(controllerId);
             } else if (justEntered.getChosenPlayerIds().isEmpty() && !validOpponentIds.isEmpty()) {

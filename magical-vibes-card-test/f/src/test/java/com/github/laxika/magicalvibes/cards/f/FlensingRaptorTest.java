@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawlingChorus;
 import com.github.laxika.magicalvibes.cards.s.SinewDancer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -28,7 +29,7 @@ class FlensingRaptorTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, toxicCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, toxicCreature)).isEqualTo(2);
-        assertThat(toxicCreature.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, toxicCreature)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -50,14 +51,14 @@ class FlensingRaptorTest extends BaseCardTest {
         castAndResolve(toxicCreature);
 
         assertThat(gqs.getEffectivePower(gd, toxicCreature)).isEqualTo(2);
-        assertThat(toxicCreature.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, toxicCreature)).contains(Keyword.FLYING);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, toxicCreature)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, toxicCreature)).isEqualTo(1);
-        assertThat(toxicCreature.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, toxicCreature)).doesNotContain(Keyword.FLYING);
     }
 
     @Test

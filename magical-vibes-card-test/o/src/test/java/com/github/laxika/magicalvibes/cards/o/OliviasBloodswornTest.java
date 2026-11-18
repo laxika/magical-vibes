@@ -47,14 +47,14 @@ class OliviasBloodswornTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, vampire.getId());
         harness.passBothPriorities();
 
-        assertThat(vampire.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(wolf.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, vampire, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(vampire.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, vampire, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -92,8 +92,8 @@ class OliviasBloodswornTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(source.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -106,7 +106,7 @@ class OliviasBloodswornTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, source.getId());
         harness.passBothPriorities();
 
-        assertThat(source.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.HASTE)).isTrue();
         assertThat(source.isTapped()).isTrue();
     }
 
@@ -118,7 +118,7 @@ class OliviasBloodswornTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(source.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -134,7 +134,7 @@ class OliviasBloodswornTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -150,8 +150,8 @@ class OliviasBloodswornTest extends BaseCardTest {
         Permanent replacement = harness.addToBattlefieldAndReturn(player1, new OliviasBloodsworn());
         harness.passBothPriorities();
 
-        assertThat(replacement.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(source.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

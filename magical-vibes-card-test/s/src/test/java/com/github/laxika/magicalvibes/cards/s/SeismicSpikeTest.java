@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -64,7 +65,7 @@ class SeismicSpikeTest extends BaseCardTest {
     @DisplayName("Adds mana even when the target land is indestructible")
     void addsManaWhenLandCannotBeDestroyed() {
         var mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        mountain.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, mountain, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new SeismicSpike()));
         harness.addMana(player1, ManaColor.RED, 4);
 

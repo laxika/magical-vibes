@@ -75,9 +75,7 @@ public class GargantuanGorillaUpkeepSupport {
         if (source == null) {
             return;
         }
-        // CR 613 layer engine: a one-shot keyword grant is a floating layer-6 effect with its own
-        // timestamp; the legacy bucket is kept for direct Permanent.hasKeyword callers.
-        source.getGrantedKeywords().add(Keyword.TRAMPLE);
+        // A one-shot keyword grant is a floating layer-6 effect with its own timestamp (CR 613.7).
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 source.getCard().getName(), null, controllerId,
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF),

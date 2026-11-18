@@ -44,8 +44,8 @@ class FamilyReunionTest extends BaseCardTest {
 
         cast(player1, 1);
 
-        assertThat(ownCreature.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(opposingCreature.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.HEXPROOF)).isFalse();
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -76,12 +76,12 @@ class FamilyReunionTest extends BaseCardTest {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         cast(player1, 1);
-        assertThat(ownCreature.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HEXPROOF)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HEXPROOF)).isFalse();
     }
 
     @ParameterizedTest
@@ -100,11 +100,11 @@ class FamilyReunionTest extends BaseCardTest {
         for (Permanent affected : List.of(first, beforeResolution)) {
             assertThat(affected.getPowerModifier()).isEqualTo(mode == 0 ? 1 : 0);
             assertThat(affected.getToughnessModifier()).isEqualTo(mode == 0 ? 1 : 0);
-            assertThat(affected.hasKeyword(Keyword.HEXPROOF)).isEqualTo(mode == 1);
+            assertThat(gqs.hasKeyword(gd, affected, Keyword.HEXPROOF)).isEqualTo(mode == 1);
         }
         assertThat(afterResolution.getPowerModifier()).isZero();
         assertThat(afterResolution.getToughnessModifier()).isZero();
-        assertThat(afterResolution.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.HEXPROOF)).isFalse();
     }
 
     @ParameterizedTest

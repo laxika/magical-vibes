@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,7 +27,7 @@ class BlightedBatTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bat.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bat)).contains(Keyword.HASTE);
     }
 
     @Test
@@ -37,13 +38,13 @@ class BlightedBatTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(bat.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bat)).contains(Keyword.HASTE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bat.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bat)).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -56,10 +57,10 @@ class BlightedBatTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(bat.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bat)).doesNotContain(Keyword.HASTE);
         harness.passBothPriorities();
 
-        assertThat(otherBat.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, otherBat)).doesNotContain(Keyword.HASTE);
         declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThat(bat.isAttacking()).isTrue();
@@ -75,7 +76,7 @@ class BlightedBatTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bat.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bat)).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -88,7 +89,7 @@ class BlightedBatTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bat.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bat)).contains(Keyword.HASTE);
         assertThat(bat.isTapped()).isTrue();
     }
 }

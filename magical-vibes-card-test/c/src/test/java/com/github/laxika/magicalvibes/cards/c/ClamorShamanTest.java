@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 import com.github.laxika.magicalvibes.cards.r.RhythmOfTheWild;
@@ -30,7 +31,7 @@ class ClamorShamanTest extends BaseCardTest {
         Permanent shaman = findPermanent(player1, "Clamor Shaman");
 
         assertThat(shaman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(shaman.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, shaman)).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -43,7 +44,7 @@ class ClamorShamanTest extends BaseCardTest {
         Permanent shaman = findPermanent(player1, "Clamor Shaman");
 
         assertThat(shaman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(shaman.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, shaman)).contains(Keyword.HASTE);
     }
 
     @Test
@@ -123,7 +124,7 @@ class ClamorShamanTest extends BaseCardTest {
         Permanent shaman = findPermanent(player1, "Clamor Shaman");
 
         assertThat(shaman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(shaman.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, shaman)).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -139,7 +140,7 @@ class ClamorShamanTest extends BaseCardTest {
         Permanent shaman = findPermanent(player1, "Clamor Shaman");
 
         assertThat(shaman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(shaman.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, shaman)).contains(Keyword.HASTE);
     }
 
     private void castShaman() {

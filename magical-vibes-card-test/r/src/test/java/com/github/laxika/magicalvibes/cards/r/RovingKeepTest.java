@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -39,7 +40,7 @@ class RovingKeepTest extends BaseCardTest {
 
         assertThat(keep.getPowerModifier()).isEqualTo(2);
         assertThat(keep.getToughnessModifier()).isZero();
-        assertThat(keep.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, keep)).contains(Keyword.TRAMPLE);
 
         beginAttackers();
         declareKeepAttack();
@@ -62,7 +63,7 @@ class RovingKeepTest extends BaseCardTest {
 
         assertThat(keep.getPowerModifier()).isZero();
         assertThat(keep.getToughnessModifier()).isZero();
-        assertThat(keep.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, keep)).doesNotContain(Keyword.TRAMPLE);
 
         beginAttackers();
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))

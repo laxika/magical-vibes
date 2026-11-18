@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
@@ -42,7 +43,7 @@ class TelJiladDefianceTest extends BaseCardTest {
 
         // Protection from artifacts was granted
         Permanent bears = findPermanent(player1, "Carapace Forger");
-        assertThat(bears.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, bears)).contains(CardType.ARTIFACT);
 
         // Drew a card
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -88,7 +89,7 @@ class TelJiladDefianceTest extends BaseCardTest {
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CarapaceForger());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        attacker.getProtectionFromCardTypes().add(CardType.ARTIFACT);
+        PermanentGrants.protectionFromCardTypeUntilEndOfTurn(gd, attacker, CardType.ARTIFACT);
 
         // Iron Myr is an artifact creature
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new IronMyr());
@@ -111,7 +112,7 @@ class TelJiladDefianceTest extends BaseCardTest {
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CarapaceForger());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        attacker.getProtectionFromCardTypes().add(CardType.ARTIFACT);
+        PermanentGrants.protectionFromCardTypeUntilEndOfTurn(gd, attacker, CardType.ARTIFACT);
 
         // Carapace Forger #2 is a non-artifact creature — can block
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new CarapaceForger());
@@ -139,7 +140,7 @@ class TelJiladDefianceTest extends BaseCardTest {
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        blocker.getProtectionFromCardTypes().add(CardType.ARTIFACT);
+        PermanentGrants.protectionFromCardTypeUntilEndOfTurn(gd, blocker, CardType.ARTIFACT);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -164,11 +165,12 @@ class TelJiladDefianceTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent bears = findPermanent(player1, "Carapace Forger");
-        assertThat(bears.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, bears)).contains(CardType.ARTIFACT);
 
-        // Simulate end of turn cleanup
-        bears.resetModifiers();
-        assertThat(bears.getProtectionFromCardTypes()).isEmpty();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, bears)).isEmpty();
     }
 
     @Test
@@ -181,7 +183,7 @@ class TelJiladDefianceTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, target)).contains(CardType.ARTIFACT);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
         harness.assertInGraveyard(player1, "Tel-Jilad Defiance");
@@ -191,13 +193,13 @@ class TelJiladDefianceTest extends BaseCardTest {
     @DisplayName("Already having protection from artifacts does not stop the spell or its draw")
     void drawsWhenTargetAlreadyHasProtection() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GoldMyr());
-        target.getProtectionFromCardTypes().add(CardType.ARTIFACT);
+        PermanentGrants.protectionFromCardTypeUntilEndOfTurn(gd, target, CardType.ARTIFACT);
         harness.setHand(player1, List.of(new TelJiladDefiance()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
 
-        assertThat(target.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, target)).contains(CardType.ARTIFACT);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Tel-Jilad Defiance");
     }
@@ -209,13 +211,13 @@ class TelJiladDefianceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TelJiladDefiance()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castAndResolveInstant(player1, 0, target.getId());
-        assertThat(target.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, target)).contains(CardType.ARTIFACT);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getProtectionFromCardTypes()).doesNotContain(CardType.ARTIFACT);
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, target)).doesNotContain(CardType.ARTIFACT);
         harness.assertOnBattlefield(player1, "Carapace Forger");
     }
 }

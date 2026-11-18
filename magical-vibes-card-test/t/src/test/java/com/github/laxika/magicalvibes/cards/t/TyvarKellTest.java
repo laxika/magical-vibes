@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JasperaSentinel;
@@ -159,7 +160,7 @@ class TyvarKellTest extends BaseCardTest {
         assertThat(tyvar.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(elf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(elf.isTapped()).isTrue();
-        assertThat(elf.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, elf)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
     @Test

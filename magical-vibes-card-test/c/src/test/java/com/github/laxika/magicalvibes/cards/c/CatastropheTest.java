@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.u.UnworthyDead;
@@ -66,7 +67,7 @@ class CatastropheTest extends BaseCardTest {
     @DisplayName("Indestructible creatures survive the creature mode")
     void indestructibleCreaturesSurvive() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new UnworthyDead());
-        creature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.INDESTRUCTIBLE);
 
         castCatastrophe(1);
 

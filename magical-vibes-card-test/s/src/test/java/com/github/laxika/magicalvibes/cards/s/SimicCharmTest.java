@@ -59,7 +59,7 @@ class SimicCharmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isTrue();
 
         harness.setHand(player2, List.of(new Murder()));
         harness.addMana(player2, ManaColor.BLACK, 3);
@@ -80,13 +80,13 @@ class SimicCharmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isFalse();
     }
 
     @Test
@@ -132,13 +132,13 @@ class SimicCharmTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Spellbook").hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(findPermanent(player1, "Grizzly Bears").hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(findPermanent(player2, "Grizzly Bears").hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Spellbook"), Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player2, "Grizzly Bears"), Keyword.HEXPROOF)).isFalse();
 
         harness.addToBattlefield(player1, new Spellbook());
         Permanent lateArrival = gd.playerBattlefields.get(player1.getId()).getLast();
-        assertThat(lateArrival.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, lateArrival, Keyword.HEXPROOF)).isFalse();
     }
 
     @Test

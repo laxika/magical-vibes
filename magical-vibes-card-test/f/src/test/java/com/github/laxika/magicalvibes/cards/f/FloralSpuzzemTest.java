@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.Prevention;
 import com.github.laxika.magicalvibes.cards.b.BronzeHorse;
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
@@ -78,7 +79,7 @@ class FloralSpuzzemTest extends BaseCardTest {
     @DisplayName("An indestructible artifact survives and does not prevent combat damage")
     void indestructibleArtifactDoesNotSatisfyDestroyClause() {
         Permanent artifact = addDefenderArtifact();
-        artifact.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, artifact, Keyword.INDESTRUCTIBLE);
         Permanent attacker = addAttacker();
         int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.ManaCylix;
 import com.github.laxika.magicalvibes.cards.m.MarkOfAsylum;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -38,7 +39,7 @@ class ViewFromAboveTest extends BaseCardTest {
         castOnOutlander();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Zombie Outlander").getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, findPermanent(player1, "Zombie Outlander"))).contains(Keyword.FLYING);
     }
 
     @Test
@@ -46,12 +47,12 @@ class ViewFromAboveTest extends BaseCardTest {
     void flyingWearsOff() {
         castOnOutlander();
         harness.passBothPriorities();
-        assertThat(findPermanent(player1, "Zombie Outlander").getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, findPermanent(player1, "Zombie Outlander"))).contains(Keyword.FLYING);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Zombie Outlander").getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, findPermanent(player1, "Zombie Outlander"))).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -72,7 +73,7 @@ class ViewFromAboveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Flying still resolved on the target.
-        assertThat(findPermanent(player1, "Zombie Outlander").getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, findPermanent(player1, "Zombie Outlander"))).contains(Keyword.FLYING);
         // Spell bounced off the stack back to hand rather than the graveyard.
         harness.assertInHand(player1, "View from Above");
         harness.assertNotInGraveyard(player1, "View from Above");
@@ -100,7 +101,7 @@ class ViewFromAboveTest extends BaseCardTest {
 
         harness.assertNotInHand(player1, "View from Above");
         harness.assertInGraveyard(player1, "View from Above");
-        assertThat(findPermanent(player1, "Zombie Outlander").getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, findPermanent(player1, "Zombie Outlander"))).contains(Keyword.FLYING);
     }
 
     @Test
@@ -123,7 +124,7 @@ class ViewFromAboveTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Vedalken Outlander"));
 
-        assertThat(findPermanent(player1, "Vedalken Outlander").getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, findPermanent(player1, "Vedalken Outlander"))).contains(Keyword.FLYING);
         harness.assertInHand(player1, "View from Above");
         harness.assertNotInGraveyard(player1, "View from Above");
     }
@@ -137,7 +138,7 @@ class ViewFromAboveTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Zombie Outlander"));
 
-        assertThat(findPermanent(player2, "Zombie Outlander").getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, findPermanent(player2, "Zombie Outlander"))).contains(Keyword.FLYING);
         harness.assertInGraveyard(player1, "View from Above");
     }
 
@@ -169,7 +170,7 @@ class ViewFromAboveTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, whitePermanent);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Zombie Outlander").getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, findPermanent(player1, "Zombie Outlander"))).contains(Keyword.FLYING);
         harness.assertNotInHand(player1, "View from Above");
         harness.assertInGraveyard(player1, "View from Above");
     }
@@ -181,7 +182,7 @@ class ViewFromAboveTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VedalkenOutlander());
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Zombie Outlander").getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, findPermanent(player1, "Zombie Outlander"))).contains(Keyword.FLYING);
         harness.assertInHand(player1, "View from Above");
         harness.assertNotInGraveyard(player1, "View from Above");
     }
@@ -193,7 +194,7 @@ class ViewFromAboveTest extends BaseCardTest {
         castOnOutlander();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Zombie Outlander").getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, findPermanent(player1, "Zombie Outlander"))).contains(Keyword.FLYING);
         harness.assertInHand(player1, "View from Above");
         harness.assertNotInGraveyard(player1, "View from Above");
     }

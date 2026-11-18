@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BurlyBreaker;
 import com.github.laxika.magicalvibes.cards.d.DawnhartRejuvenator;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -95,7 +96,7 @@ class SilverBoltTest extends BaseCardTest {
     void indestructibleWerewolfSurvives() {
         addReadyBolt();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new BurlyBreaker());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         addMana();
 
         harness.activateAbility(player1, 0, 0, null, target.getId());

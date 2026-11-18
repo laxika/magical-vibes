@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.ManaGeode;
 import com.github.laxika.magicalvibes.cards.t.TithebearerGiant;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -32,7 +33,7 @@ class BattlefieldPromotionTest extends BaseCardTest {
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(creature.getEffectivePower()).isEqualTo(5);
         assertThat(creature.getEffectiveToughness()).isEqualTo(6);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.FIRST_STRIKE);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }
 
@@ -49,7 +50,7 @@ class BattlefieldPromotionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.FIRST_STRIKE);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
@@ -95,7 +96,7 @@ class BattlefieldPromotionTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.FIRST_STRIKE);
         harness.assertInGraveyard(player1, "Battlefield Promotion");
         assertThat(gd.stack).isEmpty();
     }

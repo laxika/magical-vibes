@@ -37,12 +37,12 @@ class OvercomeTest extends BaseCardTest {
         assertThat(p1a.getEffectiveToughness()).isEqualTo(4);
         assertThat(p1b.getEffectivePower()).isEqualTo(4);
         assertThat(p1b.getEffectiveToughness()).isEqualTo(4);
-        assertThat(p1a.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(p1b.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, p1a, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, p1b, Keyword.TRAMPLE)).isTrue();
 
         assertThat(p2.getEffectivePower()).isEqualTo(2);
         assertThat(p2.getEffectiveToughness()).isEqualTo(2);
-        assertThat(p2.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, p2, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -87,7 +87,7 @@ class OvercomeTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(4);
         assertThat(creature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -95,7 +95,7 @@ class OvercomeTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -124,10 +124,10 @@ class OvercomeTest extends BaseCardTest {
 
         assertThat(existing.getEffectivePower()).isEqualTo(4);
         assertThat(existing.getEffectiveToughness()).isEqualTo(4);
-        assertThat(existing.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.TRAMPLE)).isTrue();
         assertThat(newcomer.getEffectivePower()).isEqualTo(2);
         assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
-        assertThat(newcomer.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, newcomer, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -142,7 +142,7 @@ class OvercomeTest extends BaseCardTest {
 
         assertThat(newcomer.getEffectivePower()).isEqualTo(4);
         assertThat(newcomer.getEffectiveToughness()).isEqualTo(4);
-        assertThat(newcomer.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, newcomer, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test

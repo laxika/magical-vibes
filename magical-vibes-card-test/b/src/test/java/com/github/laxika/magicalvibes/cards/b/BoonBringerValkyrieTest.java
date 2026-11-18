@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PortentTracker;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -24,7 +25,7 @@ class BoonBringerValkyrieTest extends BaseCardTest {
         resolveEtbTargeting(bears);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.getGrantedKeywords()).containsExactlyInAnyOrder(
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).containsExactlyInAnyOrder(
                 Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK);
         assertThat(valkyrie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -37,7 +38,7 @@ class BoonBringerValkyrieTest extends BaseCardTest {
         resolveEtbTargeting(valkyrie);
 
         assertThat(valkyrie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(valkyrie.getGrantedKeywords()).doesNotContain(
+        assertThat(PermanentGrants.keywordsOf(gd, valkyrie)).doesNotContain(
                 Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK);
     }
 
@@ -48,17 +49,17 @@ class BoonBringerValkyrieTest extends BaseCardTest {
         castBoonBringerValkyrie();
         resolveEtbTargeting(bears);
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -70,7 +71,7 @@ class BoonBringerValkyrieTest extends BaseCardTest {
         resolveEtbTargeting(target);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.getGrantedKeywords()).containsExactlyInAnyOrder(
+        assertThat(PermanentGrants.keywordsOf(gd, target)).containsExactlyInAnyOrder(
                 Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK);
     }
 
@@ -87,7 +88,7 @@ class BoonBringerValkyrieTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.getGrantedKeywords()).containsExactlyInAnyOrder(
+        assertThat(PermanentGrants.keywordsOf(gd, target)).containsExactlyInAnyOrder(
                 Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK);
     }
 
@@ -104,7 +105,7 @@ class BoonBringerValkyrieTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(valkyrie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(valkyrie.getGrantedKeywords()).doesNotContain(
+        assertThat(PermanentGrants.keywordsOf(gd, valkyrie)).doesNotContain(
                 Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK);
         assertThat(gd.stack).isEmpty();
     }

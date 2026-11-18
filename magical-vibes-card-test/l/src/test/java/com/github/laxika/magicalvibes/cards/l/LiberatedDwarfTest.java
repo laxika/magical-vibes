@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.i.IronshellBeetle;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
@@ -53,7 +54,7 @@ class LiberatedDwarfTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, warthog)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, warthog)).isEqualTo(5);
-        assertThat(warthog.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, warthog)).contains(Keyword.FIRST_STRIKE);
         harness.assertInGraveyard(player1, "Liberated Dwarf");
     }
 
@@ -70,7 +71,7 @@ class LiberatedDwarfTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, warthog)).isEqualTo(5);
-        assertThat(warthog.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, warthog)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -84,7 +85,7 @@ class LiberatedDwarfTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, warthog)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, warthog)).isEqualTo(5);
-        assertThat(warthog.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, warthog)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -125,7 +126,7 @@ class LiberatedDwarfTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, warthog)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, warthog)).isEqualTo(5);
-        assertThat(warthog.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, warthog)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test

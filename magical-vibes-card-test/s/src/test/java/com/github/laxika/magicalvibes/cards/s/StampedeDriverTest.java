@@ -31,13 +31,13 @@ class StampedeDriverTest extends BaseCardTest {
         assertThat(driver.isTapped()).isTrue();
         assertThat(driver.getEffectivePower()).isEqualTo(2);
         assertThat(driver.getEffectiveToughness()).isEqualTo(2);
-        assertThat(driver.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, driver, Keyword.TRAMPLE)).isTrue();
         assertThat(otherCreature.getEffectivePower()).isEqualTo(2);
         assertThat(otherCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(otherCreature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.TRAMPLE)).isTrue();
         assertThat(opponentCreature.getEffectivePower()).isEqualTo(1);
         assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(opponentCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.assertInGraveyard(player1, "Mossdog");
     }
@@ -56,10 +56,10 @@ class StampedeDriverTest extends BaseCardTest {
 
         assertThat(driver.getEffectivePower()).isEqualTo(1);
         assertThat(driver.getEffectiveToughness()).isEqualTo(1);
-        assertThat(driver.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, driver, Keyword.TRAMPLE)).isFalse();
         assertThat(otherCreature.getEffectivePower()).isEqualTo(1);
         assertThat(otherCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(otherCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -74,7 +74,7 @@ class StampedeDriverTest extends BaseCardTest {
 
         assertThat(lateCreature.getEffectivePower()).isEqualTo(1);
         assertThat(lateCreature.getEffectiveToughness()).isEqualTo(1);
-        assertThat(lateCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -102,14 +102,14 @@ class StampedeDriverTest extends BaseCardTest {
         assertThat(driver.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Mossdog");
         assertThat(driver.getEffectivePower()).isEqualTo(1);
-        assertThat(driver.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, driver, Keyword.TRAMPLE)).isFalse();
 
         Permanent creature = addCreatureReady(player1, new Mossdog());
         harness.passBothPriorities();
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test

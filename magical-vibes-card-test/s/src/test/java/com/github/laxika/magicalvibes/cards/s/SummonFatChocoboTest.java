@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -46,18 +47,18 @@ class SummonFatChocoboTest extends BaseCardTest {
         advanceToNextChapter();
         harness.passBothPriorities();
 
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.TRAMPLE);
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.TRAMPLE);
 
         saga.setCounterCount(CounterType.LORE, 2);
         advanceToNextChapter();
         harness.passBothPriorities();
 
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -70,7 +71,7 @@ class SummonFatChocoboTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.TRAMPLE);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card == saga.getCard());

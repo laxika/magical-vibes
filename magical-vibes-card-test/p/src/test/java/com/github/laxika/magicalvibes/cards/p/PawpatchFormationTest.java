@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BakersbaneDuo;
 import com.github.laxika.magicalvibes.cards.i.InnkeepersTalent;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -106,7 +107,7 @@ class PawpatchFormationTest extends BaseCardTest {
         addMana();
 
         harness.castInstant(player1, 0, 0, target.getId());
-        target.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, target, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Plumecreed Escort");

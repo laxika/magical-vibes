@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Skinrender;
@@ -160,7 +161,7 @@ class RikkuResourcefulGuardianTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(source.getId(), rikku.getId()));
         harness.passBothPriorities();
-        rikku.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, rikku, Keyword.SHROUD);
         resolveAllTriggers();
 
         assertThat(rikku.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -179,7 +180,7 @@ class RikkuResourcefulGuardianTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(source.getId(), rikku.getId()));
-        source.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, source, Keyword.HEXPROOF);
         resolveAllTriggers();
 
         assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

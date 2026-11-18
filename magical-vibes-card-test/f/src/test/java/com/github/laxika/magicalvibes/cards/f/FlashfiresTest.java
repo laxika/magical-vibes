@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -70,7 +71,7 @@ class FlashfiresTest extends BaseCardTest {
     @DisplayName("Indestructible Plains survives Flashfires")
     void indestructiblePlainsSurvives() {
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
-        plains.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, plains, Keyword.INDESTRUCTIBLE);
 
         castFlashfiresAndResolve();
 
@@ -103,7 +104,7 @@ class FlashfiresTest extends BaseCardTest {
     @DisplayName("Protected Plains survive while other Plains are destroyed")
     void protectedPlainsDoNotPreventOtherPlainsFromBeingDestroyed() {
         Permanent indestructible = harness.addToBattlefieldAndReturn(player1, new Plains());
-        indestructible.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, indestructible, Keyword.INDESTRUCTIBLE);
         Permanent regenerating = harness.addToBattlefieldAndReturn(player2, new Plains());
         gd.addRegenerationShields(regenerating.getId(), 1);
         harness.addToBattlefield(player1, new Plateau());

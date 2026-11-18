@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.CoercedToKill;
 import com.github.laxika.magicalvibes.model.Card;
@@ -58,7 +59,7 @@ class PushPullTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard() == first || permanent.getCard() == second)
                 .toList();
         assertThat(returned).hasSize(2);
-        assertThat(returned).allMatch(permanent -> permanent.getGrantedKeywords().contains(Keyword.HASTE));
+        assertThat(returned).allMatch(permanent -> PermanentGrants.keywordsOf(gd, permanent).contains(Keyword.HASTE));
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         while (!gd.stack.isEmpty()) {
@@ -112,7 +113,7 @@ class PushPullTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId())
                 .containsExactly(second.getId());
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, gd.playerBattlefields.get(player1.getId()).getFirst()))
                 .contains(Keyword.HASTE);
     }
 

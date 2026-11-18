@@ -25,11 +25,11 @@ class VolcanicRushTest extends BaseCardTest {
 
         assertThat(attackingCreature.getEffectivePower()).isEqualTo(4);
         assertThat(attackingCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(attackingCreature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attackingCreature, Keyword.TRAMPLE)).isTrue();
         assertThat(opposingBystander.getEffectivePower()).isEqualTo(2);
-        assertThat(opposingBystander.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingBystander, Keyword.TRAMPLE)).isFalse();
         assertThat(bystander.getEffectivePower()).isEqualTo(2);
-        assertThat(bystander.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bystander, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -44,9 +44,9 @@ class VolcanicRushTest extends BaseCardTest {
 
         assertThat(attacker.getEffectivePower()).isEqualTo(4);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
         assertThat(defender.getEffectivePower()).isEqualTo(2);
-        assertThat(defender.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, defender, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -62,11 +62,11 @@ class VolcanicRushTest extends BaseCardTest {
         newAttacker.setAttacking(true);
 
         assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
         assertThat(laterAttacker.getEffectivePower()).isEqualTo(2);
-        assertThat(laterAttacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterAttacker, Keyword.TRAMPLE)).isFalse();
         assertThat(newAttacker.getEffectivePower()).isEqualTo(2);
-        assertThat(newAttacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, newAttacker, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -77,7 +77,7 @@ class VolcanicRushTest extends BaseCardTest {
         creature.setAttacking(true);
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Volcanic Rush");
     }
 
@@ -89,14 +89,14 @@ class VolcanicRushTest extends BaseCardTest {
         castVolcanicRush();
 
         assertThat(attacker.getEffectivePower()).isEqualTo(4);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
     }
 
     private void castVolcanicRush() {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
 import com.github.laxika.magicalvibes.cards.w.WallOfDust;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -73,7 +74,7 @@ class InfernalMedusaTest extends BaseCardTest {
     @DisplayName("A Wall is destroyed when Infernal Medusa blocks it")
     void wallBlockedByMedusaIsDestroyedAtEndOfCombat() {
         Permanent wall = addCreatureReady(player1, new WallOfDust());
-        wall.getRemovedKeywords().add(Keyword.DEFENDER);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, wall, Keyword.DEFENDER);
         addCreatureReady(player2, new InfernalMedusa());
 
         declareAttackersAndPrepareBlockers(List.of(0));

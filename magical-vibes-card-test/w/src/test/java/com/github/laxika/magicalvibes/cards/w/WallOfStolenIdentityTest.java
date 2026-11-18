@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -137,7 +138,7 @@ class WallOfStolenIdentityTest extends BaseCardTest {
     @Test
     void copyChoiceAndReflexiveAbilityDoNotTarget() {
         Permanent bears = addBears();
-        bears.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.HEXPROOF);
 
         castWallAndChoose(bears.getId(), true);
 

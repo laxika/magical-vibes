@@ -28,7 +28,7 @@ class SpreadingInsurrectionTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
     }
 
@@ -44,7 +44,7 @@ class SpreadingInsurrectionTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 
@@ -106,7 +106,7 @@ class SpreadingInsurrectionTest extends BaseCardTest {
                 .doesNotContain(originalTarget, firstCopyTarget, secondCopyTarget);
         for (Permanent target : List.of(originalTarget, firstCopyTarget, secondCopyTarget)) {
             assertThat(target.isTapped()).isFalse();
-            assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
             assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
         }
     }
@@ -130,7 +130,7 @@ class SpreadingInsurrectionTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -168,7 +168,7 @@ class SpreadingInsurrectionTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 

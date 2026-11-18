@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -47,7 +48,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bears)).contains(CardColor.RED);
     }
 
     @Test
@@ -62,7 +63,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         harness.handleListChoice(player1, "ARTIFACT");
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, bears)).contains(CardType.ARTIFACT);
     }
 
     @Test
@@ -77,7 +78,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLACK");
 
         Permanent myr = findPermanent(player1, "Gold Myr");
-        assertThat(myr.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, myr)).contains(CardColor.BLACK);
     }
 
     @Test
@@ -122,7 +123,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        blocker.getProtectionFromColorsUntilEndOfTurn().add(CardColor.GREEN);
+        PermanentGrants.protectionFromColorUntilEndOfTurn(gd, blocker, CardColor.GREEN);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
@@ -145,7 +146,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         Permanent attacker = new Permanent(new GrizzlyBears());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        attacker.getProtectionFromColorsUntilEndOfTurn().add(CardColor.GREEN);
+        PermanentGrants.protectionFromColorUntilEndOfTurn(gd, attacker, CardColor.GREEN);
         gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         Permanent blocker = new Permanent(new GrizzlyBears()); // Green creature
@@ -174,11 +175,12 @@ class ApostlesBlessingTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bears)).contains(CardColor.RED);
 
-        // Simulate end of turn cleanup
-        bears.resetModifiers();
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(PermanentGrants.protectionColorsOf(gd, bears)).isEmpty();
     }
 
     @Test
@@ -226,9 +228,9 @@ class ApostlesBlessingTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, talisman.getId());
         harness.handleListChoice(player1, "ARTIFACT");
 
-        assertThat(talisman.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, talisman)).contains(CardType.ARTIFACT);
         harness.passUntil(TurnStep.UPKEEP);
-        assertThat(talisman.getProtectionFromCardTypes()).isEmpty();
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, talisman)).isEmpty();
         harness.assertLife(player1, 20);
     }
 
@@ -244,8 +246,8 @@ class ApostlesBlessingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
-        assertThat(talisman.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        assertThat(talisman.getProtectionFromCardTypes()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, talisman)).isEmpty();
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, talisman)).isEmpty();
         harness.assertInGraveyard(player1, "Apostle's Blessing");
     }
 

@@ -27,7 +27,7 @@ class ButchersGleeTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(3);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isTrue();
         assertThat(gd.regenerationShieldCount(bear.getId())).isEqualTo(1);
     }
 
@@ -55,7 +55,7 @@ class ButchersGleeTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isFalse();
         assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
     }
 
@@ -106,7 +106,7 @@ class ButchersGleeTest extends BaseCardTest {
         assertThat(bear.getMarkedDamage()).isZero();
         assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
         assertThat(bear.getPowerModifier()).isEqualTo(3);
-        assertThat(bear.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isTrue();
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -134,7 +134,7 @@ class ButchersGleeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Butcher's Glee");
         assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isFalse();
         assertThat(gd.regenerationShieldCount(bear.getId())).isZero();
     }
 

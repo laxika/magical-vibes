@@ -101,7 +101,6 @@ public class GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler implements 
         if (gameQueryService.cantHaveOrGainKeyword(gameData, target, keyword)) {
             return;
         }
-        target.getGrantedKeywords().add(keyword);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), null, entry.getControllerId(),
                 new GrantKeywordEffect(Set.of(keyword), GrantScope.TARGET),

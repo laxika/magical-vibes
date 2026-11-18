@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -29,7 +30,7 @@ class GloomfangMaulerTest extends BaseCardTest {
         resolveEtbTargeting(creature);
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
         assertThat(mauler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -41,7 +42,7 @@ class GloomfangMaulerTest extends BaseCardTest {
         resolveEtbTargeting(mauler);
 
         assertThat(mauler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(mauler.getGrantedKeywords()).doesNotContain(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, mauler)).doesNotContain(Keyword.MENACE);
     }
 
     @Test
@@ -51,13 +52,13 @@ class GloomfangMaulerTest extends BaseCardTest {
         castGloomfangMauler();
         resolveEtbTargeting(creature);
 
-        assertThat(creature.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isFalse();
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -87,7 +88,7 @@ class GloomfangMaulerTest extends BaseCardTest {
         resolveEtbTargeting(creature);
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
     }
 
     @Test

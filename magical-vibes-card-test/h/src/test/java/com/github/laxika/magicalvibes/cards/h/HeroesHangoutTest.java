@@ -55,9 +55,9 @@ class HeroesHangoutTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, third)).isEqualTo(2);
-        assertThat(first.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(third.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, third, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -69,7 +69,7 @@ class HeroesHangoutTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -190,7 +190,7 @@ class HeroesHangoutTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
-        assertThat(second.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     private void cast(int mode, List<java.util.UUID> targetIds) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KrakenHatchling;
 import com.github.laxika.magicalvibes.cards.w.WelkinTern;
@@ -50,7 +51,7 @@ class MerfolkSeastalkersTest extends BaseCardTest {
     void cannotTargetCreatureWithGrantedFlying() {
         addCreatureReady(player1, new MerfolkSeastalkers());
         Permanent target = addCreatureReady(player2, new KrakenHatchling());
-        target.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.FLYING);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -66,7 +67,7 @@ class MerfolkSeastalkersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        target.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.FLYING);
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();

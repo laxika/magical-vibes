@@ -25,8 +25,8 @@ class WarlordsFuryTest extends BaseCardTest {
         int handSizeAfterCast = gd.playerHands.get(player1.getId()).size();
         harness.passBothPriorities();
 
-        assertThat(bear1.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(bear2.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear1, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear2, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeAfterCast + 1);
     }
 
@@ -38,8 +38,8 @@ class WarlordsFuryTest extends BaseCardTest {
         harness.castFromHand(player1, new WarlordsFury(), "{R}");
         harness.passBothPriorities();
 
-        assertThat(ownBear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(opponentBear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownBear, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentBear, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -49,13 +49,13 @@ class WarlordsFuryTest extends BaseCardTest {
         harness.castFromHand(player1, new WarlordsFury(), "{R}");
         harness.passBothPriorities();
 
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -74,12 +74,12 @@ class WarlordsFuryTest extends BaseCardTest {
         harness.castFromHand(player1, new WarlordsFury(), "{R}");
         Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
 
-        assertThat(beforeResolution.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.FIRST_STRIKE)).isFalse();
         harness.passBothPriorities();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
 
-        assertThat(beforeResolution.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(afterResolution.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test

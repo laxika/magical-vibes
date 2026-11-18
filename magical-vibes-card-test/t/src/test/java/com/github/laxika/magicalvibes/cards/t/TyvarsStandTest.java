@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -30,7 +31,7 @@ class TyvarsStandTest extends BaseCardTest {
         assertThat(bears.getToughnessModifier()).isEqualTo(3);
         assertThat(bears.getEffectivePower()).isEqualTo(5);
         assertThat(bears.getEffectiveToughness()).isEqualTo(5);
-        assertThat(bears.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, bears))
                 .contains(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
     }
 
@@ -43,7 +44,7 @@ class TyvarsStandTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, bears))
                 .contains(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
     }
 
@@ -58,7 +59,7 @@ class TyvarsStandTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, bears))
                 .doesNotContain(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
     }
 
@@ -90,7 +91,7 @@ class TyvarsStandTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, bears))
                 .doesNotContain(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
     }
 
@@ -177,7 +178,7 @@ class TyvarsStandTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Tyvar's Stand");
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, bears))
                 .doesNotContain(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
         assertThat(gd.stack).isEmpty();
     }

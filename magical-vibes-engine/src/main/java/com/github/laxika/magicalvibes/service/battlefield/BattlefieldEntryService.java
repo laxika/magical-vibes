@@ -94,8 +94,6 @@ public class BattlefieldEntryService {
             if (opponents.size() == 1) {
                 UUID onlyOpponentId = opponents.getFirst();
                 permanent.getChosenPlayerIds().add(onlyOpponentId);
-                permanent.getProtectionFromPlayerIdsPermanently().clear();
-                permanent.getProtectionFromPlayerIdsPermanently().add(onlyOpponentId);
                 permanent.setRememberedTargetPlayerId(onlyOpponentId);
                 permanent.setAsEntersPlayerChooserId(controllerId);
             }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -31,11 +33,9 @@ public class GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffectHandler imp
             return;
         }
 
-        target.setProtectionFromOpponentCreaturesUntilEndOfTurn(true);
-        gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
-                java.util.UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(), effect,
-                target.getId(), null, null,
-                com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN, 0));
+        gameData.addEffectOnPermanent(entry.getCard().getName(), null, entry.getControllerId(),
+                new GrantEffectEffect(effect, GrantScope.TARGET), target.getId(),
+                com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())
                 .text(" gains protection from creatures your opponents control until end of turn.")

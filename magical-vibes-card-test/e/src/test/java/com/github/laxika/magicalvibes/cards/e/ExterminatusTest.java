@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -21,10 +22,10 @@ class ExterminatusTest extends BaseCardTest {
     @DisplayName("Removes opponents' indestructible before destroying all nonland permanents")
     void removesOpponentsIndestructibleBeforeWipe() {
         Permanent ownIndestructible = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        ownIndestructible.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, ownIndestructible, Keyword.INDESTRUCTIBLE);
         Permanent ownOrdinary = harness.addToBattlefieldAndReturn(player1, new DuskImp());
         Permanent opponentIndestructible = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opponentIndestructible.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, opponentIndestructible, Keyword.INDESTRUCTIBLE);
         Permanent opponentOrdinary = harness.addToBattlefieldAndReturn(player2, new DuskImp());
         Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new Forest());
@@ -42,13 +43,13 @@ class ExterminatusTest extends BaseCardTest {
     @DisplayName("Destroys noncreature artifacts but preserves own indestructible artifacts and lands")
     void destroysArtifactsAndLeavesIndestructibleLandsAlone() {
         Permanent ownIndestructible = harness.addToBattlefieldAndReturn(player1, new SolRing());
-        ownIndestructible.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, ownIndestructible, Keyword.INDESTRUCTIBLE);
         harness.addToBattlefield(player1, new MindStone());
         Permanent opponentIndestructible = harness.addToBattlefieldAndReturn(player2, new SolRing());
-        opponentIndestructible.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, opponentIndestructible, Keyword.INDESTRUCTIBLE);
         harness.addToBattlefield(player2, new MindStone());
         Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new Forest());
-        opponentLand.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, opponentLand, Keyword.INDESTRUCTIBLE);
 
         harness.castFromHand(player1, new Exterminatus(), "{5}{W}{B}");
         harness.passBothPriorities();
@@ -66,7 +67,7 @@ class ExterminatusTest extends BaseCardTest {
     @DisplayName("An opponent's permanent can regenerate after losing indestructible")
     void permitsRegenerationAfterRemovingIndestructible() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SolRing());
-        artifact.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, artifact, Keyword.INDESTRUCTIBLE);
         gd.addRegenerationShields(artifact.getId(), 1);
 
         harness.castFromHand(player1, new Exterminatus(), "{5}{W}{B}");
@@ -79,7 +80,7 @@ class ExterminatusTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, artifact, Keyword.INDESTRUCTIBLE)).isFalse();
 
         Permanent laterArtifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
-        laterArtifact.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, laterArtifact, Keyword.INDESTRUCTIBLE);
         assertThat(gqs.hasKeyword(gd, laterArtifact, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CentaurGarden;
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.m.MoldervineCloak;
@@ -35,7 +36,7 @@ class ShelterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, "RED");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.RED);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
@@ -53,7 +54,7 @@ class ShelterTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).doesNotContain(CardColor.BLUE);
     }
 
     @Test
@@ -110,11 +111,11 @@ class ShelterTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).isEmpty();
 
         harness.handleListChoice(player1, color.name());
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).containsExactly(color);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).containsExactly(color);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         harness.assertInGraveyard(player1, "Shelter");
     }

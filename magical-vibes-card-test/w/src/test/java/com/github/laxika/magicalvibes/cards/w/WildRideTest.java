@@ -30,7 +30,7 @@ class WildRideTest extends BaseCardTest {
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(3);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -46,7 +46,7 @@ class WildRideTest extends BaseCardTest {
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -72,7 +72,7 @@ class WildRideTest extends BaseCardTest {
         harness.castAndResolveFlashback(player1, 0, target.getId());
 
         assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
@@ -91,7 +91,7 @@ class WildRideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
     }
 
@@ -112,7 +112,7 @@ class WildRideTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
     }
 

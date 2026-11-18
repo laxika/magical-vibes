@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.ShuFootSoldiers;
 import com.github.laxika.magicalvibes.cards.w.WeiInfantry;
@@ -48,7 +49,7 @@ class GuanYus1000LiMarchTest extends BaseCardTest {
     void indestructibleTappedCreatureSurvives() {
         Permanent shuFootSoldiers = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
         shuFootSoldiers.tap();
-        shuFootSoldiers.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, shuFootSoldiers, Keyword.INDESTRUCTIBLE);
 
         harness.castFromHand(player1, new GuanYus1000LiMarch(), "{4}{W}{W}");
         harness.passBothPriorities();

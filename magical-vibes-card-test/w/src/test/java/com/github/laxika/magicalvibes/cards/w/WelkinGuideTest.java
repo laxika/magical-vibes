@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CylianElf;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -55,7 +56,7 @@ class WelkinGuideTest extends BaseCardTest {
         Permanent bears = permanent(targetId);
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(bears.getEffectiveToughness()).isEqualTo(4);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -72,7 +73,7 @@ class WelkinGuideTest extends BaseCardTest {
 
         Permanent bears = permanent(targetId);
         assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -94,7 +95,7 @@ class WelkinGuideTest extends BaseCardTest {
         Permanent bears = permanent(targetId);
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -129,7 +130,7 @@ class WelkinGuideTest extends BaseCardTest {
 
         assertThat(guide.getEffectivePower()).isEqualTo(4);
         assertThat(guide.getEffectiveToughness()).isEqualTo(4);
-        assertThat(guide.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, guide)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -148,7 +149,7 @@ class WelkinGuideTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(4);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING);
     }
 
     private Permanent permanent(UUID id) {

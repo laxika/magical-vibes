@@ -35,14 +35,14 @@ class DuelistsFlameTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test

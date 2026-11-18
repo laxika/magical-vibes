@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HarvesttideSentry;
 import com.github.laxika.magicalvibes.cards.m.MightOfTheOldWays;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -88,7 +89,7 @@ class FoulPlayTest extends BaseCardTest {
     @DisplayName("Investigates even when indestructible prevents destruction")
     void investigatesWhenDestructionIsPrevented() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SearchPartyCaptain());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         castFoulPlay(target);
 
         harness.assertOnBattlefield(player2, "Search Party Captain");

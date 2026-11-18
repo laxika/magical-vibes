@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorlessEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetFromChosenColorEffect;
@@ -3654,7 +3658,6 @@ public class ChoiceHandlerService {
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null && !gameQueryService.cantHaveOrGainKeyword(gameData, target, keyword)) {
             Duration duration = ctx.duration();
-            addChosenKeywordToLegacyBucket(target, keyword, duration);
             if (Duration.PERMANENT.equals(duration)) {
                 gameData.perpetualKeywords.merge(target.getOriginalCard().getId(), Set.of(keyword),
                         (existing, added) -> {
@@ -3675,14 +3678,6 @@ public class ChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void addChosenKeywordToLegacyBucket(Permanent target, Keyword keyword, Duration duration) {
-        if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
-            target.getUntilNextTurnKeywords().add(keyword);
-        } else if (!Duration.PERMANENT.equals(duration)) {
-            target.getGrantedKeywords().add(keyword);
-        }
     }
 
     private UUID sourcePermanentIdFor(ChoiceContext.KeywordGrantChoice context) {
@@ -3760,7 +3755,8 @@ public class ChoiceHandlerService {
             String landwalkName;
             if (subtypeName.endsWith("WALK")) {
                 Keyword keyword = Keyword.valueOf(subtypeName);
-                target.getGrantedKeywords().add(keyword);
+                gameData.addEffectOnPermanent(null, null, player.getId(),
+                        new GrantKeywordEffect(keyword, GrantScope.TARGET), target.getId(), Duration.UNTIL_END_OF_TURN);
                 landwalkName = keyword.name().toLowerCase();
             } else {
                 CardSubtype subtype = CardSubtype.valueOf(subtypeName);
@@ -3770,7 +3766,9 @@ public class ChoiceHandlerService {
                         .findFirst()
                         .orElse(null);
                 if (keyword != null) {
-                    target.getGrantedKeywords().add(keyword);
+                    gameData.addEffectOnPermanent(null, null, player.getId(),
+                            new GrantKeywordEffect(keyword, GrantScope.TARGET), target.getId(),
+                            Duration.UNTIL_END_OF_TURN);
                 } else {
                     gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(null, null, player.getId(),
                             new CantBeBlockedIfDefenderControlsMatchingPermanentEffect(
@@ -4803,18 +4801,25 @@ public class ChoiceHandlerService {
                 continue;
             }
             if (artifactsChosen) {
-                target.getProtectionFromCardTypes().add(CardType.ARTIFACT);
+                gameData.addEffectOnPermanent(null, null, null,
+                        new GrantEffectEffect(new ProtectionFromCardTypesEffect(Set.of(CardType.ARTIFACT)),
+                                GrantScope.TARGET),
+                        target.getId(), Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains protection from artifacts until end of turn."));
                 log.info("Game {} - {} gains protection from artifacts until end of turn", gameData.id, target.getCard().getName());
             } else if (colorlessChosen) {
-                target.setProtectionFromColorlessUntilEndOfTurn(true);
+                gameData.addEffectOnPermanent(null, null, null,
+                        new GrantEffectEffect(new ProtectionFromColorlessEffect(), GrantScope.TARGET),
+                        target.getId(), Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                         " gains protection from colorless until end of turn."));
                 log.info("Game {} - {} gains protection from colorless until end of turn",
                         gameData.id, target.getCard().getName());
             } else {
                 CardColor color = chosenColor;
-                target.getProtectionFromColorsUntilEndOfTurn().add(color);
+                gameData.addEffectOnPermanent(null, null, null,
+                        new ProtectionFromColorsEffect(Set.of(color), GrantScope.TARGET),
+                        target.getId(), Duration.UNTIL_END_OF_TURN);
                 String colorName = color.name().charAt(0) + color.name().substring(1).toLowerCase();
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains protection from " + colorName.toLowerCase() + " until end of turn."));
                 log.info("Game {} - {} gains protection from {} until end of turn", gameData.id, target.getCard().getName(), colorName.toLowerCase());
@@ -4913,7 +4918,9 @@ public class ChoiceHandlerService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                permanent.getProtectionFromColorsUntilEndOfTurn().add(color);
+                gameData.addEffectOnPermanent(ctx.sourceCardName(), null, ctx.controllerId(),
+                        new ProtectionFromColorsEffect(Set.of(color), GrantScope.TARGET),
+                        permanent.getId(), Duration.UNTIL_END_OF_TURN);
             }
         }
 

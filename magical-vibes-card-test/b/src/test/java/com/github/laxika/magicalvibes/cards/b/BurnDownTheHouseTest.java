@@ -47,7 +47,7 @@ class BurnDownTheHouseTest extends BaseCardTest {
         assertThat(devils).allSatisfy(devil -> {
             assertThat(devil.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(devil.getCard().getSubtypes()).containsExactly(CardSubtype.DEVIL);
-            assertThat(devil.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, devil, Keyword.HASTE)).isTrue();
         });
 
         harness.forceStep(TurnStep.END_STEP);
@@ -55,7 +55,7 @@ class BurnDownTheHouseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(devils).allSatisfy(devil ->
-                assertThat(devil.hasKeyword(Keyword.HASTE)).isFalse());
+                assertThat(gqs.hasKeyword(gd, devil, Keyword.HASTE)).isFalse());
     }
 
     @Test

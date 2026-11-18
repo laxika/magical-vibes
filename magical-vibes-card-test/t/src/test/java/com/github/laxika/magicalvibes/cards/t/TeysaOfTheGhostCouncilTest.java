@@ -30,7 +30,7 @@ class TeysaOfTheGhostCouncilTest extends BaseCardTest {
         assertThat(spirit.getCard().getColors())
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
         assertThat(spirit.getCard().getSubtypes()).containsExactly(CardSubtype.SPIRIT);
-        assertThat(spirit.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, spirit, Keyword.FLYING)).isTrue();
         assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
     }
@@ -50,7 +50,7 @@ class TeysaOfTheGhostCouncilTest extends BaseCardTest {
 
         Permanent returned = findTeysa(player1);
         assertThat(returned).isNotNull();
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
     }
 
     @Test

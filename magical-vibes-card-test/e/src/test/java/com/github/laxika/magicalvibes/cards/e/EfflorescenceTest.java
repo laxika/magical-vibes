@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HungryGraffalon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -28,7 +29,7 @@ class EfflorescenceTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -42,7 +43,7 @@ class EfflorescenceTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -56,7 +57,7 @@ class EfflorescenceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -69,7 +70,7 @@ class EfflorescenceTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -79,19 +80,19 @@ class EfflorescenceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
         harness.castAndResolveInstant(player1, 0, creature.getId());
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
 
         harness.setHand(player1, List.of(new Efflorescence()));
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -107,7 +108,7 @@ class EfflorescenceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
         harness.assertInGraveyard(player1, "Efflorescence");
         assertThat(gd.stack).isEmpty();
     }

@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -95,13 +99,14 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
         }
 
         if (e.grantsProtectionFromOpponents()) {
-            source.setProtectionFromOpponentsPermanently(true);
-            source.getProtectionFromPlayerIdsPermanently().clear();
+            java.util.Set<UUID> opponentIds = new java.util.HashSet<>();
             for (var playerId : gameData.playerIds) {
                 if (!playerId.equals(entry.getControllerId())) {
-                    source.getProtectionFromPlayerIdsPermanently().add(playerId);
+                    opponentIds.add(playerId);
                 }
             }
+            gameData.addEffectOnPermanent(entry, new GrantEffectEffect(new ProtectionFromPlayersEffect(opponentIds, true), GrantScope.TARGET),
+                    source.getId(), Duration.PERMANENT);
         }
 
         String stats = e.power() != null && e.toughness() != null

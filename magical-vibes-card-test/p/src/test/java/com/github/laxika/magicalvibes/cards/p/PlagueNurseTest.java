@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BiliousSkulldweller;
 import com.github.laxika.magicalvibes.cards.c.ContagiousVorrac;
 import com.github.laxika.magicalvibes.cards.c.CrawlingChorus;
@@ -27,8 +28,8 @@ class PlagueNurseTest extends BaseCardTest {
         Permanent nonToxicCreature = addReady(new ContagiousVorrac());
         activate(nurse);
 
-        assertThat(toxicCreature.getGrantedKeywords()).contains(Keyword.TOXIC);
-        assertThat(nonToxicCreature.getGrantedKeywords()).doesNotContain(Keyword.TOXIC);
+        assertThat(PermanentGrants.keywordsOf(gd, toxicCreature)).contains(Keyword.TOXIC);
+        assertThat(PermanentGrants.keywordsOf(gd, nonToxicCreature)).doesNotContain(Keyword.TOXIC);
     }
 
     @Test
@@ -51,13 +52,13 @@ class PlagueNurseTest extends BaseCardTest {
         Permanent toxicCreature = addReady(new BiliousSkulldweller());
         activate(nurse);
 
-        assertThat(toxicCreature.getGrantedKeywords()).contains(Keyword.TOXIC);
+        assertThat(PermanentGrants.keywordsOf(gd, toxicCreature)).contains(Keyword.TOXIC);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(toxicCreature.getGrantedKeywords()).doesNotContain(Keyword.TOXIC);
+        assertThat(PermanentGrants.keywordsOf(gd, toxicCreature)).doesNotContain(Keyword.TOXIC);
     }
 
     @Test

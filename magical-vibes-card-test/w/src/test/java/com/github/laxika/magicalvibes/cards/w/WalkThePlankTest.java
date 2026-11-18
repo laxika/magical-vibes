@@ -155,7 +155,7 @@ class WalkThePlankTest extends BaseCardTest {
     @DisplayName("Walk the Plank cannot destroy an indestructible creature")
     void indestructibleCreatureSurvives() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new AncientBrontodon());
-        creature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new WalkThePlank()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 

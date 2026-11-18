@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.IroncladKrovod;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
@@ -31,7 +32,7 @@ class SamutsSprintTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isEqualTo(1);
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.HASTE);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
 
         gs.handleInteractionAnswer(gd, player1,
@@ -53,7 +54,7 @@ class SamutsSprintTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.HASTE);
     }
 
     @Test

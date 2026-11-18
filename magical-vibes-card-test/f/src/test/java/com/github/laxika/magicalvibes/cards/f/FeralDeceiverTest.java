@@ -85,12 +85,12 @@ class FeralDeceiverTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isInstanceOf(Forest.class);
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, deceiver)).isEqualTo(4);
-        assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, deceiver, Keyword.TRAMPLE)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(3);
-        assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, deceiver, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -105,7 +105,7 @@ class FeralDeceiverTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, deceiver)).isEqualTo(2);
-        assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, deceiver, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -119,7 +119,7 @@ class FeralDeceiverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(3);
-        assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, deceiver, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -155,7 +155,7 @@ class FeralDeceiverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(5);
-        assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, deceiver, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -173,7 +173,7 @@ class FeralDeceiverTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, deceiver)).isEqualTo(4);
-        assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, deceiver, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -191,7 +191,7 @@ class FeralDeceiverTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonland);
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, deceiver)).isEqualTo(2);
-        assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, deceiver, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -213,7 +213,7 @@ class FeralDeceiverTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, deceiver)).isEqualTo(4);
-        assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, deceiver, Keyword.TRAMPLE)).isTrue();
         assertThat(deceiver.isTapped()).isTrue();
     }
 
@@ -248,7 +248,7 @@ class FeralDeceiverTest extends BaseCardTest {
                 .hasMessageContaining("only once each turn");
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, deceiver)).isEqualTo(2);
-        assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, deceiver, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -264,7 +264,7 @@ class FeralDeceiverTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
-        assertThat(second.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isFalse();
 
         harness.activateAbility(player1, 1, 1, null, null);
         harness.passBothPriorities();
@@ -273,8 +273,8 @@ class FeralDeceiverTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
-        assertThat(first.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
     }
 
     private Permanent addReadyDeceiver(Player player) {

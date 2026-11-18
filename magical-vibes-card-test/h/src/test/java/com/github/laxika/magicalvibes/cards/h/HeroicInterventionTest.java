@@ -31,10 +31,10 @@ class HeroicInterventionTest extends BaseCardTest {
 
         assertHasBothKeywords(ownCreature);
         assertHasBothKeywords(ownLand);
-        assertThat(opponentCreature.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(opponentCreature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(opponentLand.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(opponentLand.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentLand, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentLand, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -50,8 +50,8 @@ class HeroicInterventionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(ownCreature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -131,7 +131,7 @@ class HeroicInterventionTest extends BaseCardTest {
     }
 
     private void assertHasBothKeywords(Permanent permanent) {
-        assertThat(permanent.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(permanent.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 }

@@ -85,7 +85,7 @@ class CatacombDragonTest extends BaseCardTest {
     void affectsHexproofBlocker() {
         addAttackingDragon();
         Permanent blocker = addFlyingBlocker(new ZhalfirinKnight());
-        blocker.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, blocker, Keyword.HEXPROOF);
 
         block();
 
@@ -206,7 +206,7 @@ class CatacombDragonTest extends BaseCardTest {
 
     private Permanent addFlyingBlocker(Card card) {
         Permanent permanent = addCreatureReady(player2, card);
-        permanent.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, permanent, Keyword.FLYING);
         return permanent;
     }
 

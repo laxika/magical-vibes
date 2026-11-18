@@ -31,8 +31,8 @@ class RushOfVitalityTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(1);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -47,8 +47,8 @@ class RushOfVitalityTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.LIFELINK)).isFalse();
-        assertThat(bear.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -97,8 +97,8 @@ class RushOfVitalityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
-        assertThat(attacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(attacker.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.LIFELINK)).isFalse();
         assertThat(attacker.getPowerModifier()).isZero();
     }
 
@@ -133,8 +133,8 @@ class RushOfVitalityTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Rush of Vitality");
         assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.LIFELINK)).isFalse();
-        assertThat(other.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.INDESTRUCTIBLE)).isFalse();
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -37,7 +38,7 @@ class PhelddagrifTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(phelddagrif.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, phelddagrif)).contains(Keyword.TRAMPLE);
         harness.assertNotOnBattlefield(player1, "Hippo");
         assertThat(findPermanents(player2, "Hippo"))
                 .singleElement()
@@ -61,7 +62,7 @@ class PhelddagrifTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(phelddagrif.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, phelddagrif)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test
@@ -72,7 +73,7 @@ class PhelddagrifTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(phelddagrif.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, phelddagrif)).contains(Keyword.FLYING);
         harness.assertLife(player2, 22);
         harness.assertLife(player1, 20);
     }
@@ -89,7 +90,7 @@ class PhelddagrifTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(phelddagrif.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, phelddagrif)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -162,7 +163,7 @@ class PhelddagrifTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Phelddagrif");
-        assertThat(phelddagrif.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE, Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, phelddagrif)).doesNotContain(Keyword.TRAMPLE, Keyword.FLYING);
         harness.assertNotOnBattlefield(player2, "Hippo");
         harness.assertLife(player2, 20);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();

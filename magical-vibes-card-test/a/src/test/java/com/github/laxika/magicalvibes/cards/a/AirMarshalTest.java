@@ -29,7 +29,7 @@ class AirMarshalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, soldier.getId());
         harness.passBothPriorities();
 
-        assertThat(soldier.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -41,12 +41,12 @@ class AirMarshalTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, soldier.getId());
         harness.passBothPriorities();
-        assertThat(soldier.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(soldier.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -70,7 +70,7 @@ class AirMarshalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, marshal.getId());
         harness.passBothPriorities();
 
-        assertThat(marshal.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, marshal, Keyword.FLYING)).isTrue();
         assertThat(marshal.isTapped()).isTrue();
     }
 
@@ -83,7 +83,7 @@ class AirMarshalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, soldier.getId());
         harness.passBothPriorities();
 
-        assertThat(soldier.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -93,7 +93,7 @@ class AirMarshalTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, marshal.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(marshal.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, marshal, Keyword.FLYING)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -107,7 +107,7 @@ class AirMarshalTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(marshal);
         harness.passBothPriorities();
 
-        assertThat(soldier.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -126,7 +126,7 @@ class AirMarshalTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, altar.getId());
         harness.passBothPriorities();
 
-        assertThat(altar.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, altar, Keyword.FLYING)).isTrue();
     }
 
     private void addAbilityMana() {

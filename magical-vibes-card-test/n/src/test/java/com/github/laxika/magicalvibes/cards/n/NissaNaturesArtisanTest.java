@@ -70,9 +70,9 @@ class NissaNaturesArtisanTest extends BaseCardTest {
         assertThat(nissa.getCounterCount(CounterType.LOYALTY)).isZero();
         assertThat(ownBear.getEffectivePower()).isEqualTo(7);
         assertThat(ownBear.getEffectiveToughness()).isEqualTo(7);
-        assertThat(ownBear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownBear, Keyword.TRAMPLE)).isTrue();
         assertThat(opponentBear.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentBear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentBear, Keyword.TRAMPLE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -80,7 +80,7 @@ class NissaNaturesArtisanTest extends BaseCardTest {
 
         assertThat(ownBear.getEffectivePower()).isEqualTo(2);
         assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(ownBear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownBear, Keyword.TRAMPLE)).isFalse();
     }
 
     private Permanent addReadyNissa(Player player, int loyalty) {

@@ -30,7 +30,7 @@ class ClickslitherTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(clickslither).doesNotContain(goblin);
         assertThat(clickslither.getEffectivePower()).isEqualTo(5);
         assertThat(clickslither.getEffectiveToughness()).isEqualTo(5);
-        assertThat(clickslither.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, clickslither, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -48,7 +48,7 @@ class ClickslitherTest extends BaseCardTest {
 
         assertThat(clickslither.getEffectivePower()).isEqualTo(3);
         assertThat(clickslither.getEffectiveToughness()).isEqualTo(3);
-        assertThat(clickslither.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, clickslither, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -91,7 +91,7 @@ class ClickslitherTest extends BaseCardTest {
                 .doesNotContain(firstGoblin, secondGoblin);
         assertThat(clickslither.getEffectivePower()).isEqualTo(7);
         assertThat(clickslither.getEffectiveToughness()).isEqualTo(7);
-        assertThat(clickslither.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, clickslither, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -107,7 +107,7 @@ class ClickslitherTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(goblin.getCard());
         assertThat(clickslither.getEffectivePower()).isEqualTo(5);
         assertThat(clickslither.getEffectiveToughness()).isEqualTo(5);
-        assertThat(clickslither.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, clickslither, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -124,12 +124,12 @@ class ClickslitherTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(goblin.getCard());
         assertThat(clickslither.getEffectivePower()).isEqualTo(3);
         assertThat(clickslither.getEffectiveToughness()).isEqualTo(3);
-        assertThat(clickslither.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, clickslither, Keyword.TRAMPLE)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(clickslither.getEffectivePower()).isEqualTo(5);
         assertThat(clickslither.getEffectiveToughness()).isEqualTo(5);
-        assertThat(clickslither.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, clickslither, Keyword.TRAMPLE)).isTrue();
     }
 }

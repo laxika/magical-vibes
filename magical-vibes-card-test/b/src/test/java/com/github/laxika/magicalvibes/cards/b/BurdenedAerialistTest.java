@@ -43,7 +43,7 @@ class BurdenedAerialistTest extends BaseCardTest {
         Permanent aerialist = addCreatureReady(player1, new BurdenedAerialist());
         addTreasureToken(player1);
 
-        assertThat(aerialist.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, aerialist, Keyword.FLYING)).isFalse();
 
         Permanent treasure = findPermanent(player1, "Treasure");
         int treasureIndex = gd.playerBattlefields.get(player1.getId()).indexOf(treasure);
@@ -51,13 +51,13 @@ class BurdenedAerialistTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
         resolveAllTriggers();
 
-        assertThat(aerialist.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, aerialist, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(aerialist.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, aerialist, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -72,7 +72,7 @@ class BurdenedAerialistTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Food")).isEmpty();
         harness.assertLife(player1, 23);
-        assertThat(aerialist.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, aerialist, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -88,7 +88,7 @@ class BurdenedAerialistTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Clue")).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(aerialist.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, aerialist, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -101,7 +101,7 @@ class BurdenedAerialistTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanents(player2, "Treasure")).isEmpty();
-        assertThat(aerialist.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, aerialist, Keyword.FLYING)).isFalse();
     }
 
     private void createManufactorTokens() {

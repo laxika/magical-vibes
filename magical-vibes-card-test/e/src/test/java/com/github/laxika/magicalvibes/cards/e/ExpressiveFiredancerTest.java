@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -45,7 +46,7 @@ class ExpressiveFiredancerTest extends BaseCardTest {
 
         assertThat(firedancer.getPowerModifier()).isEqualTo(1);
         assertThat(firedancer.getToughnessModifier()).isEqualTo(1);
-        assertThat(firedancer.getGrantedKeywords()).doesNotContain(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, firedancer)).doesNotContain(Keyword.DOUBLE_STRIKE);
     }
 
     @Test
@@ -59,7 +60,7 @@ class ExpressiveFiredancerTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 3);
 
         assertThat(firedancer.getPowerModifier()).isEqualTo(1);
-        assertThat(firedancer.getGrantedKeywords()).doesNotContain(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, firedancer)).doesNotContain(Keyword.DOUBLE_STRIKE);
     }
 
     @Test
@@ -74,7 +75,7 @@ class ExpressiveFiredancerTest extends BaseCardTest {
 
         assertThat(firedancer.getPowerModifier()).isEqualTo(1);
         assertThat(firedancer.getToughnessModifier()).isEqualTo(1);
-        assertThat(firedancer.getGrantedKeywords()).contains(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, firedancer)).contains(Keyword.DOUBLE_STRIKE);
     }
 
     @Test
@@ -89,7 +90,7 @@ class ExpressiveFiredancerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(firedancer.getPowerModifier()).isZero();
-        assertThat(firedancer.getGrantedKeywords()).doesNotContain(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, firedancer)).doesNotContain(Keyword.DOUBLE_STRIKE);
     }
 
     @Test

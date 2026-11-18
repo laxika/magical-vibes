@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
@@ -89,7 +90,7 @@ class PlagueWindTest extends BaseCardTest {
     @DisplayName("Indestructible creatures you do not control survive Plague Wind")
     void indestructibleOpponentCreaturesSurvive() {
         Permanent opposingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opposingBears.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, opposingBears, Keyword.INDESTRUCTIBLE);
 
         harness.castFromHand(player1, new PlagueWind(), "{7}{B}{B}");
         harness.passBothPriorities();

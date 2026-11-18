@@ -34,13 +34,13 @@ class DragonTempestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent tern = findPermanent(player1, "Welkin Tern");
-        assertThat(tern.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, tern, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(tern.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, tern, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -51,7 +51,7 @@ class DragonTempestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -84,7 +84,7 @@ class DragonTempestTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Dragonlord Dromoka").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Dragonlord Dromoka"), Keyword.HASTE)).isTrue();
         harness.assertLife(player2, 18);
         harness.assertLife(player1, 22);
     }
@@ -138,7 +138,7 @@ class DragonTempestTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(findPermanent(player2, "Scion of Ugin").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player2, "Scion of Ugin"), Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -157,6 +157,6 @@ class DragonTempestTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertLife(player2, 19);
-        assertThat(findPermanent(player1, "Dromoka Warrior").hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Dromoka Warrior"), Keyword.HASTE)).isFalse();
     }
 }

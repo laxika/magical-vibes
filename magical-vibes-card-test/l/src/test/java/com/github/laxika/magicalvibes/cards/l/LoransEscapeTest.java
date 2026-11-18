@@ -35,8 +35,8 @@ class LoransEscapeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
     }
 
@@ -51,8 +51,8 @@ class LoransEscapeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent mine = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(mine.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(mine.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test

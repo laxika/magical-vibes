@@ -30,7 +30,7 @@ class InfuseWithVitalityTest extends BaseCardTest {
 
         castOn(creature);
 
-        assertThat(creature.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
         assertThat(gd.getLife(player1.getId())).isEqualTo(22);
     }
 
@@ -62,7 +62,7 @@ class InfuseWithVitalityTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
         destroy(player2, creature);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -121,7 +121,7 @@ class InfuseWithVitalityTest extends BaseCardTest {
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getId().equals(card.getId())).findFirst().orElseThrow();
         assertThat(returned.isTapped()).isTrue();
-        assertThat(returned.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.DEATHTOUCH)).isFalse();
         destroy(player2, returned);
 
         assertThat(gd.stack).isEmpty();

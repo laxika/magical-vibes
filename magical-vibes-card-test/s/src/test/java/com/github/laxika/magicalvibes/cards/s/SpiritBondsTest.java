@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Card;
@@ -62,7 +63,7 @@ class SpiritBondsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spirit);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -113,10 +114,10 @@ class SpiritBondsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spirit);
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.INDESTRUCTIBLE);
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -128,7 +129,7 @@ class SpiritBondsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.INDESTRUCTIBLE);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -155,12 +156,12 @@ class SpiritBondsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.INDESTRUCTIBLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     @Test

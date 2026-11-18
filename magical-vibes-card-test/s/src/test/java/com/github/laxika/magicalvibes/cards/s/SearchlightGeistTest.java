@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.v.VoiceOfTheProvinces;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -25,7 +26,7 @@ class SearchlightGeistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(geist.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, geist)).contains(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -36,12 +37,12 @@ class SearchlightGeistTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(geist.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, geist)).contains(Keyword.DEATHTOUCH);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(geist.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, geist)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -55,10 +56,10 @@ class SearchlightGeistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
-        assertThat(geist.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, geist)).doesNotContain(Keyword.DEATHTOUCH);
         harness.passBothPriorities();
 
-        assertThat(geist.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, geist)).contains(Keyword.DEATHTOUCH);
         assertThat(geist.isTapped()).isTrue();
     }
 
@@ -72,7 +73,7 @@ class SearchlightGeistTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
-        assertThat(geist.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, geist)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -84,8 +85,8 @@ class SearchlightGeistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(geist.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
-        assertThat(otherGeist.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, geist)).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, otherGeist)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GuerrillaTactics;
 import com.github.laxika.magicalvibes.cards.s.StormCrow;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -97,7 +98,7 @@ class PyrokinesisTest extends BaseCardTest {
     void canDamageOwnHexproofCreature() {
         Permanent ownTarget = harness.addToBattlefieldAndReturn(player1, new StormCrow());
         Permanent opposingTarget = harness.addToBattlefieldAndReturn(player2, new StormCrow());
-        ownTarget.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, ownTarget, Keyword.HEXPROOF);
         harness.setHand(player1, List.of(new Pyrokinesis()));
         addFullMana();
 
@@ -184,7 +185,7 @@ class PyrokinesisTest extends BaseCardTest {
                 firstLegalTarget.getId(), 1,
                 secondLegalTarget.getId(), 1,
                 thirdLegalTarget.getId(), 1));
-        illegalTarget.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, illegalTarget, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         assertThat(illegalTarget.getMarkedDamage()).isZero();
@@ -201,7 +202,7 @@ class PyrokinesisTest extends BaseCardTest {
         addFullMana();
 
         harness.castInstant(player1, 0, Map.of(target.getId(), 4));
-        target.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Storm Crow");

@@ -35,16 +35,16 @@ class MogissMarauderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, first.getId());
         harness.passBothPriorities();
 
-        assertThat(first.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(first.hasKeyword(Keyword.INTIMIDATE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(second.hasKeyword(Keyword.INTIMIDATE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.INTIMIDATE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.INTIMIDATE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(first.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(first.hasKeyword(Keyword.INTIMIDATE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.INTIMIDATE)).isFalse();
     }
 
     @Test
@@ -66,12 +66,12 @@ class MogissMarauderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(first.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(third.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(first.hasKeyword(Keyword.INTIMIDATE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.INTIMIDATE)).isTrue();
-        assertThat(third.hasKeyword(Keyword.INTIMIDATE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, third, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.INTIMIDATE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.INTIMIDATE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, third, Keyword.INTIMIDATE)).isFalse();
     }
 
     @Test
@@ -86,10 +86,10 @@ class MogissMarauderTest extends BaseCardTest {
 
         Permanent marauder = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard() instanceof MogissMarauder).findFirst().orElseThrow();
-        assertThat(marauder.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(marauder.hasKeyword(Keyword.INTIMIDATE)).isTrue();
-        assertThat(other.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(other.hasKeyword(Keyword.INTIMIDATE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, marauder, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, marauder, Keyword.INTIMIDATE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.INTIMIDATE)).isFalse();
     }
 
     @Test
@@ -101,12 +101,12 @@ class MogissMarauderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(other.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(other.hasKeyword(Keyword.INTIMIDATE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.INTIMIDATE)).isFalse();
         Permanent marauder = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard() instanceof MogissMarauder).findFirst().orElseThrow();
-        assertThat(marauder.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(marauder.hasKeyword(Keyword.INTIMIDATE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, marauder, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, marauder, Keyword.INTIMIDATE)).isFalse();
     }
 
     @Test
@@ -129,8 +129,8 @@ class MogissMarauderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         for (Permanent target : List.of(first, second, third)) {
-            assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
-            assertThat(target.hasKeyword(Keyword.INTIMIDATE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.INTIMIDATE)).isTrue();
         }
     }
 
@@ -151,8 +151,8 @@ class MogissMarauderTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(first);
         harness.passBothPriorities();
 
-        assertThat(second.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.INTIMIDATE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.INTIMIDATE)).isTrue();
     }
 
     private void castMarauder() {

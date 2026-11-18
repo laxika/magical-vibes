@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SavageLands;
@@ -46,7 +47,7 @@ class RuinationTest extends BaseCardTest {
     @DisplayName("Indestructible nonbasic lands survive")
     void indestructibleNonbasicLandsSurvive() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new SavageLands());
-        land.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, land, Keyword.INDESTRUCTIBLE);
 
         castRuinationAndResolve();
 
@@ -98,7 +99,7 @@ class RuinationTest extends BaseCardTest {
     @DisplayName("Shroud does not protect a nonbasic land from untargeted destruction")
     void destroysNonbasicLandsWithShroud() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Taiga());
-        land.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, land, Keyword.SHROUD);
 
         castRuinationAndResolve();
 

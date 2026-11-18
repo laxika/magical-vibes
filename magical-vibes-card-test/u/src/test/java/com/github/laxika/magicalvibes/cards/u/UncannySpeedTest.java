@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CathedralSanctifier;
 import com.github.laxika.magicalvibes.cards.s.ScrollOfAvacyn;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -32,7 +33,7 @@ class UncannySpeedTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(3);
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HASTE);
     }
 
     @Test
@@ -50,7 +51,7 @@ class UncannySpeedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -64,7 +65,7 @@ class UncannySpeedTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HASTE);
     }
 
     @Test

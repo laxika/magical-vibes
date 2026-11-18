@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -50,7 +51,7 @@ class FeedTheSwarmTest extends BaseCardTest {
     @DisplayName("The caster still loses life when the target is indestructible")
     void casterLosesLifeWhenTargetIsIndestructible() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         int casterLifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         cast(target);
@@ -103,7 +104,7 @@ class FeedTheSwarmTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         prepareSpell();
         harness.castSorcery(player1, 0, target.getId());
-        target.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.HEXPROOF);
 
         harness.passBothPriorities();
 

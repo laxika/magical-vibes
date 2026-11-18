@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BoggartBrute;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -93,11 +94,11 @@ class GeneralJarkeldTest extends BaseCardTest {
         Permanent jarkeld = addCreatureReady(player1, new GeneralJarkeld());
         Permanent groundAttacker = addCreatureReady(player1, new KjeldoranWarrior());
         Permanent flyingAttacker = addCreatureReady(player1, new KjeldoranWarrior());
-        flyingAttacker.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, flyingAttacker, Keyword.FLYING);
 
         Permanent groundBlocker = addCreatureReady(player2, new KjeldoranWarrior());
         Permanent flyerBlocker = addCreatureReady(player2, new KjeldoranWarrior());
-        flyerBlocker.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, flyerBlocker, Keyword.FLYING);
 
         int gAtk = gd.playerBattlefields.get(player1.getId()).indexOf(groundAttacker);
         int fAtk = gd.playerBattlefields.get(player1.getId()).indexOf(flyingAttacker);

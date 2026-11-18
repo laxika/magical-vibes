@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.k.KnightOfCliffhaven;
 import com.github.laxika.magicalvibes.cards.v.Vendetta;
@@ -31,7 +32,7 @@ class EmergeUnscathedTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.handleListChoice(player1, "RED");
 
-        assertThat(bear.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bear)).contains(CardColor.RED);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
     }
@@ -138,9 +139,9 @@ class EmergeUnscathedTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.handleListChoice(player1, "WHITE");
 
-        assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, creature)).containsExactly(CardColor.WHITE);
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(creature.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, creature)).isEmpty();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
     }
 
@@ -160,8 +161,8 @@ class EmergeUnscathedTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(other.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.GREEN);
-        assertThat(original.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.GREEN);
+        assertThat(PermanentGrants.protectionColorsOf(gd, other)).containsExactly(CardColor.GREEN);
+        assertThat(PermanentGrants.protectionColorsOf(gd, original)).doesNotContain(CardColor.GREEN);
         harness.assertInGraveyard(player1, "Emerge Unscathed");
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
@@ -47,7 +48,7 @@ class MightMakesRightTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Runeclaw Bear");
         harness.assertNotOnBattlefield(player2, "Runeclaw Bear");
         assertThat(bears.isTapped()).isFalse();
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.HASTE);
     }
 
     @Test
@@ -67,7 +68,7 @@ class MightMakesRightTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Runeclaw Bear");
         harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -125,7 +126,7 @@ class MightMakesRightTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Runeclaw Bear");
         harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -164,7 +165,7 @@ class MightMakesRightTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Might Makes Right");
         harness.assertOnBattlefield(player1, "Runeclaw Bear");
         assertThat(bears.isTapped()).isFalse();
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.HASTE);
     }
 
     @Test
@@ -197,7 +198,7 @@ class MightMakesRightTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Runeclaw Bear");
         harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -219,7 +220,7 @@ class MightMakesRightTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(survivor);
         assertThat(survivor.isTapped()).isTrue();
-        assertThat(survivor.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, survivor)).doesNotContain(Keyword.HASTE);
     }
 
     @Test

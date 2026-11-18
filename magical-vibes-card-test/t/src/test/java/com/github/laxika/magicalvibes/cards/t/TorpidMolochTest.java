@@ -50,14 +50,14 @@ class TorpidMolochTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(moloch.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, moloch, Keyword.DEFENDER)).isFalse();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .hasSize(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(moloch.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, moloch, Keyword.DEFENDER)).isTrue();
     }
 
     @Test
@@ -82,8 +82,8 @@ class TorpidMolochTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(moloch.hasKeyword(Keyword.DEFENDER)).isFalse();
-        assertThat(otherMoloch.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, moloch, Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherMoloch, Keyword.DEFENDER)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(moloch, otherMoloch);
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -101,12 +101,12 @@ class TorpidMolochTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(moloch);
-        assertThat(moloch.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, moloch, Keyword.DEFENDER)).isTrue();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(moloch.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, moloch, Keyword.DEFENDER)).isFalse();
     }
 
     @Test
@@ -124,7 +124,7 @@ class TorpidMolochTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
-        assertThat(moloch.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, moloch, Keyword.DEFENDER)).isTrue();
     }
 
     @Test
@@ -139,7 +139,7 @@ class TorpidMolochTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(moloch.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, moloch, Keyword.DEFENDER)).isFalse();
         assertThat(moloch.isTapped()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
     }
@@ -160,6 +160,6 @@ class TorpidMolochTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(moloch, keptLand);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
-        assertThat(moloch.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, moloch, Keyword.DEFENDER)).isFalse();
     }
 }

@@ -31,7 +31,7 @@ class CaughtRedHandedTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(target.isSuspected()).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
         assertThat(bls.canBlock(gd, target)).isFalse();
@@ -49,7 +49,7 @@ class CaughtRedHandedTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(target.isSuspected()).isTrue();
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
         assertThat(bls.canBlock(gd, target)).isFalse();

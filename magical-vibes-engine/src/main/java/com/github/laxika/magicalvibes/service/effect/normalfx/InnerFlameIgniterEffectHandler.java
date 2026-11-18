@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -52,7 +55,8 @@ public class InnerFlameIgniterEffectHandler implements NormalEffectHandlerBean {
         int count = 0;
         for (Permanent permanent : battlefield) {
             if (gameQueryService.isCreature(gameData, permanent)) {
-                permanent.getGrantedKeywords().add(Keyword.FIRST_STRIKE);
+                gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET),
+                        permanent.getId(), Duration.UNTIL_END_OF_TURN);
                 count++;
             }
         }

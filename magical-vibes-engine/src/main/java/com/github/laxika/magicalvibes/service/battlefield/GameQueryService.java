@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtFaceDownCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyCombatDamageFromTargetCreatureToOpponentsUntilNextTurnEffect;
@@ -4084,10 +4085,8 @@ public class GameQueryService {
     private boolean permanentPerpetuallyLostKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
         return gameData.perpetualCardRemovedKeywords
                 .getOrDefault(permanent.getCard().getId(), Set.of()).contains(keyword)
-                && !permanent.getGrantedKeywords().contains(keyword)
                 && gameData.floatingEffectsOnPermanent(permanent.getId(), GrantKeywordEffect.class).stream()
-                        .noneMatch(fe -> ((GrantKeywordEffect) fe.effect()).keywords().contains(keyword))
-                && !permanent.getUntilNextTurnKeywords().contains(keyword);
+                        .noneMatch(fe -> ((GrantKeywordEffect) fe.effect()).keywords().contains(keyword));
     }
 
     /** Counts the flanking abilities that survive the current ability layer. */
@@ -7550,15 +7549,25 @@ public class GameQueryService {
         }
 
         // A permanent off the battlefield (a departed snapshot) has no layered state: its one-shot
-        // type grants are still floating effects on its id and count as its last-known types (CR 608.2h).
+        // type and keyword grants and keyword removals are still floating effects on its id and count
+        // as its last-known characteristics, with the keywords baked into the snapshot (CR 608.2h).
         if (state == null) {
             for (var floating : gameData.floatingEffectsOnPermanent(target.getId(),
-                    GrantCardTypeEffect.class, GrantSubtypeEffect.class)) {
+                    GrantCardTypeEffect.class, GrantSubtypeEffect.class, GrantKeywordEffect.class,
+                    RemoveKeywordEffect.class)) {
                 if (floating.effect() instanceof GrantCardTypeEffect grant) {
                     accumulator.getGrantedCardTypes().add(grant.cardType());
                 } else if (floating.effect() instanceof GrantSubtypeEffect grant && !grant.overriding()) {
                     accumulator.addGrantedSubtype(grant.subtype());
+                } else if (floating.effect() instanceof GrantKeywordEffect grant
+                        && !target.isLosesAllAbilitiesUntilEndOfTurn()) {
+                    accumulator.addKeywords(grant.keywords());
+                } else if (floating.effect() instanceof RemoveKeywordEffect removal) {
+                    accumulator.removeKeyword(removal.keyword());
                 }
+            }
+            if (target.getLastKnownKeywords() != null) {
+                accumulator.addKeywords(target.getLastKnownKeywords());
             }
         }
 
@@ -7584,6 +7593,7 @@ public class GameQueryService {
                 && !isSelfAnimated
                 && !layeredTouched
                 && accumulator.getKeywords().isEmpty()
+                && (state != null || accumulator.getRemovedKeywords().isEmpty())
                 && accumulator.getGrantedActivatedAbilities().isEmpty()
                 && accumulator.getGrantedEffects().isEmpty()
                 && accumulator.getProtectionColors().isEmpty()
@@ -7688,9 +7698,6 @@ public class GameQueryService {
             Set<Keyword> mergedKeywords = new HashSet<>(accumulator.getKeywords());
             if (!target.isLosesAllAbilitiesUntilEndOfTurn()) {
                 mergedKeywords.addAll(target.getCard().getKeywords());
-                mergedKeywords.addAll(target.getGrantedKeywords());
-                mergedKeywords.addAll(target.getUntilNextTurnKeywords());
-                mergedKeywords.removeAll(target.getRemovedKeywords());
             }
             mergedKeywords.removeAll(accumulator.getRemovedKeywords());
             keywords = mergedKeywords;
@@ -7794,38 +7801,38 @@ public class GameQueryService {
 
     // --- Protection & evasion ---
 
-    /** Returns {@code true} if the target permanent has durable protection from the source's controller. */
+    /**
+     * Returns {@code true} if the target permanent has protection from the source's controller: a granted
+     * "protection from [player]" ability that survives the layered pass (CR 613.7), or its own "protection from the
+     * chosen player" ability.
+     */
     public boolean hasProtectionFromOpponents(GameData gameData, Permanent target, UUID sourceControllerId) {
         if (target == null || sourceControllerId == null) return false;
-        if (target.getProtectionFromPlayerIdsUntilEndOfTurn().contains(sourceControllerId)
-                && gameData.floatingEffects.stream().anyMatch(floating -> target.getId().equals(floating.affectedPermanentId())
-                && floating.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantProtectionFromOpponentsUntilEndOfTurnEffect
-                && grantedAbilitySurvivesRemoval(gameData, target, floating.timestamp()))) return true;
-        if (target.isLosesAllAbilitiesUntilEndOfTurn()) return false;
         StaticBonus bonus = computeStaticBonus(gameData, target);
-        if (bonus.losesAllAbilities() || bonus.protectionRemoved()) {
+        for (CardEffect effect : bonus.grantedEffects()) {
+            if (effect instanceof ProtectionGrantingEffect protection
+                    && protection.protectionFromPlayers().contains(sourceControllerId)) {
+                return true;
+            }
+        }
+        if (target.isLosesAllAbilitiesUntilEndOfTurn() || bonus.losesAllAbilities() || bonus.protectionRemoved()) {
             return false;
         }
-        if (target.getProtectionFromPlayerIdsUntilEndOfTurn().contains(sourceControllerId)) {
-            return true;
-        }
-        if (target.hasProtectionFromPlayerUntilNextTurn(sourceControllerId)) {
-            return true;
-        }
-        if (target.isProtectionFromOpponentsPermanently()
-                && target.getProtectionFromPlayerIdsPermanently().contains(sourceControllerId)) {
-            return true;
-        }
-        return target.getProtectionFromPlayerIdsPermanently().contains(sourceControllerId)
+        return target.getChosenPlayerIds().contains(sourceControllerId)
                 && hasActiveStaticEffect(gameData, target, ProtectionFromChosenPlayerEffect.class);
     }
 
+    /** Whether the target has a granted "protection from creatures your opponents control" that the layers left it. */
+    private boolean hasOpponentCreatureProtection(GameData gameData, Permanent target) {
+        return computeStaticBonus(gameData, target).grantedEffects().stream()
+                .anyMatch(com.github.laxika.magicalvibes.model.effect.GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect.class::isInstance);
+    }
+
     private boolean hasProtectionFromOpponentCreature(GameData gameData, Permanent target, Permanent source) {
-        if (target == null || source == null || !target.isProtectionFromOpponentCreaturesUntilEndOfTurn()
-                || !isCreature(gameData, source)) {
+        if (target == null || source == null || !isCreature(gameData, source)
+                || !hasOpponentCreatureProtection(gameData, target)) {
             return false;
         }
-        if (!opponentCreatureProtectionSurvivesRemoval(gameData, target)) return false;
         UUID targetControllerId = findPermanentController(gameData, target.getId());
         UUID sourceControllerId = findPermanentController(gameData, source.getId());
         return targetControllerId != null && sourceControllerId != null
@@ -7835,24 +7842,20 @@ public class GameQueryService {
     private boolean hasProtectionFromOpponentCreature(GameData gameData, Permanent target, Card source,
                                                        UUID sourceControllerId) {
         if (target == null || source == null || sourceControllerId == null
-                || !target.isProtectionFromOpponentCreaturesUntilEndOfTurn()
                 || (source.getType() != CardType.CREATURE
-                && !source.getAdditionalTypes().contains(CardType.CREATURE))) {
+                && !source.getAdditionalTypes().contains(CardType.CREATURE))
+                || !hasOpponentCreatureProtection(gameData, target)) {
             return false;
         }
-        if (!opponentCreatureProtectionSurvivesRemoval(gameData, target)) return false;
         UUID targetControllerId = findPermanentController(gameData, target.getId());
         return targetControllerId != null && !targetControllerId.equals(sourceControllerId);
     }
 
-    private boolean opponentCreatureProtectionSurvivesRemoval(GameData gameData, Permanent target) {
-        List<FloatingContinuousEffect> grants = gameData.floatingEffects.stream().filter(floating ->
-                target.getId().equals(floating.affectedPermanentId())
-                        && floating.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect)
-                .toList();
-        return grants.isEmpty() ? !target.isLosesAllAbilitiesUntilEndOfTurn()
-                && !computeStaticBonus(gameData, target).losesAllAbilities()
-                : grants.stream().anyMatch(grant -> grantedAbilitySurvivesRemoval(gameData, target, grant.timestamp()));
+    /** Whether the target has a granted protection from colorless that the layers left it. */
+    private boolean hasProtectionFromColorless(GameData gameData, Permanent target) {
+        return computeStaticBonus(gameData, target).grantedEffects().stream()
+                .anyMatch(effect -> effect instanceof ProtectionGrantingEffect protection
+                        && protection.protectionFromColorless());
     }
 
     /**
@@ -7869,7 +7872,7 @@ public class GameQueryService {
             return false;
         }
         if (sourceColor == null) {
-            return target.isProtectionFromColorlessUntilEndOfTurn();
+            return hasProtectionFromColorless(gameData, target);
         }
         if (bonus == StaticBonus.NONE) {
             // No continuous effect touched the permanent: its own printed protection stands.
@@ -7896,9 +7899,6 @@ public class GameQueryService {
                     return true;
                 }
             }
-        }
-        if (target.getProtectionFromColorsUntilEndOfTurn().contains(sourceColor)) {
-            return true;
         }
         if (!bonus.removedProtectionColors().contains(sourceColor)
                 && !bonus.losesAllAbilities()
@@ -8160,7 +8160,6 @@ public class GameQueryService {
             return true;
         }
         Set<CardType> protectedTypes = EnumSet.noneOf(CardType.class);
-        protectedTypes.addAll(target.getProtectionFromCardTypes());
         for (CardEffect effect : target.getCard().getStaticEffects()) {
             if (effect instanceof ProtectionGrantingEffect protection
                     && !hasLostPrintedAbilities(gameData, target)) {
@@ -8197,16 +8196,15 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if the target permanent has protection from any of the source
-     * card's card types. This overload is used for spells on the stack (which are cards,
-     * not permanents) and only checks the card's natural types.
+     * Returns {@code true} if the target permanent's own printed protection covers any of the source
+     * card's card types (the source's natural types). Granted protection is read from the layered
+     * state by {@link #hasProtectionFromSourceCardTypes(GameData, Permanent, Card)}.
      */
-    public boolean hasProtectionFromSourceCardTypes(Permanent target, Card sourceCard) {
+    private boolean hasPrintedProtectionFromSourceCardTypes(Permanent target, Card sourceCard) {
         if (target == null) {
             return false;
         }
         Set<CardType> protectedTypes = EnumSet.noneOf(CardType.class);
-        protectedTypes.addAll(target.getProtectionFromCardTypes());
         List<CardEffect> printedEffects = new ArrayList<>();
         if (!target.isFaceDown() && !target.isLosesAllAbilitiesUntilEndOfTurn()) {
             printedEffects.addAll(target.getCard().getStaticEffects());
@@ -8229,8 +8227,7 @@ public class GameQueryService {
     }
 
     /**
-     * Card-source overload that also evaluates protection granted by continuous battlefield
-     * effects. The legacy overload remains for callers that only have a target and a card.
+     * Card-source overload: the target's printed protection and the protection the layered state grants it.
      */
     public boolean hasProtectionFromSourceCardTypes(GameData gameData, Permanent target, Card sourceCard) {
         if (target == null || computeStaticBonus(gameData, target).protectionRemoved()) {
@@ -8241,7 +8238,7 @@ public class GameQueryService {
                 || hasProtectionFromMonocolored(gameData, target, sourceCard)) {
             return true;
         }
-        if (hasProtectionFromSourceCardTypes(target, sourceCard)
+        if (hasPrintedProtectionFromSourceCardTypes(target, sourceCard)
                 && !hasLostPrintedAbilities(gameData, target)) {
             return true;
         }
@@ -8541,7 +8538,6 @@ public class GameQueryService {
 
     private Set<CardSubtype> getNonSubtypeCreatureProtection(GameData gameData, Permanent target) {
         Set<CardSubtype> protectedFrom = EnumSet.noneOf(CardSubtype.class);
-        protectedFrom.addAll(target.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn());
         if (!computeStaticBonus(gameData, target).losesAllAbilities()) {
             for (CardEffect effect : target.getCard().getStaticEffects()) {
                 if (effect instanceof ProtectionFromNonSubtypeCreaturesEffect protection) {
@@ -8698,7 +8694,7 @@ public class GameQueryService {
                 return true;
             }
         }
-        return (target.isProtectionFromColorlessUntilEndOfTurn() && sourceColors.isEmpty())
+        return (sourceColors.isEmpty() && hasProtectionFromColorless(gameData, target))
                 || hasProtectionFromEnemyColoredMulticolored(gameData, target, sourceColors)
                 || hasProtectionFromMonocolored(gameData, target, sourceColors)
                 || hasProtectionFromSourceCardTypes(gameData, target, source)
@@ -8761,9 +8757,8 @@ public class GameQueryService {
         }
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
         if (bonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                || !bonus.removedKeywords().isEmpty() || !permanent.getRemovedKeywords().isEmpty()
-                || !bonus.grantedEffects().isEmpty() || !bonus.grantedActivatedAbilities().isEmpty()
-                || !card.getKeywords().containsAll(permanent.getGrantedKeywords())) {
+                || !bonus.removedKeywords().isEmpty()
+                || !bonus.grantedEffects().isEmpty() || !bonus.grantedActivatedAbilities().isEmpty()) {
             return true;
         }
         return !card.getKeywords().containsAll(bonus.keywords());
@@ -8816,7 +8811,7 @@ public class GameQueryService {
         return hasProtectionFromOpponentCreature(gameData, target, sourceCard, protectionSourcePlayerId)
                 || hasProtectionFromOpponents(gameData, target, protectionSourcePlayerId)
                 || sourceColors.stream().anyMatch(color -> hasProtectionFrom(gameData, target, color))
-                || (target.isProtectionFromColorlessUntilEndOfTurn() && sourceColors.isEmpty())
+                || (sourceColors.isEmpty() && hasProtectionFromColorless(gameData, target))
                 || hasProtectionFromEnemyColoredMulticolored(gameData, target, sourceColors)
                 || hasProtectionFromMonocolored(gameData, target, sourceColors)
                 // A spell Ghostly Flame makes a colorless damage source isn't a colored spell for damage.
@@ -8856,7 +8851,7 @@ public class GameQueryService {
         return hasProtectionFromOpponentCreature(gameData, target, sourceCard, protectionSourcePlayerId)
                 || hasProtectionFromOpponents(gameData, target, protectionSourcePlayerId)
                 || sourceColors.stream().anyMatch(color -> hasProtectionFrom(gameData, target, color))
-                || (target.isProtectionFromColorlessUntilEndOfTurn() && sourceColors.isEmpty())
+                || (sourceColors.isEmpty() && hasProtectionFromColorless(gameData, target))
                 || hasProtectionFromEnemyColoredMulticolored(gameData, target, sourceColors)
                 || hasProtectionFromMonocolored(gameData, target, sourceColors)
                 || hasProtectionFromColoredSpellSource(gameData, target, sourceCard)

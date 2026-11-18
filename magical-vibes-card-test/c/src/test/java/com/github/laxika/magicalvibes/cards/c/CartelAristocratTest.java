@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 import com.github.laxika.magicalvibes.cards.a.ArmoredTransport;
@@ -34,7 +35,7 @@ class CartelAristocratTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         harness.assertInGraveyard(player1, "Millennial Gargoyle");
-        assertThat(aristocrat.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, aristocrat)).contains(CardColor.RED);
     }
 
     @Test
@@ -46,13 +47,13 @@ class CartelAristocratTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handleListChoice(player1, "WHITE");
-        assertThat(aristocrat.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, aristocrat)).contains(CardColor.WHITE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(aristocrat.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, aristocrat)).doesNotContain(CardColor.WHITE);
     }
 
     @Test
@@ -98,7 +99,7 @@ class CartelAristocratTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Armored Transport");
         harness.assertOnBattlefield(player1, "Millennial Gargoyle");
-        assertThat(aristocrat.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, aristocrat)).contains(CardColor.BLACK);
     }
 
     @Test
@@ -110,11 +111,11 @@ class CartelAristocratTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.assertInGraveyard(player1, "Millennial Gargoyle");
-        assertThat(aristocrat.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, aristocrat)).isEmpty();
 
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLUE");
-        assertThat(aristocrat.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, aristocrat)).containsExactly(CardColor.BLUE);
     }
 
     @Test
@@ -130,7 +131,7 @@ class CartelAristocratTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
 
         harness.assertInGraveyard(player1, "Millennial Gargoyle");
-        assertThat(aristocrat.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.GREEN);
+        assertThat(PermanentGrants.protectionColorsOf(gd, aristocrat)).containsExactly(CardColor.GREEN);
     }
 
     @Test
@@ -150,7 +151,7 @@ class CartelAristocratTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Millennial Gargoyle");
         harness.assertInGraveyard(player1, "Armored Transport");
-        assertThat(aristocrat.getProtectionFromColorsUntilEndOfTurn())
+        assertThat(PermanentGrants.protectionColorsOf(gd, aristocrat))
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
     }
 

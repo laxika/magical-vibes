@@ -27,7 +27,7 @@ class BattlegraceAngelTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -40,7 +40,7 @@ class BattlegraceAngelTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(5);
-        assertThat(angel.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -51,14 +51,14 @@ class BattlegraceAngelTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -71,7 +71,7 @@ class BattlegraceAngelTest extends BaseCardTest {
 
         assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Battlegrace Angel"));
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -100,7 +100,7 @@ class BattlegraceAngelTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(6);
-        assertThat(attacker.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.LIFELINK)).isTrue();
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
 
@@ -118,6 +118,6 @@ class BattlegraceAngelTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.LIFELINK)).isFalse();
     }
 }

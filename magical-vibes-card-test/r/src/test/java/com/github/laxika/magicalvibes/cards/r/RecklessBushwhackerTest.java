@@ -35,17 +35,17 @@ class RecklessBushwhackerTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent bushwhacker = findPermanent(player1, "Reckless Bushwhacker");
         assertThat(ally.getPowerModifier()).isEqualTo(1);
-        assertThat(ally.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
         assertThat(bushwhacker.getPowerModifier()).isZero();
         assertThat(opponent.getPowerModifier()).isZero();
-        assertThat(opponent.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         gs.advanceStep(gd);
 
         assertThat(ally.getPowerModifier()).isZero();
-        assertThat(ally.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -60,7 +60,7 @@ class RecklessBushwhackerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ally.getPowerModifier()).isZero();
-        assertThat(ally.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -88,7 +88,7 @@ class RecklessBushwhackerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(ally.getPowerModifier()).isZero();
-        assertThat(ally.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -124,7 +124,7 @@ class RecklessBushwhackerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ally.getPowerModifier()).isEqualTo(1);
-        assertThat(ally.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -147,8 +147,8 @@ class RecklessBushwhackerTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard() instanceof GrizzlyBears)
                 .findFirst().orElseThrow();
         assertThat(ally.getPowerModifier()).isEqualTo(1);
-        assertThat(ally.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
         assertThat(laterCreature.getPowerModifier()).isZero();
-        assertThat(laterCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.HASTE)).isFalse();
     }
 }

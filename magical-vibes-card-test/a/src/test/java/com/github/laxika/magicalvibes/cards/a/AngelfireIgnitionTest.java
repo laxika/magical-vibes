@@ -37,11 +37,11 @@ class AngelfireIgnitionTest extends BaseCardTest {
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -62,11 +62,11 @@ class AngelfireIgnitionTest extends BaseCardTest {
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -113,11 +113,11 @@ class AngelfireIgnitionTest extends BaseCardTest {
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -182,11 +182,11 @@ class AngelfireIgnitionTest extends BaseCardTest {
 
         Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test

@@ -28,7 +28,7 @@ class GoldenScaleAeronautTest extends BaseCardTest {
         resolveEtbTargeting(thespian);
 
         assertThat(thespian.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(thespian.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, thespian, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -42,7 +42,7 @@ class GoldenScaleAeronautTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(thespian.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, thespian, Keyword.FLYING)).isFalse();
         assertThat(thespian.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -66,7 +66,7 @@ class GoldenScaleAeronautTest extends BaseCardTest {
         resolveEtbTargeting(thespian);
 
         assertThat(thespian.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(thespian.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, thespian, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -86,7 +86,7 @@ class GoldenScaleAeronautTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(thespian.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(thespian.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, thespian, Keyword.FLYING)).isTrue();
     }
 
     private void castGoldenScaleAeronaut() {

@@ -1135,9 +1135,6 @@ public class TurnProgressionService {
         }
         gameData.forEachPermanent((controllerId, permanent) ->
                 permanent.clearLosesAllAbilitiesUntilNextTurnController(nextActive));
-        final UUID turnStartPlayerId = nextActive;
-        gameData.forEachPermanent((ignored, permanent) ->
-                permanent.clearProtectionFromPlayersUntilTurnOf(turnStartPlayerId));
         // The turn begins: the "until your next turn" effects of the player whose turn it is end.
         gameData.rulesEvents.occur(new TurnEvent.Began(nextActive));
         if (logPlayerControlBegun(gameData, Duration.Start.AFFECTED_PLAYERS_NEXT_TURN)) {

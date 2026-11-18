@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -34,7 +35,7 @@ class CavalryDrillmasterTest extends BaseCardTest {
 
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -50,7 +51,7 @@ class CavalryDrillmasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -71,7 +72,7 @@ class CavalryDrillmasterTest extends BaseCardTest {
 
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -105,7 +106,7 @@ class CavalryDrillmasterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(drillmaster.getEffectivePower()).isEqualTo(4);
         assertThat(drillmaster.getEffectiveToughness()).isEqualTo(1);
-        assertThat(drillmaster.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, drillmaster)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -125,6 +126,6 @@ class CavalryDrillmasterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(1);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FIRST_STRIKE);
     }
 }

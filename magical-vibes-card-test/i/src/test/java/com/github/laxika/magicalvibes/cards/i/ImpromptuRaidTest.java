@@ -33,7 +33,7 @@ class ImpromptuRaidTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Devoted Druid");
         assertThat(bears.getCard().getId()).isEqualTo(creature.getId());
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
         assertThat(gd.playerDecks.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(creature.getId()));
         assertThat(DelayedPermanentMoves.waiting(gd))

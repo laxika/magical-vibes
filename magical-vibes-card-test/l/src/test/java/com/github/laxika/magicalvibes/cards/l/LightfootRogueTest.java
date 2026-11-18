@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -44,7 +45,7 @@ class LightfootRogueTest extends BaseCardTest {
         Permanent rogue = attackWithRoll(9);
 
         assertThat(rogue.getPowerModifier()).isZero();
-        assertThat(rogue.getGrantedKeywords()).containsExactly(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, rogue)).containsExactly(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -54,7 +55,7 @@ class LightfootRogueTest extends BaseCardTest {
 
         assertThat(rogue.getPowerModifier()).isEqualTo(1);
         assertThat(rogue.getToughnessModifier()).isZero();
-        assertThat(rogue.getGrantedKeywords()).containsExactly(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, rogue)).containsExactly(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -64,7 +65,7 @@ class LightfootRogueTest extends BaseCardTest {
 
         assertThat(rogue.getPowerModifier()).isEqualTo(3);
         assertThat(rogue.getToughnessModifier()).isZero();
-        assertThat(rogue.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, rogue))
                 .containsExactlyInAnyOrder(Keyword.FIRST_STRIKE, Keyword.DEATHTOUCH);
     }
 
@@ -76,7 +77,7 @@ class LightfootRogueTest extends BaseCardTest {
 
         assertThat(rogue.getPowerModifier()).isEqualTo(result == 1 ? 0 : 1);
         assertThat(rogue.getToughnessModifier()).isZero();
-        assertThat(rogue.getGrantedKeywords()).containsExactly(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, rogue)).containsExactly(Keyword.DEATHTOUCH);
     }
 
     @ParameterizedTest
@@ -84,7 +85,7 @@ class LightfootRogueTest extends BaseCardTest {
     @DisplayName("Every roll outcome expires at the end of the turn")
     void rollOutcomeExpiresAtEndOfTurn(int result) {
         Permanent rogue = attackWithRoll(result);
-        assertThat(rogue.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, rogue)).contains(Keyword.DEATHTOUCH);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
@@ -106,10 +107,10 @@ class LightfootRogueTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(attacker.getPowerModifier()).isEqualTo(3);
-        assertThat(attacker.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, attacker))
                 .containsExactlyInAnyOrder(Keyword.FIRST_STRIKE, Keyword.DEATHTOUCH);
         assertThat(otherRogue.getPowerModifier()).isZero();
-        assertThat(otherRogue.getGrantedKeywords()).isEmpty();
+        assertThat(PermanentGrants.keywordsOf(gd, otherRogue)).isEmpty();
     }
 
     private Permanent attackWithRoll(int result) {

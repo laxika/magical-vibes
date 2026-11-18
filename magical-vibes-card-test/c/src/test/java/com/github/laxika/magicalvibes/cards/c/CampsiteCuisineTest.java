@@ -57,8 +57,8 @@ class CampsiteCuisineTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, firstAttacker)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, firstAttacker)).isEqualTo(5);
-        assertThat(firstAttacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(firstAttacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, firstAttacker, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, firstAttacker, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstFood, secondFood);
     }
 }

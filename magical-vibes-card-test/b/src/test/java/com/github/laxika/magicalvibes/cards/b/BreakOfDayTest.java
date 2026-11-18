@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -125,7 +126,7 @@ class BreakOfDayTest extends BaseCardTest {
             if (p.getCard().hasType(CardType.CREATURE)) {
                 assertThat(p.getPowerModifier()).isEqualTo(1);
                 assertThat(p.getToughnessModifier()).isEqualTo(1);
-                assertThat(p.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+                assertThat(PermanentGrants.keywordsOf(gd, p)).contains(Keyword.INDESTRUCTIBLE);
             }
         }
     }
@@ -143,7 +144,7 @@ class BreakOfDayTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+                assertThat(PermanentGrants.keywordsOf(gd, p)).contains(Keyword.INDESTRUCTIBLE);
             }
         }
     }
@@ -163,7 +164,7 @@ class BreakOfDayTest extends BaseCardTest {
             if (p.getCard().hasType(CardType.CREATURE)) {
                 assertThat(p.getPowerModifier()).isEqualTo(1);
                 assertThat(p.getToughnessModifier()).isEqualTo(1);
-                assertThat(p.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+                assertThat(PermanentGrants.keywordsOf(gd, p)).doesNotContain(Keyword.INDESTRUCTIBLE);
             }
         }
     }
@@ -180,7 +181,7 @@ class BreakOfDayTest extends BaseCardTest {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+                assertThat(PermanentGrants.keywordsOf(gd, p)).doesNotContain(Keyword.INDESTRUCTIBLE);
             }
         }
     }

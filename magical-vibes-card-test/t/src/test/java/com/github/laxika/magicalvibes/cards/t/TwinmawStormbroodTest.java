@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -95,7 +96,7 @@ class TwinmawStormbroodTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castWithAlternateCost(player1, 0, target.getId());
-        target.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -140,7 +141,7 @@ class TwinmawStormbroodTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castWithAlternateCost(player1, 0, target.getId());
-        target.getProtectionFromColorsUntilEndOfTurn().add(CardColor.RED);
+        PermanentGrants.protectionFromColorUntilEndOfTurn(gd, target, CardColor.RED);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -158,7 +159,7 @@ class TwinmawStormbroodTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castWithAlternateCost(player1, 0, target.getId());
-        target.getProtectionFromColorsUntilEndOfTurn().add(CardColor.WHITE);
+        PermanentGrants.protectionFromColorUntilEndOfTurn(gd, target, CardColor.WHITE);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");

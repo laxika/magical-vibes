@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.b.BalefulStrix;
 import com.github.laxika.magicalvibes.cards.s.SavageLands;
@@ -90,7 +91,7 @@ class FromTheAshesTest extends BaseCardTest {
     @DisplayName("Indestructible nonbasic lands do not create a search")
     void indestructibleLandsDoNotCreateSearches() {
         Permanent indestructible = harness.addToBattlefieldAndReturn(player1, new SavageLands());
-        indestructible.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, indestructible, Keyword.INDESTRUCTIBLE);
         harness.addToBattlefield(player2, new SavageLands());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new Island()));

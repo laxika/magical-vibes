@@ -23,14 +23,14 @@ class TitanicUltimatumTest extends BaseCardTest {
 
         assertThat(own.getEffectivePower()).isEqualTo(7);
         assertThat(own.getEffectiveToughness()).isEqualTo(7);
-        assertThat(own.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(own.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(own.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.LIFELINK)).isTrue();
 
         assertThat(enemy.getEffectivePower()).isEqualTo(2);
-        assertThat(enemy.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(enemy.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(enemy.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, enemy, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, enemy, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, enemy, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -40,7 +40,7 @@ class TitanicUltimatumTest extends BaseCardTest {
         castUltimatum();
 
         assertThat(own.getEffectivePower()).isEqualTo(7);
-        assertThat(own.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.LIFELINK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -48,9 +48,9 @@ class TitanicUltimatumTest extends BaseCardTest {
 
         assertThat(own.getEffectivePower()).isEqualTo(2);
         assertThat(own.getEffectiveToughness()).isEqualTo(2);
-        assertThat(own.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(own.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(own.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -61,9 +61,9 @@ class TitanicUltimatumTest extends BaseCardTest {
 
         assertThat(late.getEffectivePower()).isEqualTo(2);
         assertThat(late.getEffectiveToughness()).isEqualTo(2);
-        assertThat(late.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(late.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(late.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, late, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, late, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, late, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -75,9 +75,9 @@ class TitanicUltimatumTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(7);
         assertThat(creature.getEffectiveToughness()).isEqualTo(7);
-        assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(creature.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
     }
 
     private void castUltimatum() {

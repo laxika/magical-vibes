@@ -51,8 +51,8 @@ class WargTacticsTest extends BaseCardTest {
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(bear.getEffectivePower()).isEqualTo(3);
         assertThat(bear.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HEXPROOF)).isTrue();
     }
 
     @Test
@@ -66,8 +66,8 @@ class WargTacticsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(bear.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HEXPROOF)).isFalse();
     }
 
     @Test
@@ -102,11 +102,11 @@ class WargTacticsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Serra Angel");
         assertThat(angel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(angel.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(angel.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.HEXPROOF)).isTrue();
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(bear.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HEXPROOF)).isFalse();
     }
 
     @Test
@@ -124,7 +124,7 @@ class WargTacticsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Serra Angel");
         assertThat(angel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(angel.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.HEXPROOF)).isTrue();
         harness.assertInGraveyard(player2, "Warg Tactics");
         assertThat(gd.stack).isEmpty();
     }
@@ -138,8 +138,8 @@ class WargTacticsTest extends BaseCardTest {
         cast(1, bear.getId());
 
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HEXPROOF)).isTrue();
     }
     private void cast(int mode, java.util.UUID targetId) {
         prepareCard();

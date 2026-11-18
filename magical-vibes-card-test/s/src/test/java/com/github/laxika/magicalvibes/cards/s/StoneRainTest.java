@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.Brushland;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -87,7 +88,7 @@ class StoneRainTest extends BaseCardTest {
     @DisplayName("Does not destroy an indestructible land")
     void indestructibleLandSurvives() {
         var mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        mountain.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, mountain, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new StoneRain()));
         harness.addMana(player1, ManaColor.RED, 3);
 

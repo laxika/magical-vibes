@@ -26,7 +26,7 @@ class SurgeEngineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(engine.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, engine, Keyword.DEFENDER)).isFalse();
         assertThat(gqs.hasCantBeBlocked(gd, engine)).isTrue();
     }
 

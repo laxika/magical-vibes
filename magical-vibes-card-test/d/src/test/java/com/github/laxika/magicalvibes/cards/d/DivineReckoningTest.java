@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
@@ -157,7 +158,7 @@ class DivineReckoningTest extends BaseCardTest {
         Permanent elves = harness.addToBattlefieldAndReturn(player1, new TyphoidRats());
 
         // Grant Typhoid Rats indestructible
-        elves.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, elves, Keyword.INDESTRUCTIBLE);
 
         harness.setHand(player1, List.of(new DivineReckoning()));
         harness.addMana(player1, ManaColor.WHITE, 4);

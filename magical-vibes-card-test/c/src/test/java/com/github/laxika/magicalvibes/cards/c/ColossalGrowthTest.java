@@ -30,8 +30,8 @@ class ColossalGrowthTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(3);
         assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -45,8 +45,8 @@ class ColossalGrowthTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(4);
         assertThat(target.getToughnessModifier()).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -62,8 +62,8 @@ class ColossalGrowthTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -108,15 +108,15 @@ class ColossalGrowthTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(3);
         assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(7);
         assertThat(target.getToughnessModifier()).isEqualTo(7);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     private Permanent addCreature(Player player) {

@@ -29,8 +29,8 @@ class AgonasaurRexTest extends BaseCardTest {
         cycleAgonasaurRex(bears);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
         harness.assertInGraveyard(player1, "Agonasaur Rex");
         harness.assertInHand(player1, "Grizzly Bears");
     }
@@ -43,8 +43,8 @@ class AgonasaurRexTest extends BaseCardTest {
         cycleAgonasaurRex(vehicle);
 
         assertThat(vehicle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(vehicle.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(vehicle.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vehicle, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vehicle, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -83,8 +83,8 @@ class AgonasaurRexTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -104,7 +104,7 @@ class AgonasaurRexTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, target.getId());
         }
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         harness.assertNotInHand(player1, "Forest");
 
         harness.passBothPriorities();

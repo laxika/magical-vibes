@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.MoriokReaver;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -35,7 +36,7 @@ class DrossHopperTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Moriok Reaver");
 
         // Hopper should have flying
-        assertThat(hopper.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, hopper)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -49,14 +50,14 @@ class DrossHopperTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, reaverId);
         harness.passBothPriorities();
 
-        assertThat(hopper.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, hopper)).contains(Keyword.FLYING);
 
         // Advance to cleanup step
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(hopper.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, hopper)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -105,12 +106,12 @@ class DrossHopperTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Moriok Reaver");
         harness.assertInGraveyard(player1, "Moriok Reaver");
         assertThat(gd.stack).hasSize(1);
-        assertThat(hopper.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, hopper)).doesNotContain(Keyword.FLYING);
 
         harness.passBothPriorities();
 
-        assertThat(hopper.getGrantedKeywords()).contains(Keyword.FLYING);
-        assertThat(otherHopper.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, hopper)).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, otherHopper)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -124,7 +125,7 @@ class DrossHopperTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, reaver.getId());
         harness.passBothPriorities();
 
-        assertThat(hopper.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, hopper)).contains(Keyword.FLYING);
         harness.assertInGraveyard(player1, "Moriok Reaver");
     }
 }

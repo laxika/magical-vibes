@@ -43,7 +43,7 @@ class UnconventionalTacticsTest extends BaseCardTest {
         Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(creature.getEffectivePower()).isEqualTo(5);
         assertThat(creature.getEffectiveToughness()).isEqualTo(5);
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -65,7 +65,7 @@ class UnconventionalTacticsTest extends BaseCardTest {
         Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -171,7 +171,7 @@ class UnconventionalTacticsTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test

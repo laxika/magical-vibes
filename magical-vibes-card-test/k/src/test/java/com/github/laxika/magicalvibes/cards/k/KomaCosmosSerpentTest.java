@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mistwalker;
@@ -92,13 +93,13 @@ class KomaCosmosSerpentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(koma.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, koma)).contains(Keyword.INDESTRUCTIBLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(koma.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, koma)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -128,11 +129,11 @@ class KomaCosmosSerpentTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Mistwalker");
         harness.assertNotOnBattlefield(player1, "Mistwalker");
-        assertThat(koma.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, koma)).doesNotContain(Keyword.INDESTRUCTIBLE);
 
         harness.passBothPriorities();
 
-        assertThat(koma.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, koma)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test

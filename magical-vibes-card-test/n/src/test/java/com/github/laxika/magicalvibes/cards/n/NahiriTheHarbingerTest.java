@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlwaysWatching;
 import com.github.laxika.magicalvibes.cards.d.DevilthornFox;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -107,7 +108,7 @@ class NahiriTheHarbingerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Hulking Devil");
         Permanent dragon = findPermanent(player1, "Hulking Devil");
-        assertThat(dragon.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, dragon)).contains(Keyword.HASTE);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

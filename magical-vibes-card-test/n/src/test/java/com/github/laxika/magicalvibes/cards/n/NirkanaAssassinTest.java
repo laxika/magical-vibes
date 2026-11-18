@@ -25,7 +25,7 @@ class NirkanaAssassinTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         resolveAllTriggers();
 
-        assertThat(assassin.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, assassin, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -41,7 +41,7 @@ class NirkanaAssassinTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(assassin.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, assassin, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test
@@ -53,13 +53,13 @@ class NirkanaAssassinTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
         resolveAllTriggers();
-        assertThat(assassin.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, assassin, Keyword.DEATHTOUCH)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(assassin.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, assassin, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test
@@ -72,15 +72,15 @@ class NirkanaAssassinTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.WHITE, 1);
 
             harness.activateAbility(player1, 1, null, null);
-            assertThat(assassin.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+            assertThat(gqs.hasKeyword(gd, assassin, Keyword.DEATHTOUCH)).isFalse();
             harness.passBothPriorities();
 
             harness.assertLife(player1, 21);
             assertThat(gd.stack).hasSize(1);
-            assertThat(assassin.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+            assertThat(gqs.hasKeyword(gd, assassin, Keyword.DEATHTOUCH)).isFalse();
 
             resolveAllTriggers();
-            assertThat(assassin.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+            assertThat(gqs.hasKeyword(gd, assassin, Keyword.DEATHTOUCH)).isTrue();
         });
     }
 
@@ -99,9 +99,9 @@ class NirkanaAssassinTest extends BaseCardTest {
             assertThat(gd.stack).hasSize(2);
             resolveAllTriggers();
 
-            assertThat(first.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-            assertThat(second.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-            assertThat(medic.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+            assertThat(gqs.hasKeyword(gd, first, Keyword.DEATHTOUCH)).isTrue();
+            assertThat(gqs.hasKeyword(gd, second, Keyword.DEATHTOUCH)).isTrue();
+            assertThat(gqs.hasKeyword(gd, medic, Keyword.DEATHTOUCH)).isFalse();
         });
     }
 
@@ -117,7 +117,7 @@ class NirkanaAssassinTest extends BaseCardTest {
 
             harness.activateAbility(player1, 1, null, null);
             resolveAllTriggers();
-            assertThat(assassin.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+            assertThat(gqs.hasKeyword(gd, assassin, Keyword.DEATHTOUCH)).isTrue();
 
             harness.activateAbility(player1, 2, null, null);
             harness.passBothPriorities();
@@ -125,11 +125,11 @@ class NirkanaAssassinTest extends BaseCardTest {
             assertThat(gd.stack).hasSize(1);
             resolveAllTriggers();
 
-            assertThat(assassin.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+            assertThat(gqs.hasKeyword(gd, assassin, Keyword.DEATHTOUCH)).isTrue();
             harness.forceStep(TurnStep.END_STEP);
             harness.clearPriorityPassed();
             harness.passBothPriorities();
-            assertThat(assassin.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+            assertThat(gqs.hasKeyword(gd, assassin, Keyword.DEATHTOUCH)).isFalse();
         });
     }
 }

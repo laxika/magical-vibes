@@ -27,7 +27,7 @@ class LargerThanLifeTest extends BaseCardTest {
         assertThat(creature.getToughnessModifier()).isEqualTo(4);
         assertThat(creature.getEffectivePower()).isEqualTo(6);
         assertThat(creature.getEffectiveToughness()).isEqualTo(6);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -42,7 +42,7 @@ class LargerThanLifeTest extends BaseCardTest {
         Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -58,10 +58,10 @@ class LargerThanLifeTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(6);
         assertThat(target.getEffectiveToughness()).isEqualTo(6);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(own.getPowerModifier()).isZero();
         assertThat(own.getToughnessModifier()).isZero();
-        assertThat(own.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Larger Than Life");
     }
 
@@ -77,7 +77,7 @@ class LargerThanLifeTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(10);
         assertThat(target.getEffectiveToughness()).isEqualTo(10);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -85,7 +85,7 @@ class LargerThanLifeTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -104,7 +104,7 @@ class LargerThanLifeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Larger Than Life");
     }
 

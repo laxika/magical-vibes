@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -28,7 +29,7 @@ class WoodcuttersGritTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(3);
         assertThat(creature.getToughnessModifier()).isEqualTo(3);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HEXPROOF);
     }
 
     @Test
@@ -58,7 +59,7 @@ class WoodcuttersGritTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.HEXPROOF);
     }
 
     @Test

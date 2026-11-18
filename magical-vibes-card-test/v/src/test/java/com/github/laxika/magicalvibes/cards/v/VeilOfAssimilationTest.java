@@ -30,7 +30,7 @@ class VeilOfAssimilationTest extends BaseCardTest {
 
         assertThat(bears.getEffectivePower()).isEqualTo(3);
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -45,7 +45,7 @@ class VeilOfAssimilationTest extends BaseCardTest {
 
         assertThat(bears.getEffectivePower()).isEqualTo(3);
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -63,7 +63,7 @@ class VeilOfAssimilationTest extends BaseCardTest {
         chooseOtherArtifactTarget(ownBears);
         assertThat(ownBears.getEffectivePower()).isEqualTo(3);
         assertThat(opponentBears.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentBears.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -78,7 +78,7 @@ class VeilOfAssimilationTest extends BaseCardTest {
 
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -97,7 +97,7 @@ class VeilOfAssimilationTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(4);
         assertThat(creature.getEffectiveToughness()).isEqualTo(6);
-        assertThat(creature.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -116,7 +116,7 @@ class VeilOfAssimilationTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(creature.getEffectivePower()).isEqualTo(1);
         assertThat(creature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(creature.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -136,7 +136,7 @@ class VeilOfAssimilationTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(creature.getEffectivePower()).isEqualTo(1);
         assertThat(creature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(creature.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test

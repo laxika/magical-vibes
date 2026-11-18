@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
@@ -123,7 +124,7 @@ class HoardSmelterDragonTest extends BaseCardTest {
     void boostAppliesEvenIfIndestructible() {
         Permanent dragon = addCreatureReady(player1, new HoardSmelterDragon());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
-        artifact.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, artifact, Keyword.INDESTRUCTIBLE);
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.activateAbility(player1, 0, null, artifact.getId());

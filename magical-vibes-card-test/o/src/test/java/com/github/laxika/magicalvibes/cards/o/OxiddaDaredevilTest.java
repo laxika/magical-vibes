@@ -39,7 +39,7 @@ class OxiddaDaredevilTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(daredevil.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, daredevil, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -62,7 +62,7 @@ class OxiddaDaredevilTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(daredevil.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, daredevil, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -86,15 +86,15 @@ class OxiddaDaredevilTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.assertInGraveyard(player1, "Memnite");
-        assertThat(daredevil.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, daredevil, Keyword.HASTE)).isFalse();
 
         harness.passBothPriorities();
-        assertThat(daredevil.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, daredevil, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(daredevil.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, daredevil, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -123,11 +123,11 @@ class OxiddaDaredevilTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(first).doesNotContain(second);
         harness.assertInGraveyard(player1, "Memnite");
-        assertThat(daredevil.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, daredevil, Keyword.HASTE)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(daredevil.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, daredevil, Keyword.HASTE)).isTrue();
     }
 
 }

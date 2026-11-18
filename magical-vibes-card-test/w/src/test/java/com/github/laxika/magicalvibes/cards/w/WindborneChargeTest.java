@@ -32,10 +32,10 @@ class WindborneChargeTest extends BaseCardTest {
 
         assertThat(first.getEffectivePower()).isEqualTo(4);
         assertThat(first.getEffectiveToughness()).isEqualTo(4);
-        assertThat(first.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isTrue();
         assertThat(second.getEffectivePower()).isEqualTo(4);
         assertThat(second.getEffectiveToughness()).isEqualTo(4);
-        assertThat(second.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -53,10 +53,10 @@ class WindborneChargeTest extends BaseCardTest {
 
         assertThat(first.getEffectivePower()).isEqualTo(2);
         assertThat(first.getEffectiveToughness()).isEqualTo(2);
-        assertThat(first.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isFalse();
         assertThat(second.getEffectivePower()).isEqualTo(2);
         assertThat(second.getEffectiveToughness()).isEqualTo(2);
-        assertThat(second.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -111,10 +111,10 @@ class WindborneChargeTest extends BaseCardTest {
         harness.assertInHand(player1, "Grazing Gladehart");
         assertThat(second.getEffectivePower()).isEqualTo(4);
         assertThat(second.getEffectiveToughness()).isEqualTo(4);
-        assertThat(second.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
         assertThat(untargeted.getEffectivePower()).isEqualTo(2);
         assertThat(untargeted.getEffectiveToughness()).isEqualTo(2);
-        assertThat(untargeted.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, untargeted, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -137,6 +137,6 @@ class WindborneChargeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(untargeted.getEffectivePower()).isEqualTo(2);
         assertThat(untargeted.getEffectiveToughness()).isEqualTo(2);
-        assertThat(untargeted.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, untargeted, Keyword.FLYING)).isFalse();
     }
 }

@@ -40,7 +40,7 @@ class KinsbaileBalloonistTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger -> may prompt
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(giant.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -54,7 +54,7 @@ class KinsbaileBalloonistTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger -> may prompt
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(giant.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -63,14 +63,14 @@ class KinsbaileBalloonistTest extends BaseCardTest {
         addCreatureReady(player1, new KinsbaileBalloonist());
         Permanent giant = addCreatureReady(player2, new HillcomberGiant());
 
-        assertThat(giant.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FLYING)).isFalse();
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, giant.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(giant.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -83,13 +83,13 @@ class KinsbaileBalloonistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, giant.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(giant.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(giant.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -107,7 +107,7 @@ class KinsbaileBalloonistTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(balloonist.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, balloonist, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -123,7 +123,7 @@ class KinsbaileBalloonistTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(giant.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FLYING)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 }

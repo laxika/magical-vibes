@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -93,11 +94,11 @@ class GoblinWizardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, goblin.getId());
         harness.passBothPriorities();
 
-        assertThat(goblin.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, goblin)).contains(CardColor.WHITE);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(goblin.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, goblin)).doesNotContain(CardColor.WHITE);
     }
 
     @Test
@@ -123,7 +124,7 @@ class GoblinWizardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, goblin.getId());
         harness.passBothPriorities();
 
-        assertThat(goblin.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, goblin)).contains(CardColor.WHITE);
     }
 
     @Test
@@ -137,7 +138,7 @@ class GoblinWizardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, goblinPermanent.getId());
         harness.passBothPriorities();
 
-        assertThat(goblinPermanent.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, goblinPermanent)).contains(CardColor.WHITE);
     }
 
     @Test
@@ -210,7 +211,7 @@ class GoblinWizardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, wizard.getId());
         harness.passBothPriorities();
 
-        assertThat(wizard.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, wizard)).contains(CardColor.WHITE);
         assertThat(wizard.isTapped()).isTrue();
     }
 
@@ -223,6 +224,6 @@ class GoblinWizardTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, wizard.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(wizard.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, wizard)).isEmpty();
     }
 }

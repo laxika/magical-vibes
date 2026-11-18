@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -49,7 +50,7 @@ class TerminusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        bears.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.INDESTRUCTIBLE);
 
         harness.setHand(player1, List.of(new Terminus()));
         harness.addMana(player1, ManaColor.WHITE, 2);

@@ -510,7 +510,7 @@ public class CARDNAME extends Card {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
             if (p.getCard().hasType(CardType.CREATURE)) {
-                assertThat(p.getGrantedKeywords()).contains(Keyword.KEYWORD);
+                assertThat(gqs.hasKeyword(gd, p, Keyword.KEYWORD)).isTrue();
             }
         }
     }

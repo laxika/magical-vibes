@@ -30,7 +30,7 @@ class YellowjacketHeartlessMarauderTest extends BaseCardTest {
 
         assertThat(yellowjacket.getPowerModifier()).isEqualTo(1);
         assertThat(yellowjacket.getToughnessModifier()).isZero();
-        assertThat(yellowjacket.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, yellowjacket, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -44,7 +44,7 @@ class YellowjacketHeartlessMarauderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(yellowjacket.getPowerModifier()).isZero();
-        assertThat(yellowjacket.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, yellowjacket, Keyword.LIFELINK)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -60,7 +60,7 @@ class YellowjacketHeartlessMarauderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(yellowjacket.getPowerModifier()).isZero();
-        assertThat(yellowjacket.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, yellowjacket, Keyword.LIFELINK)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -79,7 +79,7 @@ class YellowjacketHeartlessMarauderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(yellowjacket.getPowerModifier()).isZero();
-        assertThat(yellowjacket.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, yellowjacket, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -94,7 +94,7 @@ class YellowjacketHeartlessMarauderTest extends BaseCardTest {
         Permanent yellowjacket = findPermanent(player1, "Yellowjacket, Heartless Marauder");
         assertThat(gd.stack).isEmpty();
         assertThat(yellowjacket.getPowerModifier()).isZero();
-        assertThat(yellowjacket.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, yellowjacket, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -108,7 +108,7 @@ class YellowjacketHeartlessMarauderTest extends BaseCardTest {
 
         assertThat(yellowjacket.getPowerModifier()).isEqualTo(2);
         assertThat(yellowjacket.getToughnessModifier()).isZero();
-        assertThat(yellowjacket.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, yellowjacket, Keyword.LIFELINK)).isTrue();
     }
 
     @Test

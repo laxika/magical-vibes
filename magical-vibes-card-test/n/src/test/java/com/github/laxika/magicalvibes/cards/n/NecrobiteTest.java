@@ -48,7 +48,7 @@ class NecrobiteTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isTrue();
         assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
     }
 
@@ -63,7 +63,7 @@ class NecrobiteTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isTrue();
         assertThat(gd.regenerationShieldCount(bears.getId())).isEqualTo(1);
     }
 
@@ -82,7 +82,7 @@ class NecrobiteTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test
@@ -131,7 +131,7 @@ class NecrobiteTest extends BaseCardTest {
         assertThat(creature.isTapped()).isTrue();
         assertThat(creature.getMarkedDamage()).isZero();
         assertThat(gd.regenerationShieldCount(creature.getId())).isZero();
-        assertThat(creature.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
 
         creature.setMarkedDamage(2);
         harness.runStateBasedActions();
@@ -171,7 +171,7 @@ class NecrobiteTest extends BaseCardTest {
         Permanent returned = harness.addToBattlefieldAndReturn(player1, original.getCard());
         harness.passBothPriorities();
 
-        assertThat(returned.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.DEATHTOUCH)).isFalse();
         assertThat(gd.regenerationShieldCount(returned.getId())).isZero();
         harness.assertInGraveyard(player1, "Necrobite");
         assertThat(gd.stack).isEmpty();

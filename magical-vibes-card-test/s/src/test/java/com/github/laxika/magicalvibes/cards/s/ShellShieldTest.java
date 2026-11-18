@@ -30,7 +30,7 @@ class ShellShieldTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
     }
 
     @Test
@@ -42,7 +42,7 @@ class ShellShieldTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
 
         harness.setHand(player2, List.of(new MightOfMurasa()));
         harness.addMana(player2, ManaColor.GREEN, 2);
@@ -63,7 +63,7 @@ class ShellShieldTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
     }
 
     @Test
@@ -90,7 +90,7 @@ class ShellShieldTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(3);
         assertThat(target.getToughnessModifier()).isEqualTo(6);
-        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
     }
 
     @Test
@@ -109,7 +109,7 @@ class ShellShieldTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Canopy Baloth");
         harness.assertInGraveyard(player2, "Into the Roil");
         assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
     }
 
     @Test
@@ -130,7 +130,7 @@ class ShellShieldTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Shell Shield");
         assertThat(gd.stack).isEmpty();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
     }
 
     private void castResolve(Permanent target, boolean kicked) {

@@ -34,7 +34,7 @@ class RushOfAdrenalineTest extends BaseCardTest {
         Permanent bear = findPermanent(player1, "Quilled Wolf");
         assertThat(bear.getEffectivePower()).isEqualTo(4);
         assertThat(bear.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -54,7 +54,7 @@ class RushOfAdrenalineTest extends BaseCardTest {
         Permanent bear = findPermanent(player1, "Quilled Wolf");
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -82,10 +82,10 @@ class RushOfAdrenalineTest extends BaseCardTest {
 
         assertThat(opposingWolf.getEffectivePower()).isEqualTo(4);
         assertThat(opposingWolf.getEffectiveToughness()).isEqualTo(3);
-        assertThat(opposingWolf.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingWolf, Keyword.TRAMPLE)).isTrue();
         assertThat(ownWolf.getEffectivePower()).isEqualTo(2);
         assertThat(ownWolf.getEffectiveToughness()).isEqualTo(2);
-        assertThat(ownWolf.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownWolf, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Rush of Adrenaline");
     }
 
@@ -101,7 +101,7 @@ class RushOfAdrenalineTest extends BaseCardTest {
 
         assertThat(wolf.getEffectivePower()).isEqualTo(6);
         assertThat(wolf.getEffectiveToughness()).isEqualTo(4);
-        assertThat(wolf.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -109,7 +109,7 @@ class RushOfAdrenalineTest extends BaseCardTest {
 
         assertThat(wolf.getEffectivePower()).isEqualTo(2);
         assertThat(wolf.getEffectiveToughness()).isEqualTo(2);
-        assertThat(wolf.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -133,6 +133,6 @@ class RushOfAdrenalineTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(other.getEffectivePower()).isEqualTo(2);
         assertThat(other.getEffectiveToughness()).isEqualTo(2);
-        assertThat(other.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
     }
 }

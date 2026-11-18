@@ -937,14 +937,14 @@ public class StackEntry {
     /**
      * Keywords the resolving permanent enters with as a <em>granted</em> keyword rather than a
      * printed one (Choreographed Sparks: "the copy gains haste"). Kept off the {@link Card} so the
-     * UI can tell granted keywords from printed ones; drained into the entering
-     * {@code Permanent.grantedKeywords} by {@code StackResolutionService}.
+     * UI can tell granted keywords from printed ones; {@code StackResolutionService} turns them into an
+     * until-end-of-turn keyword grant on the entering permanent.
      */
     private final Set<Keyword> grantedKeywordsOnEntry = EnumSet.noneOf(Keyword.class);
     /**
      * Keywords the resolving permanent enters with that last until the start of its controller's
-     * next turn (Jade Orb of Dragonkind's hexproof on a Dragon). Drained into the entering
-     * {@code Permanent.untilNextTurnKeywords} by {@code StackResolutionService}.
+     * next turn (Jade Orb of Dragonkind's hexproof on a Dragon). {@code StackResolutionService} turns them
+     * into a keyword grant on the entering permanent that lasts until the spell controller's next turn.
      */
     private final Set<Keyword> untilNextTurnKeywordsOnEntry = EnumSet.noneOf(Keyword.class);
     /** Suspend grants haste for as long as the same player controls the resulting permanent. */

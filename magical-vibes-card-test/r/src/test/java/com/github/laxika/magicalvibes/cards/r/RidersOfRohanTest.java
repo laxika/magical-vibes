@@ -40,7 +40,7 @@ class RidersOfRohanTest extends BaseCardTest {
         castNormally();
 
         Permanent riders = findPermanent(player1, "Riders of Rohan");
-        assertThat(riders.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, riders, Keyword.HASTE)).isFalse();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
@@ -59,7 +59,7 @@ class RidersOfRohanTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent riders = findPermanent(player1, "Riders of Rohan");
-        assertThat(riders.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, riders, Keyword.HASTE)).isTrue();
         assertThat(findPermanents(player1, "Human Knight")).hasSize(2);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

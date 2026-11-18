@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Cobblebrute;
 import com.github.laxika.magicalvibes.cards.m.MaritimeGuard;
 import com.github.laxika.magicalvibes.cards.b.BoggartBrute;
@@ -174,7 +175,7 @@ class ReaveSoulTest extends BaseCardTest {
     @DisplayName("Cannot destroy an indestructible creature")
     void doesNotDestroyIndestructibleCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MaritimeGuard());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
 
         prepare();
         harness.castSorcery(player1, 0, target.getId());

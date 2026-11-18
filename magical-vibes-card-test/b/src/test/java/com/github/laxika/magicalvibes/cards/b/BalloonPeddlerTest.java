@@ -45,14 +45,14 @@ class BalloonPeddlerTest extends BaseCardTest {
         assertThat(peddler.isTapped()).isTrue();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         harness.assertInGraveyard(player1, "Fresh Volunteers");
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -90,11 +90,11 @@ class BalloonPeddlerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Island");
         assertThat(peddler.isTapped()).isTrue();
-        assertThat(peddler.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, peddler, Keyword.FLYING)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(peddler.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, peddler, Keyword.FLYING)).isTrue();
     }
 
     @Test

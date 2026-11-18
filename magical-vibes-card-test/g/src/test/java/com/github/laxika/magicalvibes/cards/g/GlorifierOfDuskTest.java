@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,7 +28,7 @@ class GlorifierOfDuskTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(glorifier.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, glorifier)).contains(Keyword.FLYING);
     }
 
     // ===== Activated ability: pay 2 life for vigilance =====
@@ -42,7 +43,7 @@ class GlorifierOfDuskTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(glorifier.getGrantedKeywords()).contains(Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, glorifier)).contains(Keyword.VIGILANCE);
     }
 
     // ===== Both abilities together =====
@@ -59,7 +60,7 @@ class GlorifierOfDuskTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
-        assertThat(glorifier.getGrantedKeywords()).contains(Keyword.FLYING, Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, glorifier)).contains(Keyword.FLYING, Keyword.VIGILANCE);
     }
 
     // ===== Life payment validation =====
@@ -87,7 +88,7 @@ class GlorifierOfDuskTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        assertThat(glorifier.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, glorifier)).doesNotContain(Keyword.FLYING);
     }
 
     // ===== End of turn cleanup =====
@@ -102,14 +103,14 @@ class GlorifierOfDuskTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        assertThat(glorifier.getGrantedKeywords()).contains(Keyword.FLYING, Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, glorifier)).contains(Keyword.FLYING, Keyword.VIGILANCE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(glorifier.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
-        assertThat(glorifier.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, glorifier)).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, glorifier)).doesNotContain(Keyword.VIGILANCE);
     }
 
     @Test
@@ -120,15 +121,15 @@ class GlorifierOfDuskTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(glorifier.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, glorifier)).doesNotContain(Keyword.FLYING);
         harness.passBothPriorities();
-        assertThat(glorifier.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, glorifier)).contains(Keyword.FLYING);
 
         harness.activateAbility(player1, 0, 1, null, null);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
-        assertThat(glorifier.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, glorifier)).doesNotContain(Keyword.VIGILANCE);
         harness.passBothPriorities();
-        assertThat(glorifier.getGrantedKeywords()).contains(Keyword.FLYING, Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, glorifier)).contains(Keyword.FLYING, Keyword.VIGILANCE);
     }
 
     @Test
@@ -143,7 +144,7 @@ class GlorifierOfDuskTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
-        assertThat(glorifier.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, glorifier)).doesNotContain(Keyword.VIGILANCE);
     }
 
     @Test
@@ -160,7 +161,7 @@ class GlorifierOfDuskTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
-        assertThat(glorifier.getGrantedKeywords()).contains(Keyword.FLYING, Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, glorifier)).contains(Keyword.FLYING, Keyword.VIGILANCE);
         assertThat(glorifier.isTapped()).isTrue();
     }
 
@@ -176,8 +177,8 @@ class GlorifierOfDuskTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(glorifier.getGrantedKeywords()).contains(Keyword.FLYING, Keyword.VIGILANCE);
-        assertThat(ally.getGrantedKeywords()).doesNotContain(Keyword.FLYING, Keyword.VIGILANCE);
-        assertThat(opponent.getGrantedKeywords()).doesNotContain(Keyword.FLYING, Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, glorifier)).contains(Keyword.FLYING, Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, ally)).doesNotContain(Keyword.FLYING, Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, opponent)).doesNotContain(Keyword.FLYING, Keyword.VIGILANCE);
     }
 }

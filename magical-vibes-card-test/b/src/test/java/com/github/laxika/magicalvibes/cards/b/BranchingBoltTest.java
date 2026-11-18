@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.cards.c.CloudheathDrake;
@@ -139,7 +140,7 @@ class BranchingBoltTest extends BaseCardTest {
         giveMana(player1);
 
         harness.castModalInstant(player1, 0, 2, List.of(drake.getId(), spider.getId()));
-        drake.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, drake, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Cloudheath Drake");
@@ -157,7 +158,7 @@ class BranchingBoltTest extends BaseCardTest {
         giveMana(player1);
 
         harness.castModalInstant(player1, 0, 2, List.of(drake.getId(), spider.getId()));
-        spider.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, spider, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Cloudheath Drake");
@@ -173,7 +174,7 @@ class BranchingBoltTest extends BaseCardTest {
         giveMana(player1);
 
         harness.castInstant(player1, 0, 1, spider.getId());
-        spider.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, spider, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Jungle Weaver");

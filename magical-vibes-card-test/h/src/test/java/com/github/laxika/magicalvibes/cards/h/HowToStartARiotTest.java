@@ -30,7 +30,7 @@ class HowToStartARiotTest extends BaseCardTest {
 
         cast(targetCreature, player2.getId());
 
-        assertThat(targetCreature.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, targetCreature, Keyword.MENACE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, targetCreature)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, firstOpponentCreature)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, secondOpponentCreature)).isEqualTo(4);
@@ -46,7 +46,7 @@ class HowToStartARiotTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(targetCreature.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, targetCreature, Keyword.MENACE)).isFalse();
         assertThat(gqs.getEffectivePower(gd, targetCreature)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
     }
@@ -80,8 +80,8 @@ class HowToStartARiotTest extends BaseCardTest {
 
         cast(opponentCreature, player1.getId());
 
-        assertThat(opponentCreature.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(ownCreature.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.MENACE)).isFalse();
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
@@ -94,7 +94,7 @@ class HowToStartARiotTest extends BaseCardTest {
 
         cast(creature, player1.getId());
 
-        assertThat(creature.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
@@ -129,7 +129,7 @@ class HowToStartARiotTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(4);
-        assertThat(creature.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

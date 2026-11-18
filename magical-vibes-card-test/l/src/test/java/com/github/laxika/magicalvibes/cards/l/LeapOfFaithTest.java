@@ -28,7 +28,7 @@ class LeapOfFaithTest extends BaseCardTest {
 
         castResolve(creature);
 
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -41,7 +41,7 @@ class LeapOfFaithTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -101,7 +101,7 @@ class LeapOfFaithTest extends BaseCardTest {
         castResolve(creature);
         shock(creature);
 
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
@@ -114,7 +114,7 @@ class LeapOfFaithTest extends BaseCardTest {
         castResolve(protectedCreature);
         shock(otherCreature);
 
-        assertThat(otherCreature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FLYING)).isFalse();
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
@@ -153,7 +153,7 @@ class LeapOfFaithTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
         harness.assertInGraveyard(player1, "Leap of Faith");
         assertThat(gd.stack).isEmpty();
     }

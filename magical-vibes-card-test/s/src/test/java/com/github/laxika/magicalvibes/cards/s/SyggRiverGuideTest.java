@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -35,7 +36,7 @@ class SyggRiverGuideTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class) != null).isTrue();
         harness.handleListChoice(player1, "RED");
 
-        assertThat(sygg.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, sygg)).contains(CardColor.RED);
     }
 
     @Test
@@ -49,13 +50,13 @@ class SyggRiverGuideTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
 
-        assertThat(sygg.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, sygg)).contains(CardColor.RED);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(sygg.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, sygg)).doesNotContain(CardColor.RED);
     }
 
     @Test
@@ -83,8 +84,8 @@ class SyggRiverGuideTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(adept.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.GREEN);
-        assertThat(sygg.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, adept)).containsExactly(CardColor.GREEN);
+        assertThat(PermanentGrants.protectionColorsOf(gd, sygg)).isEmpty();
     }
 
     @Test
@@ -118,7 +119,7 @@ class SyggRiverGuideTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLACK");
 
-        assertThat(sygg.getProtectionFromColorsUntilEndOfTurn())
+        assertThat(PermanentGrants.protectionColorsOf(gd, sygg))
                 .containsExactlyInAnyOrder(CardColor.RED, CardColor.BLACK);
         assertThat(sygg.isTapped()).isFalse();
     }
@@ -151,7 +152,7 @@ class SyggRiverGuideTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
-        assertThat(adept.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, adept)).containsExactly(CardColor.WHITE);
     }
 
     @Test
@@ -166,7 +167,7 @@ class SyggRiverGuideTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
 
-        assertThat(adept.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, adept)).containsExactly(CardColor.RED);
     }
 
     @Test

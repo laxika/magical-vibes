@@ -59,11 +59,11 @@ class JunkyardGeniusTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificed.getCard());
         assertThat(ally.getPowerModifier()).isEqualTo(1);
-        assertThat(ally.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(ally.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
         assertThat(genius.getPowerModifier()).isZero();
-        assertThat(genius.hasKeyword(Keyword.MENACE)).isFalse();
-        assertThat(genius.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, genius, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, genius, Keyword.HASTE)).isFalse();
         assertThat(opponent.getPowerModifier()).isZero();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -71,8 +71,8 @@ class JunkyardGeniusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ally.getPowerModifier()).isZero();
-        assertThat(ally.hasKeyword(Keyword.MENACE)).isFalse();
-        assertThat(ally.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -89,8 +89,8 @@ class JunkyardGeniusTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());
         assertThat(ally.getPowerModifier()).isEqualTo(1);
-        assertThat(ally.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(ally.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -123,11 +123,11 @@ class JunkyardGeniusTest extends BaseCardTest {
 
         assertThat(ally.getPowerModifier()).isEqualTo(2);
         assertThat(ally.getToughnessModifier()).isZero();
-        assertThat(ally.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(ally.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
         assertThat(secondGenius.getPowerModifier()).isEqualTo(1);
-        assertThat(secondGenius.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(secondGenius.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondGenius, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondGenius, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -145,11 +145,11 @@ class JunkyardGeniusTest extends BaseCardTest {
 
         assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
         assertThat(beforeResolution.getToughnessModifier()).isZero();
-        assertThat(beforeResolution.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(beforeResolution.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.HASTE)).isTrue();
         assertThat(afterResolution.getPowerModifier()).isZero();
-        assertThat(afterResolution.hasKeyword(Keyword.MENACE)).isFalse();
-        assertThat(afterResolution.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -171,8 +171,8 @@ class JunkyardGeniusTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Powerstone");
         assertThat(ally.getPowerModifier()).isEqualTo(1);
-        assertThat(ally.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(ally.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
     }
 
     private void addActivationMana() {

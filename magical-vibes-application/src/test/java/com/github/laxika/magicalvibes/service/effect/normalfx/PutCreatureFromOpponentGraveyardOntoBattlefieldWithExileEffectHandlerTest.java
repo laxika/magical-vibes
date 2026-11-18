@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -119,7 +120,7 @@ class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest 
 
                 verify(permanentRemovalService).removeCardFromGraveyardById(gd, target.getId());
                 verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id),
-                        argThat(p -> p.getGrantedKeywords().contains(Keyword.HASTE)
+                        argThat(p -> PermanentGrants.keywordsOf(gd, p).contains(Keyword.HASTE)
                                 && p.isExileIfLeavesBattlefield()),
                         eq(Set.of()));
                 assertThat(DelayedPermanentMoves.waiting(gd)).isNotEmpty();

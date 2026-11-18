@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BlindingDrone;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LoxodonSmiter;
@@ -127,7 +128,7 @@ class RealitySmasherTest extends BaseCardTest {
     @Test
     void grantedWardDoesNotMakeItsSpellTriggerSeeAnOpponentsActivatedAbility() {
         Permanent smasher = addReadyRealitySmasher();
-        smasher.getGrantedKeywords().add(Keyword.WARD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, smasher, Keyword.WARD);
         Permanent drone = addCreatureReady(player2, new BlindingDrone());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

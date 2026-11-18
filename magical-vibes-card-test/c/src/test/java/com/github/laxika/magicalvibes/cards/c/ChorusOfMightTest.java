@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -35,7 +36,7 @@ class ChorusOfMightTest extends BaseCardTest {
         Permanent bear = gqs.findPermanentById(gd, bearId);
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isEqualTo(2);
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -52,7 +53,7 @@ class ChorusOfMightTest extends BaseCardTest {
         Permanent enemyBear = gqs.findPermanentById(gd, enemyBearId);
         assertThat(enemyBear.getPowerModifier()).isEqualTo(1);
         assertThat(enemyBear.getToughnessModifier()).isEqualTo(1);
-        assertThat(enemyBear.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, enemyBear)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -72,7 +73,7 @@ class ChorusOfMightTest extends BaseCardTest {
         Permanent bear = gqs.findPermanentById(gd, bearId);
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test

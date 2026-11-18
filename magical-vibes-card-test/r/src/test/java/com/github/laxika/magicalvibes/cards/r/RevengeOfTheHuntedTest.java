@@ -37,7 +37,7 @@ class RevengeOfTheHuntedTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getEffectivePower()).isEqualTo(8);
         assertThat(bears.getEffectiveToughness()).isEqualTo(8);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
 
@@ -59,7 +59,7 @@ class RevengeOfTheHuntedTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }
 
@@ -73,7 +73,7 @@ class RevengeOfTheHuntedTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(8);
         assertThat(target.getEffectiveToughness()).isEqualTo(8);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
 
@@ -120,7 +120,7 @@ class RevengeOfTheHuntedTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(8);
         assertThat(target.getEffectiveToughness()).isEqualTo(8);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.assertInGraveyard(player1, "Revenge of the Hunted");

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ColossodonYearling;
 import com.github.laxika.magicalvibes.cards.f.Flatten;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -27,7 +28,7 @@ class GlintTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isEqualTo(3);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HEXPROOF);
     }
 
     @Test
@@ -41,7 +42,7 @@ class GlintTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.HEXPROOF);
     }
 
     @Test
@@ -79,7 +80,7 @@ class GlintTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isEqualTo(6);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HEXPROOF);
     }
 
     @Test
@@ -118,7 +119,7 @@ class GlintTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isEqualTo(3);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HEXPROOF);
         assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(card -> card instanceof Flatten);
         assertThat(gd.stack).isEmpty();
     }

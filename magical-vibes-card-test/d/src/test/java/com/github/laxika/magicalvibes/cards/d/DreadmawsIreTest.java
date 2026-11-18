@@ -31,7 +31,7 @@ class DreadmawsIreTest extends BaseCardTest {
 
         assertThat(attacker.getEffectivePower()).isEqualTo(4);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(4);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
 
         resolveCombat();
 
@@ -59,7 +59,7 @@ class DreadmawsIreTest extends BaseCardTest {
 
         assertThat(attacker.getEffectivePower()).isEqualTo(2);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());
@@ -97,7 +97,7 @@ class DreadmawsIreTest extends BaseCardTest {
 
         assertThat(attacker.getEffectivePower()).isEqualTo(2);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Dreadmaw's Ire");
     }
 

@@ -35,8 +35,8 @@ class DoomskarTitanTest extends BaseCardTest {
         Permanent titan = findPermanent(player1, "Doomskar Titan");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
         assertThat(gqs.getEffectivePower(gd, titan)).isEqualTo(5);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(titan.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, titan, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -58,8 +58,8 @@ class DoomskarTitanTest extends BaseCardTest {
         Permanent titan = findPermanent(player1, "Doomskar Titan");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, titan)).isEqualTo(4);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(titan.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, titan, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -81,7 +81,7 @@ class DoomskarTitanTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Grizzled Outrider");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -121,7 +121,7 @@ class DoomskarTitanTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(5);
-        assertThat(opponent.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -135,12 +135,12 @@ class DoomskarTitanTest extends BaseCardTest {
 
         Permanent outrider = harness.addToBattlefieldAndReturn(player1, new GrizzledOutrider());
         assertThat(gqs.getEffectivePower(gd, outrider)).isEqualTo(5);
-        assertThat(outrider.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, outrider, Keyword.HASTE)).isFalse();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, outrider)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, outrider)).isEqualTo(5);
-        assertThat(outrider.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, outrider, Keyword.HASTE)).isTrue();
     }
 
     @Test

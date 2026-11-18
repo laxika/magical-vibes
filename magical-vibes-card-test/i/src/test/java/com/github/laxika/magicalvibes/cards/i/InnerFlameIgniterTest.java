@@ -30,7 +30,7 @@ class InnerFlameIgniterTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isEqualTo(2);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -45,7 +45,7 @@ class InnerFlameIgniterTest extends BaseCardTest {
         activateAndResolve();
 
         assertThat(bears.getPowerModifier()).isEqualTo(3);
-        assertThat(bears.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -60,7 +60,7 @@ class InnerFlameIgniterTest extends BaseCardTest {
         activateAndResolve();
 
         assertThat(enemyBears.getPowerModifier()).isEqualTo(0);
-        assertThat(enemyBears.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, enemyBears, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -76,9 +76,9 @@ class InnerFlameIgniterTest extends BaseCardTest {
         activateAndResolve();
 
         assertThat(igniter.getPowerModifier()).isEqualTo(4);
-        assertThat(igniter.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, igniter, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(lateCreature.getPowerModifier()).isEqualTo(1);
-        assertThat(lateCreature.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -93,15 +93,15 @@ class InnerFlameIgniterTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(first.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(second.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FIRST_STRIKE)).isFalse();
 
         activateAndResolve();
 
         assertThat(first.getPowerModifier()).isEqualTo(4);
         assertThat(second.getPowerModifier()).isEqualTo(4);
-        assertThat(first.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -114,17 +114,17 @@ class InnerFlameIgniterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
         assertThat(igniter.getPowerModifier()).isZero();
-        assertThat(igniter.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, igniter, Keyword.FIRST_STRIKE)).isFalse();
         Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new WoodlandChangeling());
 
         harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(lateCreature.getPowerModifier()).isEqualTo(2);
-        assertThat(lateCreature.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.FIRST_STRIKE)).isFalse();
         harness.passBothPriorities();
 
         assertThat(lateCreature.getPowerModifier()).isEqualTo(3);
-        assertThat(lateCreature.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -139,14 +139,14 @@ class InnerFlameIgniterTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(igniter.getPowerModifier()).isZero();
-        assertThat(igniter.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, igniter, Keyword.FIRST_STRIKE)).isFalse();
         harness.addMana(player1, ManaColor.RED, 9);
         activateAndResolve();
         activateAndResolve();
-        assertThat(igniter.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, igniter, Keyword.FIRST_STRIKE)).isFalse();
         activateAndResolve();
         assertThat(igniter.getPowerModifier()).isEqualTo(3);
-        assertThat(igniter.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, igniter, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -166,11 +166,11 @@ class InnerFlameIgniterTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
         harness.passBothPriorities();
 
         assertThat(creature.getPowerModifier()).isEqualTo(3);
-        assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     private void activateAndResolve() {

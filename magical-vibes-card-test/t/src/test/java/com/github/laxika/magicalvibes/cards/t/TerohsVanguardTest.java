@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SternJudge;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -28,10 +29,10 @@ class TerohsVanguardTest extends BaseCardTest {
         Permanent vanguard = castVanguard();
         Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new SternJudge());
 
-        assertThat(vanguard.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
-        assertThat(otherCreature.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
-        assertThat(opponentCreature.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        assertThat(lateCreature.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, vanguard)).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, otherCreature)).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, opponentCreature)).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, lateCreature)).isEmpty();
     }
 
     @Test
@@ -42,8 +43,8 @@ class TerohsVanguardTest extends BaseCardTest {
 
         Permanent vanguard = castVanguard();
 
-        assertThat(vanguard.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        assertThat(otherCreature.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, vanguard)).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, otherCreature)).isEmpty();
     }
 
     @Test
@@ -53,7 +54,7 @@ class TerohsVanguardTest extends BaseCardTest {
 
         Permanent vanguard = castVanguard();
 
-        assertThat(vanguard.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, vanguard)).isEmpty();
     }
 
     @Test
@@ -67,7 +68,7 @@ class TerohsVanguardTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(vanguard.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, vanguard)).contains(CardColor.BLACK);
     }
 
     @Test
@@ -77,7 +78,7 @@ class TerohsVanguardTest extends BaseCardTest {
         Permanent vanguard = castVanguard();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(vanguard.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, vanguard)).isEmpty();
     }
 
     @Test
@@ -88,7 +89,7 @@ class TerohsVanguardTest extends BaseCardTest {
 
         Permanent vanguard = castVanguard();
 
-        assertThat(vanguard.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, vanguard)).contains(CardColor.BLACK);
     }
 
     @Test
@@ -100,8 +101,8 @@ class TerohsVanguardTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Teroh's Vanguard")
-                .getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, findPermanent(player1, "Teroh's Vanguard")))
+                .contains(CardColor.BLACK);
     }
 
     @Test
@@ -115,7 +116,7 @@ class TerohsVanguardTest extends BaseCardTest {
         harness.setGraveyard(player1, graveyardCards(7));
         harness.passBothPriorities();
 
-        assertThat(vanguard.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, vanguard)).isEmpty();
     }
 
     @Test
@@ -130,7 +131,7 @@ class TerohsVanguardTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(recipient.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, recipient)).contains(CardColor.BLACK);
     }
 
     private Permanent castVanguard() {

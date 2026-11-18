@@ -99,7 +99,7 @@ class AmbuscadeShamanTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent shaman = findPermanent(player1, "Ambuscade Shaman");
-        assertThat(shaman.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, shaman, Keyword.HASTE)).isTrue();
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

@@ -53,13 +53,13 @@ class AcademicDisputeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
     }
 
     @Test
@@ -139,7 +139,7 @@ class AcademicDisputeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.handleCardChosen(player1, -1);
 
-        assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBlockEachCombatEffect.class)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(lesson);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WallOfWood;
@@ -122,7 +123,7 @@ class SmashToDustTest extends BaseCardTest {
         prepareSpell();
         harness.castSorcery(player1, 0, 1, wall.getId());
 
-        wall.getRemovedKeywords().add(Keyword.DEFENDER);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, wall, Keyword.DEFENDER);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Wall of Wood");

@@ -34,9 +34,9 @@ class AppealAuthorityTest extends BaseCardTest {
         // X = 2 (own1 + own2); opponent creature ignored
         assertThat(own1.getPowerModifier()).isEqualTo(2);
         assertThat(own1.getToughnessModifier()).isEqualTo(2);
-        assertThat(own1.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, own1, Keyword.TRAMPLE)).isTrue();
         assertThat(own2.getPowerModifier()).isEqualTo(0);
-        assertThat(own2.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, own2, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -53,7 +53,7 @@ class AppealAuthorityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -82,8 +82,8 @@ class AppealAuthorityTest extends BaseCardTest {
 
         assertThat(opp1.isTapped()).isTrue();
         assertThat(opp2.isTapped()).isTrue();
-        assertThat(own.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(opp1.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opp1, Keyword.VIGILANCE)).isFalse();
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -103,7 +103,7 @@ class AppealAuthorityTest extends BaseCardTest {
         harness.castFlashback(player1, 0, List.of());
         harness.passBothPriorities();
 
-        assertThat(own.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -134,7 +134,7 @@ class AppealAuthorityTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(own.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -162,7 +162,7 @@ class AppealAuthorityTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -195,7 +195,7 @@ class AppealAuthorityTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(opponent);
         harness.passBothPriorities();
 
-        assertThat(own.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.VIGILANCE)).isFalse();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
     }
@@ -213,7 +213,7 @@ class AppealAuthorityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(second.isTapped()).isTrue();
-        assertThat(own.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -249,7 +249,7 @@ class AppealAuthorityTest extends BaseCardTest {
 
         Permanent later = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(own.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, later, Keyword.VIGILANCE)).isFalse();
     }
 
@@ -270,8 +270,8 @@ class AppealAuthorityTest extends BaseCardTest {
 
         assertThat(opponent.isTapped()).isTrue();
         assertThat(own.getPowerModifier()).isEqualTo(1);
-        assertThat(own.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(own.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.VIGILANCE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
     }

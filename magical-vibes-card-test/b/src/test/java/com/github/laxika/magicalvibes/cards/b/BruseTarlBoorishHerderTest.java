@@ -27,8 +27,8 @@ class BruseTarlBoorishHerderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -47,10 +47,10 @@ class BruseTarlBoorishHerderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ownTarget.getId());
         harness.passBothPriorities();
 
-        assertThat(ownTarget.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(ownTarget.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(opposingTarget.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
-        assertThat(opposingTarget.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownTarget, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownTarget, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingTarget, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingTarget, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -63,15 +63,15 @@ class BruseTarlBoorishHerderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -84,8 +84,8 @@ class BruseTarlBoorishHerderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bruse.getId());
         harness.passBothPriorities();
 
-        assertThat(bruse.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(bruse.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bruse, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bruse, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -100,9 +100,9 @@ class BruseTarlBoorishHerderTest extends BaseCardTest {
                 .removePermanentToHand(gd, target));
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
-        assertThat(bruse.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
-        assertThat(bruse.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bruse, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bruse, Keyword.LIFELINK)).isFalse();
     }
 }

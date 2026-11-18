@@ -50,7 +50,7 @@ class EddytrailHawkTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -66,7 +66,7 @@ class EddytrailHawkTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.getOrDefault(player1.getId(), 0)).isZero();
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -105,7 +105,7 @@ class EddytrailHawkTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -135,11 +135,11 @@ class EddytrailHawkTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
     }
 

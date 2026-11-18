@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -60,7 +61,7 @@ class ChainAssassinationTest extends BaseCardTest {
     @DisplayName("Draws when the legal target is indestructible and another creature died")
     void drawsWhenTargetIsIndestructible() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         otherCreature.setMarkedDamage(2);
         harness.runStateBasedActions();
@@ -176,7 +177,7 @@ class ChainAssassinationTest extends BaseCardTest {
     @DisplayName("Does not draw when an indestructible target survives and no creature died")
     void doesNotDrawForSurvivingTargetWithoutEarlierDeath() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new ChainAssassination()));
         harness.setLibrary(player1, List.of(new Forest()));
         addNormalMana();

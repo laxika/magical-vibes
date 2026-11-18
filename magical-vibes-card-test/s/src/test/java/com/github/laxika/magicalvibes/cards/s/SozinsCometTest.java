@@ -32,8 +32,8 @@ class SozinsCometTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(ownCreature.hasKeyword(Keyword.FIREBENDING)).isTrue();
-        assertThat(opposingCreature.hasKeyword(Keyword.FIREBENDING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FIREBENDING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.FIREBENDING)).isFalse();
 
         declareAttackers(List.of(0));
         harness.passUntil(TurnStep.END_OF_COMBAT);
@@ -55,8 +55,8 @@ class SozinsCometTest extends BaseCardTest {
 
         Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new EarthVillageRuffians());
 
-        assertThat(earlyCreature.hasKeyword(Keyword.FIREBENDING)).isTrue();
-        assertThat(lateCreature.hasKeyword(Keyword.FIREBENDING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, earlyCreature, Keyword.FIREBENDING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.FIREBENDING)).isFalse();
         assertThat(earlyCreature.getTemporaryTriggerEffects(Triggers.attacks()))
                 .hasSize(1);
         assertThat(lateCreature.getTemporaryTriggerEffects(Triggers.attacks()))
@@ -76,7 +76,7 @@ class SozinsCometTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.FIREBENDING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIREBENDING)).isFalse();
         assertThat(creature.getTemporaryTriggerEffects(Triggers.attacks()))
                 .isEmpty();
     }

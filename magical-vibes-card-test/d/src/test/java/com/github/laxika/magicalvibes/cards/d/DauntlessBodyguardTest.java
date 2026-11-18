@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BalothGorger;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -88,7 +89,7 @@ class DauntlessBodyguardTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.INDESTRUCTIBLE);
         harness.assertNotOnBattlefield(player1, "Dauntless Bodyguard");
         harness.assertInGraveyard(player1, "Dauntless Bodyguard");
     }
@@ -103,7 +104,7 @@ class DauntlessBodyguardTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.INDESTRUCTIBLE);
         harness.assertNotOnBattlefield(player1, "Dauntless Bodyguard");
     }
 
@@ -147,7 +148,7 @@ class DauntlessBodyguardTest extends BaseCardTest {
         harness.activateAbility(player1, bodyguardIdx, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.INDESTRUCTIBLE);
         harness.assertNotOnBattlefield(player1, "Dauntless Bodyguard");
     }
 

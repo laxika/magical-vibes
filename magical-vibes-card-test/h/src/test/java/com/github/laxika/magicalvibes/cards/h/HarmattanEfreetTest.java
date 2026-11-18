@@ -28,7 +28,7 @@ class HarmattanEfreetTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -41,7 +41,7 @@ class HarmattanEfreetTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -53,13 +53,13 @@ class HarmattanEfreetTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -68,11 +68,11 @@ class HarmattanEfreetTest extends BaseCardTest {
         addAbilityMana(player1);
         harness.activateAbility(player1, 0, null, efreet.getId());
         harness.passBothPriorities();
-        assertThat(efreet.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, efreet, Keyword.FLYING)).isTrue();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(efreet.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, efreet, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -99,7 +99,7 @@ class HarmattanEfreetTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -128,8 +128,8 @@ class HarmattanEfreetTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, secondTarget.getId());
         harness.passBothPriorities();
 
-        assertThat(firstTarget.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(secondTarget.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, firstTarget, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondTarget, Keyword.FLYING)).isTrue();
         assertThat(efreet.isTapped()).isTrue();
     }
 
@@ -143,7 +143,7 @@ class HarmattanEfreetTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
     private void addAbilityMana(Player player) {

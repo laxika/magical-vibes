@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GoblinSpelunkers;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.Card;
@@ -161,7 +162,7 @@ class PitTrapTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, idxOf(player1, trap), 0, null, attacker.getId());
-        attacker.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Pit Trap");
@@ -173,7 +174,7 @@ class PitTrapTest extends BaseCardTest {
     void indestructibleAttackerSurvives() {
         Permanent trap = addReadyTrap(player1);
         Permanent attacker = addAttacker(player2, new GoblinSpelunkers());
-        attacker.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.INDESTRUCTIBLE);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, idxOf(player1, trap), 0, null, attacker.getId());

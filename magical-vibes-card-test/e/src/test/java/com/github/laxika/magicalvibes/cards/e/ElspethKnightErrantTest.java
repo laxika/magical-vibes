@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.ObeliskOfBant;
@@ -56,7 +57,7 @@ class ElspethKnightErrantTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -78,7 +79,7 @@ class ElspethKnightErrantTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.FLYING);
     }
 
     @Test

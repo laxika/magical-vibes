@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DragonWhelp;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -207,7 +208,7 @@ class SarkhanSoulAflameTest extends BaseCardTest {
         harness.castFromHand(player1, new DragonWhelp(), "{2}{R}{R}");
         harness.passBothPriorities();
         Permanent dragon = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Dragon Whelp"));
-        dragon.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, dragon, Keyword.SHROUD);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

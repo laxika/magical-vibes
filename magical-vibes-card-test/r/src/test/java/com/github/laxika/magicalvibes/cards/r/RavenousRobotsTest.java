@@ -62,15 +62,15 @@ class RavenousRobotsTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(robots), null, null);
         harness.passBothPriorities();
 
-        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(opponentToken.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentToken, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(token.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
     }
 
     private Permanent addRobotToken() {
@@ -97,7 +97,7 @@ class RavenousRobotsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(robots.isTapped()).isTrue();
-        assertThat(robots.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, robots, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -163,6 +163,6 @@ class RavenousRobotsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
-                .singleElement().satisfies(token -> assertThat(token.hasKeyword(Keyword.HASTE)).isFalse());
+                .singleElement().satisfies(token -> assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse());
     }
 }

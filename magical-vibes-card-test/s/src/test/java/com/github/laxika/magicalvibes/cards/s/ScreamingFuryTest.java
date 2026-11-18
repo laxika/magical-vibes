@@ -31,7 +31,7 @@ class ScreamingFuryTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(5);
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -48,7 +48,7 @@ class ScreamingFuryTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -62,7 +62,7 @@ class ScreamingFuryTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(5);
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -111,15 +111,15 @@ class ScreamingFuryTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(10);
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
         assertThat(other.getPowerModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -135,7 +135,7 @@ class ScreamingFuryTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player1, "Screaming Fury");

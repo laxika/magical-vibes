@@ -24,13 +24,13 @@ class TidewaterMinionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(minion.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, minion, Keyword.DEFENDER)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(minion.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, minion, Keyword.DEFENDER)).isTrue();
     }
 
     @Test
@@ -93,11 +93,11 @@ class TidewaterMinionTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(minion.hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, minion, Keyword.DEFENDER)).isTrue();
 
         harness.passBothPriorities();
 
-        assertThat(minion.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, minion, Keyword.DEFENDER)).isFalse();
         assertThat(minion.isTapped()).isTrue();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GibberingHyenas;
 import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -102,7 +103,7 @@ class ReignOfTerrorTest extends BaseCardTest {
     @DisplayName("Indestructible creatures survive and do not contribute to life loss")
     void indestructibleCreatureDoesNotCount() {
         Permanent survivor = harness.addToBattlefieldAndReturn(player1, new GibberingHyenas());
-        survivor.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, survivor, Keyword.INDESTRUCTIBLE);
         harness.addToBattlefield(player2, new GibberingHyenas());
 
         castReign(0);

@@ -72,16 +72,16 @@ class StormWindriderTest extends BaseCardTest {
         harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
-        assertThat(first.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(second.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
 
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(first.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(second.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -95,7 +95,7 @@ class StormWindriderTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
 
         harness.passBothPriorities();
     }
@@ -135,8 +135,8 @@ class StormWindriderTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
         harness.passBothPriorities();
 
-        assertThat(first.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(second.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -152,7 +152,7 @@ class StormWindriderTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
 

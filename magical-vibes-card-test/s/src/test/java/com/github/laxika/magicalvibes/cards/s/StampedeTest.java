@@ -28,14 +28,14 @@ class StampedeTest extends BaseCardTest {
 
         assertThat(p1Attacker.getEffectivePower()).isEqualTo(3);
         assertThat(p1Attacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(p1Attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, p1Attacker, Keyword.TRAMPLE)).isTrue();
 
         assertThat(secondAttacker.getEffectivePower()).isEqualTo(3);
         assertThat(secondAttacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(secondAttacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondAttacker, Keyword.TRAMPLE)).isTrue();
 
         assertThat(p1Idle.getEffectivePower()).isEqualTo(2);
-        assertThat(p1Idle.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, p1Idle, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -47,14 +47,14 @@ class StampedeTest extends BaseCardTest {
         castStampede();
 
         assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(attacker.getEffectivePower()).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -70,9 +70,9 @@ class StampedeTest extends BaseCardTest {
         nonAttacker.setAttacking(true);
 
         assertThat(attacker.getEffectivePower()).isEqualTo(3);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
         assertThat(nonAttacker.getEffectivePower()).isEqualTo(2);
-        assertThat(nonAttacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nonAttacker, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -87,11 +87,11 @@ class StampedeTest extends BaseCardTest {
 
         assertThat(attacker.getEffectivePower()).isEqualTo(3);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
         assertThat(idle.getEffectivePower()).isEqualTo(2);
-        assertThat(idle.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, idle, Keyword.TRAMPLE)).isFalse();
         assertThat(defender.getEffectivePower()).isEqualTo(2);
-        assertThat(defender.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, defender, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -104,7 +104,7 @@ class StampedeTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Stampede");
     }
 
@@ -120,7 +120,7 @@ class StampedeTest extends BaseCardTest {
 
         assertThat(attacker.getEffectivePower()).isEqualTo(4);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
     private void castStampede() {

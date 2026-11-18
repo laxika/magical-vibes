@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -74,9 +75,9 @@ class RevivalOfTheAncestorsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, ownCreature))
                 .contains(Keyword.TRAMPLE, Keyword.LIFELINK);
-        assertThat(opponentCreature.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, opponentCreature))
                 .doesNotContain(Keyword.TRAMPLE, Keyword.LIFELINK);
     }
 
@@ -126,6 +127,6 @@ class RevivalOfTheAncestorsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(saga.getGrantedKeywords()).contains(Keyword.TRAMPLE, Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, saga)).contains(Keyword.TRAMPLE, Keyword.LIFELINK);
     }
 }

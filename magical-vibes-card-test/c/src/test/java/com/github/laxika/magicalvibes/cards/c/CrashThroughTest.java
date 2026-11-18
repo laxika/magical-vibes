@@ -28,8 +28,8 @@ class CrashThroughTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(own.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(enemy.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enemy, Keyword.TRAMPLE)).isFalse();
         // Started at handBefore, cast one card (-1), drew one (+1) => back to handBefore.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
@@ -42,13 +42,13 @@ class CrashThroughTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        assertThat(own.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(own.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -75,7 +75,7 @@ class CrashThroughTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
         Permanent later = harness.addToBattlefieldAndReturn(player1, new FeralProwler());
 
-        assertThat(original.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(later.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, original, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.TRAMPLE)).isFalse();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BlasterMage;
 import com.github.laxika.magicalvibes.cards.c.CrenellatedWall;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -54,7 +55,7 @@ class WordOfBlastingTest extends BaseCardTest {
     @DisplayName("Deals damage even when the targeted Wall is indestructible")
     void dealsDamageWhenWallIsIndestructible() {
         Permanent wall = harness.addToBattlefieldAndReturn(player2, new CrenellatedWall());
-        wall.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, wall, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new WordOfBlasting()));
         harness.addMana(player1, ManaColor.RED, 2);
 

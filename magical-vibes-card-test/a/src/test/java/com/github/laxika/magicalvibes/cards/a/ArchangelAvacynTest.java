@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -29,8 +30,8 @@ class ArchangelAvacynTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         Permanent avacyn = findPermanent(player1, "Archangel Avacyn");
-        assertThat(avacyn.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, avacyn)).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -40,13 +41,13 @@ class ArchangelAvacynTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Archangel Avacyn").getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, findPermanent(player1, "Archangel Avacyn"))).contains(Keyword.INDESTRUCTIBLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Archangel Avacyn").getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, findPermanent(player1, "Archangel Avacyn"))).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -115,7 +116,7 @@ class ArchangelAvacynTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Archangel Avacyn");
-        assertThat(findPermanent(player1, "Archangel Avacyn").getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, findPermanent(player1, "Archangel Avacyn")))
                 .contains(Keyword.INDESTRUCTIBLE);
     }
 

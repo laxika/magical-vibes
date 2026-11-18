@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,7 +28,7 @@ class ShredderUnrelentingTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -44,7 +45,7 @@ class ShredderUnrelentingTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -54,13 +55,13 @@ class ShredderUnrelentingTest extends BaseCardTest {
         castShredder(bears.getId());
 
         resolveAllTriggers();
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.DEATHTOUCH);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -107,7 +108,7 @@ class ShredderUnrelentingTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, ally.getId());
             resolveAllTriggers();
         });
-        assertThat(ally.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, ally)).contains(Keyword.DEATHTOUCH);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -138,7 +139,7 @@ class ShredderUnrelentingTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.DEATHTOUCH);
         assertThat(gd.stack).isEmpty();
     }
 

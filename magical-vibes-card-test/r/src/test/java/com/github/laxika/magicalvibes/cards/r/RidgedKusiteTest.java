@@ -32,13 +32,13 @@ class RidgedKusiteTest extends BaseCardTest {
         assertThat(kusite.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Urborg, Tomb of Yawgmoth");
         assertThat(kusite.getPowerModifier()).isZero();
-        assertThat(kusite.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, kusite, Keyword.FIRST_STRIKE)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(kusite.getPowerModifier()).isEqualTo(1);
         assertThat(kusite.getToughnessModifier()).isZero();
-        assertThat(kusite.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, kusite, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -111,7 +111,7 @@ class RidgedKusiteTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
-        assertThat(target.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(kusite.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Pouncing Wurm");
 
@@ -120,7 +120,7 @@ class RidgedKusiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
-        assertThat(target.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test

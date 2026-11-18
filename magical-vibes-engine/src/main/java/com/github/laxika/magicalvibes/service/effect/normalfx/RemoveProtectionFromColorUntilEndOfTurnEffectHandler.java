@@ -37,7 +37,6 @@ public class RemoveProtectionFromColorUntilEndOfTurnEffectHandler implements Nor
             return;
         }
 
-        target.getProtectionFromColorsUntilEndOfTurn().remove(remove.color());
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(), remove, target.getId(), null, null,

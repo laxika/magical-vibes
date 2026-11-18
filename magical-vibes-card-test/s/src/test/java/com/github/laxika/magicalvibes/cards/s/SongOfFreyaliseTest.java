@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalothGorger;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.i.InBolassClutches;
@@ -197,7 +198,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Baloth Gorger");
         assertThat(bears).isNotNull();
-        assertThat(bears.getGrantedKeywords()).contains(
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(
                 Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE
         );
     }
@@ -227,7 +228,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
         assertThat(bears).isNotNull();
 
         // Keywords should be cleared
-        assertThat(bears.getGrantedKeywords()).doesNotContain(
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(
                 Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE
         );
 
@@ -295,7 +296,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
         for (Permanent unaffected : List.of(findPermanent(player2, "Baloth Gorger"),
                 findPermanent(player1, "Llanowar Elves"))) {
             assertThat(unaffected.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-            assertThat(unaffected.getGrantedKeywords()).doesNotContain(
+            assertThat(PermanentGrants.keywordsOf(gd, unaffected)).doesNotContain(
                     Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
         }
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -64,7 +65,7 @@ class SunblastAngelTest extends BaseCardTest {
     void indestructibleTappedCreatureSurvives() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.tap();
-        bears.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.INDESTRUCTIBLE);
 
         harness.castFromHand(player1, new SunblastAngel(), "{4}{W}{W}");
         // Resolve the creature spell and put its trigger on the stack.

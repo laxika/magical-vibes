@@ -60,8 +60,8 @@ class SilverSableMercenaryLeaderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(sable.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sable, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -92,13 +92,13 @@ class SilverSableMercenaryLeaderTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -138,7 +138,7 @@ class SilverSableMercenaryLeaderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, sable.getId());
         harness.passBothPriorities();
 
-        assertThat(sable.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sable, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -150,7 +150,7 @@ class SilverSableMercenaryLeaderTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(sable.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, sable, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -179,7 +179,7 @@ class SilverSableMercenaryLeaderTest extends BaseCardTest {
         sable.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
         harness.passBothPriorities();
 
-        assertThat(sable.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, sable, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -192,7 +192,7 @@ class SilverSableMercenaryLeaderTest extends BaseCardTest {
         harness.passBothPriorities();
         sable.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
 
-        assertThat(sable.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sable, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -205,7 +205,7 @@ class SilverSableMercenaryLeaderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, sable.getId());
         harness.passBothPriorities();
 
-        assertThat(sable.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sable, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -218,7 +218,7 @@ class SilverSableMercenaryLeaderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, sable.getId());
         harness.passBothPriorities();
 
-        assertThat(sable.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sable, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -235,7 +235,7 @@ class SilverSableMercenaryLeaderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(sable.hasKeyword(Keyword.LIFELINK)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sable, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
     }
 }

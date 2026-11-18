@@ -62,7 +62,7 @@ class BaralAndKariZevTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(ragavan.getEffectivePower()).isEqualTo(2);
         assertThat(ragavan.getEffectiveToughness()).isEqualTo(1);
-        assertThat(ragavan.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ragavan, Keyword.HASTE)).isTrue();
     }
 
     @Test

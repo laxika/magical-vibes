@@ -29,8 +29,8 @@ class VictorysHeraldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears should now have flying and lifelink
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -44,7 +44,7 @@ class VictorysHeraldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Herald should have lifelink granted (flying is innate from Scryfall)
-        assertThat(herald.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, herald, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -61,8 +61,8 @@ class VictorysHeraldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bears that didn't attack should NOT gain flying or lifelink
-        assertThat(stayBack.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(stayBack.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, stayBack, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, stayBack, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -88,8 +88,8 @@ class VictorysHeraldTest extends BaseCardTest {
         declareAttackers(List.of(1));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -99,15 +99,15 @@ class VictorysHeraldTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         declareAttackers(List.of(0, 1));
         assertThat(gd.stack).hasSize(1);
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
         bears.setAttacking(false);
 
         harness.passBothPriorities();
 
-        assertThat(herald.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, herald, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -121,8 +121,8 @@ class VictorysHeraldTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -138,16 +138,16 @@ class VictorysHeraldTest extends BaseCardTest {
         harness.assertLife(player1, 26);
         harness.assertLife(player2, 14);
         assertThat(bears.isAttacking()).isFalse();
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(herald.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, herald, Keyword.LIFELINK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.LIFELINK)).isFalse();
-        assertThat(herald.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, herald, Keyword.LIFELINK)).isFalse();
     }
 }

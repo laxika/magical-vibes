@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FaerieGuidemother;
 import com.github.laxika.magicalvibes.cards.f.FlaxenIntruder;
 import com.github.laxika.magicalvibes.cards.g.GarenbrigSquire;
@@ -95,7 +96,7 @@ class WildbornPreserverTest extends BaseCardTest {
     @DisplayName("The reflexive ability has no target: a Wildborn Preserver with shroud gets its counters")
     void reflexiveAbilityPutsCountersOnAPreserverWithShroud() {
         Permanent preserver = harness.addToBattlefieldAndReturn(player1, new WildbornPreserver());
-        preserver.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, preserver, Keyword.SHROUD);
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castFromHand(player1, new MaraleafRider(), "{1}{G}");
         resolveAllTriggers();

@@ -25,7 +25,7 @@ class MerrowWavebreakersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wavebreakers.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, wavebreakers, Keyword.FLYING)).isTrue();
         // Paying {Q} untapped the source.
         assertThat(wavebreakers.isTapped()).isFalse();
     }
@@ -39,12 +39,12 @@ class MerrowWavebreakersTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(wavebreakers.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, wavebreakers, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(wavebreakers.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, wavebreakers, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -98,12 +98,12 @@ class MerrowWavebreakersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(wavebreakers.isTapped()).isFalse();
-        assertThat(wavebreakers.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, wavebreakers, Keyword.FLYING)).isFalse();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(wavebreakers.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, wavebreakers, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -118,9 +118,9 @@ class MerrowWavebreakersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(wavebreakers.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(ally.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(opponent.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, wavebreakers, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -135,6 +135,6 @@ class MerrowWavebreakersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(wavebreakers.isTapped()).isFalse();
-        assertThat(wavebreakers.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, wavebreakers, Keyword.FLYING)).isTrue();
     }
 }

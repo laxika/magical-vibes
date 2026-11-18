@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -30,7 +31,7 @@ class KnightOfTheEbonLegionTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(5);
-        assertThat(knight.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, knight)).contains(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -112,14 +113,14 @@ class KnightOfTheEbonLegionTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(originalPower + 6);
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(originalToughness + 6);
-        assertThat(knight.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, knight)).contains(Keyword.DEATHTOUCH);
 
         advanceToEndStep(player1);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(originalPower);
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(originalToughness);
-        assertThat(knight.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, knight)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
     @Test

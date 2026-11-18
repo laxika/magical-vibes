@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -39,7 +40,7 @@ class BladeTribeBerserkersTest extends BaseCardTest {
 
         assertThat(berserkers.getPowerModifier()).isEqualTo(3);
         assertThat(berserkers.getToughnessModifier()).isEqualTo(3);
-        assertThat(berserkers.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserkers)).contains(Keyword.HASTE);
     }
 
     @Test
@@ -55,7 +56,7 @@ class BladeTribeBerserkersTest extends BaseCardTest {
         Permanent berserkers = findBerserkers();
         assertThat(berserkers.getPowerModifier()).isEqualTo(0);
         assertThat(berserkers.getToughnessModifier()).isEqualTo(0);
-        assertThat(berserkers.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserkers)).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -72,7 +73,7 @@ class BladeTribeBerserkersTest extends BaseCardTest {
         Permanent berserkers = findBerserkers();
         assertThat(berserkers.getPowerModifier()).isEqualTo(0);
         assertThat(berserkers.getToughnessModifier()).isEqualTo(0);
-        assertThat(berserkers.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserkers)).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -89,7 +90,7 @@ class BladeTribeBerserkersTest extends BaseCardTest {
 
         Permanent berserkers = findBerserkers();
         assertThat(berserkers.getPowerModifier()).isEqualTo(0);
-        assertThat(berserkers.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserkers)).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -108,7 +109,7 @@ class BladeTribeBerserkersTest extends BaseCardTest {
         Permanent berserkers = findBerserkers();
         assertThat(berserkers.getPowerModifier()).isEqualTo(0);
         assertThat(berserkers.getToughnessModifier()).isEqualTo(0);
-        assertThat(berserkers.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserkers)).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -125,7 +126,7 @@ class BladeTribeBerserkersTest extends BaseCardTest {
         Permanent berserkers = findBerserkers();
         assertThat(berserkers.getPowerModifier()).isEqualTo(3);
         assertThat(berserkers.getToughnessModifier()).isEqualTo(3);
-        assertThat(berserkers.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, berserkers)).contains(Keyword.HASTE);
     }
 
     @Test

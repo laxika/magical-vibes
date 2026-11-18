@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -87,7 +88,7 @@ class ForcedMarchTest extends BaseCardTest {
     @DisplayName("Indestructible matching creatures survive")
     void indestructibleMatchingCreaturesSurvive() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        creature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.INDESTRUCTIBLE);
 
         castForcedMarch(2);
 
@@ -99,7 +100,7 @@ class ForcedMarchTest extends BaseCardTest {
     @DisplayName("Destroys matching creatures with shroud because it does not target")
     void destroysMatchingCreaturesWithShroud() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        creature.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.SHROUD);
 
         castForcedMarch(2);
 

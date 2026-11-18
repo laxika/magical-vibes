@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -49,7 +50,7 @@ class DevourInShadowTest extends BaseCardTest {
     void losesLifeWhenTargetIsIndestructible() {
         harness.setLife(player1, 20);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         prepareDevourInShadow();
         harness.castAndResolveInstant(player1, 0, target.getId());
 

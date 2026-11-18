@@ -38,16 +38,16 @@ class SynchronizedChargeTest extends BaseCardTest {
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(first.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(first.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(alreadyCountered.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(alreadyCountered.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(withoutCounters.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(withoutCounters.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(opponentCreature.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(opponentCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, alreadyCountered, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, alreadyCountered, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, withoutCounters, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, withoutCounters, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -59,16 +59,16 @@ class SynchronizedChargeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
-        assertThat(creature.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 

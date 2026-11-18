@@ -64,7 +64,7 @@ class OriginOfSpiderManTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.DOUBLE_STRIKE);
     }
 
     @Test

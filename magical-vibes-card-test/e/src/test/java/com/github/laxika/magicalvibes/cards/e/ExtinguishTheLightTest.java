@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LilianaVess;
@@ -93,7 +94,7 @@ class ExtinguishTheLightTest extends BaseCardTest {
     @DisplayName("Gains life even when indestructible prevents destruction")
     void gainsLifeForIndestructibleTarget() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         cast(target);
@@ -110,7 +111,7 @@ class ExtinguishTheLightTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
         prepareCard();
         harness.castInstant(player1, 0, target.getId());
-        target.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.HEXPROOF);
 
         harness.passBothPriorities();
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.m.MortalWound;
 import com.github.laxika.magicalvibes.cards.t.Tremor;
@@ -30,7 +31,7 @@ class KeeperOfKookusTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(keeper.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, keeper)).contains(CardColor.RED);
     }
 
     @Test
@@ -98,7 +99,7 @@ class KeeperOfKookusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(keeper.isTapped()).isFalse();
-        assertThat(keeper.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, keeper)).contains(CardColor.RED);
     }
 
     @Test
@@ -109,7 +110,7 @@ class KeeperOfKookusTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(keeper.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, keeper)).doesNotContain(CardColor.RED);
     }
 
     @Test
@@ -120,13 +121,13 @@ class KeeperOfKookusTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(keeper.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, keeper)).contains(CardColor.RED);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(keeper.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, keeper)).doesNotContain(CardColor.RED);
     }
 
     @Test

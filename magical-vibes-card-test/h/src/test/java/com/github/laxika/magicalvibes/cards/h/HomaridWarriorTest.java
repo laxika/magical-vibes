@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BindingGrasp;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.cards.s.SavorTheMoment;
@@ -56,7 +57,7 @@ class HomaridWarriorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(warrior.getGrantedKeywords()).contains(Keyword.SHROUD);
+        assertThat(PermanentGrants.keywordsOf(gd, warrior)).contains(Keyword.SHROUD);
         assertThat(warrior.isTapped()).isTrue();
 
         advanceToUpkeep(player1);
@@ -72,13 +73,13 @@ class HomaridWarriorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(warrior.getGrantedKeywords()).contains(Keyword.SHROUD);
+        assertThat(PermanentGrants.keywordsOf(gd, warrior)).contains(Keyword.SHROUD);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(warrior.getGrantedKeywords()).doesNotContain(Keyword.SHROUD);
+        assertThat(PermanentGrants.keywordsOf(gd, warrior)).doesNotContain(Keyword.SHROUD);
     }
 
     @Test

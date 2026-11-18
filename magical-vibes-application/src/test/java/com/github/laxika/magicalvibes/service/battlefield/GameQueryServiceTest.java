@@ -1299,7 +1299,7 @@ class GameQueryServiceTest {
         @DisplayName("returns true for granted keyword")
         void returnsTrueForGrantedKeyword() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            perm.getGrantedKeywords().add(Keyword.FLYING);
+            PermanentGrants.keywordUntilEndOfTurn(gd, perm, Keyword.FLYING);
 
             assertThat(gqs.hasKeyword(gd, perm, Keyword.FLYING)).isTrue();
         }
@@ -2169,7 +2169,7 @@ class GameQueryServiceTest {
         @DisplayName("returns true when source has protected card type")
         void returnsTrueWhenSourceMatchesProtection() {
             Permanent target = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            target.getProtectionFromCardTypes().add(CardType.ARTIFACT);
+            PermanentGrants.protectionFromCardTypeUntilEndOfTurn(gd, target, CardType.ARTIFACT);
             Permanent source = addPermanent(player2Id, createArtifact("Angel's Feather"));
 
             assertThat(gqs.hasProtectionFromSourceCardTypes(gd, target, source)).isTrue();
@@ -2179,7 +2179,7 @@ class GameQueryServiceTest {
         @DisplayName("returns false when source does not match protected type")
         void returnsFalseWhenSourceDoesNotMatch() {
             Permanent target = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            target.getProtectionFromCardTypes().add(CardType.ENCHANTMENT);
+            PermanentGrants.protectionFromCardTypeUntilEndOfTurn(gd, target, CardType.ENCHANTMENT);
             Permanent source = addPermanent(player2Id, createArtifact("Angel's Feather"));
 
             assertThat(gqs.hasProtectionFromSourceCardTypes(gd, target, source)).isFalse();
@@ -2227,7 +2227,7 @@ class GameQueryServiceTest {
         @DisplayName("returns true when card type protection matches")
         void returnsTrueFromCardTypeProtection() {
             Permanent target = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            target.getProtectionFromCardTypes().add(CardType.ARTIFACT);
+            PermanentGrants.protectionFromCardTypeUntilEndOfTurn(gd, target, CardType.ARTIFACT);
             Permanent source = addPermanent(player2Id, createArtifact("Angel's Feather"));
 
             assertThat(gqs.hasProtectionFromSource(gd, target, source)).isTrue();

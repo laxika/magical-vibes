@@ -30,7 +30,7 @@ class BoldDefenseTest extends BaseCardTest {
 
         assertThat(findCreature(player1).getEffectivePower()).isEqualTo(3);
         assertThat(findCreature(player1).getEffectiveToughness()).isEqualTo(3);
-        assertThat(findCreature(player1).hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findCreature(player1), Keyword.FIRST_STRIKE)).isFalse();
         assertThat(findCreature(player2).getEffectivePower()).isEqualTo(2);
     }
 
@@ -49,7 +49,7 @@ class BoldDefenseTest extends BaseCardTest {
         Permanent ownCreature = findCreature(player1);
         assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(ownCreature.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(findCreature(player2).getEffectivePower()).isEqualTo(2);
     }
 
@@ -71,7 +71,7 @@ class BoldDefenseTest extends BaseCardTest {
         Permanent ownCreature = findCreature(player1);
         assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(ownCreature.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -110,11 +110,11 @@ class BoldDefenseTest extends BaseCardTest {
         for (Permanent affected : List.of(original, beforeResolution)) {
             assertThat(affected.getEffectivePower()).isEqualTo(4);
             assertThat(affected.getEffectiveToughness()).isEqualTo(4);
-            assertThat(affected.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, affected, Keyword.FIRST_STRIKE)).isTrue();
         }
         assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
         assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
-        assertThat(afterResolution.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -132,7 +132,7 @@ class BoldDefenseTest extends BaseCardTest {
         Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new StoneworkPuma());
         assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
         assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(laterCreature.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     private Permanent findCreature(com.github.laxika.magicalvibes.model.Player player) {

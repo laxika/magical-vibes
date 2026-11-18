@@ -30,12 +30,12 @@ class ManholeCoverTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -88,11 +88,11 @@ class ManholeCoverTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0, bears.getId());
         harness.passBothPriorities();
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Manhole Cover");
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -111,13 +111,13 @@ class ManholeCoverTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Manhole Cover");
         harness.assertInGraveyard(player1, "Manhole Cover");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
 
         harness.passBothPriorities();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         harness.assertInHand(player1, "Island");
         harness.passBothPriorities();
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test

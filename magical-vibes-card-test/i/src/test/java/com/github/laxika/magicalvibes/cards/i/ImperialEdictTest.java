@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlertShuInfantry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.ForestBear;
@@ -75,7 +76,7 @@ class ImperialEdictTest extends BaseCardTest {
     @DisplayName("Indestructible creature is not destroyed (destroy, not sacrifice)")
     void indestructibleCreatureSurvives() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new ForestBear());
-        bear.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bear, Keyword.INDESTRUCTIBLE);
 
         harness.setHand(player1, List.of(new ImperialEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -142,7 +143,7 @@ class ImperialEdictTest extends BaseCardTest {
     @DisplayName("Opponent may choose an indestructible creature even when another could be destroyed")
     void opponentCanChooseIndestructibleCreature() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new ForestBear());
-        bear.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bear, Keyword.INDESTRUCTIBLE);
         harness.addToBattlefield(player2, new AlertShuInfantry());
         harness.setHand(player1, List.of(new ImperialEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -162,8 +163,8 @@ class ImperialEdictTest extends BaseCardTest {
     @DisplayName("Shroud and hexproof do not prevent choosing and destroying a creature")
     void chosenCreatureIsNotTargeted() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new ForestBear());
-        bear.getGrantedKeywords().add(Keyword.SHROUD);
-        bear.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bear, Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bear, Keyword.HEXPROOF);
         harness.addToBattlefield(player2, new AlertShuInfantry());
         harness.setHand(player1, List.of(new ImperialEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);

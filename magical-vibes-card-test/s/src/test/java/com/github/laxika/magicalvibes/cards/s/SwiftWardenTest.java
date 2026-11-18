@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RiverDarter;
 import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
 import com.github.laxika.magicalvibes.cards.a.AggressiveUrge;
@@ -31,7 +32,7 @@ class SwiftWardenTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, warden.getId());
         resolveAllTriggers();
 
-        assertThat(warden.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, warden)).contains(Keyword.HEXPROOF);
     }
 
     @Test
@@ -74,7 +75,7 @@ class SwiftWardenTest extends BaseCardTest {
         harness.castCreature(player1, 0, merfolk.getId());
         resolveAllTriggers();
 
-        assertThat(merfolk.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, merfolk)).contains(Keyword.HEXPROOF);
     }
 
     @Test
@@ -91,7 +92,7 @@ class SwiftWardenTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(merfolk.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, merfolk)).doesNotContain(Keyword.HEXPROOF);
     }
 
     @Test

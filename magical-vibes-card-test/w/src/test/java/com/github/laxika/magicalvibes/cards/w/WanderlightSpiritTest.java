@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -50,7 +51,7 @@ class WanderlightSpiritTest extends BaseCardTest {
     void canBlockCreatureWithGrantedFlying() {
         Permanent spirit = addReadyBlocker();
         Permanent attacker = addAttackingCreature(new GrizzlyBears());
-        attacker.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.FLYING);
 
         beginBlockerDeclaration();
 
@@ -64,7 +65,7 @@ class WanderlightSpiritTest extends BaseCardTest {
     void cannotBlockCreatureWithRemovedFlying() {
         addReadyBlocker();
         Permanent attacker = addAttackingCreature(new AirElemental());
-        attacker.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, attacker, Keyword.FLYING);
 
         beginBlockerDeclaration();
 

@@ -35,16 +35,16 @@ class CavalierOfFlameTest extends BaseCardTest {
 
         assertThat(source.getEffectivePower()).isEqualTo(7);
         assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
-        assertThat(ownCreature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isTrue();
         assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(source.getEffectivePower()).isEqualTo(6);
         assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(ownCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -99,7 +99,7 @@ class CavalierOfFlameTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(cavalier.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cavalier, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -116,9 +116,9 @@ class CavalierOfFlameTest extends BaseCardTest {
 
         assertThat(cavalier.getEffectivePower()).isEqualTo(8);
         assertThat(creature.getEffectivePower()).isEqualTo(4);
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
         assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(laterCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.HASTE)).isFalse();
     }
 
     @Test

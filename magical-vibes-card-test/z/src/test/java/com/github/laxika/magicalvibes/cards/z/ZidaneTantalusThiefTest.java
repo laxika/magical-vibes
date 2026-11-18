@@ -41,8 +41,8 @@ class ZidaneTantalusThiefTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
     }
 
@@ -77,8 +77,8 @@ class ZidaneTantalusThiefTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
 

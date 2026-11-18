@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -92,7 +93,7 @@ class WitheringTormentTest extends BaseCardTest {
     @DisplayName("Still loses life when an indestructible creature survives")
     void losesLifeEvenWhenTargetIsIndestructible() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new PatchworkBeastie());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
 
         castWitheringTorment(target);
 

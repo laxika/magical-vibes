@@ -54,12 +54,12 @@ class SafeholdDuoTest extends BaseCardTest {
     @Test
     @DisplayName("Casting a white spell gives Safehold Duo vigilance until end of turn")
     void whiteSpellGrantsVigilance() {
-        assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isFalse();
 
         castWhiteSpell();
         harness.passBothPriorities(); // resolve the trigger
 
-        assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -69,7 +69,7 @@ class SafeholdDuoTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(duo().getPowerModifier()).isEqualTo(0);
-        assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -92,13 +92,13 @@ class SafeholdDuoTest extends BaseCardTest {
     void vigilanceWearsOff() {
         castWhiteSpell();
         harness.passBothPriorities();
-        assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -118,7 +118,7 @@ class SafeholdDuoTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(3);
         assertThat(duo().getPowerModifier()).isZero();
-        assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isFalse();
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -126,7 +126,7 @@ class SafeholdDuoTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(duo().getPowerModifier()).isEqualTo(1);
         assertThat(duo().getToughnessModifier()).isEqualTo(1);
-        assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -135,7 +135,7 @@ class SafeholdDuoTest extends BaseCardTest {
 
         assertThat(duo().getPowerModifier()).isZero();
         assertThat(duo().getToughnessModifier()).isZero();
-        assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -150,7 +150,7 @@ class SafeholdDuoTest extends BaseCardTest {
 
         assertThat(duo().getPowerModifier()).isZero();
         assertThat(duo().getToughnessModifier()).isZero();
-        assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -164,6 +164,6 @@ class SafeholdDuoTest extends BaseCardTest {
 
         assertThat(duo().getPowerModifier()).isEqualTo(2);
         assertThat(duo().getToughnessModifier()).isEqualTo(2);
-        assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, duo(), Keyword.VIGILANCE)).isFalse();
     }
 }

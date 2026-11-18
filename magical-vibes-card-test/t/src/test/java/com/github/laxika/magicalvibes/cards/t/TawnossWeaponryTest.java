@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AmuletOfKroog;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -165,7 +166,7 @@ class TawnossWeaponryTest extends BaseCardTest {
     void cannotTargetCreatureWithProtectionFromArtifacts() {
         addReadyWeaponry(player1);
         Permanent bear = addReadyBear(player2);
-        bear.getProtectionFromCardTypes().add(CardType.ARTIFACT);
+        PermanentGrants.protectionFromCardTypeUntilEndOfTurn(gd, bear, CardType.ARTIFACT);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bear.getId()))

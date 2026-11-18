@@ -35,8 +35,8 @@ class WindcragSiegeTest extends BaseCardTest {
         Permanent goblin = goblins.getFirst();
         assertThat(goblin.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(goblin.getCard().getSubtypes()).contains(CardSubtype.GOBLIN);
-        assertThat(goblin.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(goblin.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -128,8 +128,8 @@ class WindcragSiegeTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
-        assertThat(goblin.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(goblin.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.LIFELINK)).isTrue();
 
         harness.setHand(player1, List.of());
         harness.forceStep(TurnStep.END_STEP);
@@ -137,8 +137,8 @@ class WindcragSiegeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(goblin);
-        assertThat(goblin.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(goblin.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -160,9 +160,9 @@ class WindcragSiegeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .singleElement().satisfies(token -> {
-                    assertThat(token.hasKeyword(Keyword.TRAMPLE)).isTrue();
-                    assertThat(token.hasKeyword(Keyword.LIFELINK)).isTrue();
-                    assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, token, Keyword.TRAMPLE)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, token, Keyword.LIFELINK)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
                 });
     }
 

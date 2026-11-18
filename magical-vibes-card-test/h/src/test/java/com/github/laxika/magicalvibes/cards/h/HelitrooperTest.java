@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.l.LionSash;
@@ -36,7 +37,7 @@ class HelitrooperTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isTrue();
-        assertThat(trooper.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, trooper)).doesNotContain(Keyword.FLYING);
     }
 
     @Test

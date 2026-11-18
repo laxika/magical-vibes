@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -52,13 +53,13 @@ class CinderingCutthroatTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(cutthroat.getGrantedKeywords()).contains(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, cutthroat)).contains(Keyword.MENACE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(cutthroat.getGrantedKeywords()).doesNotContain(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, cutthroat)).doesNotContain(Keyword.MENACE);
     }
 
     @Test
@@ -101,9 +102,9 @@ class CinderingCutthroatTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(cutthroat.getGrantedKeywords()).doesNotContain(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, cutthroat)).doesNotContain(Keyword.MENACE);
         harness.passBothPriorities();
-        assertThat(cutthroat.getGrantedKeywords()).contains(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, cutthroat)).contains(Keyword.MENACE);
     }
 
     private void castCutthroat() {

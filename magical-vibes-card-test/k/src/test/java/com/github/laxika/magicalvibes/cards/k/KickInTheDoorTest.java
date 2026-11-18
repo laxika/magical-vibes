@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WallOfFire;
@@ -36,7 +37,7 @@ class KickInTheDoorTest extends BaseCardTest {
         harness.handleListChoice(player1, "Lost Mine of Phandelver");
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.HASTE);
         assertThat(gd.playerDungeonProgress.get(player1.getId()))
                 .isEqualTo(new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 0));
     }
@@ -84,7 +85,7 @@ class KickInTheDoorTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(attacker.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, attacker)).doesNotContain(Keyword.HASTE);
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -115,7 +116,7 @@ class KickInTheDoorTest extends BaseCardTest {
         castKickInTheDoor(target);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.HASTE);
         assertThat(gd.playerDungeonProgress.get(player1.getId()))
                 .isEqualTo(new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 0));
         assertThat(gd.playerDungeonProgress).doesNotContainKey(player2.getId());

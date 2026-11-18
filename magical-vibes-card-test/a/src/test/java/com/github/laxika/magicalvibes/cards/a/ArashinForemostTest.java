@@ -31,7 +31,7 @@ class ArashinForemostTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, warrior.getId());
         harness.passBothPriorities();
 
-        assertThat(warrior.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -44,7 +44,7 @@ class ArashinForemostTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, warrior.getId());
         harness.passBothPriorities();
 
-        assertThat(warrior.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -68,11 +68,11 @@ class ArashinForemostTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new ArashinForemost());
         harness.handlePermanentChosen(player1, warrior.getId());
         resolveAllTriggers();
-        assertThat(warrior.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.DOUBLE_STRIKE)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(warrior.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -103,7 +103,7 @@ class ArashinForemostTest extends BaseCardTest {
         assertThat(choice.validIds()).containsExactly(warrior.getId());
         harness.handlePermanentChosen(player1, warrior.getId());
         resolveAllTriggers();
-        assertThat(warrior.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -119,7 +119,7 @@ class ArashinForemostTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Arashin Foremost");
-        assertThat(warrior.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -136,7 +136,7 @@ class ArashinForemostTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
-        assertThat(other.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.DOUBLE_STRIKE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

@@ -45,8 +45,8 @@ class SwashbucklerExtraordinaireTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, secondTarget.getId());
         resolveAllTriggers();
 
-        assertThat(firstTarget.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(secondTarget.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, firstTarget, com.github.laxika.magicalvibes.model.Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondTarget, com.github.laxika.magicalvibes.model.Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
     }
 
@@ -60,7 +60,7 @@ class SwashbucklerExtraordinaireTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(target.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, com.github.laxika.magicalvibes.model.Keyword.DOUBLE_STRIKE)).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(treasure);
     }
 
@@ -94,7 +94,7 @@ class SwashbucklerExtraordinaireTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(treasure);
-        assertThat(swashbuckler.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, swashbuckler, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -110,7 +110,7 @@ class SwashbucklerExtraordinaireTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -133,7 +133,7 @@ class SwashbucklerExtraordinaireTest extends BaseCardTest {
         }
         resolveAllTriggers();
 
-        assertThat(targets).allMatch(target -> target.hasKeyword(Keyword.DOUBLE_STRIKE));
+        assertThat(targets).allMatch(target -> gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE));
     }
 
     @Test
@@ -151,14 +151,14 @@ class SwashbucklerExtraordinaireTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
-        assertThat(swashbuckler.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(bystander.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, swashbuckler, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bystander, Keyword.DOUBLE_STRIKE)).isFalse();
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(swashbuckler.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, swashbuckler, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }

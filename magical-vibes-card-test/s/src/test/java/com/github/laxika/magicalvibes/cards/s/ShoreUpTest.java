@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -30,7 +31,7 @@ class ShoreUpTest extends BaseCardTest {
         assertThat(creature.isTapped()).isFalse();
         assertThat(creature.getPowerModifier()).isEqualTo(1);
         assertThat(creature.getToughnessModifier()).isEqualTo(1);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HEXPROOF);
     }
 
     @Test
@@ -59,7 +60,7 @@ class ShoreUpTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.HEXPROOF);
     }
 
     @Test
@@ -85,7 +86,7 @@ class ShoreUpTest extends BaseCardTest {
         assertThat(creature.isTapped()).isFalse();
         assertThat(creature.getPowerModifier()).isEqualTo(2);
         assertThat(creature.getToughnessModifier()).isEqualTo(2);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.HEXPROOF);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -93,7 +94,7 @@ class ShoreUpTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.HEXPROOF);
     }
 
     private void castShoreUp(Permanent creature) {

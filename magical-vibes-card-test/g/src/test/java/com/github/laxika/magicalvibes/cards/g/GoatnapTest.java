@@ -35,7 +35,7 @@ class GoatnapTest extends BaseCardTest {
         castGoatnap(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
@@ -51,7 +51,7 @@ class GoatnapTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -66,7 +66,7 @@ class GoatnapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
     }
@@ -92,7 +92,7 @@ class GoatnapTest extends BaseCardTest {
         castGoatnap(target);
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
@@ -102,7 +102,7 @@ class GoatnapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
     }
 
@@ -124,7 +124,7 @@ class GoatnapTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(returned);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(returned);
         assertThat(returned.isTapped()).isTrue();
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Goatnap");
     }

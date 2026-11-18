@@ -29,7 +29,7 @@ class DreadbringerLampadsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.INTIMIDATE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INTIMIDATE)).isTrue();
     }
 
     @Test
@@ -45,7 +45,7 @@ class DreadbringerLampadsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.INTIMIDATE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INTIMIDATE)).isTrue();
     }
 
     @Test
@@ -68,13 +68,13 @@ class DreadbringerLampadsTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(bears.hasKeyword(Keyword.INTIMIDATE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INTIMIDATE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.INTIMIDATE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INTIMIDATE)).isFalse();
     }
 
     @Test
@@ -100,7 +100,7 @@ class DreadbringerLampadsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, lampads.getId());
         harness.passBothPriorities();
 
-        assertThat(lampads.hasKeyword(Keyword.INTIMIDATE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, lampads, Keyword.INTIMIDATE)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -131,7 +131,7 @@ class DreadbringerLampadsTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).add(bears.getCard());
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.INTIMIDATE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INTIMIDATE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

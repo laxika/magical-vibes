@@ -50,7 +50,7 @@ class MightWeaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -63,7 +63,7 @@ class MightWeaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -76,7 +76,7 @@ class MightWeaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -88,13 +88,13 @@ class MightWeaverTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -156,7 +156,7 @@ class MightWeaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(weaver.isTapped()).isTrue();
     }
 
@@ -171,8 +171,8 @@ class MightWeaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, white.getId());
         resolveAllTriggers();
 
-        assertThat(red.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(white.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, red, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, white, Keyword.TRAMPLE)).isTrue();
         assertThat(weaver.isTapped()).isFalse();
     }
 
@@ -187,7 +187,7 @@ class MightWeaverTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(weaver.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test

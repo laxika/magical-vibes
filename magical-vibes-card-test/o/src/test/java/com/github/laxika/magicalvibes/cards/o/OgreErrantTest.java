@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.Gingerbrute;
 import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -44,7 +45,7 @@ class OgreErrantTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, knight.getId());
         harness.passBothPriorities();
 
-        assertThat(knight.getGrantedKeywords()).contains(Keyword.MENACE);
+        assertThat(PermanentGrants.keywordsOf(gd, knight)).contains(Keyword.MENACE);
     }
 
     @Test

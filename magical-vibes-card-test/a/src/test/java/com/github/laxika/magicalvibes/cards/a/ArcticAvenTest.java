@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -88,7 +89,7 @@ class ArcticAvenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(aven.getGrantedKeywords()).contains(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, aven)).contains(Keyword.LIFELINK);
     }
 
     @Test
@@ -99,13 +100,13 @@ class ArcticAvenTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(aven.getGrantedKeywords()).contains(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, aven)).contains(Keyword.LIFELINK);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(aven.getGrantedKeywords()).doesNotContain(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, aven)).doesNotContain(Keyword.LIFELINK);
     }
 
     @Test

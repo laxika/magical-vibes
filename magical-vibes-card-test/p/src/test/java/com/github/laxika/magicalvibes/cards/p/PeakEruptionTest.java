@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -95,8 +97,8 @@ class PeakEruptionTest extends BaseCardTest {
     @DisplayName("Deals damage even when the Mountain is indestructible")
     void damagesControllerEvenWhenMountainCannotBeDestroyed() {
         harness.addToBattlefield(player2, new Mountain());
-        harness.getGameData().playerBattlefields.get(player2.getId()).getFirst()
-                .getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, gd.playerBattlefields.get(player2.getId()).getFirst(),
+                Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new PeakEruption()));
         harness.addMana(player1, ManaColor.RED, 3);
 

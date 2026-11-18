@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -47,8 +48,8 @@ class FaithsShieldTest extends BaseCardTest {
         Permanent target = battlefield.stream().filter(p -> p.getId().equals(targetId)).findFirst().orElseThrow();
         Permanent other = battlefield.stream().filter(p -> !p.getId().equals(targetId)).findFirst().orElseThrow();
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
-        assertThat(other.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, other)).doesNotContain(CardColor.RED);
         // The player does not gain protection in normal mode.
         assertThat(playerProtectionColors(player1.getId()))
                 .doesNotContain(CardColor.RED);
@@ -74,7 +75,7 @@ class FaithsShieldTest extends BaseCardTest {
 
         // Every permanent the controller controls gains protection from the chosen color.
         for (Permanent permanent : gd.playerBattlefields.get(player1.getId())) {
-            assertThat(permanent.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+            assertThat(PermanentGrants.protectionColorsOf(gd, permanent)).contains(CardColor.WHITE);
         }
     }
 
@@ -175,8 +176,8 @@ class FaithsShieldTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.GREEN);
-        assertThat(other.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).containsExactly(CardColor.GREEN);
+        assertThat(PermanentGrants.protectionColorsOf(gd, other)).isEmpty();
         assertThat(playerProtectionColors(player1.getId())).isEmpty();
     }
 
@@ -194,10 +195,10 @@ class FaithsShieldTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLUE");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.BLUE);
-        assertThat(land.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).containsExactly(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, land)).containsExactly(CardColor.BLUE);
         assertThat(playerProtectionColors(player1.getId())).containsExactly(CardColor.BLUE);
-        assertThat(opponent.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, opponent)).isEmpty();
         assertThat(playerProtectionColors(player2.getId())).isEmpty();
     }
 
@@ -214,8 +215,8 @@ class FaithsShieldTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLACK");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.BLACK);
-        assertThat(other.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).containsExactly(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, other)).isEmpty();
         assertThat(playerProtectionColors(player1.getId())).isEmpty();
     }
 
@@ -228,7 +229,7 @@ class FaithsShieldTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, land.getId());
         harness.handleListChoice(player1, "WHITE");
 
-        assertThat(land.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, land)).containsExactly(CardColor.WHITE);
     }
 
     @Test
@@ -242,8 +243,8 @@ class FaithsShieldTest extends BaseCardTest {
 
         Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new RussetWolves());
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
-        assertThat(newcomer.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, newcomer)).isEmpty();
     }
 
     @Test
@@ -271,7 +272,7 @@ class FaithsShieldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
-        assertThat(remaining.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, remaining)).isEmpty();
         assertThat(playerProtectionColors(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Faith's Shield");
     }
@@ -323,15 +324,15 @@ class FaithsShieldTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleListChoice(player1, "RED");
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
-        assertThat(land.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, land)).contains(CardColor.RED);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        assertThat(land.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, land)).isEmpty();
     }
 
     private Set<CardColor> playerProtectionColors(UUID playerId) {

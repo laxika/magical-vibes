@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -154,7 +155,7 @@ class MajesticMyriarchTest extends BaseCardTest {
     void gainsEveryListedKeywordUntilEndOfTurn(Keyword keyword) {
         Permanent myriarch = addMyriarch(player1);
         Permanent donor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        donor.getGrantedKeywords().add(keyword);
+        PermanentGrants.keywordUntilEndOfTurn(gd, donor, keyword);
 
         advanceToCombat(player1);
         harness.passBothPriorities();
@@ -175,7 +176,7 @@ class MajesticMyriarchTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SerraAngel());
 
         advanceToCombat(player1);
-        donor.getGrantedKeywords().add(Keyword.TRAMPLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, donor, Keyword.TRAMPLE);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, myriarch, Keyword.FLYING)).isTrue();
@@ -215,7 +216,7 @@ class MajesticMyriarchTest extends BaseCardTest {
     void doesNotGainFlyingFromCreatureEnteringAfterResolution() {
         Permanent myriarch = addMyriarch(player1);
         Permanent donor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        donor.getGrantedKeywords().add(Keyword.TRAMPLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, donor, Keyword.TRAMPLE);
 
         advanceToCombat(player1);
         harness.passBothPriorities();

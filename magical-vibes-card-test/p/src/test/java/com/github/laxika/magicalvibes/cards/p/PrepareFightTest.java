@@ -35,7 +35,7 @@ class PrepareFightTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
         harness.assertInGraveyard(player1, "Prepare // Fight");
     }
 
@@ -54,7 +54,7 @@ class PrepareFightTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -148,7 +148,7 @@ class PrepareFightTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
     }
 
     @Test

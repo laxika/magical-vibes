@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -120,7 +121,7 @@ class BehemothOfVault0Test extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.stack).hasSize(1);
 
-        target.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.SHROUD);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");

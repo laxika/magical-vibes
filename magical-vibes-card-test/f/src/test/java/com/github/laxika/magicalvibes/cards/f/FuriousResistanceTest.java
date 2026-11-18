@@ -30,7 +30,7 @@ class FuriousResistanceTest extends BaseCardTest {
 
         assertThat(blocker.getPowerModifier()).isEqualTo(3);
         assertThat(blocker.getToughnessModifier()).isEqualTo(0);
-        assertThat(blocker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
         harness.assertInGraveyard(player1, "Furious Resistance");
     }
 
@@ -48,7 +48,7 @@ class FuriousResistanceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(blocker.getPowerModifier()).isEqualTo(0);
-        assertThat(blocker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -74,7 +74,7 @@ class FuriousResistanceTest extends BaseCardTest {
 
         assertThat(blocker.getPowerModifier()).isEqualTo(3);
         assertThat(blocker.getToughnessModifier()).isEqualTo(0);
-        assertThat(blocker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -89,7 +89,7 @@ class FuriousResistanceTest extends BaseCardTest {
 
         assertThat(blocker.getPowerModifier()).isEqualTo(0);
         assertThat(blocker.getToughnessModifier()).isEqualTo(0);
-        assertThat(blocker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isFalse();
         harness.assertInGraveyard(player1, "Furious Resistance");
     }
 
@@ -106,7 +106,7 @@ class FuriousResistanceTest extends BaseCardTest {
 
         assertThat(blocker.getPowerModifier()).isEqualTo(3);
         assertThat(blocker.getToughnessModifier()).isEqualTo(0);
-        assertThat(blocker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     private void setupSpell() {

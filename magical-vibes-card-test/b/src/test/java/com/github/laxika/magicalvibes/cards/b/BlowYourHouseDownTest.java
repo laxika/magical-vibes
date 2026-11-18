@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 import com.github.laxika.magicalvibes.cards.g.GoldenEgg;
@@ -161,7 +162,7 @@ class BlowYourHouseDownTest extends BaseCardTest {
     @Test
     void indestructibleWallSurvivesButCannotBlock() {
         Permanent wall = harness.addToBattlefieldAndReturn(player2, new RovingKeep());
-        wall.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, wall, Keyword.INDESTRUCTIBLE);
         prepareCast();
 
         harness.castAndResolveSorcery(player1, 0, List.of(wall.getId()));

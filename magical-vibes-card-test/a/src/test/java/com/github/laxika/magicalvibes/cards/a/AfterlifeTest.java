@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -64,7 +65,7 @@ class AfterlifeTest extends BaseCardTest {
     @DisplayName("Creates the Spirit token even when the target is indestructible")
     void createsTokenWhenTargetIsIndestructible() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
 
         castAfterlife(target.getId());
 
@@ -114,7 +115,7 @@ class AfterlifeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.castInstant(player1, 0, target.getId());
 
-        target.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.SHROUD);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Fresh Volunteers");

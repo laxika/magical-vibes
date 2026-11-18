@@ -103,7 +103,6 @@ public class RiotHandler implements MayEffectHandlerBean {
             }
         }
         if (!counterPlaced && source != null) {
-            source.getGrantedKeywords().add(Keyword.HASTE);
             gameData.addEffectOnPermanent(ability.sourceCard().getName(), source.getId(), ability.controllerId(),
                     new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), source.getId(), Duration.PERMANENT);
         }

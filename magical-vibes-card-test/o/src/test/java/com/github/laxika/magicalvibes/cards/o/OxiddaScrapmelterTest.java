@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.v.VulshokReplica;
@@ -140,7 +141,7 @@ class OxiddaScrapmelterTest extends BaseCardTest {
 
         // Grant indestructible to the target before ETB resolves
         Permanent target = findPermanent(player2, "Accorder's Shield");
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
 
         // Resolve ETB.
         harness.passBothPriorities();

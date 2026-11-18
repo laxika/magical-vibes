@@ -39,7 +39,7 @@ class ArmedDangerousTest extends BaseCardTest {
 
         assertThat(bears.getEffectivePower()).isEqualTo(3);
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -72,7 +72,7 @@ class ArmedDangerousTest extends BaseCardTest {
 
         assertThat(armedTarget.getEffectivePower()).isEqualTo(3);
         assertThat(armedTarget.getEffectiveToughness()).isEqualTo(3);
-        assertThat(armedTarget.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, armedTarget, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(armedTarget.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
         assertThat(gd.hasFloatingEffectOnPermanent(dangerousTarget.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
@@ -92,7 +92,7 @@ class ArmedDangerousTest extends BaseCardTest {
 
         assertThat(bears.getEffectivePower()).isEqualTo(3);
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(bears.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
     }
 
@@ -124,7 +124,7 @@ class ArmedDangerousTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isFalse();
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }
 
@@ -169,7 +169,7 @@ class ArmedDangerousTest extends BaseCardTest {
 
         assertThat(gd.hasFloatingEffectOnPermanent(dangerousTarget.getId(), MustBeBlockedByAllCreaturesEffect.class)).isTrue();
         assertThat(dangerousTarget.getEffectivePower()).isEqualTo(2);
-        assertThat(dangerousTarget.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, dangerousTarget, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -188,7 +188,7 @@ class ArmedDangerousTest extends BaseCardTest {
 
         assertThat(armedTarget.getEffectivePower()).isEqualTo(3);
         assertThat(armedTarget.getEffectiveToughness()).isEqualTo(3);
-        assertThat(armedTarget.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, armedTarget, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(armedTarget.getId(), MustBeBlockedByAllCreaturesEffect.class)).isFalse();
     }
 

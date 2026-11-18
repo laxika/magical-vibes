@@ -33,7 +33,7 @@ class KayasOnslaughtTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isEqualTo(1);
         assertThat(bears.getToughnessModifier()).isEqualTo(1);
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -51,7 +51,7 @@ class KayasOnslaughtTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -87,7 +87,7 @@ class KayasOnslaughtTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getPowerModifier()).isEqualTo(1);
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -104,10 +104,10 @@ class KayasOnslaughtTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.DOUBLE_STRIKE)).isFalse();
         harness.assertInGraveyard(player1, "Kaya's Onslaught");
     }
 
@@ -127,7 +127,7 @@ class KayasOnslaughtTest extends BaseCardTest {
         assertThat(gd.findExiledCard(onslaught.getId())).isNotNull();
         assertThat(gd.stack).isEmpty();
         assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test

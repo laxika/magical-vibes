@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.MysticRemora;
@@ -62,7 +63,7 @@ class JokulhaupsTest extends BaseCardTest {
     @DisplayName("Indestructible permanents survive Jokulhaups")
     void indestructiblePermanentsSurvive() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
-        bears.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.INDESTRUCTIBLE);
 
         harness.castFromHand(player1, new Jokulhaups(), "{4}{R}{R}");
         harness.passBothPriorities();
@@ -91,7 +92,7 @@ class JokulhaupsTest extends BaseCardTest {
     @DisplayName("Shroud does not protect creatures from Jokulhaups")
     void destroysCreaturesWithShroud() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
-        bears.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.SHROUD);
 
         harness.castFromHand(player1, new Jokulhaups(), "{4}{R}{R}");
         harness.passBothPriorities();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BayFalcon;
 import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
@@ -31,7 +32,7 @@ class CrimsonRocTest extends BaseCardTest {
 
         assertThat(roc.getPowerModifier()).isEqualTo(1);
         assertThat(roc.getToughnessModifier()).isZero();
-        assertThat(roc.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, roc)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -45,21 +46,21 @@ class CrimsonRocTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(roc.getPowerModifier()).isZero();
-        assertThat(roc.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, roc)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
     @DisplayName("Becoming blocked by a creature without flying does not trigger Crimson Roc")
     void becomesBlockedDoesNothing() {
         Permanent roc = addCreatureReady(player1, new CrimsonRoc());
-        addCreatureReady(player2, new FemerefScouts()).getGrantedKeywords().add(Keyword.REACH);
+        PermanentGrants.keywordUntilEndOfTurn(gd, addCreatureReady(player2, new FemerefScouts()), Keyword.REACH);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
         assertThat(roc.getPowerModifier()).isZero();
-        assertThat(roc.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, roc)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -79,7 +80,7 @@ class CrimsonRocTest extends BaseCardTest {
 
         assertThat(roc.getPowerModifier()).isEqualTo(2);
         assertThat(roc.getToughnessModifier()).isZero();
-        assertThat(roc.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, roc)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -93,7 +94,7 @@ class CrimsonRocTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(roc.getPowerModifier()).isEqualTo(1);
-        assertThat(roc.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, roc)).contains(Keyword.FIRST_STRIKE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -101,7 +102,7 @@ class CrimsonRocTest extends BaseCardTest {
 
         assertThat(roc.getPowerModifier()).isZero();
         assertThat(roc.getToughnessModifier()).isZero();
-        assertThat(roc.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, roc)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -112,11 +113,11 @@ class CrimsonRocTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        attacker.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.FLYING);
         harness.passBothPriorities();
 
         assertThat(roc.getPowerModifier()).isEqualTo(1);
-        assertThat(roc.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, roc)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -136,7 +137,7 @@ class CrimsonRocTest extends BaseCardTest {
 
         assertThat(roc.getPowerModifier()).isEqualTo(1);
         assertThat(roc.getToughnessModifier()).isZero();
-        assertThat(roc.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, roc)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -153,6 +154,6 @@ class CrimsonRocTest extends BaseCardTest {
 
         assertThat(roc.getPowerModifier()).isEqualTo(1);
         assertThat(roc.getToughnessModifier()).isZero();
-        assertThat(roc.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, roc)).contains(Keyword.FIRST_STRIKE);
     }
 }

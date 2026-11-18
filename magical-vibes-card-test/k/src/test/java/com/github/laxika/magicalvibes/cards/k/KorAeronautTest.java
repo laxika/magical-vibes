@@ -78,13 +78,13 @@ class KorAeronautTest extends BaseCardTest {
 
             harness.passBothPriorities();
 
-            assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
 
             harness.forceStep(TurnStep.END_STEP);
             harness.clearPriorityPassed();
             harness.passBothPriorities();
 
-            assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         }
 
         @Test
@@ -95,7 +95,7 @@ class KorAeronautTest extends BaseCardTest {
 
             harness.passBothPriorities();
 
-            assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
             assertThat(gd.stack).isEmpty();
         }
 
@@ -110,7 +110,7 @@ class KorAeronautTest extends BaseCardTest {
 
             harness.passBothPriorities();
 
-            assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
             assertThat(gd.stack).isEmpty();
         }
 
@@ -124,7 +124,7 @@ class KorAeronautTest extends BaseCardTest {
 
             harness.passBothPriorities();
 
-            assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+            assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
             assertThat(gd.stack).isEmpty();
         }
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -125,7 +126,7 @@ class PyrotechnicsTest extends BaseCardTest {
         Permanent otherBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.castSorcery(player1, 0, Map.of(protectedBears.getId(), 2, otherBears.getId(), 2));
-        protectedBears.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, protectedBears, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         assertThat(protectedBears.getMarkedDamage()).isZero();
@@ -141,7 +142,7 @@ class PyrotechnicsTest extends BaseCardTest {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.castSorcery(player1, 0, Map.of(bear.getId(), 4));
-        bear.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bear, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         assertThat(bear.getMarkedDamage()).isZero();
@@ -211,7 +212,7 @@ class PyrotechnicsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.HEXPROOF);
 
         assertThatThrownBy(() ->
                 harness.castSorcery(player1, 0, Map.of(bears.getId(), 4))
@@ -279,7 +280,7 @@ class PyrotechnicsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bear.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bear, Keyword.HEXPROOF);
 
         harness.castSorcery(player1, 0, Map.of(bear.getId(), 1, player2.getId(), 3));
         harness.passBothPriorities();
@@ -298,7 +299,7 @@ class PyrotechnicsTest extends BaseCardTest {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.castSorcery(player1, 0, Map.of(bear.getId(), 3, player2.getId(), 1));
-        bear.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bear, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         assertThat(bear.getMarkedDamage()).isZero();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AltarOfThePantheon;
 import com.github.laxika.magicalvibes.cards.r.RiptideTurtle;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -85,7 +86,7 @@ class StarlitMantleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
-        creature.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.SHROUD);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isTrue();

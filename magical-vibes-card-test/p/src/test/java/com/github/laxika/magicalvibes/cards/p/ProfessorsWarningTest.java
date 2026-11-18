@@ -51,7 +51,7 @@ class ProfessorsWarningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent spirit = findPermanent(player1, "Stonerise Spirit");
-        assertThat(spirit.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, spirit, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -80,7 +80,7 @@ class ProfessorsWarningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(mode == 0 ? 1 : 0);
-        assertThat(spirit.hasKeyword(Keyword.INDESTRUCTIBLE)).isEqualTo(mode == 1);
+        assertThat(gqs.hasKeyword(gd, spirit, Keyword.INDESTRUCTIBLE)).isEqualTo(mode == 1);
     }
 
     @ParameterizedTest
@@ -95,12 +95,12 @@ class ProfessorsWarningTest extends BaseCardTest {
         harness.castInstant(player1, 0, mode, spirit.getId());
         harness.passBothPriorities();
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(mode == 0 ? 1 : 0);
-        assertThat(spirit.hasKeyword(Keyword.INDESTRUCTIBLE)).isEqualTo(mode == 1);
+        assertThat(gqs.hasKeyword(gd, spirit, Keyword.INDESTRUCTIBLE)).isEqualTo(mode == 1);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(mode == 0 ? 1 : 0);
-        assertThat(spirit.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, spirit, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -130,7 +130,7 @@ class ProfessorsWarningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(spirit.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, spirit, Keyword.INDESTRUCTIBLE)).isFalse();
         harness.assertNotOnBattlefield(player1, "Stonerise Spirit");
         harness.assertInGraveyard(player1, "Professor's Warning");
         assertThat(gd.stack).isEmpty();

@@ -39,7 +39,7 @@ class RafiqOfTheManyTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(2);
-        assertThat(elf.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -67,7 +67,7 @@ class RafiqOfTheManyTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
-        assertThat(elf.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -80,7 +80,7 @@ class RafiqOfTheManyTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, rafiq)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, rafiq)).isEqualTo(4);
-        assertThat(rafiq.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, rafiq, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -91,14 +91,14 @@ class RafiqOfTheManyTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
-        assertThat(elf.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.DOUBLE_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
-        assertThat(elf.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -111,6 +111,6 @@ class RafiqOfTheManyTest extends BaseCardTest {
 
         assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Rafiq of the Many"));
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
-        assertThat(elf.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }

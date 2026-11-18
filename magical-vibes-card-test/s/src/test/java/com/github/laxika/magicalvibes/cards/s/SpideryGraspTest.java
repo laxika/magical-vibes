@@ -35,7 +35,7 @@ class SpideryGraspTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
     }
 
     @Test
@@ -49,7 +49,7 @@ class SpideryGraspTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -57,7 +57,7 @@ class SpideryGraspTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
     }
 
     @Test
@@ -72,7 +72,7 @@ class SpideryGraspTest extends BaseCardTest {
         assertThat(ownCreature.isTapped()).isFalse();
         assertThat(ownCreature.getPowerModifier()).isEqualTo(2);
         assertThat(ownCreature.getToughnessModifier()).isEqualTo(4);
-        assertThat(ownCreature.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.REACH)).isTrue();
     }
 
     @Test
@@ -115,7 +115,7 @@ class SpideryGraspTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
     }
 
     @Test
@@ -132,11 +132,11 @@ class SpideryGraspTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(4);
         assertThat(target.getToughnessModifier()).isEqualTo(8);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
         assertThat(other.isTapped()).isTrue();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
     }
 
     private Permanent addTappedCreature(Player player) {

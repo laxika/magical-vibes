@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -38,7 +39,7 @@ class MidvastProtectorTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         Permanent bears = gqs.findPermanentById(gd, bearsId);
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bears)).contains(CardColor.RED);
     }
 
     @Test
@@ -72,13 +73,13 @@ class MidvastProtectorTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         Permanent bears = gqs.findPermanentById(gd, bearsId);
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bears)).contains(CardColor.RED);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bears)).doesNotContain(CardColor.RED);
     }
 
     @Test
@@ -111,7 +112,7 @@ class MidvastProtectorTest extends BaseCardTest {
         assertThat(choice.options()).containsExactlyInAnyOrder("WHITE", "BLUE", "BLACK", "RED", "GREEN");
         harness.handleListChoice(player1, color.name());
 
-        assertThat(gqs.findPermanentById(gd, protectorId).getProtectionFromColorsUntilEndOfTurn())
+        assertThat(PermanentGrants.protectionColorsOf(gd, gqs.findPermanentById(gd, protectorId)))
                 .containsExactly(color);
     }
 
@@ -129,7 +130,7 @@ class MidvastProtectorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "WHITE");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).containsExactly(CardColor.WHITE);
     }
 
     @Test
@@ -147,7 +148,7 @@ class MidvastProtectorTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).isEmpty();
     }
 
     @ParameterizedTest
@@ -164,12 +165,12 @@ class MidvastProtectorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handleListChoice(player1, invalidChoice))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        assertThat(target.getProtectionFromCardTypes()).isEmpty();
-        assertThat(target.isProtectionFromColorlessUntilEndOfTurn()).isFalse();
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).isEmpty();
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, target)).isEmpty();
+        assertThat(PermanentGrants.hasProtectionFromColorless(gd, target)).isFalse();
 
         harness.handleListChoice(player1, "GREEN");
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.GREEN);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).containsExactly(CardColor.GREEN);
     }
 }
 

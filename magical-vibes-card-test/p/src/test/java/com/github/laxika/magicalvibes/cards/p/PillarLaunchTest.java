@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CatOwl;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -27,7 +28,7 @@ class PillarLaunchTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.REACH);
         assertThat(target.isTapped()).isFalse();
     }
 
@@ -43,7 +44,7 @@ class PillarLaunchTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.REACH);
     }
 
     @Test
@@ -68,11 +69,11 @@ class PillarLaunchTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.REACH);
         assertThat(target.isTapped()).isFalse();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.REACH);
         assertThat(other.isTapped()).isTrue();
     }
 
@@ -86,7 +87,7 @@ class PillarLaunchTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.REACH);
         assertThat(target.isTapped()).isFalse();
     }
 
@@ -108,7 +109,7 @@ class PillarLaunchTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Pillar Launch");
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.REACH);
+        assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.REACH);
         assertThat(other.isTapped()).isTrue();
     }
 

@@ -52,7 +52,7 @@ class CrashTheRampartsTest extends BaseCardTest {
         assertThat(creature.getToughnessModifier()).isEqualTo(3);
         assertThat(creature.getEffectivePower()).isEqualTo(5);
         assertThat(creature.getEffectiveToughness()).isEqualTo(5);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -72,7 +72,7 @@ class CrashTheRampartsTest extends BaseCardTest {
         Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(creature.getPowerModifier()).isEqualTo(0);
         assertThat(creature.getToughnessModifier()).isEqualTo(0);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -107,10 +107,10 @@ class CrashTheRampartsTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(5);
         assertThat(target.getEffectiveToughness()).isEqualTo(5);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(ownCreature.getPowerModifier()).isZero();
         assertThat(ownCreature.getToughnessModifier()).isZero();
-        assertThat(ownCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Crash the Ramparts");
     }
 
@@ -126,7 +126,7 @@ class CrashTheRampartsTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(8);
         assertThat(target.getEffectiveToughness()).isEqualTo(8);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -134,6 +134,6 @@ class CrashTheRampartsTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 }

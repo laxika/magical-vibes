@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -155,7 +156,7 @@ class QuicksandTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         harness.activateAbility(player1, 0, 1, null, attacker.getId());
-        attacker.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Quicksand");
@@ -170,7 +171,7 @@ class QuicksandTest extends BaseCardTest {
     void zeroToughnessKillsIndestructibleAttacker() {
         harness.addToBattlefield(player1, new Quicksand());
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
-        attacker.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.INDESTRUCTIBLE);
         declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         harness.activateAbility(player1, 0, 1, null, attacker.getId());

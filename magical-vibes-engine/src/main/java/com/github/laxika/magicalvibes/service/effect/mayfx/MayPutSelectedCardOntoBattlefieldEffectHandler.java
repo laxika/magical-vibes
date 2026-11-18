@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -50,7 +53,7 @@ public class MayPutSelectedCardOntoBattlefieldEffectHandler implements MayEffect
                 }
                 Permanent permanent = new Permanent(selectedCard, Zone.LIBRARY);
                 if (effect.grantHaste()) {
-                    permanent.getGrantedKeywords().add(Keyword.HASTE);
+                    gameData.addEffectOnPermanent(ability.sourceCard().getName(), null, player.getId(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), permanent.getId(), Duration.UNTIL_END_OF_TURN);
                 }
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
                 if (effect.tapped()) {

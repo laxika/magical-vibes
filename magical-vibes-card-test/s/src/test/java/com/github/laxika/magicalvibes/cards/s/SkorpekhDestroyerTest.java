@@ -22,7 +22,7 @@ class SkorpekhDestroyerTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.passBothPriorities();
 
-        assertThat(destroyer.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, destroyer, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -32,7 +32,7 @@ class SkorpekhDestroyerTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player2, new Ornithopter());
         harness.passBothPriorities();
 
-        assertThat(destroyer.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, destroyer, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -42,7 +42,7 @@ class SkorpekhDestroyerTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.passBothPriorities();
 
-        assertThat(destroyer.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, destroyer, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -51,23 +51,23 @@ class SkorpekhDestroyerTest extends BaseCardTest {
 
         harness.enterBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.passBothPriorities();
-        assertThat(destroyer.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, destroyer, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(destroyer.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, destroyer, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
     void itsOwnArtifactEntryGrantsFirstStrike() {
         Permanent destroyer = harness.enterBattlefieldAndReturn(player1, new SkorpekhDestroyer());
 
-        assertThat(destroyer.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, destroyer, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(destroyer.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, destroyer, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -76,10 +76,10 @@ class SkorpekhDestroyerTest extends BaseCardTest {
 
         harness.enterBattlefieldAndReturn(player1, new FountainOfYouth());
 
-        assertThat(destroyer.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, destroyer, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(destroyer.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, destroyer, Keyword.FIRST_STRIKE)).isTrue();
     }
 }

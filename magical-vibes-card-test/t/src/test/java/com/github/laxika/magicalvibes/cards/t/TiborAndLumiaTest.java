@@ -41,11 +41,11 @@ class TiborAndLumiaTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, dryad.getId());
         harness.passBothPriorities();
 
-        assertThat(dryad.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dryad, Keyword.FLYING)).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(dryad.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, dryad, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -63,7 +63,7 @@ class TiborAndLumiaTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, dryad.getId());
         harness.passBothPriorities();
 
-        assertThat(dryad.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dryad, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -149,11 +149,11 @@ class TiborAndLumiaTest extends BaseCardTest {
                 .findFirst().orElseThrow());
 
         harness.passBothPriorities();
-        assertThat(tiborAndLumia.hasKeyword(Keyword.FLYING)).isEqualTo(flyingFirst);
+        assertThat(gqs.hasKeyword(gd, tiborAndLumia, Keyword.FLYING)).isEqualTo(flyingFirst);
         assertThat(tiborAndLumia.getMarkedDamage()).isEqualTo(flyingFirst ? 0 : 1);
 
         harness.passBothPriorities();
-        assertThat(tiborAndLumia.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, tiborAndLumia, Keyword.FLYING)).isTrue();
         assertThat(tiborAndLumia.getMarkedDamage()).isEqualTo(flyingFirst ? 0 : 1);
         harness.assertInGraveyard(player2, "Dryad Sophisticate");
         harness.assertLife(player1, 20);
@@ -198,6 +198,6 @@ class TiborAndLumiaTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.passBothPriorities();
-        assertThat(tiborAndLumia.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, tiborAndLumia, Keyword.FLYING)).isFalse();
     }
 }

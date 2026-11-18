@@ -34,13 +34,13 @@ class LegionLoyalistTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(loyalist.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(loyalist.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(attacker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(otherAttacker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(opposingCreature.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(opposingCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, loyalist, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, loyalist, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherAttacker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -52,8 +52,8 @@ class LegionLoyalistTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(loyalist.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(loyalist.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, loyalist, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, loyalist, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -99,14 +99,14 @@ class LegionLoyalistTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
-        assertThat(loyalist.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, loyalist, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(loyalist.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(loyalist.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, loyalist, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, loyalist, Keyword.TRAMPLE)).isFalse();
         harness.addToBattlefield(player2, createTokenCreature("Soldier Token", 1, 1));
         loyalist.untap();
         loyalist.setSummoningSick(false);
@@ -125,8 +125,8 @@ class LegionLoyalistTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(nonattacker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(nonattacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonattacker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonattacker, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -139,8 +139,8 @@ class LegionLoyalistTest extends BaseCardTest {
         declareAttackers(player1, List.of(1, 2, 3));
         resolveAllTriggers();
 
-        assertThat(loyalist.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, loyalist, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -155,8 +155,8 @@ class LegionLoyalistTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, loyalist));
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
 
-        assertThat(attacker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -171,8 +171,8 @@ class LegionLoyalistTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
         Permanent lateCreature = addCreatureReady(player1, new GreensideWatcher());
 
-        assertThat(lateCreature.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(lateCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.TRAMPLE)).isFalse();
         lateCreature.setAttacking(true);
         prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 3))))
@@ -194,10 +194,10 @@ class LegionLoyalistTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(loyalist);
-        assertThat(attacker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(loyalist.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(loyalist.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, loyalist, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, loyalist, Keyword.TRAMPLE)).isFalse();
     }
 
     private Card createTokenCreature(String name, int power, int toughness) {

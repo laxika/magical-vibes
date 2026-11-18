@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -72,7 +73,7 @@ class DayOfJudgmentTest extends BaseCardTest {
         harness.addToBattlefield(player2, new RuneclawBear());
 
         Permanent bears2 = findPermanent(player2, "Runeclaw Bear");
-        bears2.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears2, Keyword.INDESTRUCTIBLE);
 
         harness.setHand(player1, List.of(new DayOfJudgment()));
         harness.addMana(player1, ManaColor.WHITE, 4);

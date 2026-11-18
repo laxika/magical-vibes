@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Censor;
 import com.github.laxika.magicalvibes.cards.d.DuneBeetle;
 import com.github.laxika.magicalvibes.cards.m.MiasmicMummy;
@@ -31,7 +32,7 @@ class PitilessVizierTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities(); // resolve the grant trigger
 
-        assertThat(getPitilessVizier().getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, getPitilessVizier())).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -45,13 +46,13 @@ class PitilessVizierTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        assertThat(getPitilessVizier().getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, getPitilessVizier())).contains(Keyword.INDESTRUCTIBLE);
 
         resolveAllTriggers();
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(getPitilessVizier().getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, getPitilessVizier())).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -66,10 +67,10 @@ class PitilessVizierTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
 
         assertThat(gd.stack).hasSize(2);
-        assertThat(getPitilessVizier().getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, getPitilessVizier())).doesNotContain(Keyword.INDESTRUCTIBLE);
         harness.passBothPriorities();
 
-        assertThat(getPitilessVizier().getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, getPitilessVizier())).contains(Keyword.INDESTRUCTIBLE);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -87,11 +88,11 @@ class PitilessVizierTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleCardChosen(player1, 0);
 
-        assertThat(getPitilessVizier().getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, getPitilessVizier())).doesNotContain(Keyword.INDESTRUCTIBLE);
         resolveAllTriggers();
 
-        assertThat(getPitilessVizier().getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
-        assertThat(opponentVizier.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, getPitilessVizier())).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, opponentVizier)).doesNotContain(Keyword.INDESTRUCTIBLE);
         harness.assertInGraveyard(player1, "Dune Beetle");
     }
 
@@ -107,7 +108,7 @@ class PitilessVizierTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
-        assertThat(getPitilessVizier().getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, getPitilessVizier())).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     private Permanent getPitilessVizier() {

@@ -54,8 +54,6 @@ public class PerpetuallyRemoveKeywordEffectHandler implements NormalEffectHandle
     }
 
     private void removeExistingGrants(GameData gameData, Permanent permanent, Keyword keyword) {
-        permanent.getGrantedKeywords().remove(keyword);
-        permanent.getUntilNextTurnKeywords().remove(keyword);
         for (FloatingContinuousEffect floating : List.copyOf(gameData.floatingEffects)) {
             if (!permanent.getId().equals(floating.affectedPermanentId())
                     || !(floating.effect() instanceof GrantKeywordEffect grant)

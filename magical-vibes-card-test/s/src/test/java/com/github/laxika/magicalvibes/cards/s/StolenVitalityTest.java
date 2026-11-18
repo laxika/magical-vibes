@@ -31,8 +31,8 @@ class StolenVitalityTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(5);
         assertThat(bear.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -50,8 +50,8 @@ class StolenVitalityTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(5);
         assertThat(bear.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -69,7 +69,7 @@ class StolenVitalityTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -97,8 +97,8 @@ class StolenVitalityTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(5);
         assertThat(bear.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -116,8 +116,8 @@ class StolenVitalityTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(5);
         assertThat(bear.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -125,7 +125,7 @@ class StolenVitalityTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 }

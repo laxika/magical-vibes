@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
 import com.github.laxika.magicalvibes.cards.d.DroolingOgre;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -51,7 +52,7 @@ class HoverguardObserverTest extends BaseCardTest {
     void canBlockCreatureWithGrantedFlying() {
         Permanent observer = addCreatureReady(player2, new HoverguardObserver());
         Permanent attacker = addCreatureReady(player1, new DroolingOgre());
-        attacker.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.FLYING);
         attacker.setAttacking(true);
         prepareDeclareBlockers();
 
@@ -65,7 +66,7 @@ class HoverguardObserverTest extends BaseCardTest {
     void cannotBlockCreatureWithRemovedFlying() {
         addCreatureReady(player2, new HoverguardObserver());
         Permanent attacker = addCreatureReady(player1, new DarksteelGargoyle());
-        attacker.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, attacker, Keyword.FLYING);
         attacker.setAttacking(true);
         prepareDeclareBlockers();
 

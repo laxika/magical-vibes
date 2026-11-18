@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AphoticWisps;
 import com.github.laxika.magicalvibes.cards.c.Cinderbones;
 import com.github.laxika.magicalvibes.cards.c.ConsignToDream;
@@ -77,7 +78,7 @@ class PuppeteerCliqueTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         Permanent stolen = findPermanent(player1, "Cinderbones");
-        assertThat(stolen.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, stolen)).contains(Keyword.HASTE);
         harness.assertNotInGraveyard(player2, "Cinderbones");
     }
 

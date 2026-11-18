@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -29,12 +30,12 @@ class RallyManeuverTest extends BaseCardTest {
 
         assertThat(firstTarget.getPowerModifier()).isEqualTo(2);
         assertThat(firstTarget.getToughnessModifier()).isZero();
-        assertThat(firstTarget.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
-        assertThat(firstTarget.getGrantedKeywords()).doesNotContain(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, firstTarget)).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, firstTarget)).doesNotContain(Keyword.LIFELINK);
         assertThat(secondTarget.getPowerModifier()).isZero();
         assertThat(secondTarget.getToughnessModifier()).isEqualTo(2);
-        assertThat(secondTarget.getGrantedKeywords()).contains(Keyword.LIFELINK);
-        assertThat(secondTarget.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, secondTarget)).contains(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, secondTarget)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -44,7 +45,7 @@ class RallyManeuverTest extends BaseCardTest {
         castRallyManeuver(List.of(firstTarget.getId()));
 
         assertThat(firstTarget.getPowerModifier()).isEqualTo(2);
-        assertThat(firstTarget.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, firstTarget)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -59,9 +60,9 @@ class RallyManeuverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(firstTarget.getPowerModifier()).isZero();
-        assertThat(firstTarget.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, firstTarget)).doesNotContain(Keyword.FIRST_STRIKE);
         assertThat(secondTarget.getToughnessModifier()).isZero();
-        assertThat(secondTarget.getGrantedKeywords()).doesNotContain(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, secondTarget)).doesNotContain(Keyword.LIFELINK);
     }
 
     @Test
@@ -103,9 +104,9 @@ class RallyManeuverTest extends BaseCardTest {
         castRallyManeuver(List.of(firstTarget.getId(), secondTarget.getId()));
 
         assertThat(firstTarget.getPowerModifier()).isEqualTo(2);
-        assertThat(firstTarget.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE).doesNotContain(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, firstTarget)).contains(Keyword.FIRST_STRIKE).doesNotContain(Keyword.LIFELINK);
         assertThat(secondTarget.getToughnessModifier()).isEqualTo(2);
-        assertThat(secondTarget.getGrantedKeywords()).contains(Keyword.LIFELINK).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, secondTarget)).contains(Keyword.LIFELINK).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -120,7 +121,7 @@ class RallyManeuverTest extends BaseCardTest {
 
         assertThat(secondTarget.getPowerModifier()).isZero();
         assertThat(secondTarget.getToughnessModifier()).isEqualTo(2);
-        assertThat(secondTarget.getGrantedKeywords()).contains(Keyword.LIFELINK).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, secondTarget)).contains(Keyword.LIFELINK).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -135,7 +136,7 @@ class RallyManeuverTest extends BaseCardTest {
 
         assertThat(firstTarget.getPowerModifier()).isEqualTo(2);
         assertThat(firstTarget.getToughnessModifier()).isZero();
-        assertThat(firstTarget.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE).doesNotContain(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, firstTarget)).contains(Keyword.FIRST_STRIKE).doesNotContain(Keyword.LIFELINK);
     }
 
     @Test
@@ -144,7 +145,7 @@ class RallyManeuverTest extends BaseCardTest {
         castRallyManeuver(List.of(creature.getId()));
 
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.LIFELINK);
     }
 
     private void castRallyManeuver(List<UUID> targetIds) {

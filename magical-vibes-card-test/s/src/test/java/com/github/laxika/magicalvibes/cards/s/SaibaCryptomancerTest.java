@@ -24,7 +24,7 @@ class SaibaCryptomancerTest extends BaseCardTest {
         resolveEtbTargeting(hawker);
 
         assertThat(hawker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(hawker.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hawker, Keyword.HEXPROOF)).isTrue();
     }
 
     @Test
@@ -38,7 +38,7 @@ class SaibaCryptomancerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(hawker.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, hawker, Keyword.HEXPROOF)).isFalse();
         assertThat(hawker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -54,7 +54,7 @@ class SaibaCryptomancerTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(cryptomancer.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cryptomancer, Keyword.HEXPROOF)).isTrue();
         assertThat(cryptomancer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -67,7 +67,7 @@ class SaibaCryptomancerTest extends BaseCardTest {
         resolveEtbTargeting(hawker);
 
         assertThat(hawker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(hawker.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hawker, Keyword.HEXPROOF)).isTrue();
     }
 
     @Test
@@ -84,7 +84,7 @@ class SaibaCryptomancerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof SaibaCryptomancer);
         assertThat(hawker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(hawker.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hawker, Keyword.HEXPROOF)).isTrue();
     }
 
     private void castSaibaCryptomancer() {

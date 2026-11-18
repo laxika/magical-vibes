@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.n.NewBenalia;
 import com.github.laxika.magicalvibes.cards.n.NessianCourser;
 import com.github.laxika.magicalvibes.cards.q.Quagnoth;
@@ -134,7 +135,7 @@ class MagusOfTheAbyssTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.handlePermanentChosen(player2, creature.getId());
-        creature.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.SHROUD);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Nessian Courser");
@@ -147,7 +148,7 @@ class MagusOfTheAbyssTest extends BaseCardTest {
     void indestructibleCreatureCanBeChosenAndSurvives() {
         harness.addToBattlefield(player1, new MagusOfTheAbyss());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new NessianCourser());
-        creature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.INDESTRUCTIBLE);
 
         advanceToUpkeep(player2);
         harness.handlePermanentChosen(player2, creature.getId());

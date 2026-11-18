@@ -53,7 +53,7 @@ class RoarOfChallengeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AirElemental());
         castRoar(target);
 
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -62,7 +62,7 @@ class RoarOfChallengeTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castRoar(target);
 
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -76,7 +76,7 @@ class RoarOfChallengeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -85,7 +85,7 @@ class RoarOfChallengeTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
         castRoar(target);
 
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -94,7 +94,7 @@ class RoarOfChallengeTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         castRoar(target);
 
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -104,7 +104,7 @@ class RoarOfChallengeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AirElemental());
         castRoar(target);
 
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -118,7 +118,7 @@ class RoarOfChallengeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AirElemental());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test

@@ -65,7 +65,7 @@ class PainsmithTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Carapace Forger");
         assertThat(bears.getPowerModifier()).isEqualTo(2);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -90,7 +90,7 @@ class PainsmithTest extends BaseCardTest {
         // Carapace Forger should not be boosted
         Permanent bears = findPermanent(player1, "Carapace Forger");
         assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test
@@ -143,12 +143,12 @@ class PainsmithTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Carapace Forger");
         assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isTrue();
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test
@@ -166,7 +166,7 @@ class PainsmithTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player2, "Carapace Forger");
         assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -193,7 +193,7 @@ class PainsmithTest extends BaseCardTest {
 
         Permanent painsmith = findPermanent(player1, "Painsmith");
         assertThat(painsmith.getPowerModifier()).isEqualTo(2);
-        assertThat(painsmith.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, painsmith, Keyword.DEATHTOUCH)).isTrue();
         harness.assertNotOnBattlefield(player1, "Memnite");
         assertThat(harness.getGameData().stack).anyMatch(e -> e.getCard() != null && e.getCard().getName().equals("Memnite"));
     }

@@ -54,7 +54,7 @@ class MightyLeapTest extends BaseCardTest {
         assertThat(bears.getToughnessModifier()).isEqualTo(2);
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(bears.getEffectiveToughness()).isEqualTo(4);
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -73,7 +73,7 @@ class MightyLeapTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -108,10 +108,10 @@ class MightyLeapTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -142,13 +142,13 @@ class MightyLeapTest extends BaseCardTest {
 
         assertThat(pegasus.getEffectivePower()).isEqualTo(6);
         assertThat(pegasus.getEffectiveToughness()).isEqualTo(5);
-        assertThat(pegasus.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, pegasus, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(pegasus.getPowerModifier()).isZero();
         assertThat(pegasus.getToughnessModifier()).isZero();
-        assertThat(pegasus.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, pegasus, Keyword.FLYING)).isTrue();
     }
 }

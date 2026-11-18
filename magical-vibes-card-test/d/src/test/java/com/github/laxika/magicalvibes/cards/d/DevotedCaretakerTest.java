@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AvenFlock;
 import com.github.laxika.magicalvibes.cards.e.EngulfingFlames;
 import com.github.laxika.magicalvibes.cards.f.Firebolt;
@@ -37,12 +38,12 @@ class DevotedCaretakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent plains = findPermanent(player1, "Plains");
-        assertThat(plains.getProtectionFromCardTypes())
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, plains))
                 .contains(CardType.INSTANT, CardType.SORCERY);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(plains.getProtectionFromCardTypes()).doesNotContain(CardType.INSTANT, CardType.SORCERY);
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, plains)).doesNotContain(CardType.INSTANT, CardType.SORCERY);
     }
 
     @Test

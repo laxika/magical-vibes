@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -57,7 +58,7 @@ class DreadhordeInvasionTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(army.getGrantedKeywords()).contains(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, army)).contains(Keyword.LIFELINK);
     }
 
     @Test
@@ -73,7 +74,7 @@ class DreadhordeInvasionTest extends BaseCardTest {
         army.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.passBothPriorities();
 
-        assertThat(army.getGrantedKeywords()).contains(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, army)).contains(Keyword.LIFELINK);
     }
 
     @Test
@@ -87,7 +88,7 @@ class DreadhordeInvasionTest extends BaseCardTest {
         declareAttackers(List.of(1));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(army.getGrantedKeywords()).doesNotContain(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, army)).doesNotContain(Keyword.LIFELINK);
     }
 
     @Test
@@ -166,7 +167,7 @@ class DreadhordeInvasionTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(army.getGrantedKeywords()).doesNotContain(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, army)).doesNotContain(Keyword.LIFELINK);
     }
 
     private void advanceAndResolveUpkeep() {

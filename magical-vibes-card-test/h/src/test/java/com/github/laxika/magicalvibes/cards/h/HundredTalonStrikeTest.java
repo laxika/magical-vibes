@@ -35,7 +35,7 @@ class HundredTalonStrikeTest extends BaseCardTest {
 
         assertThat(mass.getPowerModifier()).isEqualTo(1);
         assertThat(mass.getToughnessModifier()).isZero();
-        assertThat(mass.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mass, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -52,7 +52,7 @@ class HundredTalonStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(mass.getPowerModifier()).isZero();
-        assertThat(mass.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mass, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -81,7 +81,7 @@ class HundredTalonStrikeTest extends BaseCardTest {
         assertThat(whiteCreature.isTapped()).isTrue();
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
         assertThat(gd.playerHands.get(player1.getId()))
@@ -162,7 +162,7 @@ class HundredTalonStrikeTest extends BaseCardTest {
 
         assertThat(samurai.getPowerModifier()).isEqualTo(1);
         assertThat(samurai.getToughnessModifier()).isZero();
-        assertThat(samurai.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, samurai, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(samurai.getMarkedDamage()).isEqualTo(1);
         harness.assertLife(player1, 19);
         harness.assertInHand(player1, "Hundred-Talon Strike");
@@ -172,7 +172,7 @@ class HundredTalonStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(samurai.getPowerModifier()).isZero();
-        assertThat(samurai.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, samurai, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test

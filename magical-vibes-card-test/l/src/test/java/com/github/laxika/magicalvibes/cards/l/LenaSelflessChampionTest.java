@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -60,9 +61,9 @@ class LenaSelflessChampionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
-        assertThat(angel.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
-        assertThat(opposing.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, angel)).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, opposing)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -76,7 +77,7 @@ class LenaSelflessChampionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(angel.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, angel)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -88,13 +89,13 @@ class LenaSelflessChampionTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.INDESTRUCTIBLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -107,7 +108,7 @@ class LenaSelflessChampionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.assertNotOnBattlefield(player1, "Lena, Selfless Champion");
         harness.assertInGraveyard(player1, "Lena, Selfless Champion");
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.INDESTRUCTIBLE);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();

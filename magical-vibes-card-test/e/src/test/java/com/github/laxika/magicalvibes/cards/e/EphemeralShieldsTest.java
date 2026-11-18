@@ -34,7 +34,7 @@ class EphemeralShieldsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
 
     }
 
@@ -56,7 +56,7 @@ class EphemeralShieldsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(battlefield.get(0).hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, battlefield.get(0), Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -80,11 +80,11 @@ class EphemeralShieldsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         harness.castAndResolveInstant(player1, 0, bear.getId());
-        assertThat(bear.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(bear.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -104,8 +104,8 @@ class EphemeralShieldsTest extends BaseCardTest {
 
         assertThat(pegasus.isTapped()).isTrue();
         assertThat(bear.isTapped()).isTrue();
-        assertThat(pegasus.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, pegasus, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isFalse();
         harness.assertInGraveyard(player1, "Ephemeral Shields");
     }
 
@@ -119,7 +119,7 @@ class EphemeralShieldsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        assertThat(bear.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test

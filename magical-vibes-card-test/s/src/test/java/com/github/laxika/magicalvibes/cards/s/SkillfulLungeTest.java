@@ -52,7 +52,7 @@ class SkillfulLungeTest extends BaseCardTest {
         assertThat(creature.getToughnessModifier()).isEqualTo(0);
         assertThat(creature.getEffectivePower()).isEqualTo(4);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -72,7 +72,7 @@ class SkillfulLungeTest extends BaseCardTest {
         Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(creature.getPowerModifier()).isEqualTo(0);
         assertThat(creature.getToughnessModifier()).isEqualTo(0);
-        assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test

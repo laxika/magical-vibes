@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HorizonCanopy;
 import com.github.laxika.magicalvibes.cards.n.NessianCourser;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,7 +32,7 @@ class LlanowarAugurTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(3);
         assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.TRAMPLE);
         harness.assertNotOnBattlefield(player1, "Llanowar Augur");
         harness.assertInGraveyard(player1, "Llanowar Augur");
     }
@@ -53,7 +54,7 @@ class LlanowarAugurTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test
@@ -68,7 +69,7 @@ class LlanowarAugurTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -83,7 +84,7 @@ class LlanowarAugurTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(3);
         assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -145,13 +146,13 @@ class LlanowarAugurTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.TRAMPLE);
 
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(3);
         assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -172,7 +173,7 @@ class LlanowarAugurTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Llanowar Augur");
         assertThat(otherCreature.getPowerModifier()).isZero();
         assertThat(otherCreature.getToughnessModifier()).isZero();
-        assertThat(otherCreature.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, otherCreature)).doesNotContain(Keyword.TRAMPLE);
     }
 
     private Permanent addAugur() {

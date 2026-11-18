@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.AbilityEffects;
@@ -393,7 +396,9 @@ public class PermanentControlSupport {
 
             Set<Keyword> blueprintGrantedKeywords = tokenBlueprint.grantedKeywordsUntilEndOfTurn();
             if (blueprintGrantedKeywords != null && !blueprintGrantedKeywords.isEmpty()) {
-                tokenPermanent.getGrantedKeywords().addAll(blueprintGrantedKeywords);
+                gameData.addEffectOnPermanent(tokenPermanent.getCard().getName(), null, controllerId,
+                        new GrantKeywordEffect(Set.copyOf(blueprintGrantedKeywords), GrantScope.TARGET),
+                        tokenPermanent.getId(), Duration.UNTIL_END_OF_TURN);
             }
 
             if (tokenBlueprint.exileAtEndOfCombat()) {

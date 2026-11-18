@@ -27,7 +27,7 @@ class FoggyNelsonOnRetainerTest extends BaseCardTest {
         resolveEtbTargeting(ally);
 
         assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(ally.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HEXPROOF)).isTrue();
     }
 
     @Test
@@ -42,7 +42,7 @@ class FoggyNelsonOnRetainerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ally.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HEXPROOF)).isFalse();
         assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -80,7 +80,7 @@ class FoggyNelsonOnRetainerTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Foggy Nelson, On Retainer");
         assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(ally.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HEXPROOF)).isTrue();
     }
 
     @Test
@@ -92,7 +92,7 @@ class FoggyNelsonOnRetainerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         Permanent foggy = findPermanent(player1, "Foggy Nelson, On Retainer");
         assertThat(foggy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(foggy.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, foggy, Keyword.HEXPROOF)).isFalse();
     }
 
     @Test
@@ -109,7 +109,7 @@ class FoggyNelsonOnRetainerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Foggy Nelson, On Retainer");
         assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(ally.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HEXPROOF)).isTrue();
     }
 
     @Test
@@ -126,10 +126,10 @@ class FoggyNelsonOnRetainerTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
         assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(ally.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HEXPROOF)).isFalse();
         Permanent foggy = findPermanent(player1, "Foggy Nelson, On Retainer");
         assertThat(foggy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(foggy.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, foggy, Keyword.HEXPROOF)).isFalse();
     }
 
     private void castFoggyNelson() {

@@ -35,7 +35,7 @@ class WingsOfTheCosmosTest extends BaseCardTest {
 
         assertThat(pup.getPowerModifier()).isEqualTo(1);
         assertThat(pup.getToughnessModifier()).isEqualTo(3);
-        assertThat(pup.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, pup, Keyword.FLYING)).isTrue();
         assertThat(pup.isTapped()).isFalse();
     }
 
@@ -55,7 +55,7 @@ class WingsOfTheCosmosTest extends BaseCardTest {
 
         assertThat(pup.getPowerModifier()).isZero();
         assertThat(pup.getToughnessModifier()).isZero();
-        assertThat(pup.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, pup, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -86,11 +86,11 @@ class WingsOfTheCosmosTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(target.isTapped()).isFalse();
         assertThat(other.getPowerModifier()).isZero();
         assertThat(other.getToughnessModifier()).isZero();
-        assertThat(other.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
         assertThat(other.isTapped()).isTrue();
     }
 
@@ -106,7 +106,7 @@ class WingsOfTheCosmosTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(target.isTapped()).isFalse();
     }
 

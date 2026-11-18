@@ -36,7 +36,7 @@ class BestowGreatnessTest extends BaseCardTest {
         assertThat(bear.getToughnessModifier()).isEqualTo(4);
         assertThat(bear.getEffectivePower()).isEqualTo(6);
         assertThat(bear.getEffectiveToughness()).isEqualTo(6);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -57,7 +57,7 @@ class BestowGreatnessTest extends BaseCardTest {
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -87,10 +87,10 @@ class BestowGreatnessTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(ownCreature.getPowerModifier()).isZero();
         assertThat(ownCreature.getToughnessModifier()).isZero();
-        assertThat(ownCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -106,7 +106,7 @@ class BestowGreatnessTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(10);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(10);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -114,7 +114,7 @@ class BestowGreatnessTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 }

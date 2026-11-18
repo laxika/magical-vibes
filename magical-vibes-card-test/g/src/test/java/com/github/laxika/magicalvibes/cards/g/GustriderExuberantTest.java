@@ -28,8 +28,8 @@ class GustriderExuberantTest extends BaseCardTest {
         activateGustrider();
 
         harness.assertInGraveyard(player1, "Gustrider Exuberant");
-        assertThat(big.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(small.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, big, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, small, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -40,7 +40,7 @@ class GustriderExuberantTest extends BaseCardTest {
 
         activateGustrider();
 
-        assertThat(thoctar.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, thoctar, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -52,8 +52,8 @@ class GustriderExuberantTest extends BaseCardTest {
 
         activateGustrider();
 
-        assertThat(findPermanent(player1, "Cavern Thoctar").hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(findPermanent(player2, "Cavern Thoctar").hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Cavern Thoctar"), Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player2, "Cavern Thoctar"), Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -64,15 +64,15 @@ class GustriderExuberantTest extends BaseCardTest {
         Permanent big = addReadyCreature(new WoollyThoctar());  // 5/4
 
         activateGustrider();
-        assertThat(small.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(big.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, small, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, big, Keyword.FLYING)).isTrue();
 
         // Later power change does not add or remove the grant (ruling).
         small.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3); // now 5/5
         big.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3); // now 2/1
 
-        assertThat(small.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(big.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, small, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, big, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -82,13 +82,13 @@ class GustriderExuberantTest extends BaseCardTest {
         Permanent big = addReadyCreature(new CavernThoctar());
 
         activateGustrider();
-        assertThat(big.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, big, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(big.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, big, Keyword.FLYING)).isFalse();
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.h.HoofSkulkin;
@@ -34,7 +35,7 @@ class DoubleCleaveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Hoof Skulkin");
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -44,7 +45,7 @@ class DoubleCleaveTest extends BaseCardTest {
 
         Permanent attacker = addCreatureReady(player1, new HoofSkulkin());
         attacker.setAttacking(true);
-        attacker.getGrantedKeywords().add(Keyword.DOUBLE_STRIKE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.DOUBLE_STRIKE);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -59,12 +60,12 @@ class DoubleCleaveTest extends BaseCardTest {
     @DisplayName("Double strike keyword is removed at end of turn")
     void doubleStrikeRemovedAtEndOfTurn() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new HoofSkulkin());
-        bears.getGrantedKeywords().add(Keyword.DOUBLE_STRIKE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.DOUBLE_STRIKE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -97,8 +98,8 @@ class DoubleCleaveTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(other.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.DOUBLE_STRIKE)).isFalse();
         harness.assertInGraveyard(player1, "Double Cleave");
     }
 
@@ -140,11 +141,11 @@ class DoubleCleaveTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }

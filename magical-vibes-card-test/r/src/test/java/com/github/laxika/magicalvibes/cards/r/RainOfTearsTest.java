@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.SteadfastGuard;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -147,7 +148,7 @@ class RainOfTearsTest extends BaseCardTest {
     @DisplayName("An indestructible land survives Rain of Tears")
     void indestructibleLandSurvives() {
         var mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        mountain.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, mountain, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new RainOfTears()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 

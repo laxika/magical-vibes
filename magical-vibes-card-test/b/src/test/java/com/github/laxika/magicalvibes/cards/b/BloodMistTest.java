@@ -34,7 +34,7 @@ class BloodMistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -47,14 +47,14 @@ class BloodMistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(bear.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DOUBLE_STRIKE)).isTrue();
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bear.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -70,8 +70,8 @@ class BloodMistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, own.getId());
         harness.passBothPriorities();
 
-        assertThat(own.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(opp.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opp, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -84,7 +84,7 @@ class BloodMistTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(bear.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -115,8 +115,8 @@ class BloodMistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, second.getId());
         harness.passBothPriorities();
 
-        assertThat(first.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
-        assertThat(second.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -130,7 +130,7 @@ class BloodMistTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, mist);
         harness.passBothPriorities();
 
-        assertThat(bear.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -146,6 +146,6 @@ class BloodMistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(other.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }

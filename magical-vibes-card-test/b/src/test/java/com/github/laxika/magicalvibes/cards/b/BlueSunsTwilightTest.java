@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -138,7 +139,7 @@ class BlueSunsTwilightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BlueSunsTwilight()));
         harness.addMana(player1, ManaColor.BLUE, 7);
         harness.castSorcery(player1, 0, 5, target.getId());
-        target.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.HEXPROOF);
 
         harness.passBothPriorities();
 

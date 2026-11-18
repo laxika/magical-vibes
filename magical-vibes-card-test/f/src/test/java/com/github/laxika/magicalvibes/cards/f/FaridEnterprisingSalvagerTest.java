@@ -42,7 +42,7 @@ class FaridEnterprisingSalvagerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(farid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(farid.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, farid, Keyword.MENACE)).isTrue();
         assertThat(findPermanents(player1, "Scrap")).hasSize(1);
     }
 

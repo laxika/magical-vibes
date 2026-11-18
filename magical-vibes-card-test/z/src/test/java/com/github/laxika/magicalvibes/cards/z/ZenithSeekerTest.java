@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Censor;
 import com.github.laxika.magicalvibes.cards.d.DuneBeetle;
 import com.github.laxika.magicalvibes.cards.t.TormentingVoice;
@@ -37,7 +38,7 @@ class ZenithSeekerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, beetle.getId());
         harness.passBothPriorities();
 
-        assertThat(beetle.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, beetle)).contains(Keyword.FLYING);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -60,7 +61,7 @@ class ZenithSeekerTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
-        assertThat(beetle.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, beetle)).contains(Keyword.FLYING);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -83,7 +84,7 @@ class ZenithSeekerTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
         assertThat(gd.stack).isEmpty();
-        assertThat(beetle.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, beetle)).doesNotContain(Keyword.FLYING);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -120,7 +121,7 @@ class ZenithSeekerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities(); // resolve the flying grant
 
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -137,11 +138,11 @@ class ZenithSeekerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FLYING);
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.FLYING);
     }
 
     @Test

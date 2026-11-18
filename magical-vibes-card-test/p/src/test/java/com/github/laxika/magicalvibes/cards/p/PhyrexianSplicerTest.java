@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.j.JackalPup;
 import com.github.laxika.magicalvibes.cards.r.RangerEnVec;
 import com.github.laxika.magicalvibes.cards.s.SoltariFootSoldier;
@@ -38,8 +39,8 @@ class PhyrexianSplicerTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, indexOf(splicer), 0, List.of(drake.getId(), bears.getId()));
         harness.passBothPriorities();
 
-        assertThat(drake.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, drake, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
         assertThat(splicer.isTapped()).isTrue();
     }
 
@@ -58,8 +59,8 @@ class PhyrexianSplicerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(drake.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, drake, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -82,16 +83,16 @@ class PhyrexianSplicerTest extends BaseCardTest {
         Permanent splicer = addReadySplicer();
         Permanent drake = addCreatureReady(player1, new WindDrake());
         Permanent bears = addCreatureReady(player1, new JackalPup());
-        drake.getGrantedKeywords().add(Keyword.TRAMPLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, drake, Keyword.TRAMPLE);
         readyMain(3);
 
         harness.activateAbilityWithMultiTargets(player1, indexOf(splicer), 2, List.of(drake.getId(), bears.getId()));
         harness.passBothPriorities();
 
-        assertThat(drake.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(drake.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, drake, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, drake, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -106,8 +107,8 @@ class PhyrexianSplicerTest extends BaseCardTest {
                 List.of(ranger.getId(), gnomes.getId()));
         harness.passBothPriorities();
 
-        assertThat(ranger.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(gnomes.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ranger, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, gnomes, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -122,8 +123,8 @@ class PhyrexianSplicerTest extends BaseCardTest {
                 List.of(shadowCreature.getId(), gnomes.getId()));
         harness.passBothPriorities();
 
-        assertThat(shadowCreature.hasKeyword(Keyword.SHADOW)).isFalse();
-        assertThat(gnomes.hasKeyword(Keyword.SHADOW)).isTrue();
+        assertThat(gqs.hasKeyword(gd, shadowCreature, Keyword.SHADOW)).isFalse();
+        assertThat(gqs.hasKeyword(gd, gnomes, Keyword.SHADOW)).isTrue();
     }
 
     @Test
@@ -162,7 +163,7 @@ class PhyrexianSplicerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(bears);
         harness.passBothPriorities();
 
-        assertThat(drake.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, drake, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -178,7 +179,7 @@ class PhyrexianSplicerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(drake);
         harness.passBothPriorities();
 
-        assertThat(gnomes.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gnomes, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -198,13 +199,13 @@ class PhyrexianSplicerTest extends BaseCardTest {
                 List.of(donor.getId(), respondingRecipient.getId()));
         harness.passBothPriorities();
 
-        assertThat(donor.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(respondingRecipient.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, donor, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, respondingRecipient, Keyword.FLYING)).isTrue();
 
         harness.passBothPriorities();
 
-        assertThat(recipient.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(donor.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, recipient, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, donor, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -219,14 +220,14 @@ class PhyrexianSplicerTest extends BaseCardTest {
                 List.of(donor.getId(), recipient.getId()));
         harness.passBothPriorities();
 
-        assertThat(donor.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(recipient.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, donor, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, recipient, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(donor.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(recipient.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, donor, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, recipient, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -242,8 +243,8 @@ class PhyrexianSplicerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(splicer);
         harness.passBothPriorities();
 
-        assertThat(donor.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(recipient.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, donor, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, recipient, Keyword.FLYING)).isTrue();
     }
 
     private Permanent addReadySplicer() {

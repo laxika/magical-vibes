@@ -27,14 +27,14 @@ class BloodhazeWolverineTest extends BaseCardTest {
         draw(player1.getId());
         assertThat(wolverine.getPowerModifier()).isZero();
         assertThat(wolverine.getToughnessModifier()).isZero();
-        assertThat(wolverine.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, wolverine, Keyword.FIRST_STRIKE)).isFalse();
 
         draw(player1.getId());
         resolveAllTriggers();
 
         assertThat(wolverine.getPowerModifier()).isEqualTo(1);
         assertThat(wolverine.getToughnessModifier()).isEqualTo(1);
-        assertThat(wolverine.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, wolverine, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -68,7 +68,7 @@ class BloodhazeWolverineTest extends BaseCardTest {
 
         assertThat(wolverine.getPowerModifier()).isZero();
         assertThat(wolverine.getToughnessModifier()).isZero();
-        assertThat(wolverine.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, wolverine, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -83,12 +83,12 @@ class BloodhazeWolverineTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(wolverine.getPowerModifier()).isZero();
-        assertThat(wolverine.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, wolverine, Keyword.FIRST_STRIKE)).isFalse();
         resolveAllTriggers();
 
         assertThat(wolverine.getPowerModifier()).isEqualTo(1);
         assertThat(wolverine.getToughnessModifier()).isEqualTo(1);
-        assertThat(wolverine.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, wolverine, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -104,7 +104,7 @@ class BloodhazeWolverineTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(wolverine.getPowerModifier()).isZero();
-        assertThat(wolverine.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, wolverine, Keyword.FIRST_STRIKE)).isFalse();
 
         draw(player1.getId());
         assertThat(gd.stack).hasSize(1);
@@ -112,7 +112,7 @@ class BloodhazeWolverineTest extends BaseCardTest {
 
         assertThat(wolverine.getPowerModifier()).isEqualTo(1);
         assertThat(wolverine.getToughnessModifier()).isEqualTo(1);
-        assertThat(wolverine.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, wolverine, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -128,7 +128,7 @@ class BloodhazeWolverineTest extends BaseCardTest {
 
         assertThat(wolverine.getPowerModifier()).isEqualTo(1);
         assertThat(wolverine.getToughnessModifier()).isEqualTo(1);
-        assertThat(wolverine.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, wolverine, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -144,7 +144,7 @@ class BloodhazeWolverineTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(wolverine.getPowerModifier()).isZero();
         assertThat(wolverine.getToughnessModifier()).isZero();
-        assertThat(wolverine.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, wolverine, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     private void addCardsToDeck(int count) {

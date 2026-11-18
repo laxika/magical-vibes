@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DevkarinDissident;
 import com.github.laxika.magicalvibes.cards.d.DirectCurrent;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -36,7 +37,7 @@ class VigorsporeWurmTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(4);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.VIGILANCE);
     }
 
     @Test
@@ -57,7 +58,7 @@ class VigorsporeWurmTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.VIGILANCE);
     }
 
     @Test
@@ -97,7 +98,7 @@ class VigorsporeWurmTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.VIGILANCE);
     }
 
     @Test
@@ -115,7 +116,7 @@ class VigorsporeWurmTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(4);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.VIGILANCE);
 
         harness.setGraveyard(player1, List.of());
 

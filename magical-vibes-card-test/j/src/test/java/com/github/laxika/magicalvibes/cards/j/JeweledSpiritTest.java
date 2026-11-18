@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WintermoonMesa;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -30,7 +31,7 @@ class JeweledSpiritTest extends BaseCardTest {
 
         harness.handleListChoice(player1, CardColor.RED.name());
 
-        assertThat(spirit.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, spirit)).contains(CardColor.RED);
     }
 
     @Test
@@ -42,7 +43,7 @@ class JeweledSpiritTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "ARTIFACT");
 
-        assertThat(spirit.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, spirit)).contains(CardType.ARTIFACT);
     }
 
     @Test
@@ -81,12 +82,12 @@ class JeweledSpiritTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "ARTIFACT");
 
-        assertThat(spirit.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, spirit)).contains(CardType.ARTIFACT);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 
-        assertThat(spirit.getProtectionFromCardTypes()).doesNotContain(CardType.ARTIFACT);
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, spirit)).doesNotContain(CardType.ARTIFACT);
     }
 
     @Test
@@ -136,7 +137,7 @@ class JeweledSpiritTest extends BaseCardTest {
         harness.handleListChoice(player1, "ARTIFACT");
 
         assertThat(gqs.hasProtectionFrom(gd, spirit, CardColor.RED)).isTrue();
-        assertThat(spirit.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, spirit)).contains(CardType.ARTIFACT);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
     }
 

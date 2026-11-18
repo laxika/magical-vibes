@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.o.OliviasDragoon;
@@ -39,8 +40,8 @@ class AbandonReasonTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
-        assertThat(first.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
-        assertThat(second.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, first)).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, second)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -53,7 +54,7 @@ class AbandonReasonTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(bears.getId()));
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -69,7 +70,7 @@ class AbandonReasonTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test

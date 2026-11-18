@@ -36,12 +36,12 @@ class PyrewoodGearhulkTest extends BaseCardTest {
         Permanent gearhulk = findPermanent(player1, "Pyrewood Gearhulk");
         assertThat(bears.getPowerModifier()).isEqualTo(2);
         assertThat(bears.getToughnessModifier()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isTrue();
         assertThat(gearhulk.getPowerModifier()).isZero();
         assertThat(gearhulk.getToughnessModifier()).isZero();
         assertThat(opponentBears.getPowerModifier()).isZero();
-        assertThat(opponentBears.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.MENACE)).isFalse();
     }
 
     @Test
@@ -51,7 +51,7 @@ class PyrewoodGearhulkTest extends BaseCardTest {
 
         castGearhulk();
         assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -59,8 +59,8 @@ class PyrewoodGearhulkTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isFalse();
     }
 
     @Test
@@ -88,8 +88,8 @@ class PyrewoodGearhulkTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isFalse();
     }
 
     @Test

@@ -160,7 +160,7 @@ class ExecuteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castInstant(player1, 0, target.getId());
-        target.getProtectionFromColorsUntilEndOfTurn().add(CardColor.BLACK);
+        PermanentGrants.protectionFromColorUntilEndOfTurn(gd, target, CardColor.BLACK);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Glory Seeker");

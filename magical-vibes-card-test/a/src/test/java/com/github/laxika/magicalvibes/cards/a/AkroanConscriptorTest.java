@@ -34,7 +34,7 @@ class AkroanConscriptorTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
@@ -42,7 +42,7 @@ class AkroanConscriptorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -54,7 +54,7 @@ class AkroanConscriptorTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, conscriptor.getId());
 
-        assertThat(conscriptor.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, conscriptor, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -66,7 +66,7 @@ class AkroanConscriptorTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(conscriptor.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, conscriptor, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -83,7 +83,7 @@ class AkroanConscriptorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
@@ -99,7 +99,7 @@ class AkroanConscriptorTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, conscriptor.getId());
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
@@ -122,6 +122,6 @@ class AkroanConscriptorTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 }

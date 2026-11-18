@@ -53,7 +53,7 @@ class MetallicMasteryTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(artifact.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(artifact.getId()));
         assertThat(artifact.isTapped()).isFalse();
-        assertThat(artifact.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(artifact.getId())).isTrue();
     }
 
@@ -73,7 +73,7 @@ class MetallicMasteryTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(artifact.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(artifact.getId()));
-        assertThat(artifact.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(artifact.getId())).isFalse();
     }
 
@@ -89,7 +89,7 @@ class MetallicMasteryTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, artifact.getId());
 
         assertThat(artifact.isTapped()).isFalse();
-        assertThat(artifact.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(artifact.getId())).isFalse();
     }
 
@@ -137,7 +137,7 @@ class MetallicMasteryTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, artifactCreature.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(artifactCreature.getId()));
-        assertThat(artifactCreature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, artifactCreature, Keyword.HASTE)).isTrue();
         assertThat(artifactCreature.isTapped()).isFalse();
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));

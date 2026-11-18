@@ -126,13 +126,13 @@ class TidalCourierTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(courier.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(dodecapod.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, courier, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dodecapod, Keyword.FLYING)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(courier.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, courier, Keyword.FLYING)).isFalse();
     }
 }

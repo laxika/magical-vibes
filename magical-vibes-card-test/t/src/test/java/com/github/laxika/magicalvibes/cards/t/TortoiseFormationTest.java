@@ -29,8 +29,8 @@ class TortoiseFormationTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(own.hasKeyword(Keyword.SHROUD)).isTrue();
-        assertThat(enemy.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enemy, Keyword.SHROUD)).isFalse();
     }
 
     @Test
@@ -42,13 +42,13 @@ class TortoiseFormationTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(own.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.SHROUD)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(own.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.SHROUD)).isFalse();
     }
 
     @Test
@@ -62,8 +62,8 @@ class TortoiseFormationTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = harness.enterBattlefieldAndReturn(player1, new CylianElf());
 
-        assertThat(beforeResolution.hasKeyword(Keyword.SHROUD)).isTrue();
-        assertThat(afterResolution.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.SHROUD)).isFalse();
     }
 
     @Test

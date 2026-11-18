@@ -41,7 +41,7 @@ class KytheonsTacticsTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -54,7 +54,7 @@ class KytheonsTacticsTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -68,7 +68,7 @@ class KytheonsTacticsTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -85,7 +85,7 @@ class KytheonsTacticsTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -96,7 +96,7 @@ class KytheonsTacticsTest extends BaseCardTest {
 
         cast(player1);
 
-        assertThat(findPermanent(player1, "Grizzly Bears").hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -108,11 +108,11 @@ class KytheonsTacticsTest extends BaseCardTest {
 
         cast(player1);
 
-        assertThat(findPermanent(player1, "Grizzly Bears").hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.VIGILANCE)).isTrue();
         Permanent opponent = findPermanent(player2, "Grizzly Bears");
         assertThat(opponent.getEffectivePower()).isEqualTo(2);
         assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponent.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -126,7 +126,7 @@ class KytheonsTacticsTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -141,7 +141,7 @@ class KytheonsTacticsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new Shock(), new LavaAxe()));
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears").hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -155,7 +155,7 @@ class KytheonsTacticsTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
     }
 
     private void cast(Player player) {

@@ -39,7 +39,7 @@ class FeySteedTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
 
-        assertThat(attacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -63,13 +63,13 @@ class FeySteedTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();
-        assertThat(attacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test

@@ -53,7 +53,7 @@ class RileTest extends BaseCardTest {
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeAfterCast + 1);
     }
 
@@ -84,7 +84,7 @@ class RileTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -137,7 +137,7 @@ class RileTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Jungle Delver");
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
         harness.assertInHand(player1, "Deeproot Warrior");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
@@ -172,7 +172,7 @@ class RileTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getMarkedDamage()).isZero();
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Rile");

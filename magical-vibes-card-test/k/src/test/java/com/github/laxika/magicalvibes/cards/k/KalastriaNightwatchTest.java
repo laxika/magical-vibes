@@ -26,7 +26,7 @@ class KalastriaNightwatchTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(nightwatch.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nightwatch, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -42,7 +42,7 @@ class KalastriaNightwatchTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(nightwatch.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nightwatch, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -55,13 +55,13 @@ class KalastriaNightwatchTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(nightwatch.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nightwatch, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(nightwatch.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nightwatch, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -72,16 +72,16 @@ class KalastriaNightwatchTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 1, null, null);
-        assertThat(nightwatch.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nightwatch, Keyword.FLYING)).isFalse();
         harness.passBothPriorities();
 
         harness.assertLife(player1, 21);
-        assertThat(nightwatch.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nightwatch, Keyword.FLYING)).isFalse();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(nightwatch.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nightwatch, Keyword.FLYING)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -100,9 +100,9 @@ class KalastriaNightwatchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(first.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(second.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(opponent.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -115,6 +115,6 @@ class KalastriaNightwatchTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         assertThat(gd.stack).isEmpty();
-        assertThat(nightwatch.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nightwatch, Keyword.FLYING)).isFalse();
     }
 }

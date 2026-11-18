@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlabasterHostSanctifier;
 import com.github.laxika.magicalvibes.cards.v.VanquishTheWeak;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -28,7 +29,7 @@ class RedcapHeelslasherTest extends BaseCardTest {
         resolveEtbTargeting(bears);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.getGrantedKeywords()).containsExactly(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).containsExactly(Keyword.FIRST_STRIKE);
         assertThat(heelslasher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -40,7 +41,7 @@ class RedcapHeelslasherTest extends BaseCardTest {
         resolveEtbTargeting(heelslasher);
 
         assertThat(heelslasher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(heelslasher.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, heelslasher)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -50,13 +51,13 @@ class RedcapHeelslasherTest extends BaseCardTest {
         castRedcapHeelslasher();
         resolveEtbTargeting(bears);
 
-        assertThat(bears.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -68,7 +69,7 @@ class RedcapHeelslasherTest extends BaseCardTest {
         resolveEtbTargeting(target);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.getGrantedKeywords()).containsExactly(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).containsExactly(Keyword.FIRST_STRIKE);
         assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -84,7 +85,7 @@ class RedcapHeelslasherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.getGrantedKeywords()).containsExactly(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).containsExactly(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -99,7 +100,7 @@ class RedcapHeelslasherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(source.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, source)).doesNotContain(Keyword.FIRST_STRIKE);
         assertThat(gd.stack).isEmpty();
     }
 

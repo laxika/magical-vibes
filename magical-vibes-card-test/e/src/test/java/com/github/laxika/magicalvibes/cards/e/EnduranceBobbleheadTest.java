@@ -41,8 +41,8 @@ class EnduranceBobbleheadTest extends BaseCardTest {
 
         assertThat(first.getEffectivePower()).isEqualTo(3);
         assertThat(second.getEffectivePower()).isEqualTo(3);
-        assertThat(first.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -148,8 +148,8 @@ class EnduranceBobbleheadTest extends BaseCardTest {
 
         assertThat(first.getEffectivePower()).isEqualTo(3);
         assertThat(second.getEffectivePower()).isEqualTo(3);
-        assertThat(first.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -162,7 +162,7 @@ class EnduranceBobbleheadTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(creature.getEffectivePower()).isEqualTo(3);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -170,7 +170,7 @@ class EnduranceBobbleheadTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -199,6 +199,6 @@ class EnduranceBobbleheadTest extends BaseCardTest {
 
         assertThat(second.getEffectivePower()).isEqualTo(3);
         assertThat(second.getEffectiveToughness()).isEqualTo(2);
-        assertThat(second.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 }

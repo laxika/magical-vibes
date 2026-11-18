@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GlassOfTheGuildpact;
@@ -53,7 +54,7 @@ class RampageOfTheClansTest extends BaseCardTest {
     @DisplayName("Does not create a token for an indestructible artifact")
     void indestructibleArtifactSurvivesWithoutCreatingToken() {
         Permanent indestructibleArtifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
-        indestructibleArtifact.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, indestructibleArtifact, Keyword.INDESTRUCTIBLE);
 
         castRampageOfTheClans();
 

@@ -1117,9 +1117,6 @@ public class LayerSystemService {
         h = hashEnums(h, p.getFaceDownCardTypes());
         h = hashEnums(h, p.getFaceDownSubtypes());
 
-        h = hashEnums(h, p.getGrantedKeywords());
-        h = hashEnums(h, p.getRemovedKeywords());
-        h = hashEnums(h, p.getUntilNextTurnKeywords());
         h = mix(h, p.getPersistentName() == null ? 0 : p.getPersistentName().hashCode());
 
         for (TextReplacement replacement : p.getTextReplacements()) {
@@ -1333,13 +1330,11 @@ public class LayerSystemService {
             // leaves answering from the states never see less than the intrinsic values
             // (colors and keywords are untouched by layer 4).
             seedLegacyColorAndAbilityState(gameData, permanent, state, globalWordChange);
-            // A one-shot changeling grant (e.g. Wings of Velis Vel) is not seeded into the state
-            // until layer 6, so it is also read from the permanent's granted keywords and its
-            // floating keyword grants here.
+            // A one-shot changeling grant (e.g. Wings of Velis Vel) is not applied to the state
+            // until layer 6, so its floating keyword grant is read here, unless a newer floating
+            // removal of changeling takes it away again (CR 613.7).
             boolean grantedChangeling = !permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                    && !permanent.getRemovedKeywords().contains(Keyword.CHANGELING)
-                    && (permanent.getGrantedKeywords().contains(Keyword.CHANGELING)
-                    || hasFloatingKeywordGrant(gameData, permanent.getId(), Keyword.CHANGELING));
+                    && hasFloatingKeywordGrant(gameData, permanent.getId(), Keyword.CHANGELING);
             if (state.hasKeyword(Keyword.CHANGELING) || grantedChangeling) {
                 for (CardSubtype subtype : CardSubtype.values()) {
                     if (StaticEffectSupport.isCreatureSubtype(subtype)) state.addSubtype(subtype);
@@ -3090,7 +3085,7 @@ public class LayerSystemService {
      * Seeds the legacy one-shot color and ability state that has not been migrated to floating
      * effects yet, then snapshots the seeded baseline. Mirrors {@code Permanent.getEffectiveColor}
      * and {@code Permanent.hasKeyword}: the awakening counter makes
-     * the land green, granted/until-next-turn keywords add, removed keywords subtract, the
+     * the land green, perpetually gained keywords add, the
      * legacy "loses all abilities until end of turn" flag clears everything at seed time (so
      * later-timestamp layered grants still apply, matching the old accumulator behavior).
      */
@@ -3143,18 +3138,15 @@ public class LayerSystemService {
             state.loseAllAbilities(0);
         } else {
             state.snapshotPrintedTriggerKeywords();
-            state.addKeywords(permanent.getGrantedKeywords());
             if (permanent.getOriginalCard() != null) {
                 state.addKeywords(keepingPerpetualRemovals(gameData, permanent.getCard().getId(),
                         gameData.perpetualKeywords.getOrDefault(permanent.getOriginalCard().getId(), Set.of())));
             }
-            state.addKeywords(permanent.getUntilNextTurnKeywords());
             state.addKeywords(keepingPerpetualRemovals(gameData, permanent.getCard().getId(),
                     gameData.perpetualCardKeywords.getOrDefault(permanent.getCard().getId(), Set.of())));
             gameData.perpetualCardExtraKeywordInstances
                     .getOrDefault(permanent.getCard().getId(), Map.of())
                     .forEach(state::addPerpetualTriggerKeywordInstances);
-            permanent.getRemovedKeywords().forEach(state::removeKeyword);
         }
         state.snapshotSeededCharacteristics();
     }
@@ -3179,8 +3171,13 @@ public class LayerSystemService {
 
     /** Whether a floating effect on {@code permanentId} grants it {@code keyword}. */
     private static boolean hasFloatingKeywordGrant(GameData gameData, UUID permanentId, Keyword keyword) {
-        return gameData.floatingEffectsOnPermanent(permanentId, GrantKeywordEffect.class).stream()
-                .anyMatch(fe -> ((GrantKeywordEffect) fe.effect()).keywords().contains(keyword));
+        long newestGrant = gameData.floatingEffectsOnPermanent(permanentId, GrantKeywordEffect.class).stream()
+                .filter(fe -> ((GrantKeywordEffect) fe.effect()).keywords().contains(keyword))
+                .mapToLong(FloatingContinuousEffect::timestamp).max().orElse(Long.MIN_VALUE);
+        long newestRemoval = gameData.floatingEffectsOnPermanent(permanentId, RemoveKeywordEffect.class).stream()
+                .filter(fe -> ((RemoveKeywordEffect) fe.effect()).keyword() == keyword)
+                .mapToLong(FloatingContinuousEffect::timestamp).max().orElse(Long.MIN_VALUE);
+        return newestGrant != Long.MIN_VALUE && newestGrant > newestRemoval;
     }
 
     /**

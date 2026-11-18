@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BoroughBackup;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LukeCagePowerMan;
@@ -146,7 +147,7 @@ class CaptainAmericaTeamLeaderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent luke = findPermanent(player1, "Luke Cage, Power Man");
-        luke.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, luke, Keyword.SHROUD);
         resolveAllTriggers();
 
         assertThat(captain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlloyMyr;
 import com.github.laxika.magicalvibes.cards.h.Hovermyr;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -126,8 +127,8 @@ class CorrosiveGaleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castSorcery(player1, 0, 2);
 
-        newlyFlying.getGrantedKeywords().add(Keyword.FLYING);
-        noLongerFlying.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, newlyFlying, Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, noLongerFlying, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Alloy Myr");

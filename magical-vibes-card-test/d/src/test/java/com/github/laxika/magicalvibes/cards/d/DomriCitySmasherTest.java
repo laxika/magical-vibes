@@ -28,9 +28,9 @@ class DomriCitySmasherTest extends BaseCardTest {
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(ownCreature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isTrue();
         assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
-        assertThat(opponentCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -38,7 +38,7 @@ class DomriCitySmasherTest extends BaseCardTest {
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
-        assertThat(ownCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -68,16 +68,16 @@ class DomriCitySmasherTest extends BaseCardTest {
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(ownCreature.getEffectivePower()).isEqualTo(5);
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(5);
-        assertThat(ownCreature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opponentCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(ownCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     private Permanent addReadyDomri(Player player, int loyalty) {

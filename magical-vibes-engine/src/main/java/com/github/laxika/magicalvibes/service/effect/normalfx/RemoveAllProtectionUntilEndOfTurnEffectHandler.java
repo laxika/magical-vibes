@@ -82,12 +82,6 @@ public class RemoveAllProtectionUntilEndOfTurnEffectHandler implements NormalEff
 
     private void removeFrom(GameData gameData, StackEntry entry,
                             RemoveAllProtectionUntilEndOfTurnEffect remove, Permanent target) {
-        target.setProtectionRemovedUntilEndOfTurn(true);
-        target.getProtectionFromCardTypes().clear();
-        target.getProtectionFromColorsUntilEndOfTurn().clear();
-        target.setProtectionFromColorlessUntilEndOfTurn(false);
-        target.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().clear();
-        target.setProtectionFromOpponentCreaturesUntilEndOfTurn(false);
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(), remove, target.getId(), null, null,

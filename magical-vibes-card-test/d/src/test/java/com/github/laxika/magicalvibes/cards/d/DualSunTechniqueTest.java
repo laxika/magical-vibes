@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -26,7 +27,7 @@ class DualSunTechniqueTest extends BaseCardTest {
 
         castResolve(creature);
 
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.DOUBLE_STRIKE);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -39,7 +40,7 @@ class DualSunTechniqueTest extends BaseCardTest {
 
         castResolve(creature);
 
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.DOUBLE_STRIKE);
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
@@ -53,7 +54,7 @@ class DualSunTechniqueTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.DOUBLE_STRIKE);
     }
 
     @Test
@@ -78,7 +79,7 @@ class DualSunTechniqueTest extends BaseCardTest {
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.passBothPriorities();
 
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.DOUBLE_STRIKE);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInHand(player1, "Grizzly Bears");
     }
@@ -94,7 +95,7 @@ class DualSunTechniqueTest extends BaseCardTest {
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
         harness.passBothPriorities();
 
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.DOUBLE_STRIKE);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
@@ -107,7 +108,7 @@ class DualSunTechniqueTest extends BaseCardTest {
 
         castResolve(creature);
 
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.DOUBLE_STRIKE);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
@@ -124,7 +125,7 @@ class DualSunTechniqueTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
         harness.passBothPriorities();
 
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.DOUBLE_STRIKE);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Dual-Sun Technique");

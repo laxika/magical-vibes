@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -112,7 +113,7 @@ class TailSlashTest extends BaseCardTest {
         addMana();
 
         harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
-        source.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, source, Keyword.SHROUD);
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();
@@ -128,7 +129,7 @@ class TailSlashTest extends BaseCardTest {
         addMana();
 
         harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
-        target.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.SHROUD);
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();

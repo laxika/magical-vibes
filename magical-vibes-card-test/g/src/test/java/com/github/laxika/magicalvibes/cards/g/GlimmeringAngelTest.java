@@ -28,7 +28,7 @@ class GlimmeringAngelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(angel.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.SHROUD)).isTrue();
     }
 
     @Test
@@ -39,13 +39,13 @@ class GlimmeringAngelTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(angel.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.SHROUD)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(angel.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.SHROUD)).isFalse();
     }
 
     @Test
@@ -115,11 +115,11 @@ class GlimmeringAngelTest extends BaseCardTest {
         harness.castInstant(player2, 0, angel.getId());
         harness.passPriority(player2);
         harness.activateAbility(player1, 0, null, null);
-        assertThat(angel.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.SHROUD)).isFalse();
 
         resolveAllTriggers();
 
-        assertThat(angel.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.SHROUD)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(angel);
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(card -> card instanceof AgonizingDemise);
@@ -136,12 +136,12 @@ class GlimmeringAngelTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(angel.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.SHROUD)).isTrue();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(angel.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.SHROUD)).isTrue();
         assertThat(angel.isTapped()).isTrue();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

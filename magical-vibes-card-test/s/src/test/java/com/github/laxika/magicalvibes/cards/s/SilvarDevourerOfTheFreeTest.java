@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TrynnChampionOfFreedom;
 import com.github.laxika.magicalvibes.model.Card;
@@ -70,7 +71,7 @@ class SilvarDevourerOfTheFreeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Human");
         assertThat(silvar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(silvar.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, silvar)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -91,13 +92,13 @@ class SilvarDevourerOfTheFreeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(silvar.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, silvar)).contains(Keyword.INDESTRUCTIBLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(silvar.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, silvar)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     private Permanent addReadySilvar() {
@@ -152,12 +153,12 @@ class SilvarDevourerOfTheFreeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Trynn, Champion of Freedom");
         harness.assertNotOnBattlefield(player1, "Trynn, Champion of Freedom");
         assertThat(silvar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(silvar.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, silvar)).doesNotContain(Keyword.INDESTRUCTIBLE);
 
         harness.passBothPriorities();
 
         assertThat(silvar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(silvar.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, silvar)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test

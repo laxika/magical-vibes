@@ -55,7 +55,7 @@ class VeilOfSecrecyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, blueCreature.getId());
         harness.passBothPriorities();
-        assertThat(blueCreature.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, blueCreature, Keyword.SHROUD)).isTrue();
 
         harness.setHand(player1, List.of(new FirstVolley(), new VeilOfSecrecy()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -66,7 +66,7 @@ class VeilOfSecrecyTest extends BaseCardTest {
         harness.assertInHand(player1, "Teardrop Kami");
         harness.passBothPriorities();
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
         assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
         harness.assertInHand(player1, "Veil of Secrecy");
     }
@@ -82,7 +82,7 @@ class VeilOfSecrecyTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
         assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 
@@ -101,7 +101,7 @@ class VeilOfSecrecyTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isFalse();
         assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
@@ -149,7 +149,7 @@ class VeilOfSecrecyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
         assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HeadlessSkaab;
 import com.github.laxika.magicalvibes.cards.s.ScornedVillager;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -28,7 +29,7 @@ class FalkenrathTorturerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Scorned Villager");
 
-        assertThat(torturer.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, torturer)).contains(Keyword.FLYING);
         assertThat(torturer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -44,7 +45,7 @@ class FalkenrathTorturerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Headless Skaab");
 
-        assertThat(torturer.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, torturer)).contains(Keyword.FLYING);
         assertThat(torturer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -94,12 +95,12 @@ class FalkenrathTorturerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handlePermanentChosen(player1, skaab.getId());
         harness.passBothPriorities();
-        assertThat(torturer.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, torturer)).contains(Keyword.FLYING);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(torturer.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, torturer)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -112,16 +113,16 @@ class FalkenrathTorturerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Scorned Villager");
         harness.assertNotOnBattlefield(player1, "Scorned Villager");
-        assertThat(torturer.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, torturer)).doesNotContain(Keyword.FLYING);
         assertThat(torturer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.passBothPriorities();
-        assertThat(torturer.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, torturer)).contains(Keyword.FLYING);
         assertThat(torturer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(torturer.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, torturer)).doesNotContain(Keyword.FLYING);
         assertThat(torturer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 

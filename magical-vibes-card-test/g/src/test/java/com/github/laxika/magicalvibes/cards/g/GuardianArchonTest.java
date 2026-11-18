@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.a.ActOfTreason;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -35,7 +36,7 @@ class GuardianArchonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, archon.getId());
         harness.passBothPriorities();
 
-        assertThat(archon.getProtectionFromPlayerIdsUntilEndOfTurn()).contains(player2.getId());
+        assertThat(PermanentGrants.protectionPlayersOf(gd, archon)).contains(player2.getId());
         assertThat(gqs.playerHasProtectionFromOpponents(gd, player1.getId(), player2.getId())).isTrue();
 
         harness.setHand(player2, List.of(new Shock()));
@@ -112,7 +113,7 @@ class GuardianArchonTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getProtectionFromPlayerIdsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionPlayersOf(gd, target)).isEmpty();
         assertThat(gqs.playerHasProtectionFromOpponents(gd, player1.getId(), player2.getId())).isFalse();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, archon.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -133,7 +134,7 @@ class GuardianArchonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(archon);
-        assertThat(target.getProtectionFromPlayerIdsUntilEndOfTurn()).contains(player2.getId());
+        assertThat(PermanentGrants.protectionPlayersOf(gd, target)).contains(player2.getId());
         assertThat(gqs.playerHasProtectionFromOpponents(gd, player1.getId(), player2.getId())).isTrue();
     }
 
@@ -153,7 +154,7 @@ class GuardianArchonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(archon.getProtectionFromPlayerIdsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionPlayersOf(gd, archon)).isEmpty();
         assertThat(gqs.playerHasProtectionFromOpponents(gd, player1.getId(), player2.getId())).isFalse();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);

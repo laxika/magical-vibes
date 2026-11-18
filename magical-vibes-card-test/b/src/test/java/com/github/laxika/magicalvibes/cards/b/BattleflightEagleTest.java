@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -57,7 +58,7 @@ class BattleflightEagleTest extends BaseCardTest {
         Permanent bears = gqs.findPermanentById(gd, targetId);
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(bears.getEffectiveToughness()).isEqualTo(4);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -75,7 +76,7 @@ class BattleflightEagleTest extends BaseCardTest {
 
         Permanent bears = gqs.findPermanentById(gd, targetId);
         assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -98,7 +99,7 @@ class BattleflightEagleTest extends BaseCardTest {
         Permanent bears = gqs.findPermanentById(gd, targetId);
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.FLYING);
     }
 
     @Test

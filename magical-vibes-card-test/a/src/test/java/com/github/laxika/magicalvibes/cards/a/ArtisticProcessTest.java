@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -195,7 +196,7 @@ class ArtisticProcessTest extends BaseCardTest {
             assertThat(token.getCard().getPower()).isEqualTo(3);
             assertThat(token.getCard().getToughness()).isEqualTo(3);
             assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
-            assertThat(token.getGrantedKeywords()).contains(Keyword.HASTE);
+            assertThat(PermanentGrants.keywordsOf(gd, token)).contains(Keyword.HASTE);
             assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         }
     }

@@ -28,9 +28,9 @@ class BiosynthicBurstTest extends BaseCardTest {
         castBurst(target);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(target.isTapped()).isFalse();
     }
 
@@ -46,9 +46,9 @@ class BiosynthicBurstTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -71,9 +71,9 @@ class BiosynthicBurstTest extends BaseCardTest {
         castBurst(target);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(target.isTapped()).isFalse();
     }
 
@@ -92,9 +92,9 @@ class BiosynthicBurstTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         for (Permanent unaffected : List.of(other, opponent)) {
             assertThat(unaffected.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-            assertThat(unaffected.hasKeyword(Keyword.REACH)).isFalse();
-            assertThat(unaffected.hasKeyword(Keyword.TRAMPLE)).isFalse();
-            assertThat(unaffected.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, unaffected, Keyword.REACH)).isFalse();
+            assertThat(gqs.hasKeyword(gd, unaffected, Keyword.TRAMPLE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, unaffected, Keyword.INDESTRUCTIBLE)).isFalse();
             assertThat(unaffected.isTapped()).isTrue();
         }
     }
@@ -114,9 +114,9 @@ class BiosynthicBurstTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(target.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Biosynthic Burst");
@@ -138,9 +138,9 @@ class BiosynthicBurstTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(other.hasKeyword(Keyword.REACH)).isFalse();
-        assertThat(other.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(other.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(other.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Biosynthic Burst");

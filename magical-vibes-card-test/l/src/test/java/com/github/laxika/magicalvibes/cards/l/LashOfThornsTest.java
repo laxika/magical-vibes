@@ -25,7 +25,7 @@ class LashOfThornsTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(4);
         assertThat(bear.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bear.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -39,7 +39,7 @@ class LashOfThornsTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test
@@ -51,10 +51,10 @@ class LashOfThornsTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
         assertThat(other.getEffectivePower()).isEqualTo(2);
         assertThat(other.getEffectiveToughness()).isEqualTo(2);
-        assertThat(other.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test
@@ -65,14 +65,14 @@ class LashOfThornsTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(6);
         assertThat(bear.getEffectiveToughness()).isEqualTo(4);
-        assertThat(bear.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DEATHTOUCH)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test

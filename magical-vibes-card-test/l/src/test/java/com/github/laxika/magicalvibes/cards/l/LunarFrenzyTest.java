@@ -32,8 +32,8 @@ class LunarFrenzyTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(5);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -47,8 +47,8 @@ class LunarFrenzyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -65,8 +65,8 @@ class LunarFrenzyTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -106,18 +106,18 @@ class LunarFrenzyTest extends BaseCardTest {
 
         assertThat(secondBear.getEffectivePower()).isEqualTo(5);
         assertThat(secondBear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(secondBear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(secondBear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondBear, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondBear, Keyword.TRAMPLE)).isTrue();
         assertThat(firstBear.getEffectivePower()).isEqualTo(2);
-        assertThat(firstBear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(firstBear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, firstBear, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, firstBear, Keyword.TRAMPLE)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(firstBear.getEffectivePower()).isEqualTo(3);
         assertThat(firstBear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(firstBear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(firstBear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, firstBear, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, firstBear, Keyword.TRAMPLE)).isTrue();
         assertThat(secondBear.getEffectivePower()).isEqualTo(5);
     }
 }

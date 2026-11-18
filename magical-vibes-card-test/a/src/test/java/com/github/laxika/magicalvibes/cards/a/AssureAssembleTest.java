@@ -36,7 +36,7 @@ class AssureAssembleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -55,7 +55,7 @@ class AssureAssembleTest extends BaseCardTest {
                 .allSatisfy(token -> {
                     assertThat(token.getCard().getSubtypes())
                             .containsExactlyInAnyOrder(CardSubtype.ELF, CardSubtype.KNIGHT);
-                    assertThat(token.hasKeyword(Keyword.VIGILANCE)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();
                     assertThat(token.getEffectivePower()).isEqualTo(2);
                     assertThat(token.getEffectiveToughness()).isEqualTo(2);
                 });
@@ -86,7 +86,7 @@ class AssureAssembleTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -112,7 +112,7 @@ class AssureAssembleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
@@ -130,7 +130,7 @@ class AssureAssembleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(com.github.laxika.magicalvibes.model.Card::getId)
                 .contains(spell.getId());

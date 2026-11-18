@@ -28,8 +28,8 @@ class BorosMastiffTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(mastiff.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(attacker.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mastiff, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -41,7 +41,7 @@ class BorosMastiffTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(mastiff.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mastiff, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -69,13 +69,13 @@ class BorosMastiffTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
-        assertThat(mastiff.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mastiff, Keyword.LIFELINK)).isTrue();
 
         harness.passUntil(player1, TurnStep.END_STEP);
-        assertThat(mastiff.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mastiff, Keyword.LIFELINK)).isTrue();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(mastiff.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mastiff, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -89,7 +89,7 @@ class BorosMastiffTest extends BaseCardTest {
         declareAttackers(player1, List.of(1, 2, 3));
         resolveAllTriggers();
 
-        assertThat(mastiff.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mastiff, Keyword.LIFELINK)).isFalse();
         harness.assertLife(player1, 20);
     }
 
@@ -105,14 +105,14 @@ class BorosMastiffTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(player1, List.of(0, 1, 2));
-            assertThat(mastiff.hasKeyword(Keyword.LIFELINK)).isFalse();
+            assertThat(gqs.hasKeyword(gd, mastiff, Keyword.LIFELINK)).isFalse();
             harness.castInstant(player2, 0, attacker.getId());
             harness.passBothPriorities();
             harness.assertInGraveyard(player1, "Kraul Warrior");
             resolveAllTriggers();
         });
 
-        assertThat(mastiff.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mastiff, Keyword.LIFELINK)).isTrue();
         resolveCombat();
         harness.assertLife(player1, 22);
         harness.assertLife(player2, 16);
@@ -129,7 +129,7 @@ class BorosMastiffTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 2, 3));
         resolveAllTriggers();
 
-        assertThat(attacker.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(nonattacker.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonattacker, Keyword.LIFELINK)).isFalse();
     }
 }

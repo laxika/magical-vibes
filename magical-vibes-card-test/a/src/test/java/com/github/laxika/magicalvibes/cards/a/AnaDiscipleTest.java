@@ -26,12 +26,12 @@ class AnaDiscipleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -72,13 +72,13 @@ class AnaDiscipleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, abilityIndex, null, disciple.getId());
 
         assertThat(disciple.isTapped()).isTrue();
-        assertThat(disciple.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, disciple, Keyword.FLYING)).isFalse();
         assertThat(disciple.getPowerModifier()).isZero();
 
         harness.passBothPriorities();
 
         if (abilityIndex == 0) {
-            assertThat(disciple.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, disciple, Keyword.FLYING)).isTrue();
         } else {
             assertThat(gqs.getEffectivePower(gd, disciple)).isEqualTo(-1);
             assertThat(gqs.getEffectiveToughness(gd, disciple)).isEqualTo(1);

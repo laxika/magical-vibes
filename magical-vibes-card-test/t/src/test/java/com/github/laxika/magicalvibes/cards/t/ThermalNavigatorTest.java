@@ -48,7 +48,7 @@ class ThermalNavigatorTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Avarice Totem");
         harness.assertOnBattlefield(player1, "Blind Creeper");
-        assertThat(findPermanent(player1, "Thermal Navigator").hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Thermal Navigator"), Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -61,7 +61,7 @@ class ThermalNavigatorTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
-        assertThat(navigator.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, navigator, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -73,12 +73,12 @@ class ThermalNavigatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
-        assertThat(navigator.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, navigator, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(navigator.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, navigator, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -109,7 +109,7 @@ class ThermalNavigatorTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Avarice Totem");
         harness.assertOnBattlefield(player2, "Avarice Totem");
-        assertThat(navigator.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, navigator, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -124,12 +124,12 @@ class ThermalNavigatorTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, artifact.getId());
 
         harness.assertInGraveyard(player1, "Avarice Totem");
-        assertThat(navigator.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, navigator, Keyword.FLYING)).isFalse();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(navigator.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, navigator, Keyword.FLYING)).isTrue();
         assertThat(navigator.isTapped()).isTrue();
     }
 
@@ -149,6 +149,6 @@ class ThermalNavigatorTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(findPermanent(player1, "Thermal Navigator")).isSameAs(otherNavigator);
-        assertThat(otherNavigator.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherNavigator, Keyword.FLYING)).isFalse();
     }
 }

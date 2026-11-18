@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DwarvenGrunt;
 import com.github.laxika.magicalvibes.cards.f.FlameBurst;
 import com.github.laxika.magicalvibes.cards.f.FreneticOgre;
@@ -37,7 +38,7 @@ class ResilientWandererTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, "RED");
 
-        assertThat(wanderer.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, wanderer)).contains(CardColor.RED);
         harness.assertInGraveyard(player1, "Dwarven Grunt");
     }
 
@@ -108,13 +109,13 @@ class ResilientWandererTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLUE");
-        assertThat(wanderer.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, wanderer)).contains(CardColor.BLUE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(wanderer.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, wanderer)).doesNotContain(CardColor.BLUE);
     }
 
     @Test
@@ -136,7 +137,7 @@ class ResilientWandererTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.assertInGraveyard(player1, "Dwarven Grunt");
-        assertThat(wanderer.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, wanderer)).isEmpty();
         harness.passBothPriorities();
         harness.handleListChoice(player1, "WHITE");
 
@@ -145,7 +146,7 @@ class ResilientWandererTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(wanderer.getProtectionFromColorsUntilEndOfTurn())
+        assertThat(PermanentGrants.protectionColorsOf(gd, wanderer))
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.GREEN);
         harness.assertInGraveyard(player1, "Flame Burst");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -187,7 +188,7 @@ class ResilientWandererTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLACK");
 
-        assertThat(wanderer.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, wanderer)).contains(CardColor.BLACK);
         assertThat(wanderer.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Dwarven Grunt");
     }

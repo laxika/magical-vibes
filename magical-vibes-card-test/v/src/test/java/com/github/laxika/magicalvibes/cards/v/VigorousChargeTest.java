@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BorosSwiftblade;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.y.YavimayaBarbarian;
@@ -30,7 +31,7 @@ class VigorousChargeTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, new YavimayaBarbarian());
         castCharge(target, false);
 
-        assertThat(target.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -190,7 +191,7 @@ class VigorousChargeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test

@@ -73,7 +73,6 @@ public class BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEf
                 continue;
             }
 
-            permanent.getGrantedKeywords().addAll(grantableKeywords);
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                     new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET),

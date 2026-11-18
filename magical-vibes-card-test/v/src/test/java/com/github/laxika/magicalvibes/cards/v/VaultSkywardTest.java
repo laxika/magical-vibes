@@ -32,7 +32,7 @@ class VaultSkywardTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(target.isTapped()).isFalse();
     }
 
@@ -46,13 +46,13 @@ class VaultSkywardTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -65,7 +65,7 @@ class VaultSkywardTest extends BaseCardTest {
         harness.castInstant(player1, 0, ownCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isTrue();
         assertThat(ownCreature.isTapped()).isFalse();
     }
 
@@ -109,9 +109,9 @@ class VaultSkywardTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(target.isTapped()).isFalse();
-        assertThat(other.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
         assertThat(other.isTapped()).isTrue();
     }
 

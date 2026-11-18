@@ -29,7 +29,7 @@ class MaximizeAltitudeTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(3);
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -44,7 +44,7 @@ class MaximizeAltitudeTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -62,7 +62,7 @@ class MaximizeAltitudeTest extends BaseCardTest {
 
         Permanent battlefieldBears = findPermanent(player1, "Grizzly Bears");
         assertThat(battlefieldBears.getEffectivePower()).isEqualTo(3);
-        assertThat(battlefieldBears.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, battlefieldBears, Keyword.FLYING)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(discarded.getId()));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -109,7 +109,7 @@ class MaximizeAltitudeTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(3);
         assertThat(target.getEffectiveToughness()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -33,7 +34,7 @@ class TrainedCondorTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, other.getId());
         harness.passBothPriorities();
 
-        assertThat(other.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, other)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -50,13 +51,13 @@ class TrainedCondorTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, other.getId());
         harness.passBothPriorities();
 
-        assertThat(other.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, other)).contains(Keyword.FLYING);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -149,7 +150,7 @@ class TrainedCondorTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         resolveAllTriggers();
 
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.FLYING);
         assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }

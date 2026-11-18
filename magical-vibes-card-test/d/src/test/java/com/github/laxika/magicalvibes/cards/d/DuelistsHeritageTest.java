@@ -37,7 +37,7 @@ class DuelistsHeritageTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleMayAbilityChosen(player1, true));
 
-        assertThat(attacker.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -58,8 +58,8 @@ class DuelistsHeritageTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleMayAbilityChosen(player1, true));
 
-        assertThat(first.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
-        assertThat(second.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -76,7 +76,7 @@ class DuelistsHeritageTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleMayAbilityChosen(player1, true));
 
-        assertThat(attacker.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -90,7 +90,7 @@ class DuelistsHeritageTest extends BaseCardTest {
         attacker.setAttacking(false);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.passBothPriorities());
 
-        assertThat(attacker.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
@@ -106,7 +106,7 @@ class DuelistsHeritageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(attacker.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -120,12 +120,12 @@ class DuelistsHeritageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handleMayAbilityChosen(player1, true));
-        assertThat(attacker.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }

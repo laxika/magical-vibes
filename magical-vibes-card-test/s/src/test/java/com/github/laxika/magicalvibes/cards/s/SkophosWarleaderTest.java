@@ -41,7 +41,7 @@ class SkophosWarleaderTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(warleader.getPowerModifier()).isEqualTo(1);
         assertThat(warleader.getToughnessModifier()).isZero();
-        assertThat(warleader.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warleader, Keyword.MENACE)).isTrue();
     }
 
     @Test
@@ -55,7 +55,7 @@ class SkophosWarleaderTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Glorious Anthem");
         assertThat(warleader.getPowerModifier()).isEqualTo(1);
-        assertThat(warleader.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warleader, Keyword.MENACE)).isTrue();
     }
 
     @Test
@@ -71,7 +71,7 @@ class SkophosWarleaderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(warleader.getPowerModifier()).isZero();
-        assertThat(warleader.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, warleader, Keyword.MENACE)).isFalse();
     }
 
     @Test
@@ -123,13 +123,13 @@ class SkophosWarleaderTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Nyxborn Brute");
         assertThat(gd.stack).hasSize(1);
         assertThat(warleader.getPowerModifier()).isZero();
-        assertThat(warleader.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, warleader, Keyword.MENACE)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(warleader.getPowerModifier()).isEqualTo(1);
         assertThat(warleader.getToughnessModifier()).isZero();
-        assertThat(warleader.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warleader, Keyword.MENACE)).isTrue();
     }
 
     @Test
@@ -150,13 +150,13 @@ class SkophosWarleaderTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(warleader.getPowerModifier()).isEqualTo(2);
         assertThat(warleader.getToughnessModifier()).isZero();
-        assertThat(warleader.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warleader, Keyword.MENACE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(warleader.getPowerModifier()).isZero();
-        assertThat(warleader.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, warleader, Keyword.MENACE)).isFalse();
     }
 
     private Permanent addReadyWarlord() {

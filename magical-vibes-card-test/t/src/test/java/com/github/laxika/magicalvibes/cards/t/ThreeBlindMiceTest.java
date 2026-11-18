@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -67,7 +68,7 @@ class ThreeBlindMiceTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(1);
         assertThat(creature.getToughnessModifier()).isEqualTo(1);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.VIGILANCE);
     }
 
     @Test

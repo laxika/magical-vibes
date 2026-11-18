@@ -60,13 +60,13 @@ class SomberwaldAlphaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -158,7 +158,7 @@ class SomberwaldAlphaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, alpha.getId());
         resolveAllTriggers();
 
-        assertThat(alpha.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, alpha, Keyword.TRAMPLE)).isTrue();
         assertThat(alpha.isTapped()).isTrue();
     }
 

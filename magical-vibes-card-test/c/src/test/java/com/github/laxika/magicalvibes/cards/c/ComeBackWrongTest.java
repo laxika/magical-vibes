@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BearTrap;
 import com.github.laxika.magicalvibes.cards.d.DredgingClaw;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfTheVoid;
@@ -49,7 +50,7 @@ class ComeBackWrongTest extends BaseCardTest {
     @DisplayName("Does not return an indestructible creature")
     void doesNotReturnIndestructibleCreature() {
         Permanent target = addSurvivor(player2);
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
 
         castComeBackWrong(target);
 

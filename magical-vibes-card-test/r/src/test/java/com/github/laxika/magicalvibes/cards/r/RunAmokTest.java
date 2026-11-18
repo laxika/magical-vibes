@@ -61,7 +61,7 @@ class RunAmokTest extends BaseCardTest {
         assertThat(attacker.getToughnessModifier()).isEqualTo(3);
         assertThat(attacker.getEffectivePower()).isEqualTo(5);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(5);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -108,7 +108,7 @@ class RunAmokTest extends BaseCardTest {
 
         assertThat(attacker.getPowerModifier()).isEqualTo(0);
         assertThat(attacker.getToughnessModifier()).isEqualTo(0);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -128,7 +128,7 @@ class RunAmokTest extends BaseCardTest {
 
         assertThat(attacker.getEffectivePower()).isEqualTo(5);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(5);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -148,7 +148,7 @@ class RunAmokTest extends BaseCardTest {
 
         assertThat(attacker.getPowerModifier()).isZero();
         assertThat(attacker.getToughnessModifier()).isZero();
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Run Amok");
     }

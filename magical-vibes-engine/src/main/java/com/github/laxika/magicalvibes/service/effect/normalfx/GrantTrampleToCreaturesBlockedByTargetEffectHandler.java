@@ -52,7 +52,6 @@ public class GrantTrampleToCreaturesBlockedByTargetEffectHandler implements Norm
             if (blockedCreature == null || !gameQueryService.isCreature(gameData, blockedCreature)) {
                 continue;
             }
-            blockedCreature.getGrantedKeywords().add(Keyword.TRAMPLE);
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(), grant,
                     blockedCreature.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));

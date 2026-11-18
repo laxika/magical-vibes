@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlpineGrizzly;
 import com.github.laxika.magicalvibes.cards.b.BalduvianWarlord;
 import com.github.laxika.magicalvibes.cards.f.FlashFoliage;
@@ -96,7 +97,7 @@ class RideDownTest extends BaseCardTest {
     void indestructibleBlockerStillGrantsTrample() {
         Permanent attacker = addCreatureReady(player1, new AlpineGrizzly());
         Permanent blocker = addCreatureReady(player2, new AlpineGrizzly());
-        blocker.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, blocker, Keyword.INDESTRUCTIBLE);
         declareBlock(attacker, blocker);
 
         castRideDown(blocker);

@@ -33,7 +33,7 @@ class MacabreMockeryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Noxious Groodion");
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         assertThat(returned.getPowerModifier()).isEqualTo(2);
         harness.assertNotInGraveyard(player2, "Noxious Groodion");
 
@@ -91,14 +91,14 @@ class MacabreMockeryTest extends BaseCardTest {
             harness.passBothPriorities();
         });
         Permanent returned = findPermanent(player1, "Noxious Groodion");
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         assertThat(returned.getPowerModifier()).isEqualTo(2);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player1, "Noxious Groodion");
         assertThat(returned.getPowerModifier()).isZero();
-        assertThat(returned.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

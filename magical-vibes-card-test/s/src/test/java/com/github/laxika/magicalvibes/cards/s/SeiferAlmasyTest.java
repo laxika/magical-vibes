@@ -26,7 +26,7 @@ class SeiferAlmasyTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(seifer.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, seifer, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -37,7 +37,7 @@ class SeiferAlmasyTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1));
 
-        assertThat(seifer.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, seifer, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -48,8 +48,8 @@ class SeiferAlmasyTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         harness.passBothPriorities();
 
-        assertThat(attacker.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(seifer.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, seifer, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -60,7 +60,7 @@ class SeiferAlmasyTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(attacker.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test

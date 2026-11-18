@@ -32,7 +32,7 @@ class DinosaurStampedeTest extends BaseCardTest {
 
         assertThat(dino.getEffectivePower()).isEqualTo(5);  // 3 + 2
         assertThat(dino.getEffectiveToughness()).isEqualTo(2);
-        assertThat(dino.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dino, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -50,7 +50,7 @@ class DinosaurStampedeTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(4);  // 2 + 2
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -67,7 +67,7 @@ class DinosaurStampedeTest extends BaseCardTest {
 
         assertThat(dino.getEffectivePower()).isEqualTo(3);  // unchanged
         assertThat(dino.getEffectiveToughness()).isEqualTo(2);
-        assertThat(dino.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dino, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -84,7 +84,7 @@ class DinosaurStampedeTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -101,8 +101,8 @@ class DinosaurStampedeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(ownDino.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(opponentDino.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownDino, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentDino, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -119,7 +119,7 @@ class DinosaurStampedeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         assertThat(dino.getEffectivePower()).isEqualTo(5);
-        assertThat(dino.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dino, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -127,7 +127,7 @@ class DinosaurStampedeTest extends BaseCardTest {
 
         assertThat(dino.getEffectivePower()).isEqualTo(3);
         assertThat(dino.getEffectiveToughness()).isEqualTo(2);
-        assertThat(dino.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, dino, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -146,9 +146,9 @@ class DinosaurStampedeTest extends BaseCardTest {
 
         assertThat(attacker.getEffectivePower()).isEqualTo(5);
         assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
         assertThat(ownDinosaur.getEffectivePower()).isEqualTo(3);
-        assertThat(ownDinosaur.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownDinosaur, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -166,7 +166,7 @@ class DinosaurStampedeTest extends BaseCardTest {
 
         assertThat(dinosaur.getEffectivePower()).isEqualTo(3);
         assertThat(dinosaur.getEffectiveToughness()).isEqualTo(2);
-        assertThat(dinosaur.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, dinosaur, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -183,6 +183,6 @@ class DinosaurStampedeTest extends BaseCardTest {
 
         assertThat(dinosaur.getEffectivePower()).isEqualTo(3);
         assertThat(dinosaur.getEffectiveToughness()).isEqualTo(2);
-        assertThat(dinosaur.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dinosaur, Keyword.TRAMPLE)).isTrue();
     }
 }

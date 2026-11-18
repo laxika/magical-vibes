@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.d.DiregrafCaptain;
 import com.github.laxika.magicalvibes.cards.f.FlayerOfTheHatebound;
@@ -194,7 +195,7 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         sorin.setCounterCount(CounterType.LOYALTY, 7);
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         UUID bearsId = bears.getId();
-        bears.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.INDESTRUCTIBLE);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(bearsId));
         harness.passBothPriorities();

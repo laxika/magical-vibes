@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LeechFanatic;
 import com.github.laxika.magicalvibes.cards.l.LashOfMalice;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,7 +32,7 @@ class BeamingDefianceTest extends BaseCardTest {
         assertThat(bears.getToughnessModifier()).isEqualTo(2);
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(bears.getEffectiveToughness()).isEqualTo(4);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.HEXPROOF);
     }
 
     @Test
@@ -46,7 +47,7 @@ class BeamingDefianceTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.HEXPROOF);
     }
 
     @Test

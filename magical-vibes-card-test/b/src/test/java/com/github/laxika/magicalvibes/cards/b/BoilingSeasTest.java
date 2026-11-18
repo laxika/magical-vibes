@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -86,7 +87,7 @@ class BoilingSeasTest extends BaseCardTest {
     @DisplayName("An indestructible Island survives while other Islands are destroyed")
     void indestructibleIslandSurvives() {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        island.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, island, Keyword.INDESTRUCTIBLE);
         harness.addToBattlefield(player2, new Island());
 
         harness.castFromHand(player1, new BoilingSeas(), "{3}{R}");

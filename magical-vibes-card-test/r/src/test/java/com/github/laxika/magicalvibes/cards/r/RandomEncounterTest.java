@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -34,7 +35,7 @@ class RandomEncounterTest extends BaseCardTest {
                 .extracting(permanent -> permanent.getCard().getId())
                 .containsExactlyInAnyOrder(firstCreature.getId(), secondCreature.getId());
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .allMatch(permanent -> permanent.getGrantedKeywords().contains(Keyword.HASTE));
+                .allMatch(permanent -> PermanentGrants.keywordsOf(gd, permanent).contains(Keyword.HASTE));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)
                 .contains("Forest", "Forest");
@@ -106,7 +107,7 @@ class RandomEncounterTest extends BaseCardTest {
                 .extracting(permanent -> permanent.getCard().getId())
                 .containsExactly(creature.getId());
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .allMatch(permanent -> permanent.getGrantedKeywords().contains(Keyword.HASTE));
+                .allMatch(permanent -> PermanentGrants.keywordsOf(gd, permanent).contains(Keyword.HASTE));
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(spell);
         assertThat(gd.findExiledCard(spell.getId())).isNotNull();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

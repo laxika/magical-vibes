@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BoldwyrHeavyweights;
 import com.github.laxika.magicalvibes.cards.b.BurrentonBombardier;
 import com.github.laxika.magicalvibes.cards.m.MothdustChangeling;
@@ -55,7 +56,7 @@ class RedeemTheLostTest extends BaseCardTest {
         castAtOwnCreature();
 
         Permanent bombardier = findPermanent(player1, "Burrenton Bombardier");
-        assertThat(bombardier.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bombardier)).contains(CardColor.RED);
     }
 
     @Test
@@ -69,7 +70,7 @@ class RedeemTheLostTest extends BaseCardTest {
         castAtOwnCreature();
 
         Permanent bombardier = findPermanent(player1, "Burrenton Bombardier");
-        assertThat(bombardier.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bombardier)).contains(CardColor.RED);
         harness.assertInHand(player1, "Redeem the Lost");
         harness.assertNotInGraveyard(player1, "Redeem the Lost");
     }
@@ -117,7 +118,7 @@ class RedeemTheLostTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownTop);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingTop);
         harness.handleListChoice(player1, "WHITE");
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.WHITE);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
         keepClashCardsOnTop();
         harness.assertInHand(player1, "Redeem the Lost");
@@ -147,7 +148,7 @@ class RedeemTheLostTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).isEmpty();
     }
 
     @Test
@@ -168,7 +169,7 @@ class RedeemTheLostTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownTop);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingTop);
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).isEmpty();
         harness.assertInGraveyard(player1, "Redeem the Lost");
         harness.assertNotInHand(player1, "Redeem the Lost");
     }
@@ -182,7 +183,7 @@ class RedeemTheLostTest extends BaseCardTest {
         castAtOwnCreature();
 
         Permanent target = findPermanent(player1, "Burrenton Bombardier");
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.RED);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player1, "Redeem the Lost");
         harness.assertNotInHand(player1, "Redeem the Lost");

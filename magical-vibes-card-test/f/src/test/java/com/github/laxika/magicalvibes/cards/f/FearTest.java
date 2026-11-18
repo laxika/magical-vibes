@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -206,7 +207,7 @@ class FearTest extends BaseCardTest {
     void innateKeywordBlockingRestriction() {
         // Simulate a creature that has fear as an innate keyword
         Permanent attackerPerm = addCreatureReady(player1, new GrizzlyBears());
-        attackerPerm.getGrantedKeywords().add(Keyword.FEAR);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attackerPerm, Keyword.FEAR);
 
         // Blocker: GrizzlyBears (green) on player2
         addCreatureReady(player2, new GrizzlyBears());

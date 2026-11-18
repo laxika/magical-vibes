@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -32,7 +33,7 @@ class StoneGiantTest extends BaseCardTest {
 
         Permanent targetAfter = gqs.findPermanentById(gd, bears.getId());
         assertThat(targetAfter).isNotNull();
-        assertThat(targetAfter.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, targetAfter)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -50,7 +51,7 @@ class StoneGiantTest extends BaseCardTest {
 
         // Elves should still be on battlefield with flying
         harness.assertOnBattlefield(player1, "Llanowar Elves");
-        assertThat(gqs.findPermanentById(gd, elves.getId()).getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, gqs.findPermanentById(gd, elves.getId()))).contains(Keyword.FLYING);
 
         // Enter the end step, then resolve the delayed destruction ability.
         harness.passBothPriorities();
@@ -134,7 +135,7 @@ class StoneGiantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.findPermanentById(gd, elves.getId())).isNotNull();
-        assertThat(elves.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, elves)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -247,7 +248,7 @@ class StoneGiantTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.FLYING);
         harness.assertOnBattlefield(player1, "Runeclaw Bear");
         harness.assertNotInGraveyard(player1, "Runeclaw Bear");
         assertThat(stoneGiant.isTapped()).isTrue();

@@ -56,7 +56,7 @@ class VitalityCharmTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(4);
         assertThat(creature.getEffectiveToughness()).isEqualTo(5);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -64,7 +64,7 @@ class VitalityCharmTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(3);
         assertThat(creature.getEffectiveToughness()).isEqualTo(4);
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test

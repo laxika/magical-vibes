@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Colossapede;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -44,7 +45,7 @@ class HazoretsFavorTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Colossapede");
         assertThat(bears.getPowerModifier()).isEqualTo(2);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.HASTE);
     }
 
     @Test
@@ -84,7 +85,7 @@ class HazoretsFavorTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Colossapede");
         assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.HASTE);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();

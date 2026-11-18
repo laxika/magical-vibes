@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BandingSliver;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.e.EyelessWatcher;
@@ -55,7 +56,7 @@ class OddricLunarMarquisTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent sliver = harness.addToBattlefieldAndReturn(player1, new BandingSliver());
         Permanent ingestCreature = harness.addToBattlefieldAndReturn(player1, new MistIntruder());
-        ingestCreature.getGrantedKeywords().add(Keyword.TANTRUM);
+        PermanentGrants.keywordUntilEndOfTurn(gd, ingestCreature, Keyword.TANTRUM);
 
         advanceToCombatAndResolve(player1);
 
@@ -107,7 +108,7 @@ class OddricLunarMarquisTest extends BaseCardTest {
     void sharesEachListedKeywordOnOpponentsTurn(Keyword keyword) {
         harness.addToBattlefield(player1, oddric());
         Permanent donor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        donor.getGrantedKeywords().add(keyword);
+        PermanentGrants.keywordUntilEndOfTurn(gd, donor, keyword);
         Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 

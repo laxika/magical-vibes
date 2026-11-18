@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GruulNodorog;
 import com.github.laxika.magicalvibes.cards.g.GruulSignet;
 import com.github.laxika.magicalvibes.cards.h.HatchingPlans;
@@ -33,7 +34,7 @@ class WildsizeTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isEqualTo(2);
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.TRAMPLE);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
@@ -52,7 +53,7 @@ class WildsizeTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test
@@ -98,7 +99,7 @@ class WildsizeTest extends BaseCardTest {
 
         assertThat(opponentCreature.getPowerModifier()).isEqualTo(2);
         assertThat(opponentCreature.getToughnessModifier()).isEqualTo(2);
-        assertThat(opponentCreature.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, opponentCreature)).contains(Keyword.TRAMPLE);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
@@ -116,7 +117,7 @@ class WildsizeTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(4);
         assertThat(creature.getToughnessModifier()).isEqualTo(4);
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).contains(Keyword.TRAMPLE);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertInHand(player1, "Hatching Plans");
@@ -127,6 +128,6 @@ class WildsizeTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.TRAMPLE);
     }
 }

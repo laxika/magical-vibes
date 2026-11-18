@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.k.KavuLair;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -49,7 +50,7 @@ class AuraMutationTest extends BaseCardTest {
     @DisplayName("Creates Saprolings even when the enchantment is indestructible")
     void createsSaprolingsWhenEnchantmentIsIndestructible() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new KavuLair());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new AuraMutation()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);

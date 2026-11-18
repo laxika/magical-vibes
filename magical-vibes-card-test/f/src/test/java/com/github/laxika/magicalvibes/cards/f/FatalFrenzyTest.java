@@ -37,7 +37,7 @@ class FatalFrenzyTest extends BaseCardTest {
         Permanent after = gqs.findPermanentById(gd, bears.getId());
         assertThat(gqs.getEffectivePower(gd, after)).isEqualTo(basePower * 2);
         assertThat(gqs.getEffectiveToughness(gd, after)).isEqualTo(baseToughness);
-        assertThat(after.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, after, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test

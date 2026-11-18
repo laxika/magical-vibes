@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -78,7 +79,7 @@ class DeepSpawnTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(spawn.getGrantedKeywords()).contains(Keyword.SHROUD);
+        assertThat(PermanentGrants.keywordsOf(gd, spawn)).contains(Keyword.SHROUD);
         assertThat(spawn.isTapped()).isTrue();
         assertThat(spawn.getSkipUntapCount()).isEqualTo(1);
     }
@@ -139,13 +140,13 @@ class DeepSpawnTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(spawn.getGrantedKeywords()).contains(Keyword.SHROUD);
+        assertThat(PermanentGrants.keywordsOf(gd, spawn)).contains(Keyword.SHROUD);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(spawn.getGrantedKeywords()).doesNotContain(Keyword.SHROUD);
+        assertThat(PermanentGrants.keywordsOf(gd, spawn)).doesNotContain(Keyword.SHROUD);
     }
 
     @Test

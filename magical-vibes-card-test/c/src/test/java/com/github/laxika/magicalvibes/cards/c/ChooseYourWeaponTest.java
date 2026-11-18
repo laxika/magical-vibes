@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.ArboreaPegasus;
 import com.github.laxika.magicalvibes.cards.d.DireWolfProwler;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -147,7 +148,7 @@ class ChooseYourWeaponTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChooseYourWeapon()));
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castInstant(player1, 0, 1, target.getId());
-        target.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, target, Keyword.FLYING);
 
         harness.passBothPriorities();
 

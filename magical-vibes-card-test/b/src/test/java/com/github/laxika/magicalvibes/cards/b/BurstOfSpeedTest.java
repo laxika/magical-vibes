@@ -31,9 +31,9 @@ class BurstOfSpeedTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(p1a.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(p1b.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(p2.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, p1a, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, p1b, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, p2, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -45,13 +45,13 @@ class BurstOfSpeedTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
     }
 
     @Test

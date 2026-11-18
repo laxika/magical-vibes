@@ -229,7 +229,7 @@ class NekrataalTest extends BaseCardTest {
 
         // Grant indestructible to the target before ETB resolves
         Permanent target = findPermanent(player2, "Grizzly Bears");
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
 
         // Resolve ETB — should not destroy indestructible creature
         harness.passBothPriorities();

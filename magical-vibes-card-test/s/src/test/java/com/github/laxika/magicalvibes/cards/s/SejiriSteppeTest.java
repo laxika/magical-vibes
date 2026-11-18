@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AetherTradewinds;
 import com.github.laxika.magicalvibes.cards.l.LoamLion;
 import com.github.laxika.magicalvibes.cards.v.VeteransReflexes;
@@ -37,7 +38,7 @@ class SejiriSteppeTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         assertThat(findPermanent(player1, "Sejiri Steppe").isTapped()).isTrue();
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bears)).contains(CardColor.RED);
     }
 
     @Test
@@ -80,7 +81,7 @@ class SejiriSteppeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bears)).doesNotContain(CardColor.BLUE);
     }
 
     @Test
@@ -110,7 +111,7 @@ class SejiriSteppeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, lion.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player1, "WHITE");
-        assertThat(lion.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, lion)).containsExactly(CardColor.WHITE);
     }
 
     @Test
@@ -129,7 +130,7 @@ class SejiriSteppeTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(ownLion.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, ownLion)).isEmpty();
     }
 
     @Test
@@ -162,6 +163,6 @@ class SejiriSteppeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
 
         harness.handleListChoice(player1, "GREEN");
-        assertThat(lion.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.GREEN);
+        assertThat(PermanentGrants.protectionColorsOf(gd, lion)).containsExactly(CardColor.GREEN);
     }
 }

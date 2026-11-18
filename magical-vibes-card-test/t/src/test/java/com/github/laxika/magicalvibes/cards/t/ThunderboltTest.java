@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.Archangel;
 import com.github.laxika.magicalvibes.cards.n.NarstadScrapper;
 import com.github.laxika.magicalvibes.cards.s.SeraphOfDawn;
@@ -157,7 +158,7 @@ class ThunderboltTest extends BaseCardTest {
         giveMana();
 
         harness.castModalInstant(player1, 0, 1, List.of(angel.getId()));
-        angel.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, angel, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Archangel");

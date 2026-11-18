@@ -35,7 +35,7 @@ class VampiresBiteTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(3);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -51,7 +51,7 @@ class VampiresBiteTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(3);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -70,7 +70,7 @@ class VampiresBiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -125,7 +125,7 @@ class VampiresBiteTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Vampire's Bite");
         assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -150,6 +150,6 @@ class VampiresBiteTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Vampire's Bite");
         assertThat(replacement.getPowerModifier()).isZero();
         assertThat(replacement.getToughnessModifier()).isZero();
-        assertThat(replacement.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.LIFELINK)).isFalse();
     }
 }

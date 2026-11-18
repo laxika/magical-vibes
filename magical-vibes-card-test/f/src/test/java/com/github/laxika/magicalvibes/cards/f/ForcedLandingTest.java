@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PrimordialWurm;
 import com.github.laxika.magicalvibes.cards.t.TrustedPegasus;
 import com.github.laxika.magicalvibes.model.Card;
@@ -80,7 +81,7 @@ class ForcedLandingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, target.getId());
 
-        target.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, target, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Trusted Pegasus");

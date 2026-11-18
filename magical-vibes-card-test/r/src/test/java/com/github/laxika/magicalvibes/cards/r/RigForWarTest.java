@@ -33,8 +33,8 @@ class RigForWarTest extends BaseCardTest {
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(3);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.REACH)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -54,8 +54,8 @@ class RigForWarTest extends BaseCardTest {
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.REACH)).isFalse();
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -84,11 +84,11 @@ class RigForWarTest extends BaseCardTest {
 
         assertThat(opposingBear.getPowerModifier()).isEqualTo(3);
         assertThat(opposingBear.getToughnessModifier()).isZero();
-        assertThat(opposingBear.hasKeyword(Keyword.REACH)).isTrue();
-        assertThat(opposingBear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingBear, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingBear, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(ownBear.getPowerModifier()).isZero();
-        assertThat(ownBear.hasKeyword(Keyword.REACH)).isFalse();
-        assertThat(ownBear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownBear, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownBear, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -103,15 +103,15 @@ class RigForWarTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(6);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.REACH)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.REACH)).isFalse();
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
     }
 }

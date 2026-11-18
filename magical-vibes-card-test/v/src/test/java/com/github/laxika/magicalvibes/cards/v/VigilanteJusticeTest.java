@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
@@ -49,7 +50,7 @@ class VigilanteJusticeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve Elite Vanguard
-        findPermanent(player1, "Elite Vanguard").getGrantedKeywords().add(Keyword.LIFELINK);
+        PermanentGrants.keywordUntilEndOfTurn(gd, findPermanent(player1, "Elite Vanguard"), Keyword.LIFELINK);
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve the damage trigger

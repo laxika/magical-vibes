@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DemonicGifts;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -28,12 +29,12 @@ class InfernalPetTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, pet.getId());
         assertThat(pet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(pet.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, pet)).doesNotContain(Keyword.FLYING);
 
         harness.castAndResolveInstant(player1, 0, pet.getId());
 
         assertThat(pet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(pet.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, pet)).contains(Keyword.FLYING);
 
         harness.castAndResolveInstant(player1, 0, pet.getId());
         assertThat(pet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -54,7 +55,7 @@ class InfernalPetTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(pet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(pet.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, pet)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -67,7 +68,7 @@ class InfernalPetTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, pet.getId());
         harness.castAndResolveInstant(player2, 0, pet.getId());
         assertThat(pet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(pet.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, pet)).doesNotContain(Keyword.FLYING);
 
         harness.setHand(player1, List.of(new DemonicGifts(), new DemonicGifts()));
         harness.addMana(player1, ManaColor.BLACK, 4);
@@ -75,7 +76,7 @@ class InfernalPetTest extends BaseCardTest {
         assertThat(pet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.castAndResolveInstant(player1, 0, pet.getId());
         assertThat(pet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(pet.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, pet)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -95,10 +96,10 @@ class InfernalPetTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, pet.getId());
         assertThat(pet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(pet.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, pet)).doesNotContain(Keyword.FLYING);
         harness.castAndResolveInstant(player1, 0, pet.getId());
         assertThat(pet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(pet.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, pet)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -113,6 +114,6 @@ class InfernalPetTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, pet.getId());
         assertThat(pet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(pet.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, pet)).contains(Keyword.FLYING);
     }
 }

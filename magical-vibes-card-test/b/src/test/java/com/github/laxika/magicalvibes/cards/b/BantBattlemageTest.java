@@ -27,7 +27,7 @@ class BantBattlemageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -40,7 +40,7 @@ class BantBattlemageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -52,13 +52,13 @@ class BantBattlemageTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -81,15 +81,15 @@ class BantBattlemageTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, ability, null, target.getId());
         assertThat(source.isTapped()).isTrue();
-        assertThat(target.hasKeyword(keyword)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, keyword)).isFalse();
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(keyword)).isTrue();
-        assertThat(source.hasKeyword(keyword)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, keyword)).isTrue();
+        assertThat(gqs.hasKeyword(gd, source, keyword)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(keyword)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, keyword)).isFalse();
     }
 
     @ParameterizedTest
@@ -102,7 +102,7 @@ class BantBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(source.isTapped()).isTrue();
-        assertThat(source.hasKeyword(keyword)).isTrue();
+        assertThat(gqs.hasKeyword(gd, source, keyword)).isTrue();
     }
 
     @ParameterizedTest
@@ -117,7 +117,7 @@ class BantBattlemageTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(keyword)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, keyword)).isTrue();
     }
 
     @ParameterizedTest
@@ -166,7 +166,7 @@ class BantBattlemageTest extends BaseCardTest {
         Permanent returned = harness.addToBattlefieldAndReturn(player2, target.getCard());
         harness.passBothPriorities();
 
-        assertThat(returned.hasKeyword(keyword)).isFalse();
+        assertThat(gqs.hasKeyword(gd, returned, keyword)).isFalse();
         assertThat(source.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
     }

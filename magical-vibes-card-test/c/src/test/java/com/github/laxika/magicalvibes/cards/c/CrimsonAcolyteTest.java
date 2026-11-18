@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BreathOfDarigaaz;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -18,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BreathOfDarigaaz.class, CrimsonAcolyte.class, GrizzlyBears.class, Island.class, LightningBolt.class})
+@CardUsed({BreathOfDarigaaz.class, CrimsonAcolyte.class, GrizzlyBears.class, Humility.class, Island.class,
+        LightningBolt.class})
 class CrimsonAcolyteTest extends BaseCardTest {
 
     @Test
@@ -45,7 +48,7 @@ class CrimsonAcolyteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(acolyte.isTapped()).isFalse();
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bears)).contains(CardColor.RED);
     }
 
     @Test
@@ -58,7 +61,7 @@ class CrimsonAcolyteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bears)).contains(CardColor.RED);
     }
 
     @Test
@@ -100,13 +103,13 @@ class CrimsonAcolyteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bears)).contains(CardColor.RED);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, bears)).doesNotContain(CardColor.RED);
     }
 
     @Test
@@ -159,8 +162,8 @@ class CrimsonAcolyteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, secondAcolyte.getId());
         harness.passBothPriorities();
 
-        assertThat(acolyte.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
-        assertThat(secondAcolyte.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, acolyte)).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, secondAcolyte)).contains(CardColor.RED);
         assertThat(acolyte.isTapped()).isTrue();
     }
 
@@ -176,5 +179,21 @@ class CrimsonAcolyteTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Crimson Acolyte");
         assertThat(acolyte.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A Humility that enters after the ability resolves removes the granted protection")
+    void laterHumilityRemovesGrantedProtection() {
+        addCreatureReady(player1, new CrimsonAcolyte());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasProtectionFrom(gd, bears, CardColor.RED)).isTrue();
+
+        harness.addToBattlefield(player2, new Humility());
+
+        assertThat(gqs.hasProtectionFrom(gd, bears, CardColor.RED)).isFalse();
     }
 }

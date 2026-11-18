@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -97,7 +98,7 @@ class HourOfDefeatTest extends BaseCardTest {
     @DisplayName("Surveil still happens when the creature is indestructible")
     void surveilsWhenDestructionIsPrevented() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HydraTroopers());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         Card topCard = new Forest();
         Card secondCard = new Forest();
         harness.setLibrary(player1, List.of(topCard, secondCard));

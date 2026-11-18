@@ -51,7 +51,7 @@ class KindledFuryTest extends BaseCardTest {
         Permanent warrior = findPermanent(player1, "Elvish Warrior");
         assertThat(warrior.getPowerModifier()).isEqualTo(1);
         assertThat(warrior.getToughnessModifier()).isEqualTo(0);
-        assertThat(warrior.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -67,7 +67,7 @@ class KindledFuryTest extends BaseCardTest {
         Permanent warrior = findPermanent(player2, "Elvish Warrior");
         assertThat(warrior.getPowerModifier()).isEqualTo(1);
         assertThat(warrior.getToughnessModifier()).isEqualTo(0);
-        assertThat(warrior.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     // ===== End of turn cleanup =====
@@ -89,7 +89,7 @@ class KindledFuryTest extends BaseCardTest {
         Permanent warrior = findPermanent(player1, "Elvish Warrior");
         assertThat(warrior.getPowerModifier()).isEqualTo(0);
         assertThat(warrior.getToughnessModifier()).isEqualTo(0);
-        assertThat(warrior.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     // ===== Fizzle =====
@@ -126,7 +126,7 @@ class KindledFuryTest extends BaseCardTest {
 
         assertThat(warrior.getPowerModifier()).isEqualTo(2);
         assertThat(warrior.getToughnessModifier()).isZero();
-        assertThat(warrior.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -134,7 +134,7 @@ class KindledFuryTest extends BaseCardTest {
 
         assertThat(warrior.getPowerModifier()).isZero();
         assertThat(warrior.getToughnessModifier()).isZero();
-        assertThat(warrior.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -149,11 +149,11 @@ class KindledFuryTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
         for (Permanent unaffected : List.of(other, opponent)) {
             assertThat(unaffected.getPowerModifier()).isZero();
             assertThat(unaffected.getToughnessModifier()).isZero();
-            assertThat(unaffected.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, unaffected, Keyword.FIRST_STRIKE)).isFalse();
         }
     }
 }

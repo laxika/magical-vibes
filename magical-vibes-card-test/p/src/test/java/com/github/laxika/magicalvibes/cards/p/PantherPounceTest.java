@@ -33,14 +33,14 @@ class PantherPounceTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Clue")).isEmpty();
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getEffectivePower()).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -73,7 +73,7 @@ class PantherPounceTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getEffectivePower()).isEqualTo(3);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test

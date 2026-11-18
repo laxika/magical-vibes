@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,7 +26,7 @@ class ThornlingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(thornling.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, thornling)).contains(Keyword.HASTE);
     }
 
     @Test
@@ -36,13 +37,13 @@ class ThornlingTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(thornling.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, thornling)).contains(Keyword.HASTE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(thornling.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, thornling)).doesNotContain(Keyword.HASTE);
     }
 
     // ===== {G}: gains trample until end of turn (ability 1) =====
@@ -56,7 +57,7 @@ class ThornlingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(thornling.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, thornling)).contains(Keyword.TRAMPLE);
     }
 
     // ===== {G}: gains indestructible until end of turn (ability 2) =====
@@ -70,7 +71,7 @@ class ThornlingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        assertThat(thornling.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, thornling)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     // ===== {1}: +1/-1 until end of turn (ability 3) =====
@@ -130,13 +131,13 @@ class ThornlingTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
-        assertThat(thornling.getGrantedKeywords()).contains(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, thornling)).contains(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(thornling.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, thornling)).doesNotContain(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
     }
 
     @Test

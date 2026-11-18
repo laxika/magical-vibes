@@ -38,7 +38,7 @@ class OvertakerTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
         harness.assertInGraveyard(player1, "Forest");
     }
@@ -61,7 +61,7 @@ class OvertakerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 
@@ -108,7 +108,7 @@ class OvertakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(overtaker.isTapped()).isFalse();
-        assertThat(overtaker.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, overtaker, Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player1, "Overtaker");
         harness.assertNotOnBattlefield(player2, "Overtaker");
     }
@@ -129,7 +129,7 @@ class OvertakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player1, "Chambered Nautilus");
         harness.assertNotOnBattlefield(player2, "Chambered Nautilus");
     }

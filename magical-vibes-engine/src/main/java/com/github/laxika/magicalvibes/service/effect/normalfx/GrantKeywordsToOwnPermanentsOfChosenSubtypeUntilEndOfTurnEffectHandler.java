@@ -66,7 +66,6 @@ public class GrantKeywordsToOwnPermanentsOfChosenSubtypeUntilEndOfTurnEffectHand
                     continue;
                 }
 
-                permanent.getGrantedKeywords().addAll(grant.keywords());
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard().getName(), sourcePermanentId,
                         entry.getControllerId(),

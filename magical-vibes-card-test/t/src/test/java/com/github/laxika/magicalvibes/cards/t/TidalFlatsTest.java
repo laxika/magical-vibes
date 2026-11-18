@@ -31,8 +31,8 @@ class TidalFlatsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(blocker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(attacker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -48,7 +48,7 @@ class TidalFlatsTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(blocker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
@@ -67,8 +67,8 @@ class TidalFlatsTest extends BaseCardTest {
         assertThat(gd.pendingMayAbilities).hasSize(1);
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(groundBlocker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(flyingBlocker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, groundBlocker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, flyingBlocker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -81,13 +81,13 @@ class TidalFlatsTest extends BaseCardTest {
 
         activateTidalFlats();
         harness.handleMayAbilityChosen(player2, false);
-        assertThat(blocker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(blocker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -108,9 +108,9 @@ class TidalFlatsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(unpaidBlockerOne.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(unpaidBlockerTwo.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(paidBlocker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, unpaidBlockerOne, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, unpaidBlockerTwo, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, paidBlocker, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
@@ -127,7 +127,7 @@ class TidalFlatsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.pendingMayAbilities).isEmpty();
-        assertThat(attacker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -142,8 +142,8 @@ class TidalFlatsTest extends BaseCardTest {
         activateTidalFlats();
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(blocker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(bystander.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bystander, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test

@@ -37,7 +37,7 @@ class SaltRoadSkirmishTest extends BaseCardTest {
             assertThat(warrior.getCard().getToughness()).isEqualTo(1);
             assertThat(warrior.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(warrior.getCard().getSubtypes()).contains(CardSubtype.WARRIOR);
-            assertThat(warrior.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, warrior, Keyword.HASTE)).isTrue();
         });
     }
 

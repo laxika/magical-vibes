@@ -51,7 +51,7 @@ class ThreatenTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
     }
 
@@ -88,7 +88,7 @@ class ThreatenTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 
@@ -104,7 +104,7 @@ class ThreatenTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, ownCreature.getId());
 
         assertThat(ownCreature.isTapped()).isFalse();
-        assertThat(ownCreature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(ownCreature.getId())).isFalse();
     }
 
@@ -172,6 +172,6 @@ class ThreatenTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(other).doesNotContain(target);
         assertThat(target.isTapped()).isFalse();
         assertThat(other.isTapped()).isTrue();
-        assertThat(other.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -91,7 +92,7 @@ class JarethLeonineTitanTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, CardColor.RED.name());
 
-        assertThat(jareth.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, jareth)).contains(CardColor.RED);
     }
 
     @Test
@@ -108,7 +109,7 @@ class JarethLeonineTitanTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(jareth.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, jareth)).doesNotContain(CardColor.BLUE);
     }
 
     @Test
@@ -127,7 +128,7 @@ class JarethLeonineTitanTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, CardColor.GREEN.name());
 
-        assertThat(jareth.getProtectionFromColorsUntilEndOfTurn())
+        assertThat(PermanentGrants.protectionColorsOf(gd, jareth))
                 .containsExactlyInAnyOrder(CardColor.RED, CardColor.GREEN);
     }
 

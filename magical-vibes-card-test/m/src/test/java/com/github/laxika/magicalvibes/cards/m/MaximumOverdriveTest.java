@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.Terror;
@@ -35,7 +36,7 @@ class MaximumOverdriveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -53,7 +54,7 @@ class MaximumOverdriveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -82,9 +83,9 @@ class MaximumOverdriveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(opposingBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(opposingBear.getGrantedKeywords()).contains(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, opposingBear)).contains(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
         assertThat(ownBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(ownBear.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, ownBear)).doesNotContain(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -99,13 +100,13 @@ class MaximumOverdriveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -126,7 +127,7 @@ class MaximumOverdriveTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Maximum Overdrive");
         assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -144,6 +145,6 @@ class MaximumOverdriveTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Terror");
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE);
     }
 }

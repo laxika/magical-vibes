@@ -54,7 +54,7 @@ class ChaseInspirationTest extends BaseCardTest {
         assertThat(newt.getToughnessModifier()).isEqualTo(3);
         assertThat(newt.getEffectivePower()).isEqualTo(1);
         assertThat(newt.getEffectiveToughness()).isEqualTo(5);
-        assertThat(newt.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, newt, Keyword.HEXPROOF)).isTrue();
     }
 
     @Test
@@ -86,7 +86,7 @@ class ChaseInspirationTest extends BaseCardTest {
 
         assertThat(newt.getPowerModifier()).isEqualTo(0);
         assertThat(newt.getToughnessModifier()).isEqualTo(0);
-        assertThat(newt.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, newt, Keyword.HEXPROOF)).isFalse();
     }
 
     @Test
@@ -140,7 +140,7 @@ class ChaseInspirationTest extends BaseCardTest {
 
         assertThat(newt.getPowerModifier()).isZero();
         assertThat(newt.getToughnessModifier()).isEqualTo(6);
-        assertThat(newt.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, newt, Keyword.HEXPROOF)).isTrue();
     }
 
     @Test
@@ -163,7 +163,7 @@ class ChaseInspirationTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(newt.getPowerModifier()).isZero();
         assertThat(newt.getToughnessModifier()).isEqualTo(3);
-        assertThat(newt.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, newt, Keyword.FIRST_STRIKE)).isFalse();
         harness.assertInGraveyard(player2, "Interjection");
     }
 }

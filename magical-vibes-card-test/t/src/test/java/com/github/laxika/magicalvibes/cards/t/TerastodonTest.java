@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.l.LeatherbackBaloth;
 import com.github.laxika.magicalvibes.cards.s.StirringWildwood;
@@ -51,7 +52,7 @@ class TerastodonTest extends BaseCardTest {
     @DisplayName("Does not create a token when destruction is prevented")
     void indestructiblePermanentDoesNotCreateToken() {
         Permanent indestructiblePlains = harness.addToBattlefieldAndReturn(player2, new TectonicEdge());
-        indestructiblePlains.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, indestructiblePlains, Keyword.INDESTRUCTIBLE);
 
         castTerastodon(List.of(indestructiblePlains.getId()));
 
@@ -104,7 +105,7 @@ class TerastodonTest extends BaseCardTest {
     @DisplayName("Only destroyed targets create tokens when another target is indestructible")
     void mixedDestructionCreatesOnlyOneToken() {
         Permanent surviving = harness.addToBattlefieldAndReturn(player2, new TectonicEdge());
-        surviving.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, surviving, Keyword.INDESTRUCTIBLE);
         Permanent destroyed = harness.addToBattlefieldAndReturn(player2, new TectonicEdge());
 
         castTerastodon(List.of(surviving.getId(), destroyed.getId()));

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.e.ExpeditionHealer;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -35,7 +36,7 @@ class SejiriShelterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, color.name());
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).containsExactly(color);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).containsExactly(color);
     }
 
     @Test
@@ -57,11 +58,11 @@ class SejiriShelterTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleListChoice(player1, "RED");
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).containsExactly(CardColor.RED);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).isEmpty();
     }
 
     @Test
@@ -107,10 +108,10 @@ class SejiriShelterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handleListChoice(player1, choice))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isSameAs(prompt);
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).isEmpty();
 
         harness.handleListChoice(player1, "GREEN");
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.GREEN);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).containsExactly(CardColor.GREEN);
     }
 
     @Test

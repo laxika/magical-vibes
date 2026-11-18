@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.h.HeadlessSkaab;
 import com.github.laxika.magicalvibes.cards.t.ThrabenHeretic;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -28,7 +29,7 @@ class FalkenrathAristocratTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Thraben Heretic");
 
-        assertThat(aristocrat.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, aristocrat)).contains(Keyword.INDESTRUCTIBLE);
         assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -46,7 +47,7 @@ class FalkenrathAristocratTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Headless Skaab");
 
-        assertThat(aristocrat.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, aristocrat)).contains(Keyword.INDESTRUCTIBLE);
         assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -97,13 +98,13 @@ class FalkenrathAristocratTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, fodder.getId());
         }
         harness.passBothPriorities();
-        assertThat(aristocrat.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, aristocrat)).contains(Keyword.INDESTRUCTIBLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(aristocrat.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, aristocrat)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -115,12 +116,12 @@ class FalkenrathAristocratTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         harness.assertInGraveyard(player1, "Thraben Heretic");
-        assertThat(aristocrat.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, aristocrat)).doesNotContain(Keyword.INDESTRUCTIBLE);
         assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(aristocrat.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, aristocrat)).contains(Keyword.INDESTRUCTIBLE);
         assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -137,14 +138,14 @@ class FalkenrathAristocratTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(aristocrat.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, aristocrat)).contains(Keyword.INDESTRUCTIBLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(aristocrat.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, aristocrat)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     @Test

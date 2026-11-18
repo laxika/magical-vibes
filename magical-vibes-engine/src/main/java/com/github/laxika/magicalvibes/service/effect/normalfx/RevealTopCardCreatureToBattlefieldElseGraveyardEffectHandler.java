@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.Card;
@@ -64,7 +67,8 @@ public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implem
                 topCard, fx.predicate(), entry.getCard().getId(), gameData, controllerId)) {
             Permanent perm = new Permanent(topCard);
             if (fx.grantHaste()) {
-                perm.getGrantedKeywords().add(Keyword.HASTE);
+                gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                        perm.getId(), Duration.UNTIL_END_OF_TURN);
             }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 

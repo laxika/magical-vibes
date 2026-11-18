@@ -792,8 +792,16 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - `onPermanent` floating effects, one per grant, until end of turn: "prevent the next N" and Temper (`DamagePreventionShield`, renamed from the player payload, `plusOneCounters`; player and global queries skip permanent shields), Brace for Impact and Gatta and Luzzu (the `PreventDamageEffect` with its scope), Kill-Suit Cultist and Pyramids (the resolving effect is the shield, `GameData.useOldestEffectOnPermanent`), regeneration (`RegenerationShield` with its rider; a rider's delayed ability is the effect controller's, CR 603.7e). Sacred Boon reads its `PreventedDamageCounterShield`. Gone: 14 `Permanent` fields, their `EndOfTurnStateField`s, `Kind.SHIELD`, the cleanup resets.
 - Moments: used up where damage or destruction uses them, else at cleanup (CR 514.2), as the fields were. A shield on a permanent that left ends at cleanup, not as it leaves; it applies to no object (CR 400.7).
 - Ledger (787 card test classes, route tests): only `floating began|ended` lines added; trigger lines differ only by the route fixture's random draws.
-- Open: the choice among a permanent's prevention steps and regeneration riders is still a fixed order (CR 616.1: its controller chooses); Matopi Golem's -1/-1 trigger is the permanent's current controller's, not the activator's (CR 603.7e); `onPermanent` effects don't end as their permanent leaves.
+- Open: Matopi Golem's -1/-1 trigger is the permanent's current controller's, not the activator's (CR 603.7e); `onPermanent` effects don't end as their permanent leaves.
 - Left: P/T modifiers and base P/T overrides; until-end-of-turn keywords; protection; abilities and text changes; part 3's phasing item; then step 6.
+
+**D (part 15: until-end-of-turn and next-turn keywords, keyword removals, protection).**
+- `onPermanent` floating effects with the stated `Duration`: `GrantKeywordEffect`, `RemoveKeywordEffect`, `ProtectionFromColorsEffect(…, TARGET)`, and `GrantEffectEffect` of `ProtectionFromCardTypesEffect`, `ProtectionFromColorlessEffect` (new), `ProtectionFromPlayersEffect` (new; players fixed as it resolves), `ProtectionFromNonSubtypeCreaturesEffect` or the opponent-creatures grant (controllers compared at each check). Gone: 14 `Permanent` fields, 9 `EndOfTurnStateField`s, their seeds, fingerprint lines and the next-turn reset.
+- The as-enters chosen player is `chosenPlayerIds`; last-known keywords are `Permanent.lastKnownKeywords`; `computeStaticBonus` folds the floating keyword grants and removals still on a departed snapshot's id. `removeAllProtection` drops the protection granted so far.
+- Rules fix (CR 613.1f, 613.7): a later Humility removes a granted protection (`CrimsonAcolyteTest`); the field survived any lose-all.
+- Moments: cleanup, or the grantor's next turn, as the fields were. Ledger (5,376 card test classes, route tests): only `floating began|ended` lines added; trigger lines differ only by random draws, dice and tokens.
+- Open: `protectionRemoved` is a whole-permanent gate that a newer protection grant clears, bringing printed protection back; Concerted Effort doesn't share protection from colorless or from players.
+- Left: P/T modifiers and base P/T overrides; abilities and text changes; part 3's phasing item; then step 6.
 
 ## Prompt
 

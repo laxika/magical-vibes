@@ -31,7 +31,7 @@ class BuiltToLastTest extends BaseCardTest {
 
         assertThat(ornithopter.getPowerModifier()).isEqualTo(2);
         assertThat(ornithopter.getToughnessModifier()).isEqualTo(2);
-        assertThat(ornithopter.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ornithopter, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -43,7 +43,7 @@ class BuiltToLastTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isEqualTo(2);
         assertThat(bears.getToughnessModifier()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -58,7 +58,7 @@ class BuiltToLastTest extends BaseCardTest {
 
         assertThat(ornithopter.getPowerModifier()).isZero();
         assertThat(ornithopter.getToughnessModifier()).isZero();
-        assertThat(ornithopter.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ornithopter, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -69,7 +69,7 @@ class BuiltToLastTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -100,7 +100,7 @@ class BuiltToLastTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Built to Last");
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

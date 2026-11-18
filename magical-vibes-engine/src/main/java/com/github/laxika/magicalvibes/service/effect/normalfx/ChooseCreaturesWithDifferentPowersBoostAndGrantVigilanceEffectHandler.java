@@ -95,7 +95,6 @@ public class ChooseCreaturesWithDifferentPowersBoostAndGrantVigilanceEffectHandl
                     entry.getControllerId(), boost, permanent.getId(), null, null,
                     Duration.UNTIL_END_OF_TURN, 0));
             if (!gameQueryService.cantHaveOrGainKeyword(gameData, permanent, VIGILANCE)) {
-                permanent.getGrantedKeywords().add(VIGILANCE);
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                         entry.getControllerId(), vigilance, permanent.getId(), null, null,

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GlimmeringAngel;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -110,13 +111,13 @@ class PhyrexianSlayerTest extends BaseCardTest {
     void regenerationRestrictionAppliesOnlyToSlayerDestruction() {
         Permanent slayer = addReadySlayer();
         Permanent blocker = addCreatureReady(player2, new GlimmeringAngel());
-        blocker.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, blocker, Keyword.INDESTRUCTIBLE);
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(slayer)));
         block(blocker);
         harness.assertOnBattlefield(player2, "Glimmering Angel");
 
-        blocker.getGrantedKeywords().remove(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.endKeywordGrants(gd, blocker, Keyword.INDESTRUCTIBLE);
         gd.addRegenerationShields(blocker.getId(), 1);
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .tryDestroyPermanent(gd, blocker));

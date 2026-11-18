@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.ChanneledDragonfire;
 import com.github.laxika.magicalvibes.cards.g.GurmagNightwatch;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,7 +32,7 @@ class UnrootedAncestorTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Gurmag Nightwatch");
         harness.assertInGraveyard(player1, "Gurmag Nightwatch");
-        assertThat(ancestor.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, ancestor)).contains(Keyword.INDESTRUCTIBLE);
         assertThat(ancestor.isTapped()).isTrue();
     }
 
@@ -55,13 +56,13 @@ class UnrootedAncestorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(ancestor.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, ancestor)).contains(Keyword.INDESTRUCTIBLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ancestor.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, ancestor)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -74,13 +75,13 @@ class UnrootedAncestorTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Gurmag Nightwatch");
         harness.assertNotOnBattlefield(player1, "Gurmag Nightwatch");
-        assertThat(ancestor.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, ancestor)).doesNotContain(Keyword.INDESTRUCTIBLE);
         assertThat(ancestor.isTapped()).isFalse();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(ancestor.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, ancestor)).contains(Keyword.INDESTRUCTIBLE);
         assertThat(ancestor.isTapped()).isTrue();
     }
 
@@ -96,7 +97,7 @@ class UnrootedAncestorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Gurmag Nightwatch");
-        assertThat(ancestor.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, ancestor)).contains(Keyword.INDESTRUCTIBLE);
         assertThat(ancestor.isTapped()).isTrue();
     }
 
@@ -128,7 +129,7 @@ class UnrootedAncestorTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .filteredOn(card -> card instanceof GurmagNightwatch).hasSize(2);
-        assertThat(ancestor.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, ancestor)).contains(Keyword.INDESTRUCTIBLE);
         assertThat(ancestor.isTapped()).isTrue();
     }
 

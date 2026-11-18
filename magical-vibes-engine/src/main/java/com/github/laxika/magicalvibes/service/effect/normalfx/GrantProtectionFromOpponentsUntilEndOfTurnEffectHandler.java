@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import java.util.Set;
+import java.util.HashSet;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -37,15 +42,15 @@ public class GrantProtectionFromOpponentsUntilEndOfTurnEffectHandler implements 
             return;
         }
 
-        gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
-                UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(), effect,
-                target.getId(), null, null,
-                com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN, 0));
+        Set<UUID> opponentIds = new HashSet<>();
         for (UUID playerId : gameData.playerIds) {
             if (!playerId.equals(entry.getControllerId())) {
-                target.getProtectionFromPlayerIdsUntilEndOfTurn().add(playerId);
+                opponentIds.add(playerId);
             }
         }
+        gameData.addEffectOnPermanent(entry.getCard().getName(), null, entry.getControllerId(),
+                new GrantEffectEffect(new ProtectionFromPlayersEffect(opponentIds, true), GrantScope.TARGET), target.getId(),
+                com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -67,7 +68,7 @@ class WarrenPilferersTest extends BaseCardTest {
         chooseTargetAndResolve(piker);
 
         harness.assertInHand(player1, "Goblin Piker");
-        assertThat(findPilferers().getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, findPilferers())).contains(Keyword.HASTE);
     }
 
     @Test
@@ -79,7 +80,7 @@ class WarrenPilferersTest extends BaseCardTest {
 
         chooseTargetAndResolve(bears);
 
-        assertThat(findPilferers().getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, findPilferers())).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -92,7 +93,7 @@ class WarrenPilferersTest extends BaseCardTest {
         chooseTargetAndResolve(piker);
 
         harness.assertInHand(player1, "Goblin Piker");
-        assertThat(findPilferers().getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, findPilferers())).contains(Keyword.HASTE);
     }
 
     @Test
@@ -103,13 +104,13 @@ class WarrenPilferersTest extends BaseCardTest {
         castAndResolveEtb();
         chooseTargetAndResolve(piker);
 
-        assertThat(findPilferers().getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, findPilferers())).contains(Keyword.HASTE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(findPilferers().getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, findPilferers())).doesNotContain(Keyword.HASTE);
     }
 
     @Test
@@ -119,7 +120,7 @@ class WarrenPilferersTest extends BaseCardTest {
         castAndResolveEtb();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
-        assertThat(findPilferers().getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, findPilferers())).doesNotContain(Keyword.HASTE);
         harness.assertOnBattlefield(player1, "Warren Pilferers");
     }
 
@@ -156,7 +157,7 @@ class WarrenPilferersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Goblin Piker");
-        assertThat(findPilferers().getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, findPilferers())).contains(Keyword.HASTE);
     }
 
     @Test
@@ -181,6 +182,6 @@ class WarrenPilferersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player2, "Goblin Piker");
         harness.assertNotInHand(player1, "Goblin Piker");
-        assertThat(findPilferers().getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+        assertThat(PermanentGrants.keywordsOf(gd, findPilferers())).doesNotContain(Keyword.HASTE);
     }
 }

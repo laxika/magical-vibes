@@ -32,8 +32,8 @@ class BurningSunsFuryTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
-        assertThat(first.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -43,7 +43,7 @@ class BurningSunsFuryTest extends BaseCardTest {
         cast(List.of(target.getId()));
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         harness.setHand(player1, List.of(new BurningSunsFury()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -62,7 +62,7 @@ class BurningSunsFuryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -78,7 +78,7 @@ class BurningSunsFuryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -131,7 +131,7 @@ class BurningSunsFuryTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Burning Sun's Fury");
     }
@@ -155,7 +155,7 @@ class BurningSunsFuryTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, remaining)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, remaining)).isEqualTo(2);
-        assertThat(remaining.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, remaining, Keyword.HASTE)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -177,8 +177,8 @@ class BurningSunsFuryTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, redCreature)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, greenCreature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, greenCreature)).isEqualTo(2);
-        assertThat(redCreature.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(greenCreature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, redCreature, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, greenCreature, Keyword.HASTE)).isTrue();
         assertThat(redCreature.isTapped()).isTrue();
         assertThat(greenCreature.isTapped()).isTrue();
     }

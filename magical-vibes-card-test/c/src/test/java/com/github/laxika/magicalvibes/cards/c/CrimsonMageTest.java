@@ -27,7 +27,7 @@ class CrimsonMageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -39,13 +39,13 @@ class CrimsonMageTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -74,8 +74,8 @@ class CrimsonMageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, second.getId());
         harness.passBothPriorities();
 
-        assertThat(first.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -87,10 +87,10 @@ class CrimsonMageTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, mage.getId());
 
-        assertThat(mage.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mage, Keyword.HASTE)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(mage.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mage, Keyword.HASTE)).isTrue();
         assertThat(mage.isTapped()).isFalse();
     }
 
@@ -105,7 +105,7 @@ class CrimsonMageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(mage.isTapped()).isTrue();
     }
 
@@ -121,7 +121,7 @@ class CrimsonMageTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(mage.getCard());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -136,7 +136,7 @@ class CrimsonMageTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(target);
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -149,7 +149,7 @@ class CrimsonMageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

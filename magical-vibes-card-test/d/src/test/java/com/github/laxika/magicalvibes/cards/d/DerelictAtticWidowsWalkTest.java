@@ -40,7 +40,7 @@ class DerelictAtticWidowsWalkTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -56,8 +56,8 @@ class DerelictAtticWidowsWalkTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, firstAttacker)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, secondAttacker)).isEqualTo(2);
-        assertThat(firstAttacker.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
-        assertThat(secondAttacker.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, firstAttacker, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, secondAttacker, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test
@@ -67,12 +67,12 @@ class DerelictAtticWidowsWalkTest extends BaseCardTest {
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         harness.passBothPriorities();
-        assertThat(attacker.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test
@@ -114,7 +114,7 @@ class DerelictAtticWidowsWalkTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test
@@ -137,7 +137,7 @@ class DerelictAtticWidowsWalkTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
-        assertThat(attacker.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -149,7 +149,7 @@ class DerelictAtticWidowsWalkTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DEATHTOUCH)).isFalse();
     }
 
     private Permanent castRoom(int doorIndex) {

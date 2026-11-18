@@ -28,13 +28,13 @@ class ICallForSlaughterTest extends BaseCardTest {
 
         List<Permanent> devils = findPermanents(player1, "Devil");
         assertThat(devils).hasSize(3);
-        assertThat(devils).allSatisfy(devil -> assertThat(devil.hasKeyword(Keyword.HASTE)).isTrue());
+        assertThat(devils).allSatisfy(devil -> assertThat(gqs.hasKeyword(gd, devil, Keyword.HASTE)).isTrue());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(devils).allSatisfy(devil -> assertThat(devil.hasKeyword(Keyword.HASTE)).isFalse());
+        assertThat(devils).allSatisfy(devil -> assertThat(gqs.hasKeyword(gd, devil, Keyword.HASTE)).isFalse());
     }
 
     @Test

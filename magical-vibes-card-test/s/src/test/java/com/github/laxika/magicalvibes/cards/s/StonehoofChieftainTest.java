@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,7 +26,7 @@ class StonehoofChieftainTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
 
-        assertThat(attacker.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, attacker))
                 .containsExactlyInAnyOrder(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
     }
 
@@ -37,7 +38,7 @@ class StonehoofChieftainTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(chieftain.getGrantedKeywords()).isEmpty();
+        assertThat(PermanentGrants.keywordsOf(gd, chieftain)).isEmpty();
     }
 
     @Test
@@ -48,14 +49,14 @@ class StonehoofChieftainTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
-        assertThat(attacker.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, attacker))
                 .containsExactlyInAnyOrder(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(attacker.getGrantedKeywords()).isEmpty();
+        assertThat(PermanentGrants.keywordsOf(gd, attacker)).isEmpty();
     }
 
     @Test
@@ -69,12 +70,12 @@ class StonehoofChieftainTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(firstAttacker.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, firstAttacker))
                 .containsExactlyInAnyOrder(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
-        assertThat(secondAttacker.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, secondAttacker))
                 .containsExactlyInAnyOrder(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
-        assertThat(chieftain.getGrantedKeywords()).isEmpty();
-        assertThat(nonattacker.getGrantedKeywords()).isEmpty();
+        assertThat(PermanentGrants.keywordsOf(gd, chieftain)).isEmpty();
+        assertThat(PermanentGrants.keywordsOf(gd, nonattacker)).isEmpty();
     }
 
     @Test
@@ -86,6 +87,6 @@ class StonehoofChieftainTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
 
-        assertThat(attacker.getGrantedKeywords()).isEmpty();
+        assertThat(PermanentGrants.keywordsOf(gd, attacker)).isEmpty();
     }
 }

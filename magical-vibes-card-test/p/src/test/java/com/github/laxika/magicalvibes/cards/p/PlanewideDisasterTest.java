@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
@@ -55,7 +56,7 @@ class PlanewideDisasterTest extends BaseCardTest {
     @Test
     void indestructibleCreatureSurvivesEncounter() {
         var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        creature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.INDESTRUCTIBLE);
         gd.planechase.deck.addFirst(new PlanewideDisaster());
 
         harness.inMutationScope(() -> planar.reveal(gd, true));

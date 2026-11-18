@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CoalitionWarbrute;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TeoSpiritedGlider;
@@ -75,7 +76,7 @@ class FirebenderAscensionTest extends BaseCardTest {
     void decayedTriggeringAsTheCreatureAttacksAddsQuestCounter() {
         Permanent ascension = harness.addToBattlefieldAndReturn(player1, new FirebenderAscension());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.getGrantedKeywords().add(Keyword.DECAYED);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.DECAYED);
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(bears)));
         harness.passUntil(TurnStep.END_OF_COMBAT);

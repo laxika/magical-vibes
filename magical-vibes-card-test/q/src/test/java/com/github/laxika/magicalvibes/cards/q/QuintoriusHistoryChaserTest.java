@@ -75,16 +75,16 @@ class QuintoriusHistoryChaserTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(ownSpirit.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(ownSpirit.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(ownBear.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
-        assertThat(opponentSpirit.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownSpirit, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownSpirit, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownBear, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentSpirit, Keyword.DOUBLE_STRIKE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(ownSpirit.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
-        assertThat(ownSpirit.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownSpirit, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownSpirit, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test

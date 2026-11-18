@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
@@ -107,7 +108,7 @@ class RakingCanopyTest extends BaseCardTest {
     void losingFlyingAfterDeclarationStillDealsDamage() {
         Permanent attacker = setUpAttack(new AirElemental());
         declareAttackers(player2, List.of(0));
-        attacker.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, attacker, Keyword.FLYING);
 
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
@@ -130,7 +131,7 @@ class RakingCanopyTest extends BaseCardTest {
     @DisplayName("Shroud does not prevent the non-targeting trigger from dealing damage")
     void shroudDoesNotPreventDamage() {
         Permanent attacker = setUpAttack(new AirElemental());
-        attacker.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.SHROUD);
         declareAttackers(player2, List.of(0));
 
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));

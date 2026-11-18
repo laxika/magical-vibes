@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CloudSprite;
 import com.github.laxika.magicalvibes.cards.e.ElendaSaintOfDusk;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -51,8 +52,8 @@ class OdricLunarchMarshalTest extends BaseCardTest {
         Permanent odric = harness.addToBattlefieldAndReturn(player1, new OdricLunarchMarshal());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent sprite = harness.addToBattlefieldAndReturn(player1, new CloudSprite());
-        bears.getGrantedKeywords().add(Keyword.VIGILANCE);
-        odric.getGrantedKeywords().add(Keyword.LIFELINK);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.VIGILANCE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, odric, Keyword.LIFELINK);
 
         advanceToCombatAndResolve(player1);
 
@@ -72,8 +73,8 @@ class OdricLunarchMarshalTest extends BaseCardTest {
 
         advanceToCombatAndResolve(player1);
 
-        assertThat(odric.getGrantedKeywords()).isEmpty();
-        assertThat(bears.getGrantedKeywords()).isEmpty();
+        assertThat(PermanentGrants.keywordsOf(gd, odric)).isEmpty();
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).isEmpty();
     }
 
     @Test
@@ -124,7 +125,7 @@ class OdricLunarchMarshalTest extends BaseCardTest {
     void sharedSkulkBlocksHigherPower() {
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         attacker.setSummoningSick(false);
-        attacker.getGrantedKeywords().add(Keyword.SKULK);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.SKULK);
         harness.addToBattlefield(player1, new OdricLunarchMarshal());
 
         Permanent highPowerBlocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -155,7 +156,7 @@ class OdricLunarchMarshalTest extends BaseCardTest {
         Permanent donor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        donor.getGrantedKeywords().add(keyword);
+        PermanentGrants.keywordUntilEndOfTurn(gd, donor, keyword);
 
         advanceToCombatAndResolve(player1);
 
@@ -171,7 +172,7 @@ class OdricLunarchMarshalTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
         assertThat(gd.stack).hasSize(1);
-        donor.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, donor, Keyword.FLYING);
 
         harness.passBothPriorities();
 
@@ -182,10 +183,10 @@ class OdricLunarchMarshalTest extends BaseCardTest {
     void doesNotShareKeywordLostBeforeResolution() {
         Permanent odric = harness.addToBattlefieldAndReturn(player1, new OdricLunarchMarshal());
         Permanent donor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        donor.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, donor, Keyword.FLYING);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
-        donor.getGrantedKeywords().remove(Keyword.FLYING);
+        PermanentGrants.endKeywordGrants(gd, donor, Keyword.FLYING);
 
         harness.passBothPriorities();
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AbbeyGriffin;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -175,7 +176,7 @@ class DaybreakRangerTest extends BaseCardTest {
         Permanent griffin = harness.addToBattlefieldAndReturn(player2, new AbbeyGriffin());
 
         harness.activateAbility(player1, indexOf(player1, ranger), null, griffin.getId());
-        griffin.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, griffin, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Abbey Griffin");

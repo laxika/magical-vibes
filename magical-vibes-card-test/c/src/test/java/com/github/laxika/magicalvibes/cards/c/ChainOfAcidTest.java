@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -120,7 +121,7 @@ class ChainOfAcidTest extends BaseCardTest {
     @DisplayName("An indestructible target survives and its controller can copy without changing targets")
     void indestructibleTargetCanBeCopiedWithSameTarget() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         castAt(target.getId());
 
         harness.assertOnBattlefield(player1, "Forest");

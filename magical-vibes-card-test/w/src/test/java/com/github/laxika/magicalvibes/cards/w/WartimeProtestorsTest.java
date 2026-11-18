@@ -34,7 +34,7 @@ class WartimeProtestorsTest extends BaseCardTest {
         assertThat(allies).hasSize(2);
         assertThat(allies).allSatisfy(ally -> {
             assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-            assertThat(ally.hasKeyword(Keyword.HASTE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
         });
     }
 
@@ -56,7 +56,7 @@ class WartimeProtestorsTest extends BaseCardTest {
         List<Permanent> allies = findPermanents(player1, "Soldier Ally");
         assertThat(allies).allSatisfy(ally -> {
             assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-            assertThat(ally.hasKeyword(Keyword.HASTE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isFalse();
         });
     }
 
@@ -72,7 +72,7 @@ class WartimeProtestorsTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -118,7 +118,7 @@ class WartimeProtestorsTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Soldier Ally"))
                 .filteredOn(ally -> ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) == 1
-                        && ally.hasKeyword(Keyword.HASTE))
+                        && gqs.hasKeyword(gd, ally, Keyword.HASTE))
                 .hasSize(1);
     }
 

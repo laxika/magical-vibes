@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,7 +25,7 @@ class StreamHopperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hopper.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, hopper)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -35,12 +36,12 @@ class StreamHopperTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(hopper.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, hopper)).contains(Keyword.FLYING);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(hopper.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, hopper)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -51,10 +52,10 @@ class StreamHopperTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(hopper.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, hopper)).doesNotContain(Keyword.FLYING);
         harness.passBothPriorities();
 
-        assertThat(hopper.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, hopper)).contains(Keyword.FLYING);
         assertThat(hopper.isTapped()).isFalse();
     }
 
@@ -70,10 +71,10 @@ class StreamHopperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(hopper.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, hopper)).contains(Keyword.FLYING);
         assertThat(hopper.isTapped()).isTrue();
-        assertThat(otherHopper.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
-        assertThat(opposingHopper.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, otherHopper)).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, opposingHopper)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -86,6 +87,6 @@ class StreamHopperTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(hopper.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, hopper)).doesNotContain(Keyword.FLYING);
     }
 }

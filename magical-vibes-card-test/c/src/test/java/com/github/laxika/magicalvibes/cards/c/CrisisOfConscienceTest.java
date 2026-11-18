@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -127,7 +128,7 @@ class CrisisOfConscienceTest extends BaseCardTest {
         Card protectedCard = modeIndex == 0 ? newToken() : new GrizzlyBears();
         Card unprotectedCard = modeIndex == 0 ? newToken() : new GrizzlyBears();
         Permanent protectedPermanent = harness.addToBattlefieldAndReturn(player1, protectedCard);
-        protectedPermanent.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, protectedPermanent, Keyword.INDESTRUCTIBLE);
         harness.addToBattlefield(player2, unprotectedCard);
 
         cast(modeIndex);

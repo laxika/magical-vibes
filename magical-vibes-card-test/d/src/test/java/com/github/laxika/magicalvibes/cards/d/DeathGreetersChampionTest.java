@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BurnishedHart;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -28,7 +29,7 @@ class DeathGreetersChampionTest extends BaseCardTest {
         resolveEtbTargeting(hart);
 
         assertThat(hart.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(hart.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hart, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -40,7 +41,7 @@ class DeathGreetersChampionTest extends BaseCardTest {
         resolveEtbTargeting(champion);
 
         assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(champion.getGrantedKeywords()).doesNotContain(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, champion)).doesNotContain(Keyword.DOUBLE_STRIKE);
     }
 
     @Test
@@ -54,7 +55,7 @@ class DeathGreetersChampionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(hart.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, hart, Keyword.DOUBLE_STRIKE)).isFalse();
         assertThat(hart.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -72,7 +73,7 @@ class DeathGreetersChampionTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, champion.getId());
         harness.passBothPriorities();
 
-        assertThat(champion.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, champion, Keyword.HASTE)).isTrue();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP))
                 .anyMatch(action -> action.watchedPermanentId().equals(champion.getId()));
 
@@ -94,8 +95,8 @@ class DeathGreetersChampionTest extends BaseCardTest {
         resolveEtbTargeting(hart);
 
         assertThat(hart.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(hart.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(hart.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, hart, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hart, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -121,7 +122,7 @@ class DeathGreetersChampionTest extends BaseCardTest {
         Permanent champion = findPermanent(player1, "Death-Greeter's Champion");
         resolveEtbTargeting(champion);
 
-        assertThat(champion.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, champion, Keyword.HASTE)).isFalse();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

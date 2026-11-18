@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.Cloudpost;
 import com.github.laxika.magicalvibes.cards.g.GreatFurnace;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
@@ -120,7 +121,7 @@ class ShatterTest extends BaseCardTest {
     @DisplayName("Shatter does not destroy an indestructible artifact")
     void indestructibleArtifactSurvives() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new JayemdaeTome());
-        artifact.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, artifact, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 2);
 

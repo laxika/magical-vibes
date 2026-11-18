@@ -41,8 +41,8 @@ class AgilityBobbleheadTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
-        assertThat(first.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -156,8 +156,8 @@ class AgilityBobbleheadTest extends BaseCardTest {
         });
         harness.passBothPriorities();
 
-        assertThat(first.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
         assertThat(gd.blockRestrictions(first.getId())).hasSize(1);
         assertThat(gd.blockRestrictions(second.getId())).hasSize(1);
     }
@@ -175,7 +175,7 @@ class AgilityBobbleheadTest extends BaseCardTest {
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, first));
         harness.passBothPriorities();
 
-        assertThat(second.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
         assertThat(gd.blockRestrictions(second.getId())).hasSize(1);
     }
 
@@ -202,7 +202,7 @@ class AgilityBobbleheadTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
         assertThat(gd.blockRestrictions(creature.getId())).hasSize(1);
 
         gd.interaction.clearAwaitingInput();
@@ -210,7 +210,7 @@ class AgilityBobbleheadTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
         assertThat(gd.blockRestrictions(creature.getId())).isEmpty();
     }
 }

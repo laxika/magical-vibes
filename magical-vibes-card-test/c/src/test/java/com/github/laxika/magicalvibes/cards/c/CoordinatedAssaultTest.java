@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.SatyrRambler;
@@ -30,8 +31,8 @@ class CoordinatedAssaultTest extends BaseCardTest {
 
         assertThat(first.getPowerModifier()).isEqualTo(1);
         assertThat(second.getPowerModifier()).isEqualTo(1);
-        assertThat(first.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
-        assertThat(second.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, first)).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, second)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -41,7 +42,7 @@ class CoordinatedAssaultTest extends BaseCardTest {
         cast(List.of(target.getId()));
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -55,7 +56,7 @@ class CoordinatedAssaultTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -76,7 +77,7 @@ class CoordinatedAssaultTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.FIRST_STRIKE);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Coordinated Assault");
     }
@@ -91,8 +92,8 @@ class CoordinatedAssaultTest extends BaseCardTest {
         assertThat(opposing.getPowerModifier()).isEqualTo(1);
         assertThat(own.getToughnessModifier()).isZero();
         assertThat(opposing.getToughnessModifier()).isZero();
-        assertThat(own.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
-        assertThat(opposing.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, own)).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, opposing)).contains(Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -130,10 +131,10 @@ class CoordinatedAssaultTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first).contains(second);
         assertThat(first.getPowerModifier()).isZero();
-        assertThat(first.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, first)).doesNotContain(Keyword.FIRST_STRIKE);
         assertThat(second.getPowerModifier()).isEqualTo(1);
         assertThat(second.getToughnessModifier()).isZero();
-        assertThat(second.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, second)).contains(Keyword.FIRST_STRIKE);
         harness.assertInGraveyard(player1, "Coordinated Assault");
     }
 
@@ -150,7 +151,7 @@ class CoordinatedAssaultTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(untargeted.getPowerModifier()).isZero();
         assertThat(untargeted.getToughnessModifier()).isZero();
-        assertThat(untargeted.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, untargeted)).doesNotContain(Keyword.FIRST_STRIKE);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Coordinated Assault");
     }

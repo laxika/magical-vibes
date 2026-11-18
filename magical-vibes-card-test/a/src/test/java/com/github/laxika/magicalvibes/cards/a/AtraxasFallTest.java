@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
@@ -69,7 +70,7 @@ class AtraxasFallTest extends BaseCardTest {
         addMana();
         harness.castSorcery(player1, 0, elemental.getId());
 
-        elemental.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, elemental, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Air Elemental");
@@ -80,7 +81,7 @@ class AtraxasFallTest extends BaseCardTest {
     @Test
     void doesNotDestroyIndestructibleArtifact() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
-        artifact.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, artifact, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new AtraxasFall()));
         addMana();
 

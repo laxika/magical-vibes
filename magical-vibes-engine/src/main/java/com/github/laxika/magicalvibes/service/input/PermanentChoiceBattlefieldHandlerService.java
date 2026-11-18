@@ -2958,7 +2958,11 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (source != null) {
             source.setPowerModifier(source.getPowerModifier() + ctx.power());
             source.setToughnessModifier(source.getToughnessModifier() + ctx.toughness());
-            source.getGrantedKeywords().addAll(ctx.grantedKeywords());
+            if (!ctx.grantedKeywords().isEmpty()) {
+                gameData.addEffectOnPermanent(ctx.sourceCard().getName(), null, ctx.controllerId(),
+                        new GrantKeywordEffect(Set.copyOf(ctx.grantedKeywords()), GrantScope.TARGET),
+                        source.getId(), Duration.UNTIL_END_OF_TURN);
+            }
             gameLogService.append(gameData, GameLog.builder()
                     .card(source.getCard())
                     .text(String.format(" gets %+d/%+d until end of turn.", ctx.power(), ctx.toughness()))
@@ -2992,7 +2996,6 @@ public class PermanentChoiceBattlefieldHandlerService {
             }
         }
         if (source != null) {
-            source.getGrantedKeywords().addAll(ctx.keywords());
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(),
                     ctx.sourceCard().getName(),
@@ -3217,8 +3220,8 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Choose an opponent");
         }
 
-        entering.getProtectionFromPlayerIdsPermanently().clear();
-        entering.getProtectionFromPlayerIdsPermanently().add(chosenPlayerId);
+        entering.getChosenPlayerIds().clear();
+        entering.getChosenPlayerIds().add(chosenPlayerId);
         entering.setRememberedTargetPlayerId(chosenPlayerId);
         entering.setAsEntersPlayerChooserId(context.controllerId());
         if (!opponentOnly) {

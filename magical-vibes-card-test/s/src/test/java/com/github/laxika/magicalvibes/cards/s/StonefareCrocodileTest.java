@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,7 +28,7 @@ class StonefareCrocodileTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(crocodile.getGrantedKeywords()).contains(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, crocodile)).contains(Keyword.LIFELINK);
     }
 
     @Test
@@ -39,13 +40,13 @@ class StonefareCrocodileTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(crocodile.getGrantedKeywords()).contains(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, crocodile)).contains(Keyword.LIFELINK);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(crocodile.getGrantedKeywords()).doesNotContain(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, crocodile)).doesNotContain(Keyword.LIFELINK);
     }
 
     @Test
@@ -105,10 +106,10 @@ class StonefareCrocodileTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(crocodile.getGrantedKeywords()).doesNotContain(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, crocodile)).doesNotContain(Keyword.LIFELINK);
         harness.passBothPriorities();
 
-        assertThat(crocodile.getGrantedKeywords()).contains(Keyword.LIFELINK);
+        assertThat(PermanentGrants.keywordsOf(gd, crocodile)).contains(Keyword.LIFELINK);
         assertThat(crocodile.isTapped()).isTrue();
     }
 

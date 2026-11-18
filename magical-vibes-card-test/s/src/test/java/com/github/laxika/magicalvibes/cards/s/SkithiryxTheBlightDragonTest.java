@@ -67,7 +67,7 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(skithiryx.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, skithiryx, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -82,7 +82,7 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(skithiryx.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, skithiryx, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -287,12 +287,12 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(skithiryx.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, skithiryx, Keyword.HASTE)).isTrue();
         assertThat(gd.regenerationShieldCount(skithiryx.getId())).isEqualTo(1);
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(skithiryx.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, skithiryx, Keyword.HASTE)).isFalse();
         assertThat(gd.regenerationShieldCount(skithiryx.getId())).isZero();
     }
 

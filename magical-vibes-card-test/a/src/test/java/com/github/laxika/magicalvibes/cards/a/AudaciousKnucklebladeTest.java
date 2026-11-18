@@ -74,16 +74,16 @@ class AudaciousKnucklebladeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        assertThat(source.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(ally.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(opponent.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(source.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(ally.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isFalse();
     }
 
     @Test

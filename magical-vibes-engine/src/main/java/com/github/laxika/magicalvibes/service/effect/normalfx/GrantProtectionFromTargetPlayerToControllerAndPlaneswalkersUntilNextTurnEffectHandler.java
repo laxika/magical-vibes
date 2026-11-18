@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -48,7 +52,9 @@ public class GrantProtectionFromTargetPlayerToControllerAndPlaneswalkersUntilNex
         if (controlled != null) {
             for (Permanent permanent : controlled) {
                 if (gameQueryService.isPlaneswalker(gameData, permanent)) {
-                    permanent.addProtectionFromPlayerUntilNextTurnOf(entry.getControllerId(), targetPlayerId);
+                    gameData.addEffectOnPermanent(entry.getCard().getName(), entry.getSourcePermanentId(),
+                            entry.getControllerId(), new GrantEffectEffect(new ProtectionFromPlayersEffect(Set.of(targetPlayerId), false), GrantScope.TARGET),
+                            permanent.getId(), Duration.UNTIL_YOUR_NEXT_TURN);
                 }
             }
         }

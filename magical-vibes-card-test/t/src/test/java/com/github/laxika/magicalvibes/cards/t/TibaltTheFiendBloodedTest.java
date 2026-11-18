@@ -77,8 +77,8 @@ class TibaltTheFiendBloodedTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(theirs.getId()));
         assertThat(theirs.isTapped()).isFalse();
         assertThat(mine.isTapped()).isFalse();
-        assertThat(theirs.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(mine.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, theirs, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -96,7 +96,7 @@ class TibaltTheFiendBloodedTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(theirs.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(theirs.getId()));
-        assertThat(theirs.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, theirs, Keyword.HASTE)).isFalse();
     }
 
     @Test

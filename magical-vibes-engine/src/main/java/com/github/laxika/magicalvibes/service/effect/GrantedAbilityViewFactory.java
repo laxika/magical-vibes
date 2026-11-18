@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromNonSubtypeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -91,7 +94,6 @@ public class GrantedAbilityViewFactory {
         Set<CardColor> printedProtection = printedProtectionColors(permanent);
         Set<CardColor> remainingProtection = EnumSet.noneOf(CardColor.class);
         remainingProtection.addAll(bonus.protectionColors());
-        remainingProtection.addAll(permanent.getProtectionFromColorsUntilEndOfTurn());
         remainingProtection.removeAll(printedProtection);
         remainingProtection.removeAll(protectionCoveredByAttributedEffects);
 
@@ -104,21 +106,8 @@ public class GrantedAbilityViewFactory {
         if (!remainingProtection.isEmpty()) {
             result.add(new GrantedAbilityView(formatProtectionColors(remainingProtection), null));
         }
-        if (permanent.isProtectionFromColorlessUntilEndOfTurn()) {
-            result.add(new GrantedAbilityView("Protection from colorless", null));
-        }
         if (cantBeBlockedThisTurn) {
             result.add(new GrantedAbilityView("Can't be blocked", null));
-        }
-        for (CardSubtype subtype : permanent.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn()
-                .stream().sorted(Comparator.comparingInt(CardSubtype::ordinal)).toList()) {
-            result.add(new GrantedAbilityView(
-                    "Protection from non-" + formatSubtype(subtype) + " creatures", null));
-        }
-        if (permanent.isProtectionFromOpponentCreaturesUntilEndOfTurn()
-                && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                && !bonus.losesAllAbilities()) {
-            result.add(new GrantedAbilityView("Protection from creatures your opponents control", null));
         }
         if (permanent.getCard().getStaticEffects().stream()
                 .anyMatch(ProtectionFromChosenPlayerEffect.class::isInstance)
@@ -126,11 +115,6 @@ public class GrantedAbilityViewFactory {
                 && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
                 && !bonus.losesAllAbilities()) {
             result.add(new GrantedAbilityView("Protection from the chosen player", null));
-        }
-        if (permanent.isProtectionFromOpponentsPermanently()
-                && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                && !bonus.losesAllAbilities()) {
-            result.add(new GrantedAbilityView("Protection from each opponent", null));
         }
 
         // Multiple sources may grant the same final ability. Keep their separate source rows,
@@ -179,6 +163,10 @@ public class GrantedAbilityViewFactory {
                     "Can't have +1/+1 counters put on it";
             case CantBeSacrificedEffect ignored -> "Can't be sacrificed";
             case CantBecomeSuspectedEffect ignored -> "Can't become suspected";
+            case ProtectionFromNonSubtypeCreaturesEffect protection ->
+                    "Protection from non-" + formatSubtype(protection.subtype()) + " creatures";
+            case GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect ignored ->
+                    "Protection from creatures your opponents control";
             default -> null;
         };
     }
@@ -189,6 +177,13 @@ public class GrantedAbilityViewFactory {
         }
         if (protection.protectionFromMulticolored()) {
             return "Protection from multicolored";
+        }
+        if (protection.protectionFromColorless()) {
+            return "Protection from colorless";
+        }
+        if (!protection.protectionFromPlayers().isEmpty()) {
+            return protection instanceof ProtectionFromPlayersEffect players && players.eachOpponent()
+                    ? "Protection from each opponent" : "Protection from a player";
         }
         if (protection.protectionFromMonocolored()) {
             return "Protection from monocolored";

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.Gristleback;
 import com.github.laxika.magicalvibes.cards.i.IzzetSignet;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,7 +32,7 @@ class LeapOfFlameTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -50,7 +51,7 @@ class LeapOfFlameTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(target.getPowerModifier()).isEqualTo(3);
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -68,9 +69,9 @@ class LeapOfFlameTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(originalTarget.getPowerModifier()).isEqualTo(1);
-        assertThat(originalTarget.getGrantedKeywords()).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, originalTarget)).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
         assertThat(newTarget.getPowerModifier()).isEqualTo(1);
-        assertThat(newTarget.getGrantedKeywords()).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, newTarget)).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -99,7 +100,7 @@ class LeapOfFlameTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.FLYING, Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.FLYING, Keyword.FIRST_STRIKE);
     }
 
     @Test
@@ -134,7 +135,7 @@ class LeapOfFlameTest extends BaseCardTest {
 
         assertThat(newTarget.getPowerModifier()).isEqualTo(1);
         assertThat(newTarget.getToughnessModifier()).isZero();
-        assertThat(newTarget.getGrantedKeywords()).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, newTarget)).contains(Keyword.FLYING, Keyword.FIRST_STRIKE);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Leap of Flame");
     }
@@ -153,7 +154,7 @@ class LeapOfFlameTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Leap of Flame");
         assertThat(otherCreature.getPowerModifier()).isZero();
         assertThat(otherCreature.getToughnessModifier()).isZero();
-        assertThat(otherCreature.getGrantedKeywords()).doesNotContain(Keyword.FLYING, Keyword.FIRST_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, otherCreature)).doesNotContain(Keyword.FLYING, Keyword.FIRST_STRIKE);
         assertThat(gd.stack).isEmpty();
     }
 

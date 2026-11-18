@@ -542,6 +542,21 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps the last-known keywords of a triggering permanent")
+    void deepCopyKeepsLastKnownKeywordsOfTriggeringPermanent() {
+        Permanent dying = new Permanent(new GrizzlyBears());
+        dying.setLastKnownKeywords(Set.of(Keyword.LIFELINK));
+        StackEntry entry = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Death trigger", List.of());
+        entry.setTriggeringPermanent(dying, new DepartedAttachments(List.of(), List.of(), java.util.Map.of()));
+        gd.stack.add(entry);
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.stack.getFirst().getTriggeringPermanentSnapshot().getLastKnownKeywords())
+                .containsExactly(Keyword.LIFELINK);
+    }
+
+    @Test
     @DisplayName("Deep copy keeps a stack entry's triggering permanent and attachments, independently")
     void deepCopyKeepsTriggeringPermanentIndependently() {
         Permanent dying = new Permanent(new GrizzlyBears());

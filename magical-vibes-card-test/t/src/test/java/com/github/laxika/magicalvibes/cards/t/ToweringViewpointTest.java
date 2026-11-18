@@ -25,7 +25,7 @@ class ToweringViewpointTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -37,7 +37,7 @@ class ToweringViewpointTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -48,13 +48,13 @@ class ToweringViewpointTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -76,10 +76,10 @@ class ToweringViewpointTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, viewpoint.getId());
-        assertThat(viewpoint.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, viewpoint, Keyword.FLYING)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(viewpoint.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, viewpoint, Keyword.FLYING)).isTrue();
         assertThat(viewpoint.isTapped()).isTrue();
     }
 
@@ -94,8 +94,8 @@ class ToweringViewpointTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, other.getId());
         harness.passBothPriorities();
 
-        assertThat(viewpoint.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(other.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, viewpoint, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isTrue();
         assertThat(viewpoint.isTapped()).isFalse();
     }
 
@@ -109,6 +109,6 @@ class ToweringViewpointTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
 
         assertThat(gd.stack).isEmpty();
-        assertThat(viewpoint.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, viewpoint, Keyword.FLYING)).isFalse();
     }
 }

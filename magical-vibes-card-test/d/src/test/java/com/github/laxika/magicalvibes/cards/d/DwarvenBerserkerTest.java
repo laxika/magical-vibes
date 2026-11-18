@@ -35,7 +35,7 @@ class DwarvenBerserkerTest extends BaseCardTest {
         assertThat(berserker.getPowerModifier()).isEqualTo(3);
         assertThat(berserker.getToughnessModifier()).isZero();
         assertThat(berserker.getEffectivePower()).isEqualTo(4);
-        assertThat(berserker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, berserker, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -54,7 +54,7 @@ class DwarvenBerserkerTest extends BaseCardTest {
         harness.passUntil(TurnStep.COMBAT_DAMAGE);
 
         assertThat(berserker.getPowerModifier()).isEqualTo(3);
-        assertThat(berserker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, berserker, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -68,7 +68,7 @@ class DwarvenBerserkerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(berserker.getPowerModifier()).isZero();
-        assertThat(berserker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, berserker, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -88,7 +88,7 @@ class DwarvenBerserkerTest extends BaseCardTest {
 
         assertThat(berserker.getPowerModifier()).isZero();
         assertThat(berserker.getToughnessModifier()).isZero();
-        assertThat(berserker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, berserker, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -125,9 +125,9 @@ class DwarvenBerserkerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(attacker.getPowerModifier()).isEqualTo(3);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
         assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -145,7 +145,7 @@ class DwarvenBerserkerTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(berserker.getPowerModifier()).isZero();
-        assertThat(berserker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, berserker, Keyword.TRAMPLE)).isFalse();
 
         harness.castModalInstant(player1, 0, 1, List.of(blocker.getId()));
         harness.passBothPriorities();
@@ -154,6 +154,6 @@ class DwarvenBerserkerTest extends BaseCardTest {
 
         assertThat(berserker.getPowerModifier()).isEqualTo(3);
         assertThat(berserker.getToughnessModifier()).isZero();
-        assertThat(berserker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, berserker, Keyword.TRAMPLE)).isTrue();
     }
 }

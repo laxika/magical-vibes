@@ -88,13 +88,13 @@ class KamahlFistOfKrosaTest extends BaseCardTest {
 
         assertThat(kamahl.getEffectivePower()).isEqualTo(kamahlPower + 3);
         assertThat(kamahl.getEffectiveToughness()).isEqualTo(kamahlToughness + 3);
-        assertThat(kamahl.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, kamahl, Keyword.TRAMPLE)).isTrue();
         assertThat(ownCreature.getEffectivePower()).isEqualTo(ownPower + 3);
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(ownToughness + 3);
-        assertThat(ownCreature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
         assertThat(opponentCreature.getEffectivePower()).isEqualTo(opponentPower);
         assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(opponentToughness);
-        assertThat(opponentCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -114,8 +114,8 @@ class KamahlFistOfKrosaTest extends BaseCardTest {
 
         assertThat(kamahl.getEffectivePower()).isEqualTo(kamahlPower);
         assertThat(ownCreature.getEffectivePower()).isEqualTo(ownPower);
-        assertThat(kamahl.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(ownCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, kamahl, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test

@@ -26,7 +26,7 @@ class RenegadesGetawayTest extends BaseCardTest {
 
         cast(target);
 
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         Permanent servo = findPermanent(player1, "Servo");
         assertThat(servo.getEffectivePower()).isEqualTo(1);
         assertThat(servo.getEffectiveToughness()).isEqualTo(1);
@@ -37,13 +37,13 @@ class RenegadesGetawayTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         cast(target);
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -72,7 +72,7 @@ class RenegadesGetawayTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Ornithopter");
         Permanent servo = findPermanent(player1, "Servo");
-        assertThat(servo.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, servo, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(countPermanents(player1, "Servo")).isEqualTo(1);
         assertThat(countPermanents(player2, "Servo")).isZero();
         harness.castAndResolveInstant(player2, 0, servo.getId());

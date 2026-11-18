@@ -56,12 +56,12 @@ class BasriTomorrowsChampionTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(ownCat.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(ownCat.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(ownNonCat.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(ownNonCat.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(opponentCat.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(opponentCat.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCat, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCat, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownNonCat, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownNonCat, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCat, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCat, Keyword.INDESTRUCTIBLE)).isFalse();
         harness.assertInGraveyard(player1, "Basri, Tomorrow's Champion");
         harness.assertInHand(player1, "Grizzly Bears");
     }
@@ -93,8 +93,8 @@ class BasriTomorrowsChampionTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Grizzly Bears");
         harness.passBothPriorities();
 
-        assertThat(cat.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(cat.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cat, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cat, Keyword.INDESTRUCTIBLE)).isTrue();
         harness.assertNotInHand(player1, "Grizzly Bears");
 
         harness.passBothPriorities();
@@ -131,13 +131,13 @@ class BasriTomorrowsChampionTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(cat.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(cat.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cat, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cat, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
-        assertThat(cat.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(cat.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, cat, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, cat, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -154,7 +154,7 @@ class BasriTomorrowsChampionTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Grizzly Bears");
         Permanent laterCat = addCreatureReady(player1, new BrimazKingOfOreskos());
-        assertThat(laterCat.hasKeyword(Keyword.HEXPROOF)).isFalse();
-        assertThat(laterCat.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCat, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCat, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 }

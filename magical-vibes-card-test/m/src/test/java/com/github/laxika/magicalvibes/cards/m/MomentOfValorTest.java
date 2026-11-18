@@ -29,7 +29,7 @@ class MomentOfValorTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getPowerModifier()).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
@@ -43,7 +43,7 @@ class MomentOfValorTest extends BaseCardTest {
         harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(target.getPowerModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -79,7 +79,7 @@ class MomentOfValorTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Air Elemental");
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -57,7 +60,8 @@ public class BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffectHandler imp
 
         equippedCreature.setPowerModifier(equippedCreature.getPowerModifier() + e.powerBoost());
         equippedCreature.setToughnessModifier(equippedCreature.getToughnessModifier() + e.toughnessBoost());
-        equippedCreature.getGrantedKeywords().add(e.keyword());
+        gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(e.keyword(), GrantScope.TARGET),
+                equippedCreature.getId(), Duration.UNTIL_END_OF_TURN);
 
         String keywordName = e.keyword().name().charAt(0)
                 + e.keyword().name().substring(1).toLowerCase().replace('_', ' ');

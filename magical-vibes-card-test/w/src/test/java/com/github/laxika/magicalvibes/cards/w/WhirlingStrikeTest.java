@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -31,7 +32,7 @@ class WhirlingStrikeTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
     }
 
     @Test
@@ -50,7 +51,7 @@ class WhirlingStrikeTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
     }
 
     @Test
@@ -79,9 +80,9 @@ class WhirlingStrikeTest extends BaseCardTest {
 
         assertThat(opposingBear.getPowerModifier()).isEqualTo(2);
         assertThat(opposingBear.getToughnessModifier()).isZero();
-        assertThat(opposingBear.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, opposingBear)).contains(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
         assertThat(ownBear.getPowerModifier()).isZero();
-        assertThat(ownBear.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, ownBear)).doesNotContain(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
     }
 
     @Test
@@ -98,13 +99,13 @@ class WhirlingStrikeTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(4);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
     }
 }

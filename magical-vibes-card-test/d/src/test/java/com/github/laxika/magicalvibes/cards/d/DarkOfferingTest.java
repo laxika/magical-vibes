@@ -123,7 +123,7 @@ class DarkOfferingTest extends BaseCardTest {
     @DisplayName("Gains life even when indestructibility prevents destruction")
     void indestructibleCreatureSurvivesAndControllerGainsLife() {
         Permanent griffin = harness.addToBattlefieldAndReturn(player2, new ArmoredGriffin());
-        griffin.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, griffin, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new DarkOffering()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 

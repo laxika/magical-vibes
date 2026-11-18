@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -40,9 +41,9 @@ class KaylasCommandTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Construct");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.DOUBLE_STRIKE);
         assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(giant.getGrantedKeywords()).doesNotContain(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, giant)).doesNotContain(Keyword.DOUBLE_STRIKE);
     }
 
     @Test
@@ -96,7 +97,7 @@ class KaylasCommandTest extends BaseCardTest {
 
         Permanent construct = findPermanent(player1, "Construct");
         assertThat(construct.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(construct.getGrantedKeywords()).contains(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, construct)).contains(Keyword.DOUBLE_STRIKE);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -117,7 +118,7 @@ class KaylasCommandTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.DOUBLE_STRIKE);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }
 
@@ -133,7 +134,7 @@ class KaylasCommandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opponentCreature.getGrantedKeywords()).doesNotContain(Keyword.DOUBLE_STRIKE);
+        assertThat(PermanentGrants.keywordsOf(gd, opponentCreature)).doesNotContain(Keyword.DOUBLE_STRIKE);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

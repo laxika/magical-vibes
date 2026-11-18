@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.t.TravelingPhilosopher;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -142,7 +143,7 @@ class DauntlessOnslaughtTest extends BaseCardTest {
         giveMana();
 
         harness.castInstant(player1, 0, List.of(own.getId(), opposing.getId()));
-        opposing.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, opposing, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(4);

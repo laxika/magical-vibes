@@ -36,11 +36,11 @@ class CaptainAmericaSkyboundTest extends BaseCardTest {
         assertThat(otherAttacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(nonAttacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(captain.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(attacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(otherAttacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(nonAttacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(opposingCreature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, captain, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherAttacker, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonAttacker, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -54,7 +54,7 @@ class CaptainAmericaSkyboundTest extends BaseCardTest {
 
         assertThat(captain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(captain.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, captain, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -69,7 +69,7 @@ class CaptainAmericaSkyboundTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(captain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(attacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @ParameterizedTest
@@ -96,10 +96,10 @@ class CaptainAmericaSkyboundTest extends BaseCardTest {
         Permanent otherRemainingAttacker = returnCaptain ? attacker : captain;
         assertThat(remainingAttacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(otherRemainingAttacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(remainingAttacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(otherRemainingAttacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, remainingAttacker, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherRemainingAttacker, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(nonAttacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(nonAttacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nonAttacker, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -110,12 +110,12 @@ class CaptainAmericaSkyboundTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
-        assertThat(captain.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, captain, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(captain.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, captain, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(captain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

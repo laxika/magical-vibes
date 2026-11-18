@@ -29,7 +29,7 @@ class VialOfPoisonTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Vial of Poison");
         harness.assertInGraveyard(player1, "Vial of Poison");
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -42,7 +42,7 @@ class VialOfPoisonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -54,13 +54,13 @@ class VialOfPoisonTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isFalse();
     }
 
     @Test
@@ -85,11 +85,11 @@ class VialOfPoisonTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Vial of Poison");
         harness.assertInGraveyard(player1, "Vial of Poison");
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -104,7 +104,7 @@ class VialOfPoisonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Vial of Poison");
-        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test

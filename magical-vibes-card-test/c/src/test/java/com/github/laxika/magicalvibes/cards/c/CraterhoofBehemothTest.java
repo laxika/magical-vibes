@@ -38,8 +38,8 @@ class CraterhoofBehemothTest extends BaseCardTest {
         assertThat(hoof.getPowerModifier()).isEqualTo(3);
         assertThat(hoof.getToughnessModifier()).isEqualTo(3);
 
-        assertThat(swine.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(hoof.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, swine, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hoof, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -61,7 +61,7 @@ class CraterhoofBehemothTest extends BaseCardTest {
         castBehemoth();
 
         assertThat(opponentSwine.getPowerModifier()).isEqualTo(0);
-        assertThat(opponentSwine.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentSwine, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -72,7 +72,7 @@ class CraterhoofBehemothTest extends BaseCardTest {
         castBehemoth();
 
         assertThat(swine.getPowerModifier()).isEqualTo(2);
-        assertThat(swine.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, swine, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -80,7 +80,7 @@ class CraterhoofBehemothTest extends BaseCardTest {
 
         assertThat(swine.getPowerModifier()).isEqualTo(0);
         assertThat(swine.getToughnessModifier()).isEqualTo(0);
-        assertThat(swine.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, swine, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -96,7 +96,7 @@ class CraterhoofBehemothTest extends BaseCardTest {
         Permanent hoof = findPermanent(player1, "Craterhoof Behemoth");
         assertThat(swine.getPowerModifier()).isEqualTo(2);
         assertThat(swine.getToughnessModifier()).isEqualTo(2);
-        assertThat(swine.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, swine, Keyword.TRAMPLE)).isTrue();
         assertThat(hoof.getPowerModifier()).isEqualTo(2);
         assertThat(hoof.getToughnessModifier()).isEqualTo(2);
     }
@@ -117,7 +117,7 @@ class CraterhoofBehemothTest extends BaseCardTest {
 
         assertThat(swine.getPowerModifier()).isEqualTo(1);
         assertThat(swine.getToughnessModifier()).isEqualTo(1);
-        assertThat(swine.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, swine, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -130,7 +130,7 @@ class CraterhoofBehemothTest extends BaseCardTest {
         Permanent hoof = findPermanent(player1, "Craterhoof Behemoth");
         assertThat(lateSwine.getPowerModifier()).isZero();
         assertThat(lateSwine.getToughnessModifier()).isZero();
-        assertThat(lateSwine.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, lateSwine, Keyword.TRAMPLE)).isFalse();
         assertThat(hoof.getPowerModifier()).isEqualTo(2);
 
         swine.setMarkedDamage(5);
@@ -138,6 +138,6 @@ class CraterhoofBehemothTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(swine);
         assertThat(hoof.getPowerModifier()).isEqualTo(2);
         assertThat(hoof.getToughnessModifier()).isEqualTo(2);
-        assertThat(hoof.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hoof, Keyword.TRAMPLE)).isTrue();
     }
 }

@@ -32,7 +32,7 @@ class AncestorsAidTest extends BaseCardTest {
         Permanent bear = findPermanent(player1, "Goldfury Strider");
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
 
@@ -52,7 +52,7 @@ class AncestorsAidTest extends BaseCardTest {
         Permanent bear = findPermanent(player1, "Goldfury Strider");
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -79,7 +79,7 @@ class AncestorsAidTest extends BaseCardTest {
         Permanent creature = findPermanent(player2, "Goldfury Strider");
         assertThat(creature.getPowerModifier()).isEqualTo(2);
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
         assertThat(findPermanents(player2, "Treasure")).isEmpty();
     }

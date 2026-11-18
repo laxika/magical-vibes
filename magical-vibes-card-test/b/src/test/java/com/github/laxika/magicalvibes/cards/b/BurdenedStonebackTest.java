@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.SizzlingChangeling;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -55,7 +56,7 @@ class BurdenedStonebackTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         Permanent bears = harness.getGameQueryService().findPermanentById(gd, bearsId);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -173,7 +174,7 @@ class BurdenedStonebackTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, stoneback.getId());
         harness.passBothPriorities();
 
-        assertThat(stoneback.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, stoneback)).contains(Keyword.INDESTRUCTIBLE);
         assertThat(stoneback.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 

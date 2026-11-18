@@ -31,7 +31,7 @@ class PredatorsStrikeTest extends BaseCardTest {
 
         assertThat(myr.getPowerModifier()).isEqualTo(3);
         assertThat(myr.getToughnessModifier()).isEqualTo(3);
-        assertThat(myr.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -45,7 +45,7 @@ class PredatorsStrikeTest extends BaseCardTest {
 
         assertThat(myr.getPowerModifier()).isEqualTo(3);
         assertThat(myr.getToughnessModifier()).isEqualTo(3);
-        assertThat(myr.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -63,7 +63,7 @@ class PredatorsStrikeTest extends BaseCardTest {
 
         assertThat(myr.getPowerModifier()).isZero();
         assertThat(myr.getToughnessModifier()).isZero();
-        assertThat(myr.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -91,7 +91,7 @@ class PredatorsStrikeTest extends BaseCardTest {
 
         assertThat(myr.getPowerModifier()).isEqualTo(6);
         assertThat(myr.getToughnessModifier()).isEqualTo(6);
-        assertThat(myr.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -99,7 +99,7 @@ class PredatorsStrikeTest extends BaseCardTest {
 
         assertThat(myr.getPowerModifier()).isZero();
         assertThat(myr.getToughnessModifier()).isZero();
-        assertThat(myr.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -121,6 +121,6 @@ class PredatorsStrikeTest extends BaseCardTest {
         harness.assertLife(player1, 23);
         assertThat(myr.getPowerModifier()).isZero();
         assertThat(myr.getToughnessModifier()).isZero();
-        assertThat(myr.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.TRAMPLE)).isFalse();
     }
 }

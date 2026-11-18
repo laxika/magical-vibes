@@ -56,7 +56,7 @@ class YasovaDragonclawTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, bearsId);
         assertThat(bears.isTapped()).isFalse();
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -72,7 +72,7 @@ class YasovaDragonclawTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(findPermanent(player2, bearsId)).isNotNull();
-        assertThat(findPermanent(player2, bearsId).hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player2, bearsId), Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -89,12 +89,12 @@ class YasovaDragonclawTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, bearsId).hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, bearsId), Keyword.HASTE)).isTrue();
 
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TurnCleanupService.class)
                 .applyCleanupResets(gd));
 
-        assertThat(findPermanent(player2, bearsId).hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player2, bearsId), Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -151,7 +151,7 @@ class YasovaDragonclawTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, bears.getId()).hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, bears.getId()), Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -168,7 +168,7 @@ class YasovaDragonclawTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(findPermanent(player2, bears.getId()).isTapped()).isTrue();
-        assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -184,7 +184,7 @@ class YasovaDragonclawTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(findPermanent(player2, giant.getId()).hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player2, giant.getId()), Keyword.HASTE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 }

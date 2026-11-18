@@ -27,13 +27,13 @@ class ReaperOfNightTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(reaper.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, reaper, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(reaper.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, reaper, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -45,7 +45,7 @@ class ReaperOfNightTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(reaper.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, reaper, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -108,7 +108,7 @@ class ReaperOfNightTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(reaper.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, reaper, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -123,7 +123,7 @@ class ReaperOfNightTest extends BaseCardTest {
             harness.passBothPriorities();
         });
 
-        assertThat(reaper.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, reaper, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -138,7 +138,7 @@ class ReaperOfNightTest extends BaseCardTest {
             harness.passBothPriorities();
         });
 
-        assertThat(reaper.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, reaper, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -149,11 +149,11 @@ class ReaperOfNightTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
             harness.passBothPriorities();
-            assertThat(reaper.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, reaper, Keyword.FLYING)).isTrue();
             harness.setHand(player2, List.of(new SporecapSpider(), new SporecapSpider(), new SporecapSpider()));
         });
 
-        assertThat(reaper.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, reaper, Keyword.FLYING)).isTrue();
     }
 
     @Test

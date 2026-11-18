@@ -34,8 +34,8 @@ class StormcallersBoonTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Stormcaller's Boon");
         harness.assertInGraveyard(player1, "Stormcaller's Boon");
 
-        assertThat(findPermanent(player1, "Grizzly Bears").hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(findPermanent(player2, "Grizzly Bears").hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player2, "Grizzly Bears"), Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -48,13 +48,13 @@ class StormcallersBoonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -66,10 +66,10 @@ class StormcallersBoonTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Stormcaller's Boon");
         harness.assertInGraveyard(player1, "Stormcaller's Boon");
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
 
         harness.passBothPriorities();
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -81,8 +81,8 @@ class StormcallersBoonTest extends BaseCardTest {
 
         Permanent after = harness.addToBattlefieldAndReturn(player1, new QasaliPridemage());
 
-        assertThat(before.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(after.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, before, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, after, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -93,7 +93,7 @@ class StormcallersBoonTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
     }
 
     @Test

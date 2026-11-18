@@ -84,14 +84,14 @@ class BitterReunionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Bitter Reunion");
-        assertThat(ownCreature.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(opponentCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HASTE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -122,14 +122,14 @@ class BitterReunionTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Bitter Reunion");
         harness.assertInGraveyard(player1, "Bitter Reunion");
-        assertThat(existing.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.HASTE)).isFalse();
 
         Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new ArgothianSprite());
         harness.passBothPriorities();
 
-        assertThat(existing.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(beforeResolution.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.HASTE)).isTrue();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new ArgothianSprite());
-        assertThat(afterResolution.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.HASTE)).isFalse();
     }
 }

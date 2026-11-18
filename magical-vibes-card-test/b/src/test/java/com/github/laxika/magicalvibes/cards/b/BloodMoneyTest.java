@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.Card;
@@ -36,7 +37,7 @@ class BloodMoneyTest extends BaseCardTest {
     @Test
     void indestructibleCreatureDoesNotCreateTreasure() {
         Permanent indestructible = addCreatureReady(player1, new GrizzlyBears());
-        indestructible.getGrantedKeywords().add(com.github.laxika.magicalvibes.model.Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, indestructible, com.github.laxika.magicalvibes.model.Keyword.INDESTRUCTIBLE);
 
         castBloodMoney();
 

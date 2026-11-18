@@ -34,10 +34,10 @@ class FrontlineMedicTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(medic.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(attacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(otherAttacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(opposingCreature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, medic, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherAttacker, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -49,7 +49,7 @@ class FrontlineMedicTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
         resolveAllTriggers();
 
-        assertThat(medic.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, medic, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -61,13 +61,13 @@ class FrontlineMedicTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1, 2));
         resolveAllTriggers();
-        assertThat(medic.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, medic, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(medic.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, medic, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -139,8 +139,8 @@ class FrontlineMedicTest extends BaseCardTest {
         declareAttackers(player1, List.of(1, 2, 3));
         resolveAllTriggers();
 
-        assertThat(medic.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(attacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, medic, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -155,9 +155,9 @@ class FrontlineMedicTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThat(nonattacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(beforeResolution.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(afterResolution.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nonattacker, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -173,9 +173,9 @@ class FrontlineMedicTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(medic);
-        assertThat(attacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(medic.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(manipulator.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, medic, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, manipulator, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     @Test
@@ -191,8 +191,8 @@ class FrontlineMedicTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(otherAttacker);
-        assertThat(medic.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(attacker.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, medic, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test

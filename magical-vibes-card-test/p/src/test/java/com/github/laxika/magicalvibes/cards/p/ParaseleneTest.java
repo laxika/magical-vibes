@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.cards.i.IntangibleVirtue;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -88,7 +89,7 @@ class ParaseleneTest extends BaseCardTest {
     @DisplayName("Only destroyed enchantments count toward life gain")
     void survivingIndestructibleEnchantmentDoesNotCount() {
         var survivor = harness.addToBattlefieldAndReturn(player1, new IntangibleVirtue());
-        survivor.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, survivor, Keyword.INDESTRUCTIBLE);
         harness.addToBattlefield(player2, new IntangibleVirtue());
         harness.setHand(player1, List.of(new Paraselene()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -105,7 +106,7 @@ class ParaseleneTest extends BaseCardTest {
     @DisplayName("Gains no life when all enchantments are indestructible")
     void gainsNoLifeWhenNoEnchantmentIsDestroyed() {
         var enchantment = harness.addToBattlefieldAndReturn(player2, new IntangibleVirtue());
-        enchantment.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, enchantment, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new Paraselene()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
@@ -121,7 +122,7 @@ class ParaseleneTest extends BaseCardTest {
     @DisplayName("Destroys opposing enchantments with hexproof without targeting")
     void destroysHexproofEnchantment() {
         var enchantment = harness.addToBattlefieldAndReturn(player2, new IntangibleVirtue());
-        enchantment.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, enchantment, Keyword.HEXPROOF);
         harness.setHand(player1, List.of(new Paraselene()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 

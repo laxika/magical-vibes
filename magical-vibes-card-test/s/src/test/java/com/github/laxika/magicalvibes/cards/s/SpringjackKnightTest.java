@@ -84,7 +84,7 @@ class SpringjackKnightTest extends BaseCardTest {
         harness.passBothPriorities();
         keepBothRevealedCardsOnTop();
 
-        assertThat(ally.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     // ===== Lost clash — no grant =====
@@ -104,7 +104,7 @@ class SpringjackKnightTest extends BaseCardTest {
         harness.passBothPriorities();
         keepBothRevealedCardsOnTop();
 
-        assertThat(ally.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     // ===== Tie — a clash is only won on a strictly greater mana value =====
@@ -123,7 +123,7 @@ class SpringjackKnightTest extends BaseCardTest {
         harness.passBothPriorities();
         keepBothRevealedCardsOnTop();
 
-        assertThat(ally.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     // ===== Cleanup =====
@@ -141,13 +141,13 @@ class SpringjackKnightTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ally.getId());
         harness.passBothPriorities();
         keepBothRevealedCardsOnTop();
-        assertThat(ally.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.DOUBLE_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(ally.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
 
@@ -168,7 +168,7 @@ class SpringjackKnightTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, knight.getId());
         harness.passBothPriorities();
         keepBothRevealedCardsOnTop();
-        assertThat(knight.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -182,7 +182,7 @@ class SpringjackKnightTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         keepBothRevealedCardsOnTop();
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -222,12 +222,12 @@ class SpringjackKnightTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(winningCard, ownNext);
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isFalse();
         gs.handleInteractionAnswer(gd, player2,
                 new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownNext, winningCard);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingNext, losingCard);
-        assertThat(target.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
 }

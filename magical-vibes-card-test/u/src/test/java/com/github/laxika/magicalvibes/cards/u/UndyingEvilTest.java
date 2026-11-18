@@ -103,7 +103,7 @@ class UndyingEvilTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, targetId);
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.hasKeyword(Keyword.UNDYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.UNDYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.UNDYING)).isTrue();
     }
 
@@ -175,7 +175,7 @@ class UndyingEvilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.hasKeyword(Keyword.UNDYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.UNDYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.UNDYING)).isFalse();
     }
 

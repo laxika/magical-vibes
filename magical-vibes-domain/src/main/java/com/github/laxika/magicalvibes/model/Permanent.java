@@ -415,36 +415,12 @@ public class Permanent {
      * may block attackers attacking this battle; everyone else (including the controller) may attack it.
      */
     @Setter private UUID protectorPlayerId;
-    private final Set<Keyword> grantedKeywords = new HashSet<>();
-    /** Keywords temporarily removed by one-shot effects (e.g. activated abilities).
-     *  Cleared every turn by {@link #resetModifiers()}. */
-    private final Set<Keyword> removedKeywords = new HashSet<>();
     /** Name assigned by a one-shot effect for as long as this permanent stays on the battlefield. */
     @Setter private String persistentName;
     /** Word substitutions applied by text-changing effects (CR 612). Entries flagged
      *  {@link TextReplacement#untilEndOfTurn()} (Whim of Volrath) are dropped by
      *  {@link #resetModifiers()}; the rest survive turn resets (Mind Bend, Magical Hack). */
     private final List<TextReplacement> textReplacements = new ArrayList<>();
-    private final Set<CardType> protectionFromCardTypes = EnumSet.noneOf(CardType.class);
-    private final Set<CardColor> protectionFromColorsUntilEndOfTurn = EnumSet.noneOf(CardColor.class);
-    /** Whether this permanent has protection from colorless until end of turn. */
-    @Setter private boolean protectionFromColorlessUntilEndOfTurn;
-    /** Whether this permanent has durable protection from each opponent of its controller. */
-    @Setter private boolean protectionFromOpponentsPermanently;
-    /** Players from whom this permanent has durable protection, captured when the effect resolved. */
-    private final Set<UUID> protectionFromPlayerIdsPermanently = new HashSet<>();
-    /** Players from whom this permanent has protection until end of turn. */
-    private final Set<UUID> protectionFromPlayerIdsUntilEndOfTurn = new HashSet<>();
-    /** Players this permanent has protection from until a player's next turn, keyed by that player (Eon Frolicker). */
-    private final Map<UUID, Set<UUID>> protectionFromPlayerIdsUntilNextTurnOf = new HashMap<>();
-    /** Subtypes for "protection from non-[subtype] creatures" granted until end of turn.
-     *  If this set contains HUMAN, the permanent has "protection from non-Human creatures."
-     *  Cleared by {@link #resetModifiers()}. */
-    private final Set<CardSubtype> protectionFromNonSubtypeCreaturesUntilEndOfTurn = EnumSet.noneOf(CardSubtype.class);
-    /** Whether this permanent has protection from creatures controlled by its opponents until end of turn. */
-    @Setter private boolean protectionFromOpponentCreaturesUntilEndOfTurn;
-    /** Whether all protection abilities have been removed from this permanent until end of turn. */
-    @Setter private boolean protectionRemovedUntilEndOfTurn;
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield (CR 614.6). */
     @Setter private boolean exileIfLeavesBattlefield;
     /** If true, this permanent is exiled instead of being put into a graveyard from the battlefield. */
@@ -525,6 +501,9 @@ public class Permanent {
     @Setter private Set<CardSubtype> lastKnownSubtypes;
     /** Effective supertypes immediately before this permanent left the battlefield (layer-granted ones included). */
     @Setter private Set<CardSupertype> lastKnownSupertypes;
+    /** Keywords this permanent had from continuous effects that end as it leaves the battlefield (an Aura's or another
+     *  permanent's static grant), kept so a last-known-information copy still has them (CR 608.2h). */
+    @Setter private Set<Keyword> lastKnownKeywords;
     /** When true, this permanent has lost all abilities until end of turn (e.g. Merfolk Trickster).
      *  Keywords, activated abilities, and triggered abilities are suppressed.
      *  Cleared by {@link #resetModifiers()}. */
@@ -696,10 +675,6 @@ public class Permanent {
      *  Cleared at the beginning of the controller's next turn by
      *  {@link com.github.laxika.magicalvibes.model.Permanent#clearUntilNextTurnEffects()}. */
     private final List<ActivatedAbility> untilNextTurnActivatedAbilities = new ArrayList<>();
-    /** Keywords granted until the controller's next turn (an animation's keywords are floating effects instead).
-     *  NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
-     *  Cleared at the beginning of the controller's next turn by {@link #clearUntilNextTurnEffects()}. */
-    private final Set<Keyword> untilNextTurnKeywords = new HashSet<>();
     /** When true, this permanent is a copy of another creature until {@link #copyUntilNextTurnControllerId}'s
      *  next turn (e.g. Shapesharer). NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
      *  Reverts to {@link #untilNextTurnPreCopyCard} via {@link #revertUntilNextTurnCopy()} at the beginning
@@ -939,21 +914,8 @@ public class Permanent {
         this.enteredFromGraveyardOwnerId = source.enteredFromGraveyardOwnerId;
         this.enteredFromExile = source.enteredFromExile;
         this.returnedWhenSourceLeftId = source.returnedWhenSourceLeftId;
-        this.grantedKeywords.addAll(source.grantedKeywords);
-        this.removedKeywords.addAll(source.removedKeywords);
         this.persistentName = source.persistentName;
         this.textReplacements.addAll(source.textReplacements);
-        this.protectionFromCardTypes.addAll(source.protectionFromCardTypes);
-        this.protectionFromColorsUntilEndOfTurn.addAll(source.protectionFromColorsUntilEndOfTurn);
-        this.protectionFromColorlessUntilEndOfTurn = source.protectionFromColorlessUntilEndOfTurn;
-        this.protectionFromOpponentsPermanently = source.protectionFromOpponentsPermanently;
-        this.protectionFromPlayerIdsPermanently.addAll(source.protectionFromPlayerIdsPermanently);
-        this.protectionFromPlayerIdsUntilEndOfTurn.addAll(source.protectionFromPlayerIdsUntilEndOfTurn);
-        source.protectionFromPlayerIdsUntilNextTurnOf.forEach((untilTurnOfPlayerId, playerIds) ->
-                this.protectionFromPlayerIdsUntilNextTurnOf.put(untilTurnOfPlayerId, new HashSet<>(playerIds)));
-        this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll(source.protectionFromNonSubtypeCreaturesUntilEndOfTurn);
-        this.protectionFromOpponentCreaturesUntilEndOfTurn = source.protectionFromOpponentCreaturesUntilEndOfTurn;
-        this.protectionRemovedUntilEndOfTurn = source.protectionRemovedUntilEndOfTurn;
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
         this.exileIfDying = source.exileIfDying;
         this.exileIfDyingTimestamp = source.exileIfDyingTimestamp;
@@ -981,6 +943,7 @@ public class Permanent {
         this.lastKnownColors = source.lastKnownColors == null ? null : Set.copyOf(source.lastKnownColors);
         this.lastKnownSubtypes = source.lastKnownSubtypes == null ? null : Set.copyOf(source.lastKnownSubtypes);
         this.lastKnownSupertypes = source.lastKnownSupertypes == null ? null : Set.copyOf(source.lastKnownSupertypes);
+        this.lastKnownKeywords = source.lastKnownKeywords == null ? null : Set.copyOf(source.lastKnownKeywords);
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
         this.losesAllAbilitiesUntilNextTurnControllers.addAll(
                 source.losesAllAbilitiesUntilNextTurnControllers);
@@ -1036,7 +999,6 @@ public class Permanent {
         this.copyWhileAttached = source.copyWhileAttached;
         this.whileAttachedPreCopyCard = source.whileAttachedPreCopyCard;
         this.untilNextTurnActivatedAbilities.addAll(source.untilNextTurnActivatedAbilities);
-        this.untilNextTurnKeywords.addAll(source.untilNextTurnKeywords);
         this.copyUntilControllerNextTurn = source.copyUntilControllerNextTurn;
         this.untilNextTurnPreCopyCard = source.untilNextTurnPreCopyCard;
         this.copyUntilNextTurnControllerId = source.copyUntilNextTurnControllerId;
@@ -1651,7 +1613,6 @@ public class Permanent {
     public boolean hasKeyword(Keyword keyword) {
         if (losesAllAbilitiesUntilEndOfTurn || !losesAllAbilitiesUntilNextTurnControllers.isEmpty()
                 || losesAllAbilitiesPermanently) return false;
-        if (removedKeywords.contains(keyword)) return false;
         CounterType keywordCounter = switch (keyword) {
             case HASTE -> CounterType.HASTE;
             case FLYING -> CounterType.FLYING;
@@ -1670,8 +1631,7 @@ public class Permanent {
             default -> null;
         };
         return (keyword == Keyword.MENACE && suspected)
-                || (!faceDown && card.hasKeyword(keyword)) || grantedKeywords.contains(keyword)
-                || untilNextTurnKeywords.contains(keyword)
+                || (!faceDown && card.hasKeyword(keyword))
                 || (keywordCounter != null && getCounterCount(keywordCounter) > 0);
     }
 
@@ -1928,15 +1888,6 @@ public class Permanent {
         this.creaturesThatCrewedThisTurn.clear();
         this.temporaryAbilities.clear();
         this.saddled = false;
-        this.grantedKeywords.clear();
-        this.removedKeywords.clear();
-        this.protectionFromCardTypes.clear();
-        this.protectionFromColorsUntilEndOfTurn.clear();
-        this.protectionFromPlayerIdsUntilEndOfTurn.clear();
-        this.protectionFromColorlessUntilEndOfTurn = false;
-        this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.clear();
-        this.protectionFromOpponentCreaturesUntilEndOfTurn = false;
-        this.protectionRemovedUntilEndOfTurn = false;
         this.losesAllAbilitiesUntilEndOfTurn = false;
         this.suppressedStaticEffectsUntilEndOfTurn.clear();
         this.suppressedStaticEffectInstancesUntilEndOfTurn.clear();
@@ -1979,15 +1930,6 @@ public class Permanent {
             case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers;
             case TEMPORARY_ABILITIES -> temporaryAbilities;
             case SADDLED -> saddled;
-            case GRANTED_KEYWORDS -> grantedKeywords;
-            case REMOVED_KEYWORDS -> removedKeywords;
-            case PROTECTION_FROM_CARD_TYPES -> protectionFromCardTypes;
-            case PROTECTION_FROM_COLORS -> protectionFromColorsUntilEndOfTurn;
-            case PROTECTION_FROM_PLAYERS -> protectionFromPlayerIdsUntilEndOfTurn;
-            case PROTECTION_FROM_COLORLESS -> protectionFromColorlessUntilEndOfTurn;
-            case PROTECTION_FROM_NON_SUBTYPE_CREATURES -> protectionFromNonSubtypeCreaturesUntilEndOfTurn;
-            case PROTECTION_FROM_OPPONENT_CREATURES -> protectionFromOpponentCreaturesUntilEndOfTurn;
-            case PROTECTION_REMOVED -> protectionRemovedUntilEndOfTurn;
             case LOSES_ALL_ABILITIES -> losesAllAbilitiesUntilEndOfTurn;
             case SUPPRESSED_STATIC_EFFECT_TYPES -> suppressedStaticEffectsUntilEndOfTurn;
             case SUPPRESSED_STATIC_EFFECT_INSTANCES -> new ArrayList<>(suppressedStaticEffectInstancesUntilEndOfTurn);
@@ -2011,16 +1953,6 @@ public class Permanent {
             case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers = true;
             case TEMPORARY_ABILITIES -> temporaryAbilities.addAll((List<Ability>) value);
             case SADDLED -> saddled = true;
-            case GRANTED_KEYWORDS -> grantedKeywords.addAll((Set<Keyword>) value);
-            case REMOVED_KEYWORDS -> removedKeywords.addAll((Set<Keyword>) value);
-            case PROTECTION_FROM_CARD_TYPES -> protectionFromCardTypes.addAll((Set<CardType>) value);
-            case PROTECTION_FROM_COLORS -> protectionFromColorsUntilEndOfTurn.addAll((Set<CardColor>) value);
-            case PROTECTION_FROM_PLAYERS -> protectionFromPlayerIdsUntilEndOfTurn.addAll((Set<UUID>) value);
-            case PROTECTION_FROM_COLORLESS -> protectionFromColorlessUntilEndOfTurn = true;
-            case PROTECTION_FROM_NON_SUBTYPE_CREATURES ->
-                    protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll((Set<CardSubtype>) value);
-            case PROTECTION_FROM_OPPONENT_CREATURES -> protectionFromOpponentCreaturesUntilEndOfTurn = true;
-            case PROTECTION_REMOVED -> protectionRemovedUntilEndOfTurn = true;
             case LOSES_ALL_ABILITIES -> losesAllAbilitiesUntilEndOfTurn = true;
             case SUPPRESSED_STATIC_EFFECT_TYPES -> suppressedStaticEffectsUntilEndOfTurn.addAll((Set) value);
             case SUPPRESSED_STATIC_EFFECT_INSTANCES ->
@@ -2109,24 +2041,8 @@ public class Permanent {
      * and land animation (e.g. Sylvan Awakening). Called at the beginning of the controller's
      * next turn, not at end of turn.
      */
-    public void addProtectionFromPlayerUntilNextTurnOf(UUID untilTurnOfPlayerId, UUID protectedFromPlayerId) {
-        protectionFromPlayerIdsUntilNextTurnOf
-                .computeIfAbsent(untilTurnOfPlayerId, ignored -> new HashSet<>()).add(protectedFromPlayerId);
-    }
-
-    /** Ends the protection-from-player grants that last until {@code untilTurnOfPlayerId}'s next turn. */
-    public void clearProtectionFromPlayersUntilTurnOf(UUID untilTurnOfPlayerId) {
-        protectionFromPlayerIdsUntilNextTurnOf.remove(untilTurnOfPlayerId);
-    }
-
-    public boolean hasProtectionFromPlayerUntilNextTurn(UUID protectedFromPlayerId) {
-        return protectionFromPlayerIdsUntilNextTurnOf.values().stream()
-                .anyMatch(playerIds -> playerIds.contains(protectedFromPlayerId));
-    }
-
     public void clearUntilNextTurnEffects() {
         this.untilNextTurnActivatedAbilities.clear();
-        this.untilNextTurnKeywords.clear();
     }
 
     /**

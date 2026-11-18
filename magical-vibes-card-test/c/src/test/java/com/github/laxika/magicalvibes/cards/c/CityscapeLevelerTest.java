@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MachineOverMatter;
@@ -136,7 +137,7 @@ class CityscapeLevelerTest extends BaseCardTest {
     @Test
     void indestructibleTargetStillGetsTappedPowerstone() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new CityscapeLeveler());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new CityscapeLeveler()));
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 

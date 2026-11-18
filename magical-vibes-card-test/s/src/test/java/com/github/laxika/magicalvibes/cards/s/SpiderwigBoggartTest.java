@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
@@ -37,7 +38,7 @@ class SpiderwigBoggartTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
 
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.FEAR);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.FEAR);
     }
 
     @Test
@@ -57,7 +58,7 @@ class SpiderwigBoggartTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.FEAR);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.FEAR);
     }
 
     @Test
@@ -102,7 +103,7 @@ class SpiderwigBoggartTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(boggart.getGrantedKeywords()).contains(Keyword.FEAR);
+        assertThat(PermanentGrants.keywordsOf(gd, boggart)).contains(Keyword.FEAR);
     }
 
     @Test
@@ -117,6 +118,6 @@ class SpiderwigBoggartTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(target.getGrantedKeywords()).contains(Keyword.FEAR);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).contains(Keyword.FEAR);
     }
 }

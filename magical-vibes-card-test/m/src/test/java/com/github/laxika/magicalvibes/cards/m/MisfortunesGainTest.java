@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.ForestBear;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -124,7 +125,7 @@ class MisfortunesGainTest extends BaseCardTest {
     @DisplayName("Its owner gains life even when the target creature is indestructible")
     void ownerGainsLifeWhenCreatureIsIndestructible() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ForestBear());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new MisfortunesGain()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 

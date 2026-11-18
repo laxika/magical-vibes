@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -38,7 +39,7 @@ class TowerAboveTest extends BaseCardTest {
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(4);
         assertThat(bear.getToughnessModifier()).isEqualTo(4);
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.TRAMPLE, Keyword.WITHER);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.TRAMPLE, Keyword.WITHER);
     }
 
     @Test
@@ -58,7 +59,7 @@ class TowerAboveTest extends BaseCardTest {
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE, Keyword.WITHER);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.TRAMPLE, Keyword.WITHER);
     }
 
     @Test

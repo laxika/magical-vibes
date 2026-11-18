@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
@@ -34,9 +35,9 @@ class BraveTheElementsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
         harness.handleListChoice(player1, "RED");
 
-        assertThat(hawk.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
-        assertThat(spider.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        assertThat(opponentHawk.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, hawk)).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, spider)).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, opponentHawk)).isEmpty();
     }
 
     @Test
@@ -49,10 +50,10 @@ class BraveTheElementsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         harness.handleListChoice(player1, "BLACK");
 
-        assertThat(hawk.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, hawk)).contains(CardColor.BLACK);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(hawk.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, hawk)).isEmpty();
     }
 
     @Test
@@ -79,7 +80,7 @@ class BraveTheElementsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLUE");
 
-        assertThat(hawk.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, hawk)).contains(CardColor.BLUE);
     }
 
     @Test
@@ -93,8 +94,8 @@ class BraveTheElementsTest extends BaseCardTest {
 
         Permanent laterHawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
 
-        assertThat(originalHawk.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
-        assertThat(laterHawk.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, originalHawk)).contains(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, laterHawk)).isEmpty();
     }
 
     @Test

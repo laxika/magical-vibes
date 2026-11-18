@@ -27,7 +27,7 @@ class GrabTheReinsTest extends BaseCardTest {
         cast(new int[]{0}, List.of(target.getId()), false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
@@ -35,7 +35,7 @@ class GrabTheReinsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -65,7 +65,7 @@ class GrabTheReinsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(stolen.getId()));
-        assertThat(stolen.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, stolen, Keyword.HASTE)).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         harness.assertInGraveyard(player1, "Lumengrid Warden");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
@@ -179,7 +179,7 @@ class GrabTheReinsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, sacrifice.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         harness.assertInGraveyard(player1, "Lumengrid Warden");
         assertThat(gd.stack).isEmpty();
@@ -194,7 +194,7 @@ class GrabTheReinsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test

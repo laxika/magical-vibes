@@ -24,9 +24,9 @@ class HerculesPrinceOfPowerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hercules.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(hercules.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(hercules.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(hercules.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hercules, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hercules, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hercules, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -52,9 +52,9 @@ class HerculesPrinceOfPowerTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(hercules.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(hercules.hasKeyword(Keyword.VIGILANCE)).isFalse();
-        assertThat(hercules.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
-        assertThat(hercules.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, hercules, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, hercules, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, hercules, Keyword.HASTE)).isFalse();
     }
 
     @Test

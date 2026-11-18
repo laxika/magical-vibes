@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BattlefieldForge;
 import com.github.laxika.magicalvibes.cards.c.CoastalDrake;
 import com.github.laxika.magicalvibes.cards.e.EmblazonedGolem;
@@ -74,7 +75,7 @@ class DeadRingersTest extends BaseCardTest {
         Permanent remaining = harness.addToBattlefieldAndReturn(player2, new SpectralLynx());
         castDeadRingersOnStack(List.of(illegalTarget.getId(), remaining.getId()));
 
-        illegalTarget.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, illegalTarget, Keyword.HEXPROOF);
 
         harness.passBothPriorities();
 
@@ -210,7 +211,7 @@ class DeadRingersTest extends BaseCardTest {
     void destroysOtherTargetWhenOneIsIndestructible() {
         Permanent protectedCreature = harness.addToBattlefieldAndReturn(player2, new CoastalDrake());
         Permanent other = harness.addToBattlefieldAndReturn(player2, new CoastalDrake());
-        protectedCreature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, protectedCreature, Keyword.INDESTRUCTIBLE);
         castDeadRingers(List.of(protectedCreature.getId(), other.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(protectedCreature).doesNotContain(other);

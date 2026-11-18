@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.s.StormriderSpirit;
 import com.github.laxika.magicalvibes.cards.t.ThornhideWolves;
 import com.github.laxika.magicalvibes.model.Card;
@@ -72,7 +73,7 @@ class ClipWingsTest extends BaseCardTest {
     @DisplayName("Hexproof and indestructible do not prevent sacrificing a flying creature")
     void sacrificesProtectedFlyingCreature() {
         Permanent flyer = harness.addToBattlefieldAndReturn(player2, new StormriderSpirit());
-        flyer.getGrantedKeywords().addAll(Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE));
+        PermanentGrants.keywordsUntilEndOfTurn(gd, flyer, Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE));
         harness.addToBattlefield(player2, new ThornhideWolves());
 
         castAndResolveClipWings();
@@ -88,7 +89,7 @@ class ClipWingsTest extends BaseCardTest {
         Permanent wolves = harness.addToBattlefieldAndReturn(player2, new ThornhideWolves());
 
         castClipWings();
-        wolves.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, wolves, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Thornhide Wolves");
@@ -101,7 +102,7 @@ class ClipWingsTest extends BaseCardTest {
         Permanent flyer = harness.addToBattlefieldAndReturn(player2, new StormriderSpirit());
 
         castClipWings();
-        flyer.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, flyer, Keyword.FLYING);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Stormrider Spirit");

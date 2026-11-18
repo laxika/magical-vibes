@@ -29,7 +29,7 @@ class SalivatingGremlinsTest extends BaseCardTest {
 
         assertThat(gremlins.getPowerModifier()).isEqualTo(2);
         assertThat(gremlins.getToughnessModifier()).isEqualTo(0);
-        assertThat(gremlins.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gremlins, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -48,7 +48,7 @@ class SalivatingGremlinsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gremlins.getPowerModifier()).isEqualTo(0);
-        assertThat(gremlins.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, gremlins, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -63,7 +63,7 @@ class SalivatingGremlinsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gremlins.getPowerModifier()).isEqualTo(0);
-        assertThat(gremlins.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, gremlins, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -76,13 +76,13 @@ class SalivatingGremlinsTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gremlins.getPowerModifier()).isZero();
-        assertThat(gremlins.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, gremlins, Keyword.TRAMPLE)).isFalse();
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gremlins.getPowerModifier()).isEqualTo(2);
-        assertThat(gremlins.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gremlins, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -95,7 +95,7 @@ class SalivatingGremlinsTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gremlins.getPowerModifier()).isZero();
-        assertThat(gremlins.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, gremlins, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -111,6 +111,6 @@ class SalivatingGremlinsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gremlins.getPowerModifier()).isEqualTo(4);
         assertThat(gremlins.getToughnessModifier()).isZero();
-        assertThat(gremlins.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, gremlins, Keyword.TRAMPLE)).isTrue();
     }
 }

@@ -25,7 +25,7 @@ class RunWildTest extends BaseCardTest {
     void grantsTrampleAndRegenerationAbility() {
         Permanent creature = castRunWildOnOwnCreature();
 
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, 0, null, null);
@@ -43,7 +43,7 @@ class RunWildTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.activateAbility(player2, 0, null, null);
@@ -82,7 +82,7 @@ class RunWildTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");

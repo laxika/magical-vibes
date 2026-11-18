@@ -49,10 +49,10 @@ class BruteStrengthTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(5);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(own.getPowerModifier()).isZero();
         assertThat(own.getToughnessModifier()).isZero();
-        assertThat(own.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.TRAMPLE)).isFalse();
         harness.assertInGraveyard(player1, "Brute Strength");
     }
 
@@ -68,7 +68,7 @@ class BruteStrengthTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(7);
         assertThat(target.getEffectiveToughness()).isEqualTo(6);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -76,7 +76,7 @@ class BruteStrengthTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -109,7 +109,7 @@ class BruteStrengthTest extends BaseCardTest {
         assertThat(beetle.getToughnessModifier()).isEqualTo(1);
         assertThat(beetle.getEffectivePower()).isEqualTo(4);
         assertThat(beetle.getEffectiveToughness()).isEqualTo(5);
-        assertThat(beetle.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beetle, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -129,7 +129,7 @@ class BruteStrengthTest extends BaseCardTest {
         Permanent beetle = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(beetle.getPowerModifier()).isEqualTo(0);
         assertThat(beetle.getToughnessModifier()).isEqualTo(0);
-        assertThat(beetle.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, beetle, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test

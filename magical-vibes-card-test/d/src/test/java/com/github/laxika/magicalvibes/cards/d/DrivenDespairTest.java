@@ -32,8 +32,8 @@ class DrivenDespairTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(opponent.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.TRAMPLE)).isFalse();
 
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -55,14 +55,14 @@ class DrivenDespairTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
         assertThat(bears.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayer())).isNotEmpty();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
         assertThat(bears.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayer())).isEmpty();
     }
 
@@ -77,8 +77,8 @@ class DrivenDespairTest extends BaseCardTest {
 
         Permanent late = harness.addToBattlefieldAndReturn(player1, new FrilledSandwalla());
 
-        assertThat(early.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(late.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, early, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, late, Keyword.TRAMPLE)).isFalse();
         assertThat(late.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayer())).isEmpty();
     }
 
@@ -92,7 +92,7 @@ class DrivenDespairTest extends BaseCardTest {
 
         harness.castAndResolveFlashback(player1, 0, null);
 
-        assertThat(bears.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Driven // Despair"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -124,7 +124,7 @@ class DrivenDespairTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isFalse();
         assertThat(bears.getTemporaryTriggerEffects(Triggers.dealsCombatDamageToPlayer())).isEmpty();
     }
 
@@ -171,9 +171,9 @@ class DrivenDespairTest extends BaseCardTest {
         harness.castAndResolveFlashback(player1, 0, null);
         Permanent late = addCreatureReady(player1, new FrilledSandwalla());
 
-        assertThat(early.hasKeyword(Keyword.MENACE)).isTrue();
-        assertThat(opponent.hasKeyword(Keyword.MENACE)).isFalse();
-        assertThat(late.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, early, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, late, Keyword.MENACE)).isFalse();
 
         late.setAttacking(true);
         resolveCombat();
@@ -195,8 +195,8 @@ class DrivenDespairTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.castAndResolveFlashback(player1, 0, null);
 
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(creature.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
         creature.setAttacking(true);
         resolveCombat();
         harness.passBothPriorities();

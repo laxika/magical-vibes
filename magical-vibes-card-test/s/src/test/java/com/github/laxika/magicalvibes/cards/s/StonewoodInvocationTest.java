@@ -28,7 +28,7 @@ class StonewoodInvocationTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(5);
         assertThat(target.getToughnessModifier()).isEqualTo(5);
-        assertThat(target.hasKeyword(Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -36,7 +36,7 @@ class StonewoodInvocationTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.SHROUD)).isFalse();
     }
 
     @Test

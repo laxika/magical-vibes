@@ -29,10 +29,10 @@ class PressTheAdvantageTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(6);
-        assertThat(first.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(6);
-        assertThat(second.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -43,7 +43,7 @@ class PressTheAdvantageTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
         harness.setHand(player1, List.of(new PressTheAdvantage()));
         harness.addMana(player1, ManaColor.GREEN, 4);
@@ -65,7 +65,7 @@ class PressTheAdvantageTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -121,10 +121,10 @@ class PressTheAdvantageTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, remaining)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, remaining)).isEqualTo(6);
-        assertThat(remaining.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, remaining, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, untouched)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, untouched)).isEqualTo(4);
-        assertThat(untouched.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, untouched, Keyword.TRAMPLE)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Press the Advantage");
     }

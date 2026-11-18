@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.p.PheresBandCentaurs;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -36,7 +37,7 @@ class GodsWillingTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "RED");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.RED);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
 
         harness.getGameService().handleInteractionAnswer(
@@ -74,7 +75,7 @@ class GodsWillingTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).doesNotContain(CardColor.BLUE);
     }
 
     @Test
@@ -90,7 +91,7 @@ class GodsWillingTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleListChoice(player1, "WHITE");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.WHITE);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
         harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
@@ -111,7 +112,7 @@ class GodsWillingTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleListChoice(player1, "BLACK");
 
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.BLACK);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Gods Willing");
@@ -152,14 +153,14 @@ class GodsWillingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handleListChoice(player1, choice))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isSameAs(prompt);
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        assertThat(target.getProtectionFromCardTypes()).isEmpty();
-        assertThat(target.isProtectionFromColorlessUntilEndOfTurn()).isFalse();
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).isEmpty();
+        assertThat(PermanentGrants.protectionCardTypesOf(gd, target)).isEmpty();
+        assertThat(PermanentGrants.hasProtectionFromColorless(gd, target)).isFalse();
 
         harness.handleListChoice(player1, "GREEN");
         harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
-        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.GREEN);
+        assertThat(PermanentGrants.protectionColorsOf(gd, target)).contains(CardColor.GREEN);
         assertThat(gd.stack).isEmpty();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
@@ -96,7 +97,7 @@ class AerialVolleyTest extends BaseCardTest {
 
         harness.castInstant(player1, 0,
                 Map.of(protectedTarget.getId(), 2, legalTarget.getId(), 1));
-        protectedTarget.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, protectedTarget, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         assertThat(protectedTarget.getMarkedDamage()).isZero();
@@ -151,7 +152,7 @@ class AerialVolleyTest extends BaseCardTest {
         Permanent legal = harness.addToBattlefieldAndReturn(player2, new AirElemental());
 
         harness.castInstant(player1, 0, Map.of(illegal.getId(), 2, legal.getId(), 1));
-        illegal.getRemovedKeywords().add(Keyword.FLYING);
+        PermanentGrants.removeKeywordUntilEndOfTurn(gd, illegal, Keyword.FLYING);
         harness.passBothPriorities();
 
         assertThat(illegal.getMarkedDamage()).isZero();
@@ -166,7 +167,7 @@ class AerialVolleyTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
 
         harness.castInstant(player1, 0, Map.of(target.getId(), 3));
-        target.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isZero();

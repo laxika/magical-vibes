@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.cards.g.GargantuanGorilla;
@@ -76,7 +77,7 @@ class BestialFuryTest extends BaseCardTest {
 
         assertThat(attacker.getPowerModifier()).isEqualTo(4);
         assertThat(attacker.getToughnessModifier()).isZero();
-        assertThat(attacker.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, attacker)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -98,7 +99,7 @@ class BestialFuryTest extends BaseCardTest {
 
         assertThat(attacker.getPowerModifier()).isZero();
         assertThat(attacker.getToughnessModifier()).isZero();
-        assertThat(attacker.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, attacker)).doesNotContain(Keyword.TRAMPLE);
     }
 
     @Test
@@ -118,7 +119,7 @@ class BestialFuryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(attacker.getPowerModifier()).isEqualTo(4);
-        assertThat(attacker.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, attacker)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -136,7 +137,7 @@ class BestialFuryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(attacker.getPowerModifier()).isEqualTo(4);
-        assertThat(attacker.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, attacker)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -188,7 +189,7 @@ class BestialFuryTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(attacker.getPowerModifier()).isEqualTo(4);
-        assertThat(attacker.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, attacker)).contains(Keyword.TRAMPLE);
     }
 
     @Test
@@ -204,7 +205,7 @@ class BestialFuryTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, attacker)).doesNotContain(Keyword.TRAMPLE);
     }
 
     private Permanent addBestialFury(Player player) {

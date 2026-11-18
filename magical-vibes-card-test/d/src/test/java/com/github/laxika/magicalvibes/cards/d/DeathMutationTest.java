@@ -62,7 +62,7 @@ class DeathMutationTest extends BaseCardTest {
     @Test
     void createsSaprolingsEvenWhenIndestructibleTargetSurvives() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Dodecapod());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         cast(target);
 
         harness.assertOnBattlefield(player2, "Dodecapod");

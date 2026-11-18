@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.s.StoneworkPuma;
@@ -34,9 +35,9 @@ class KabiraEvangelTest extends BaseCardTest {
         Permanent enteringAlly = findPermanents(player1, "Kabira Evangel").stream()
                 .filter(permanent -> !permanent.getId().equals(existingAlly.getId()))
                 .findFirst().orElseThrow();
-        assertThat(existingAlly.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
-        assertThat(enteringAlly.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
-        assertThat(nonAlly.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, existingAlly)).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, enteringAlly)).contains(CardColor.RED);
+        assertThat(PermanentGrants.protectionColorsOf(gd, nonAlly)).isEmpty();
     }
 
     @Test
@@ -50,7 +51,7 @@ class KabiraEvangelTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         Permanent evangel = findPermanent(player1, "Kabira Evangel");
-        assertThat(evangel.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, evangel)).isEmpty();
     }
 
     @Test
@@ -76,13 +77,13 @@ class KabiraEvangelTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         Permanent enteringAlly = findPermanent(player1, "Stonework Puma");
-        assertThat(evangel.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.BLUE);
-        assertThat(enteringAlly.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.BLUE);
-        assertThat(opposingAlly.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, evangel)).containsExactly(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, enteringAlly)).containsExactly(CardColor.BLUE);
+        assertThat(PermanentGrants.protectionColorsOf(gd, opposingAlly)).isEmpty();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
-        assertThat(evangel.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        assertThat(enteringAlly.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, evangel)).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, enteringAlly)).isEmpty();
     }
 
     @Test
@@ -110,7 +111,7 @@ class KabiraEvangelTest extends BaseCardTest {
         harness.handleListChoice(player1, "WHITE");
 
         assertThat(findPermanents(player1, "Kabira Evangel")).hasSize(2).allSatisfy(permanent ->
-                assertThat(permanent.getProtectionFromColorsUntilEndOfTurn())
+                assertThat(PermanentGrants.protectionColorsOf(gd, permanent))
                         .containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE));
     }
 
@@ -127,6 +128,6 @@ class KabiraEvangelTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, "GREEN");
-        assertThat(findPermanent(player1, "Kabira Evangel").getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(PermanentGrants.protectionColorsOf(gd, findPermanent(player1, "Kabira Evangel"))).isEmpty();
     }
 }

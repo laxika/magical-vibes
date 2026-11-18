@@ -37,7 +37,7 @@ class SarkhanVolTest extends BaseCardTest {
         assertThat(sarkhan.getCounterCount(CounterType.LOYALTY)).isEqualTo(5); // 4 + 1
         assertThat(bear.getEffectivePower()).isEqualTo(3);
         assertThat(bear.getEffectiveToughness()).isEqualTo(3);
-        assertThat(bear.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -50,7 +50,7 @@ class SarkhanVolTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(oppBear.getEffectivePower()).isEqualTo(2);
-        assertThat(oppBear.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, oppBear, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -67,7 +67,7 @@ class SarkhanVolTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -84,7 +84,7 @@ class SarkhanVolTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -102,7 +102,7 @@ class SarkhanVolTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -136,7 +136,7 @@ class SarkhanVolTest extends BaseCardTest {
             assertThat(d.getCard().getToughness()).isEqualTo(4);
             assertThat(d.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(d.getCard().getSubtypes()).contains(CardSubtype.DRAGON);
-            assertThat(d.hasKeyword(Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, d, Keyword.FLYING)).isTrue();
         });
     }
 
@@ -180,10 +180,10 @@ class SarkhanVolTest extends BaseCardTest {
 
         assertThat(beforeResolution.getEffectivePower()).isEqualTo(3);
         assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(3);
-        assertThat(beforeResolution.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.HASTE)).isTrue();
         assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
         assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
-        assertThat(afterResolution.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -197,7 +197,7 @@ class SarkhanVolTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -205,7 +205,7 @@ class SarkhanVolTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -222,7 +222,7 @@ class SarkhanVolTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Sarkhan Vol");
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -230,7 +230,7 @@ class SarkhanVolTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     private Permanent addReadySarkhan(Player player) {

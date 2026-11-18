@@ -30,7 +30,7 @@ class InvigoratedRampageTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(6);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -45,9 +45,9 @@ class InvigoratedRampageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(first.getEffectivePower()).isEqualTo(4);
-        assertThat(first.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isTrue();
         assertThat(second.getEffectivePower()).isEqualTo(4);
-        assertThat(second.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -63,7 +63,7 @@ class InvigoratedRampageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -113,9 +113,9 @@ class InvigoratedRampageTest extends BaseCardTest {
 
         assertThat(second.getEffectivePower()).isEqualTo(4);
         assertThat(second.getEffectiveToughness()).isEqualTo(2);
-        assertThat(second.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
         assertThat(first.getEffectivePower()).isEqualTo(2);
-        assertThat(first.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -132,8 +132,8 @@ class InvigoratedRampageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(first.getEffectivePower()).isEqualTo(2);
-        assertThat(first.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isFalse();
         assertThat(second.getEffectivePower()).isEqualTo(2);
-        assertThat(second.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isFalse();
     }
 }

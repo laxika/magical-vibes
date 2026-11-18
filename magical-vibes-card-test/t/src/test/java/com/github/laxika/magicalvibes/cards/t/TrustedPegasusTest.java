@@ -31,7 +31,7 @@ class TrustedPegasusTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -48,7 +48,7 @@ class TrustedPegasusTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -104,7 +104,7 @@ class TrustedPegasusTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Trusted Pegasus");
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -123,7 +123,7 @@ class TrustedPegasusTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }

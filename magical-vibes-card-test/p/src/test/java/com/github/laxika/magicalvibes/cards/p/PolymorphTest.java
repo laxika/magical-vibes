@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
@@ -96,7 +97,7 @@ class PolymorphTest extends BaseCardTest {
     @DisplayName("Polymorph still reveals for an indestructible target")
     void indestructibleTargetStillReveals() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         harness.setHand(player1, List.of(new Polymorph()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.setLibrary(player1, List.of(new GrizzlyBears()));

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IronMyr;
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
@@ -28,7 +29,7 @@ class AngelicCuratorTest extends BaseCardTest {
         curator.setAttacking(true);
 
         Permanent ironMyr = addCreatureReady(player2, new IronMyr());
-        ironMyr.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, ironMyr, Keyword.FLYING);
 
         prepareDeclareBlockers();
 
@@ -44,7 +45,7 @@ class AngelicCuratorTest extends BaseCardTest {
         curator.setAttacking(true);
 
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        bears.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bears, Keyword.FLYING);
 
         prepareDeclareBlockers();
 

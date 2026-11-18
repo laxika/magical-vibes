@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.m.MillennialGargoyle;
 import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -145,7 +146,7 @@ class KillingGlareTest extends BaseCardTest {
     @DisplayName("Indestructible prevents destruction of an otherwise legal target")
     void indestructibleSavesTarget() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MillennialGargoyle());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
 
         castKillingGlare(2, target);
         harness.passBothPriorities();

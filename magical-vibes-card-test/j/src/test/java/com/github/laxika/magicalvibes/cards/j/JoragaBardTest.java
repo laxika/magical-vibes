@@ -35,9 +35,9 @@ class JoragaBardTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent enteringAlly = findPermanent(player1, "Joraga Bard");
-        assertThat(existingAlly.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(enteringAlly.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(nonAlly.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, existingAlly, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enteringAlly, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonAlly, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -56,8 +56,8 @@ class JoragaBardTest extends BaseCardTest {
         Permanent enteringBard = findPermanents(player1, "Joraga Bard").stream()
                 .filter(permanent -> !permanent.getId().equals(existingBard.getId()))
                 .findFirst().orElseThrow();
-        assertThat(existingBard.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(enteringBard.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, existingBard, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enteringBard, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -70,7 +70,7 @@ class JoragaBardTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(findPermanent(player1, "Joraga Bard").hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Joraga Bard"), Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -84,7 +84,7 @@ class JoragaBardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(bard.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bard, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -98,13 +98,13 @@ class JoragaBardTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent bard = findPermanent(player1, "Joraga Bard");
-        assertThat(bard.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bard, Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bard.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bard, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -120,7 +120,7 @@ class JoragaBardTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(bard.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bard, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -135,9 +135,9 @@ class JoragaBardTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(bard.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(findPermanent(player1, "Stonework Puma").hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(opposingAlly.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bard, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Stonework Puma"), Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingAlly, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -156,7 +156,7 @@ class JoragaBardTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(findPermanent(player1, "Stonework Puma").hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(bard.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Stonework Puma"), Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bard, Keyword.VIGILANCE)).isFalse();
     }
 }

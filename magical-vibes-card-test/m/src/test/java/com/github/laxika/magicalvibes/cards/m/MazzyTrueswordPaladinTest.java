@@ -37,7 +37,7 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
 
         assertThat(attacker.getPowerModifier()).isEqualTo(2);
         assertThat(attacker.getToughnessModifier()).isZero();
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -53,7 +53,7 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -94,7 +94,7 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -108,7 +108,7 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(attacker.getPowerModifier()).isZero();
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test

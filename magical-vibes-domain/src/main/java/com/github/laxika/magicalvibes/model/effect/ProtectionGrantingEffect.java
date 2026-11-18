@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Capability interface for static effects that grant "protection from …". Lets the battlefield
@@ -25,12 +26,13 @@ import java.util.Set;
  * {@code ProtectionFromManaValueAtMostEffect},
  * {@code ProtectionFromMulticoloredEffect}, {@code ProtectionFromMonocoloredEffect},
  * {@code ProtectionFromEnemyColoredMulticoloredEffect},
- * {@code ProtectionFromAllOtherManaValuesEffect}).
+ * {@code ProtectionFromAllOtherManaValuesEffect}, {@code ProtectionFromColorlessEffect},
+ * {@code ProtectionFromPlayersEffect}).
  * Protection whose
  * protected set is only known at runtime from game state — a chosen color
- * ({@code ProtectionFromChosenColorEffect}, resolved via {@link ChooseColorEffect}) or a
- * "protection from non-[subtype] creatures" grant tracked on the {@code Permanent} — is not a pure
- * function of an effect record's components and deliberately does not implement this interface.
+ * ({@code ProtectionFromChosenColorEffect}, resolved via {@link ChooseColorEffect}) or a chosen player
+ * ({@code ProtectionFromChosenPlayerEffect}) — is not a pure function of an effect record's components and
+ * deliberately does not implement this interface.
  */
 public interface ProtectionGrantingEffect extends CardEffect {
 
@@ -142,5 +144,15 @@ public interface ProtectionGrantingEffect extends CardEffect {
     /** Whether this effect protects from permanents currently designated as Ring-bearers. */
     default boolean protectionFromRingBearers() {
         return false;
+    }
+
+    /** Whether this effect protects from colorless sources (sources with no color). */
+    default boolean protectionFromColorless() {
+        return false;
+    }
+
+    /** The players this effect protects from: every source they control (empty when it is not player-based). */
+    default Set<UUID> protectionFromPlayers() {
+        return Set.of();
     }
 }

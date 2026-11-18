@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -85,7 +86,7 @@ class WildPackSquadTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.hasKeyword(gd, source, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, source, Keyword.VIGILANCE)).isFalse();
-        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE, Keyword.VIGILANCE);
+        assertThat(PermanentGrants.keywordsOf(gd, target)).doesNotContain(Keyword.FIRST_STRIKE, Keyword.VIGILANCE);
     }
 
     @Test

@@ -55,7 +55,7 @@ class WildHungerTest extends BaseCardTest {
         assertThat(elk.getToughnessModifier()).isEqualTo(1);
         assertThat(elk.getEffectivePower()).isEqualTo(5);
         assertThat(elk.getEffectiveToughness()).isEqualTo(3);
-        assertThat(elk.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, elk, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -72,7 +72,7 @@ class WildHungerTest extends BaseCardTest {
         Permanent elk = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(elk.getPowerModifier()).isEqualTo(3);
         assertThat(elk.getToughnessModifier()).isEqualTo(1);
-        assertThat(elk.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, elk, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -104,7 +104,7 @@ class WildHungerTest extends BaseCardTest {
         Permanent elk = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(elk.getPowerModifier()).isEqualTo(0);
         assertThat(elk.getToughnessModifier()).isEqualTo(0);
-        assertThat(elk.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, elk, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -155,7 +155,7 @@ class WildHungerTest extends BaseCardTest {
         Permanent elk = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(elk.getPowerModifier()).isEqualTo(3);
         assertThat(elk.getToughnessModifier()).isEqualTo(1);
-        assertThat(elk.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, elk, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -256,7 +256,7 @@ class WildHungerTest extends BaseCardTest {
 
         assertThat(elk.getEffectivePower()).isEqualTo(8);
         assertThat(elk.getEffectiveToughness()).isEqualTo(4);
-        assertThat(elk.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, elk, Keyword.TRAMPLE)).isTrue();
         harness.assertNotInGraveyard(player1, "Wild Hunger");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Wild Hunger"));
@@ -266,6 +266,6 @@ class WildHungerTest extends BaseCardTest {
 
         assertThat(elk.getPowerModifier()).isZero();
         assertThat(elk.getToughnessModifier()).isZero();
-        assertThat(elk.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, elk, Keyword.TRAMPLE)).isFalse();
     }
 }

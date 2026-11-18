@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.ForsakenCity;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -91,7 +92,7 @@ class TerminateTest extends BaseCardTest {
     @DisplayName("Terminate does not destroy an indestructible creature")
     void respectsIndestructible() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ThornscapeFamiliar());
-        creature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.INDESTRUCTIBLE);
 
         harness.setHand(player1, List.of(new Terminate()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -145,7 +146,7 @@ class TerminateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, creature.getId());
-        creature.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, creature, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Thornscape Familiar");

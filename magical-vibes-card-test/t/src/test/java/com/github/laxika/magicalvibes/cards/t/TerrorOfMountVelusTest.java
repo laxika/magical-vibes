@@ -21,9 +21,9 @@ class TerrorOfMountVelusTest extends BaseCardTest {
         castTerrorOfMountVelus();
 
         Permanent terror = findPermanent(player1, "Terror of Mount Velus");
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(terror.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(opponentBears.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, terror, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -32,13 +32,13 @@ class TerrorOfMountVelusTest extends BaseCardTest {
 
         castTerrorOfMountVelus();
 
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -47,7 +47,7 @@ class TerrorOfMountVelusTest extends BaseCardTest {
 
         Permanent lateCreature = harness.enterBattlefieldAndReturn(player1, new SavannahLions());
 
-        assertThat(lateCreature.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -56,10 +56,10 @@ class TerrorOfMountVelusTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent creature = harness.enterBattlefieldAndReturn(player1, new SavannahLions());
 
-        assertThat(creature.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     private void castTerrorOfMountVelus() {

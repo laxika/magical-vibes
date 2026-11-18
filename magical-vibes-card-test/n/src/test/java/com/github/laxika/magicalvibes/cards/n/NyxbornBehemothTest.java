@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -47,13 +48,13 @@ class NyxbornBehemothTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, sacrificed.getId());
         harness.passBothPriorities();
 
-        assertThat(behemoth.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, behemoth)).contains(Keyword.INDESTRUCTIBLE);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrificed);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(behemoth.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, behemoth)).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
     @Test
@@ -115,12 +116,12 @@ class NyxbornBehemothTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrificed);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificed.getCard());
-        assertThat(behemoth.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, behemoth)).doesNotContain(Keyword.INDESTRUCTIBLE);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
 
         harness.passBothPriorities();
 
-        assertThat(behemoth.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(PermanentGrants.keywordsOf(gd, behemoth)).contains(Keyword.INDESTRUCTIBLE);
     }
 
     @Test

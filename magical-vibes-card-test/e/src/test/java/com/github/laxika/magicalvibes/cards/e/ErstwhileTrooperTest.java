@@ -33,7 +33,7 @@ class ErstwhileTrooperTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, trooper)).isEqualTo(basePower + 2);
         assertThat(gqs.getEffectiveToughness(gd, trooper)).isEqualTo(baseToughness + 2);
-        assertThat(trooper.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, trooper, Keyword.TRAMPLE)).isTrue();
         harness.assertInGraveyard(player1, "Erstwhile Trooper");
     }
 
@@ -52,7 +52,7 @@ class ErstwhileTrooperTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, trooper)).isEqualTo(basePower);
         assertThat(gqs.getEffectiveToughness(gd, trooper)).isEqualTo(baseToughness);
-        assertThat(trooper.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, trooper, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -96,7 +96,7 @@ class ErstwhileTrooperTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.getEffectivePower(gd, trooper)).isEqualTo(basePower);
         assertThat(gqs.getEffectiveToughness(gd, trooper)).isEqualTo(baseToughness);
-        assertThat(trooper.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, trooper, Keyword.TRAMPLE)).isFalse();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once each turn");
@@ -105,7 +105,7 @@ class ErstwhileTrooperTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, trooper)).isEqualTo(basePower + 2);
         assertThat(gqs.getEffectiveToughness(gd, trooper)).isEqualTo(baseToughness + 2);
-        assertThat(trooper.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, trooper, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -127,7 +127,7 @@ class ErstwhileTrooperTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, trooper)).isEqualTo(basePower + 2);
         assertThat(gqs.getEffectiveToughness(gd, trooper)).isEqualTo(baseToughness + 2);
-        assertThat(trooper.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, trooper, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 
@@ -152,7 +152,7 @@ class ErstwhileTrooperTest extends BaseCardTest {
         harness.assertInHand(player1, "Dead Weight");
         harness.assertInGraveyard(player1, "Erstwhile Trooper");
         assertThat(gqs.getEffectivePower(gd, trooper)).isEqualTo(basePower + 2);
-        assertThat(trooper.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, trooper, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -168,7 +168,7 @@ class ErstwhileTrooperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(basePower);
-        assertThat(second.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isFalse();
 
         harness.activateAbility(player1, 1, null, null);
         harness.handleCardChosen(player1, 0);
@@ -176,7 +176,7 @@ class ErstwhileTrooperTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(basePower + 2);
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(basePower + 2);
-        assertThat(first.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(second.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
     }
 }

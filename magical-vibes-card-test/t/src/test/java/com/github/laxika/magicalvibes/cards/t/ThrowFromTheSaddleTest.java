@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -79,7 +80,7 @@ class ThrowFromTheSaddleTest extends BaseCardTest {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         queueThrow(source);
-        victim.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, victim, Keyword.HEXPROOF);
 
         harness.passBothPriorities();
 
@@ -94,7 +95,7 @@ class ThrowFromTheSaddleTest extends BaseCardTest {
         Permanent mount = harness.addToBattlefieldAndReturn(player1, new TrainedArynx());
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         queueThrow(mount);
-        victim.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, victim, Keyword.HEXPROOF);
 
         harness.passBothPriorities();
 
@@ -108,7 +109,7 @@ class ThrowFromTheSaddleTest extends BaseCardTest {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         queueThrow(source);
-        source.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, source, Keyword.SHROUD);
 
         harness.passBothPriorities();
 

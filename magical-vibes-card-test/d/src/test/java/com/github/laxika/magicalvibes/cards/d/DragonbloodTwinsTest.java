@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,14 +28,14 @@ class DragonbloodTwinsTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(twins.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, twins)).doesNotContain(Keyword.FLYING);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(twins.getEffectivePower()).isEqualTo(4);
         assertThat(twins.getEffectiveToughness()).isEqualTo(4);
-        assertThat(twins.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, twins)).contains(Keyword.FLYING);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -57,7 +58,7 @@ class DragonbloodTwinsTest extends BaseCardTest {
 
         assertThat(twins.getEffectivePower()).isEqualTo(4);
         assertThat(twins.getEffectiveToughness()).isEqualTo(4);
-        assertThat(twins.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, twins)).contains(Keyword.FLYING);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -65,6 +66,6 @@ class DragonbloodTwinsTest extends BaseCardTest {
 
         assertThat(twins.getEffectivePower()).isEqualTo(2);
         assertThat(twins.getEffectiveToughness()).isEqualTo(2);
-        assertThat(twins.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, twins)).doesNotContain(Keyword.FLYING);
     }
 }

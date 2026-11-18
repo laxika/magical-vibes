@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.cards.c.CatWarriors;
 import com.github.laxika.magicalvibes.cards.s.SegovianLeviathan;
@@ -101,7 +102,7 @@ class DeadfallTest extends BaseCardTest {
         harness.addToBattlefield(player2, basicLand(CardSubtype.FOREST));
         harness.addToBattlefield(player2, new Deadfall());
         Permanent attacker = addCreatureReady(player1, new CatWarriors());
-        attacker.getGrantedKeywords().add(Keyword.FLYING);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.FLYING);
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new BarbaryApes());
 
@@ -118,7 +119,7 @@ class DeadfallTest extends BaseCardTest {
         harness.addToBattlefield(player2, basicLand(CardSubtype.FOREST));
         harness.addToBattlefield(player2, new Deadfall());
         Permanent attacker = addCreatureReady(player1, new SegovianLeviathan());
-        attacker.getGrantedKeywords().add(Keyword.FORESTWALK);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.FORESTWALK);
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new BarbaryApes());
 
@@ -136,7 +137,7 @@ class DeadfallTest extends BaseCardTest {
         harness.addToBattlefield(player2, basicLand(CardSubtype.ISLAND));
         harness.addToBattlefield(player2, new Deadfall());
         Permanent attacker = addCreatureReady(player1, new SegovianLeviathan());
-        attacker.getGrantedKeywords().add(Keyword.FORESTWALK);
+        PermanentGrants.keywordUntilEndOfTurn(gd, attacker, Keyword.FORESTWALK);
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new BarbaryApes());
 

@@ -54,7 +54,7 @@ class HuntersTalentTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -133,7 +133,7 @@ class HuntersTalentTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -257,9 +257,9 @@ class HuntersTalentTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
-        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, otherAttacker)).isEqualTo(2);
-        assertThat(otherAttacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherAttacker, Keyword.TRAMPLE)).isFalse();
     }
 
     private Permanent castTalent(Permanent source, Permanent victim) {

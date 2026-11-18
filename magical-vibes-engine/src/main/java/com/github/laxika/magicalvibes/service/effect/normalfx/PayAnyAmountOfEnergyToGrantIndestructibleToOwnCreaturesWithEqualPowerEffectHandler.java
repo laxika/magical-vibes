@@ -83,7 +83,6 @@ public class PayAnyAmountOfEnergyToGrantIndestructibleToOwnCreaturesWithEqualPow
                 continue;
             }
 
-            permanent.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                     entry.getControllerId(),

@@ -135,7 +135,7 @@ class DefaceTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.RED, 1);
 
             harness.castSorcery(player1, 0, 1, wall.getId());
-            wall.getRemovedKeywords().add(Keyword.DEFENDER);
+            PermanentGrants.removeKeywordUntilEndOfTurn(gd, wall, Keyword.DEFENDER);
             harness.passBothPriorities();
 
             harness.assertOnBattlefield(player2, "Wall of Lost Thoughts");

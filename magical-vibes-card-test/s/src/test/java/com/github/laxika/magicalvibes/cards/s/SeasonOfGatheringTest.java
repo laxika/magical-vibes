@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DemonicPact;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -37,9 +38,9 @@ class SeasonOfGatheringTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(giant.getId()));
 
         assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(giant.getGrantedKeywords()).contains(Keyword.VIGILANCE, Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, giant)).contains(Keyword.VIGILANCE, Keyword.TRAMPLE);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE, Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.VIGILANCE, Keyword.TRAMPLE);
     }
 
     @Test
@@ -49,7 +50,7 @@ class SeasonOfGatheringTest extends BaseCardTest {
         cast(mode(0, 0));
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.VIGILANCE, Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.VIGILANCE, Keyword.TRAMPLE);
     }
 
     @Test
@@ -106,10 +107,10 @@ class SeasonOfGatheringTest extends BaseCardTest {
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.VIGILANCE, Keyword.TRAMPLE);
-        assertThat(giant.getGrantedKeywords()).contains(Keyword.VIGILANCE, Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.VIGILANCE, Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, giant)).contains(Keyword.VIGILANCE, Keyword.TRAMPLE);
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opponentCreature.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE, Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, opponentCreature)).doesNotContain(Keyword.VIGILANCE, Keyword.TRAMPLE);
     }
 
     @Test
@@ -119,7 +120,7 @@ class SeasonOfGatheringTest extends BaseCardTest {
         cast(mode(0, 0, 0, 0, 0));
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.VIGILANCE, Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.VIGILANCE, Keyword.TRAMPLE);
     }
 
     @Test
@@ -178,7 +179,7 @@ class SeasonOfGatheringTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(opponentCreature.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE, Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, opponentCreature)).doesNotContain(Keyword.VIGILANCE, Keyword.TRAMPLE);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -190,7 +191,7 @@ class SeasonOfGatheringTest extends BaseCardTest {
         cast(mode());
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE, Keyword.TRAMPLE);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.VIGILANCE, Keyword.TRAMPLE);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Season of Gathering");

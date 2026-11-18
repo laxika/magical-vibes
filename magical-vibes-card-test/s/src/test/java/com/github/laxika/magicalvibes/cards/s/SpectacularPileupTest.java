@@ -34,7 +34,7 @@ class SpectacularPileupTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, vehicle.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(vehicle.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, vehicle, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.setHand(player1, List.of(new SpectacularPileup()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -70,7 +70,7 @@ class SpectacularPileupTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, creature.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
-        assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
 
         harness.setHand(player1, List.of(new SpectacularPileup()));
         harness.addMana(player1, ManaColor.WHITE, 2);

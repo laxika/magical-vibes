@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -29,7 +30,7 @@ class MoggCannonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent after = gqs.findPermanentById(gd, giant.getId());
-        assertThat(after.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, after)).contains(Keyword.FLYING);
         assertThat(gqs.getEffectivePower(gd, after)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, after)).isEqualTo(3);
         assertThat(cannon.isTapped()).isTrue();

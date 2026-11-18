@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -34,7 +35,7 @@ class VirulentSwipeTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).contains(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -51,7 +52,7 @@ class VirulentSwipeTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
-        assertThat(bear.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, bear)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -83,7 +84,7 @@ class VirulentSwipeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isNotEmpty();
         assertThat(first.getPowerModifier()).isZero();
-        assertThat(first.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, first)).doesNotContain(Keyword.DEATHTOUCH);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -93,7 +94,7 @@ class VirulentSwipeTest extends BaseCardTest {
 
         assertThat(second.getPowerModifier()).isEqualTo(2);
         assertThat(second.getToughnessModifier()).isZero();
-        assertThat(second.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, second)).contains(Keyword.DEATHTOUCH);
         assertThat(first.getPowerModifier()).isZero();
         assertThat(gd.findExiledCard(card.getId())).isNull();
         harness.assertInGraveyard(player1, "Virulent Swipe");
@@ -124,7 +125,7 @@ class VirulentSwipeTest extends BaseCardTest {
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
     @Test
@@ -141,7 +142,7 @@ class VirulentSwipeTest extends BaseCardTest {
         assertThat(gd.findExiledCard(card.getId())).isNull();
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.UPKEEP)).isEmpty();
         assertThat(creature.getPowerModifier()).isZero();
-        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(PermanentGrants.keywordsOf(gd, creature)).doesNotContain(Keyword.DEATHTOUCH);
     }
 
     @Test

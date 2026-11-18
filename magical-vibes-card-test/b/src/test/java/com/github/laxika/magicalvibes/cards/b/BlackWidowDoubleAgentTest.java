@@ -25,8 +25,8 @@ class BlackWidowDoubleAgentTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isTrue();
     }
 
     @Test
@@ -42,8 +42,8 @@ class BlackWidowDoubleAgentTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isFalse();
     }
 
     @Test
@@ -56,8 +56,8 @@ class BlackWidowDoubleAgentTest extends BaseCardTest {
         declareAttackers(player1, List.of(1, 2));
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Black Widow, Double Agent"));
-        assertThat(bears.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isFalse();
     }
 
     @Test
@@ -68,8 +68,8 @@ class BlackWidowDoubleAgentTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(widow.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(widow.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, widow, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, widow, Keyword.MENACE)).isTrue();
     }
 
     @Test
@@ -81,8 +81,8 @@ class BlackWidowDoubleAgentTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
         resolveAllTriggers();
 
-        assertThat(bears.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
-        assertThat(bears.hasKeyword(Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -98,7 +98,7 @@ class BlackWidowDoubleAgentTest extends BaseCardTest {
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, widow);
         resolveAllTriggers();
 
-        assertThat(bears.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isTrue();
     }
 }

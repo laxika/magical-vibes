@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AutomatedArtificer;
 import com.github.laxika.magicalvibes.cards.b.BambooGroveArcher;
 import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
@@ -111,7 +112,7 @@ class ReplicationSpecialistTest extends BaseCardTest {
     void shroudDoesNotPreventCopyingTheEnteringArtifact() {
         harness.addToBattlefield(player1, new ReplicationSpecialist());
         Permanent artifact = harness.enterBattlefieldAndReturn(player1, new AutomatedArtificer());
-        artifact.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, artifact, Keyword.SHROUD);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

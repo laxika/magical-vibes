@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.n.NightscapeApprentice;
 import com.github.laxika.magicalvibes.cards.y.YavimayaBarbarian;
@@ -98,7 +99,7 @@ class AgonizingDemiseTest extends BaseCardTest {
     @Test
     void kickedSpellDealsDamageEvenIfCreatureIsIndestructible() {
         Permanent barbarian = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
-        barbarian.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, barbarian, Keyword.INDESTRUCTIBLE);
         cast(barbarian, true);
 
         harness.assertOnBattlefield(player2, "Yavimaya Barbarian");

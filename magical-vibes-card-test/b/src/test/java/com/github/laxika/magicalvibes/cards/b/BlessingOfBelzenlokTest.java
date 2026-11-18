@@ -34,7 +34,7 @@ class BlessingOfBelzenlokTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isEqualTo(1);
         assertThat(target.getEffectivePower()).isEqualTo(9);
         assertThat(target.getEffectiveToughness()).isEqualTo(7);
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -51,7 +51,7 @@ class BlessingOfBelzenlokTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isEqualTo(1);
         assertThat(target.getEffectivePower()).isEqualTo(11);
         assertThat(target.getEffectiveToughness()).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -69,7 +69,7 @@ class BlessingOfBelzenlokTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -103,7 +103,7 @@ class BlessingOfBelzenlokTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(11);
         assertThat(target.getEffectiveToughness()).isEqualTo(4);
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
         harness.assertInGraveyard(player1, "Blessing of Belzenlok");
     }
 
@@ -121,13 +121,13 @@ class BlessingOfBelzenlokTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(4);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
 }

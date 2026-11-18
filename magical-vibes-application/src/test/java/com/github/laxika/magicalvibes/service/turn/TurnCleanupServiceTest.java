@@ -203,33 +203,6 @@ class TurnCleanupServiceTest {
         }
 
         @Test
-        @DisplayName("Clears granted keywords on permanents")
-        void clearsGrantedKeywords() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.getGrantedKeywords().add(Keyword.FLYING);
-            perm.getGrantedKeywords().add(Keyword.TRAMPLE);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.getGrantedKeywords()).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Clears protection from colors on permanents whose only modifier is that protection")
-        void clearsProtectionFromColors() {
-            Card card = createCardWithName("Grizzly Bears");
-            Permanent perm = new Permanent(card);
-            perm.getProtectionFromColorsUntilEndOfTurn().add(com.github.laxika.magicalvibes.model.CardColor.RED);
-            gd.playerBattlefields.get(player1Id).add(perm);
-
-            sut.resetEndOfTurnModifiers(gd);
-
-            assertThat(perm.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
-        }
-
-        @Test
         @DisplayName("Clears basePowerToughnessOverriddenUntilEndOfTurn flag on permanents")
         void clearsBasePowerToughnessOverridden() {
             Card card = createCardWithName("Grizzly Bears");

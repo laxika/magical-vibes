@@ -55,7 +55,7 @@ class AngrathTheFlameChainedTest extends BaseCardTest {
         assertThat(angrath.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         declareAttackers(List.of());
         harness.passUntil(TurnStep.END_STEP);
@@ -81,7 +81,7 @@ class AngrathTheFlameChainedTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
@@ -161,7 +161,7 @@ class AngrathTheFlameChainedTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         declareAttackers(List.of());
         harness.passUntil(TurnStep.END_STEP);

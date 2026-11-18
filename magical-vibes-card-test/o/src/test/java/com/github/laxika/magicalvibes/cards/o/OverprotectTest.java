@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -29,7 +30,7 @@ class OverprotectTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isEqualTo(3);
         assertThat(creature.getToughnessModifier()).isEqualTo(3);
-        assertThat(creature.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, creature))
                 .contains(Keyword.TRAMPLE, Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
     }
 
@@ -45,7 +46,7 @@ class OverprotectTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, creature))
                 .doesNotContain(Keyword.TRAMPLE, Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
     }
 
@@ -132,7 +133,7 @@ class OverprotectTest extends BaseCardTest {
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
-        assertThat(creature.getGrantedKeywords())
+        assertThat(PermanentGrants.keywordsOf(gd, creature))
                 .doesNotContain(Keyword.TRAMPLE, Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Overprotect");

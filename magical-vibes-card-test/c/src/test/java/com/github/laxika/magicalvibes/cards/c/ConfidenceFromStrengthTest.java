@@ -32,7 +32,7 @@ class ConfidenceFromStrengthTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(6);
         assertThat(bear.getEffectiveToughness()).isEqualTo(6);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -50,7 +50,7 @@ class ConfidenceFromStrengthTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -79,10 +79,10 @@ class ConfidenceFromStrengthTest extends BaseCardTest {
 
         assertThat(opposingBear.getEffectivePower()).isEqualTo(6);
         assertThat(opposingBear.getEffectiveToughness()).isEqualTo(6);
-        assertThat(opposingBear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingBear, Keyword.TRAMPLE)).isTrue();
         assertThat(ownBear.getEffectivePower()).isEqualTo(2);
         assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(ownBear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownBear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -107,6 +107,6 @@ class ConfidenceFromStrengthTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Confidence from Strength");
         assertThat(other.getEffectivePower()).isEqualTo(2);
         assertThat(other.getEffectiveToughness()).isEqualTo(2);
-        assertThat(other.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
     }
 }

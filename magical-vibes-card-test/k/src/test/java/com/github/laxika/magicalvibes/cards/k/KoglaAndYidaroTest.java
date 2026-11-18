@@ -29,14 +29,14 @@ class KoglaAndYidaroTest extends BaseCardTest {
         resolveCreatureAndEtb();
 
         Permanent kogla = findPermanent(player1, "Kogla and Yidaro");
-        assertThat(kogla.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(kogla.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, kogla, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, kogla, Keyword.HASTE)).isTrue();
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(kogla.hasKeyword(Keyword.TRAMPLE)).isFalse();
-        assertThat(kogla.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, kogla, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, kogla, Keyword.HASTE)).isFalse();
     }
 
     @Test

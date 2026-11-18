@@ -33,14 +33,14 @@ class ShowOfConfidenceTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(target.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -119,7 +119,7 @@ class ShowOfConfidenceTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(target.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
         assertThat(gd.getSpellsCastThisTurn(player1.getId())).hasSize(3);
     }
 
@@ -140,8 +140,8 @@ class ShowOfConfidenceTest extends BaseCardTest {
 
         assertThat(originalTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(copyTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(originalTarget.hasKeyword(Keyword.VIGILANCE)).isTrue();
-        assertThat(copyTarget.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, originalTarget, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, copyTarget, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -163,7 +163,7 @@ class ShowOfConfidenceTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(copyTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(copyTarget.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, copyTarget, Keyword.VIGILANCE)).isTrue();
         harness.assertInGraveyard(player1, "Show of Confidence");
     }
 }

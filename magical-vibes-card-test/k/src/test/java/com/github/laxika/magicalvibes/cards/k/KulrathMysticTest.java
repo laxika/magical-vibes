@@ -31,7 +31,7 @@ class KulrathMysticTest extends BaseCardTest {
 
         assertThat(mystic.getPowerModifier()).isEqualTo(2);
         assertThat(mystic.getToughnessModifier()).isEqualTo(0);
-        assertThat(mystic.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -47,7 +47,7 @@ class KulrathMysticTest extends BaseCardTest {
 
         assertThat(mystic.getPowerModifier()).isEqualTo(0);
         assertThat(mystic.getToughnessModifier()).isEqualTo(0);
-        assertThat(mystic.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -60,14 +60,14 @@ class KulrathMysticTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         assertThat(mystic.getPowerModifier()).isEqualTo(2);
-        assertThat(mystic.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(mystic.getPowerModifier()).isEqualTo(0);
         assertThat(mystic.getToughnessModifier()).isEqualTo(0);
-        assertThat(mystic.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -82,7 +82,7 @@ class KulrathMysticTest extends BaseCardTest {
 
         assertThat(mystic.getPowerModifier()).isEqualTo(2);
         assertThat(mystic.getToughnessModifier()).isZero();
-        assertThat(mystic.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isTrue();
         harness.assertNotOnBattlefield(player1, "Luminollusk");
     }
 
@@ -96,7 +96,7 @@ class KulrathMysticTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0);
 
         assertThat(mystic.getPowerModifier()).isZero();
-        assertThat(mystic.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -112,9 +112,9 @@ class KulrathMysticTest extends BaseCardTest {
 
         assertThat(mystic.getPowerModifier()).isEqualTo(4);
         assertThat(mystic.getToughnessModifier()).isZero();
-        assertThat(mystic.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isTrue();
         assertThat(opponentMystic.getPowerModifier()).isZero();
-        assertThat(opponentMystic.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentMystic, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -129,7 +129,7 @@ class KulrathMysticTest extends BaseCardTest {
 
         assertThat(mystic.getPowerModifier()).isEqualTo(2);
         assertThat(mystic.getToughnessModifier()).isZero();
-        assertThat(mystic.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isTrue();
     }
 
     @Test
@@ -143,6 +143,6 @@ class KulrathMysticTest extends BaseCardTest {
 
         assertThat(mystic.getPowerModifier()).isZero();
         assertThat(mystic.getToughnessModifier()).isZero();
-        assertThat(mystic.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mystic, Keyword.VIGILANCE)).isFalse();
     }
 }

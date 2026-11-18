@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.c.CourageousResolve;
 import com.github.laxika.magicalvibes.cards.j.JeweledAmulet;
@@ -109,7 +110,7 @@ class EssenceVortexTest extends BaseCardTest {
     @DisplayName("An indestructible creature survives when its controller declines")
     void indestructibleCreatureSurvivesDestruction() {
         Permanent target = addCreatureReady(player2, new BalduvianBears());
-        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, target, Keyword.INDESTRUCTIBLE);
         harness.setLife(player2, 20);
         castVortexOn(target);
 

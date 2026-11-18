@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.DesperateRitual;
 import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
 import com.github.laxika.magicalvibes.cards.h.HarshDeceiver;
@@ -30,7 +31,7 @@ class GuardianOfSolitudeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, retainer.getId());
         harness.passBothPriorities();
 
-        assertThat(retainer.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, retainer)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -45,7 +46,7 @@ class GuardianOfSolitudeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, retainer.getId());
         harness.passBothPriorities();
 
-        assertThat(retainer.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, retainer)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -60,7 +61,7 @@ class GuardianOfSolitudeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, opponentRetainer.getId());
         harness.passBothPriorities();
 
-        assertThat(opponentRetainer.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, opponentRetainer)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -77,7 +78,7 @@ class GuardianOfSolitudeTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(retainer.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, retainer)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -101,7 +102,7 @@ class GuardianOfSolitudeTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(guardian.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, guardian)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -114,7 +115,7 @@ class GuardianOfSolitudeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, guardian.getId());
         harness.passBothPriorities();
 
-        assertThat(guardian.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, guardian)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -127,6 +128,6 @@ class GuardianOfSolitudeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Guardian of Solitude");
         Permanent guardian = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(guardian.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, guardian)).doesNotContain(Keyword.FLYING);
     }
 }

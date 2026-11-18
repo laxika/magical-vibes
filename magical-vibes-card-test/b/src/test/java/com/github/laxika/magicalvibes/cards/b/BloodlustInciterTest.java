@@ -26,7 +26,7 @@ class BloodlustInciterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -38,7 +38,7 @@ class BloodlustInciterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -49,13 +49,13 @@ class BloodlustInciterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -77,9 +77,9 @@ class BloodlustInciterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, inciter.getId());
 
         assertThat(inciter.isTapped()).isTrue();
-        assertThat(inciter.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, inciter, Keyword.HASTE)).isFalse();
         harness.passBothPriorities();
-        assertThat(inciter.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, inciter, Keyword.HASTE)).isTrue();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, inciter.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -110,7 +110,7 @@ class BloodlustInciterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     private Permanent addReadyInciter(Player player) {

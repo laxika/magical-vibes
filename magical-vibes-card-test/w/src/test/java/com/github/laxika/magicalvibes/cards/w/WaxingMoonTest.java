@@ -31,9 +31,9 @@ class WaxingMoonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(werewolf.isTransformed()).isTrue();
-        assertThat(werewolf.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(otherCreature.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(opponentCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, werewolf, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -47,7 +47,7 @@ class WaxingMoonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(werewolf.isTransformed()).isFalse();
-        assertThat(werewolf.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, werewolf, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -71,13 +71,13 @@ class WaxingMoonTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -95,7 +95,7 @@ class WaxingMoonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(werewolf.isTransformed()).isFalse();
-        assertThat(werewolf.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, werewolf, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -135,7 +135,7 @@ class WaxingMoonTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(werewolf.getCard());
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof WaxingMoon);
@@ -152,7 +152,7 @@ class WaxingMoonTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent afterResolution = addCreatureReady(player1, new GrizzlyBears());
 
-        assertThat(beforeResolution.hasKeyword(Keyword.TRAMPLE)).isTrue();
-        assertThat(afterResolution.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.TRAMPLE)).isFalse();
     }
 }

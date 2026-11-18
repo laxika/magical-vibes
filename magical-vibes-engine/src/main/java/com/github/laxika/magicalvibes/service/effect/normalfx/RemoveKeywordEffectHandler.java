@@ -128,11 +128,8 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void removeFrom(GameData gameData, StackEntry entry, RemoveKeywordEffect remove, Permanent target) {
-        // CR 613 layer engine: a one-shot keyword removal is a floating layer-6 effect with
-        // its own timestamp — a later-timestamp grant of the same keyword re-adds it. The
-        // legacy field is still written for direct Permanent.hasKeyword callers; the layered
-        // pass seeds it and then replays this removal at its real timestamp.
-        target.getRemovedKeywords().add(remove.keyword());
+        // A one-shot keyword removal is a floating layer-6 effect with its own timestamp: a
+        // later-timestamp grant of the same keyword re-adds it (CR 613.7).
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), null, entry.getControllerId(), remove,
                 target.getId(), null, null, remove.duration(), 0));

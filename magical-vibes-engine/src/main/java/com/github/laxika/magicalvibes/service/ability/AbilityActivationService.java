@@ -6974,7 +6974,7 @@ public class AbilityActivationService {
         List<CardEffect> abilityEffects = ability.getEffects();
 
         if (abilityEffects.stream().anyMatch(RevealChosenPlayerCost.class::isInstance)
-                && permanent.getProtectionFromPlayerIdsPermanently().isEmpty()) {
+                && permanent.getChosenPlayerIds().isEmpty()) {
             throw new IllegalStateException("No player was chosen as this permanent entered");
         }
 
@@ -7902,7 +7902,7 @@ public class AbilityActivationService {
         if (abilityEffects.stream().noneMatch(RevealChosenPlayerCost.class::isInstance)) {
             return;
         }
-        UUID chosenPlayerId = permanent.getProtectionFromPlayerIdsPermanently().stream()
+        UUID chosenPlayerId = permanent.getChosenPlayerIds().stream()
                 .findFirst().orElseThrow(() -> new IllegalStateException(
                         "No player was chosen as this permanent entered"));
         String playerName = gameData.playerIdToName.getOrDefault(player.getId(), player.getUsername());

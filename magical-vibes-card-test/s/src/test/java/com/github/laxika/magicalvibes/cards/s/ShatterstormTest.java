@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -75,7 +76,7 @@ class ShatterstormTest extends BaseCardTest {
     @DisplayName("Indestructible artifacts survive Shatterstorm")
     void indestructibleArtifactsSurvive() {
         Permanent ornithopter = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
-        ornithopter.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, ornithopter, Keyword.INDESTRUCTIBLE);
         harness.castFromHand(player1, new Shatterstorm(), "{2}{R}{R}");
         harness.passBothPriorities();
 
@@ -98,11 +99,11 @@ class ShatterstormTest extends BaseCardTest {
     @DisplayName("Shatterstorm destroys untargetable artifacts while sparing indestructible artifacts")
     void destroysUntargetableArtifactsOnMixedBattlefield() {
         Permanent mine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
-        mine.getGrantedKeywords().add(Keyword.SHROUD);
+        PermanentGrants.keywordUntilEndOfTurn(gd, mine, Keyword.SHROUD);
         Permanent vulnerable = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
-        vulnerable.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, vulnerable, Keyword.HEXPROOF);
         Permanent survivor = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
-        survivor.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, survivor, Keyword.INDESTRUCTIBLE);
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         harness.castFromHand(player1, new Shatterstorm(), "{2}{R}{R}");

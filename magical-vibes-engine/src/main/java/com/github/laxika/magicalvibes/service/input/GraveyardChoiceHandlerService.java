@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -496,7 +497,7 @@ public class GraveyardChoiceHandlerService {
                                 || card.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.CHANGELING))) {
                         Permanent sourcePerm = gameQueryService.findPermanentById(gameData, grantSourceHasteSourcePermanentId);
                         if (sourcePerm != null) {
-                            sourcePerm.getGrantedKeywords().add(com.github.laxika.magicalvibes.model.Keyword.HASTE);
+                            gameData.addEffectOnPermanent(sourcePerm.getCard().getName(), null, playerId, new GrantKeywordEffect(com.github.laxika.magicalvibes.model.Keyword.HASTE, GrantScope.TARGET), sourcePerm.getId(), Duration.UNTIL_END_OF_TURN);
                             gameLogService.append(gameData, GameLog.cardThen(sourcePerm.getCard(), " gains haste until end of turn."));
                         }
                     }

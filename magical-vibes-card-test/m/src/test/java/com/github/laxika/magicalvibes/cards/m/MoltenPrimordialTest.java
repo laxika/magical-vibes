@@ -30,7 +30,7 @@ class MoltenPrimordialTest extends BaseCardTest {
         assertThat(bear.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(bear.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(bear.getId()));
-        assertThat(bear.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(bear.getId())).isTrue();
     }
 
@@ -46,7 +46,7 @@ class MoltenPrimordialTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(bear.getId()));
-        assertThat(bear.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(bear.getId())).isFalse();
     }
 
@@ -105,9 +105,9 @@ class MoltenPrimordialTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(chosen).doesNotContain(unchosen);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(unchosen).doesNotContain(chosen);
         assertThat(chosen.isTapped()).isFalse();
-        assertThat(chosen.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.HASTE)).isTrue();
         assertThat(unchosen.isTapped()).isTrue();
-        assertThat(unchosen.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, unchosen, Keyword.HASTE)).isFalse();
         assertThat(gd.isStolenUntilEndOfTurn(unchosen.getId())).isFalse();
     }
 

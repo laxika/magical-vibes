@@ -1956,9 +1956,12 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
   its facet and inherits the empty/self defaults. Impl `ProtectionFromColorsEffect`,
   `ProtectionFromCardTypesEffect`, `ProtectionFromSubtypesEffect`, `ProtectionFromManaValueEffect`,
   `ProtectionFromManaValueParityEffect`, `ProtectionFromManaValueAtMostEffect`,
-  `ProtectionFromEverythingEffect`.
+  `ProtectionFromEverythingEffect`, `ProtectionFromColorlessEffect` (`protectionFromColorless()`) and
+  `ProtectionFromPlayersEffect(Set<UUID> playerIds, boolean eachOpponent)` (`protectionFromPlayers()`);
+  the last two are the payloads of resolved "gains protection from colorless / from [player]" grants
+  (`GrantEffectEffect(…, GrantScope.TARGET)` floating effects on the permanent).
   NOT for runtime-only protection: chosen-color (`ProtectionFromChosenColorEffect`, a
-  `ChooseColorEffect`), "protection from non-[subtype] creatures" (tracked on the `Permanent`), or
+  `ChooseColorEffect`), the chosen player (`ProtectionFromChosenPlayerEffect`), or
   `ProtectionFromColorsOfPermanentsYouControlEffect()` — STATIC self-scoped Empty-Shrine Kannushi
   shape whose colour set is recomputed from the controller's battlefield inside
   `GameQueryService.hasProtectionFrom`
@@ -5154,7 +5157,7 @@ The `CONTROLLER` form of `GivePoisonCountersEffect` is also supported as a mana-
 - `GrantProtectionFromColorsUntilYourNextTurnEffect(Set<CardColor>)` — target creature you control gains protection from the listed colors until your next turn. Uses a floating layer-6 effect, so the grant survives cleanup and expires with the ability controller's next turn. Sygg, Wanderbrine Shield.
 - `GrantProtectionFromTargetPlayerToControllerAndPlaneswalkersUntilNextTurnEffect()` — the controller and planeswalkers they control gain protection from the targeted player until the controller's next turn; the player-scoped grant (a floating effect on the controller carrying the protected-from player as `playerId`) and the per-`Permanent` grants on the planeswalkers controlled at resolution end when that turn begins (Eon Frolicker).
 - `GrantProtectionFromTargetPermanentColorsUntilEndOfTurnEffect()` — target permanent's colors are snapshotted on resolution; each creature the ability controller controls gains protection from those colors until end of turn. Samite Elder.
-- `GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect()` — target creature you control gains protection from creatures controlled by its opponents until end of turn. The source/controller comparison is evaluated live, so the protection follows a later control change; cleared by `resetModifiers()`. Crypsis.
+- `GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect()` — target creature you control gains protection from creatures controlled by its opponents until end of turn. A floating `GrantEffectEffect` of this record on the creature until end of turn (layer 6, timestamp order); the source/controller comparison is evaluated live, so the protection follows a later control change. Crypsis.
 - `GrantMadnessEqualToManaCostEffect(CardPredicate)` — owned off-BF matching cards gain madness; cost = mana cost (static; Falkenrath Gorger)
 - `GrantSpellCastingAbilityToSpellsEffect(Keyword, CardPredicate[, Zone])` — spells cast from the optional source zone and matching the predicate have the granted ability (static). `CONSPIRE`, `CONVOKE`, and `IMPROVISE` are consumed by cast-cost gates; `REBOUND` is consumed when a resolving hand spell is disposed; `JUMP_START` is consumed by the graveyard cast path; `SPLIT_SECOND` is stamped onto the spell's stack entry. Other abilities are rejected as unsupported
 - `GrantSpellCastingAbilityToSpellsEffect(Keyword, CardPredicate[, Zone])` — spells cast from the optional source zone and matching the predicate have the granted ability (static). `CONSPIRE` and `CONVOKE` are consumed by cast-cost gates; `REBOUND` is consumed when a resolving hand spell is disposed; `DELVE` adds a `DelveCost` to the cast-cost path; `JUMP_START` is consumed by the graveyard cast path. Other abilities are rejected as unsupported
@@ -5989,7 +5992,7 @@ The `CONTROLLER` form of `GivePoisonCountersEffect` is also supported as a mana-
 - `IncreaseCastCostForChosenNameSpellsEffect(int amount)` — STATIC; spells cast by the player enchanted by the source Aura whose name equals its chosen name cost `amount` generic more (Curse of Silence = 2); pair with `ChooseCardNameOnEnterEffect()`
 - `PlayerHasProtectionFromChosenNameEffect()` — STATIC; controller has protection from the chosen card name (Runed Halo); pair with `ChooseCardNameOnEnterEffect()`
 - `PlayerHasProtectionFromOpponentsEffect()` — STATIC; the source permanent's controller has protection from sources controlled by each opponent (Absolute Virtue). Player targeting, player damage, and Aura attachment checks evaluate the source controller dynamically.
-- `ProtectionFromChosenPlayerEffect()` — STATIC; the source permanent has protection from the player chosen as it entered (True-Name Nemesis); pair with `ChoosePlayerOnEnterEffect()`
+- `ProtectionFromChosenPlayerEffect()` — STATIC; the source permanent has protection from the player chosen as it entered (True-Name Nemesis; read from `Permanent.chosenPlayerIds`); pair with `ChoosePlayerOnEnterEffect()`
 - `PreventDamageFromChosenNameEffect()` — STATIC; prevent all damage (combat + noncombat) to the controller AND permanents they control from sources with the chosen name — damage only, not full protection (Gideon's Intervention). Pair with `ChooseCardNameOnEnterEffect()`; queried by `GameQueryService.isDamageFromChosenNamePreventedForController`
 - `PreventDamageFromNamedPlanesToControlledPermanentsEffect(String)` — resolving planar ability: for the rest of the game, prevent damage from face-up planes with the given name to permanents controlled by the ability's controller (Mount Keralia). Stored per player in a floating prevention effect and checked through the shared permanent-damage path.
 - `ReduceSpellDamageEffect(int amount)` — STATIC replacement; every spell deals its damage minus `amount` to permanents and players (Benevolent Unicorn). Global, all spell types; combat/abilities/fight-bite unaffected, not gated on `isDamagePreventable`, stacks. Queried by `GameQueryService.getSpellDamageReduction` from `DamageSupport`

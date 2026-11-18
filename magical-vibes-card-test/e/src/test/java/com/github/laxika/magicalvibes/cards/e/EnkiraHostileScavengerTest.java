@@ -54,7 +54,7 @@ class EnkiraHostileScavengerTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         resolveAllTriggers();
 
-        assertThat(enkira.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enkira, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test

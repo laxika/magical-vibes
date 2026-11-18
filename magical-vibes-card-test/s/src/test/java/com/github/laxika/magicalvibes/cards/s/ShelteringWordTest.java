@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.Cloudshift;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -31,7 +32,7 @@ class ShelteringWordTest extends BaseCardTest {
 
         castResolve(bears);
 
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.HEXPROOF);
         // Grizzly Bears is 2/2 -> gain 2 life
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId()))
                 .isEqualTo(lifeBefore + 2);
@@ -56,13 +57,13 @@ class ShelteringWordTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castResolve(bears);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.HEXPROOF);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).doesNotContain(Keyword.HEXPROOF);
     }
 
     @Test
@@ -91,7 +92,7 @@ class ShelteringWordTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertLife(player1, 23);
-        assertThat(bears.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, bears)).contains(Keyword.HEXPROOF);
     }
 
     @Test
@@ -108,7 +109,7 @@ class ShelteringWordTest extends BaseCardTest {
 
         Permanent returnedBears = findPermanent(player1, "Grizzly Bears");
         assertThat(returnedBears.getId()).isNotEqualTo(bears.getId());
-        assertThat(returnedBears.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        assertThat(PermanentGrants.keywordsOf(gd, returnedBears)).doesNotContain(Keyword.HEXPROOF);
         harness.assertLife(player1, 20);
         harness.assertInGraveyard(player1, "Sheltering Word");
     }

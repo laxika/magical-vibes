@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -40,7 +41,7 @@ class CeaselessConflictTest extends BaseCardTest {
     @DisplayName("Regeneration and indestructible creatures survive without creating Spirits")
     void creaturesNotDestroyedDoNotCount() {
         Permanent indestructible = addCreatureReady(player1, new GrizzlyBears());
-        indestructible.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        PermanentGrants.keywordUntilEndOfTurn(gd, indestructible, Keyword.INDESTRUCTIBLE);
         Permanent regenerating = addCreatureReady(player2, new GrizzlyBears());
         gd.addRegenerationShields(regenerating.getId(), 1);
 

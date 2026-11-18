@@ -38,7 +38,7 @@ class KingHaraldsRevengeTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isEqualTo(3);
         assertThat(target.getEffectivePower()).isEqualTo(5);
         assertThat(target.getEffectiveToughness()).isEqualTo(5);
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 
@@ -72,7 +72,7 @@ class KingHaraldsRevengeTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isFalse();
     }
 
@@ -118,7 +118,7 @@ class KingHaraldsRevengeTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
-        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
         assertThat(gd.hasFloatingEffectOnPermanent(target.getId(), MustBeBlockedIfAbleEffect.class)).isTrue();
     }
 

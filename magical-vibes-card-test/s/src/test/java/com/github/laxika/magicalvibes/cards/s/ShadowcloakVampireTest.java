@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -24,7 +25,7 @@ class ShadowcloakVampireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(vampire.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, vampire)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -35,12 +36,12 @@ class ShadowcloakVampireTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(vampire.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, vampire)).contains(Keyword.FLYING);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(vampire.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, vampire)).doesNotContain(Keyword.FLYING);
     }
 
     @Test
@@ -66,7 +67,7 @@ class ShadowcloakVampireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
-        assertThat(vampire.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, vampire)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -78,13 +79,13 @@ class ShadowcloakVampireTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.assertLife(player1, 18);
-        assertThat(vampire.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, vampire)).doesNotContain(Keyword.FLYING);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
         harness.assertLife(player1, 18);
-        assertThat(vampire.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, vampire)).contains(Keyword.FLYING);
     }
 
     @Test
@@ -99,7 +100,7 @@ class ShadowcloakVampireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 1);
-        assertThat(vampire.getGrantedKeywords()).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, vampire)).contains(Keyword.FLYING);
         assertThat(vampire.isTapped()).isTrue();
     }
 
@@ -115,8 +116,8 @@ class ShadowcloakVampireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 18);
-        assertThat(source.getGrantedKeywords()).contains(Keyword.FLYING);
-        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
-        assertThat(opponent.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, source)).contains(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, other)).doesNotContain(Keyword.FLYING);
+        assertThat(PermanentGrants.keywordsOf(gd, opponent)).doesNotContain(Keyword.FLYING);
     }
 }

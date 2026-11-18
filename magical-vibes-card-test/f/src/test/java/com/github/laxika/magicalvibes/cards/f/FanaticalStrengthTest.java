@@ -30,7 +30,7 @@ class FanaticalStrengthTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(5);
         assertThat(bear.getEffectiveToughness()).isEqualTo(5);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -47,7 +47,7 @@ class FanaticalStrengthTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -72,10 +72,10 @@ class FanaticalStrengthTest extends BaseCardTest {
 
         assertThat(opposingBear.getEffectivePower()).isEqualTo(5);
         assertThat(opposingBear.getEffectiveToughness()).isEqualTo(5);
-        assertThat(opposingBear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingBear, Keyword.TRAMPLE)).isTrue();
         assertThat(ownBear.getEffectivePower()).isEqualTo(2);
         assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(ownBear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownBear, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -89,18 +89,18 @@ class FanaticalStrengthTest extends BaseCardTest {
 
         assertThat(bear.getEffectivePower()).isEqualTo(8);
         assertThat(bear.getEffectiveToughness()).isEqualTo(8);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         assertThat(bear.getEffectivePower()).isEqualTo(8);
         assertThat(bear.getEffectiveToughness()).isEqualTo(8);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
 
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.getEffectiveToughness()).isEqualTo(2);
-        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isFalse();
     }
 }

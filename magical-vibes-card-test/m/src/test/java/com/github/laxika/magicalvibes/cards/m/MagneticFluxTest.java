@@ -26,10 +26,10 @@ class MagneticFluxTest extends BaseCardTest {
 
         castMagneticFlux();
 
-        assertThat(ownArtifactCreature.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(ownNonartifactCreature.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(ownArtifactLand.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(opponentArtifactCreature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownArtifactCreature, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownNonartifactCreature, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownArtifactLand, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentArtifactCreature, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -41,8 +41,8 @@ class MagneticFluxTest extends BaseCardTest {
 
         Permanent laterArtifactCreature = harness.enterBattlefieldAndReturn(player1, new ArcboundWorker());
 
-        assertThat(existingArtifactCreature.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(laterArtifactCreature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, existingArtifactCreature, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, laterArtifactCreature, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -52,13 +52,13 @@ class MagneticFluxTest extends BaseCardTest {
 
         castMagneticFlux();
 
-        assertThat(ownArtifactCreature.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownArtifactCreature, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(ownArtifactCreature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownArtifactCreature, Keyword.FLYING)).isFalse();
     }
 
     private void castMagneticFlux() {
@@ -74,14 +74,14 @@ class MagneticFluxTest extends BaseCardTest {
 
         harness.castFromHand(player1, new MagneticFlux(), "{2}{U}");
 
-        assertThat(first.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(second.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isFalse();
         Permanent enteringBeforeResolution = harness.enterBattlefieldAndReturn(player1, new ArcboundWorker());
         harness.passBothPriorities();
 
-        assertThat(first.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(second.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(enteringBeforeResolution.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enteringBeforeResolution, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -95,8 +95,8 @@ class MagneticFluxTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Magnetic Flux");
-        assertThat(ownCreature.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(ownArtifact.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(opponentCreature.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownArtifact, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FLYING)).isFalse();
     }
 }

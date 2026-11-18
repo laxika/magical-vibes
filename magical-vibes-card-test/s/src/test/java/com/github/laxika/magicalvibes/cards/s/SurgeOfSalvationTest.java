@@ -34,12 +34,12 @@ class SurgeOfSalvationTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(ownCreature.hasKeyword(Keyword.HEXPROOF)).isTrue();
-        assertThat(ownLand.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownLand, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
 
         Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        assertThat(laterCreature.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.HEXPROOF)).isFalse();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -123,12 +123,12 @@ class SurgeOfSalvationTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
-        assertThat(ownCreature.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(ownCreature.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HEXPROOF)).isFalse();
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isFalse();
     }
 
@@ -146,7 +146,7 @@ class SurgeOfSalvationTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(laterCreature.hasKeyword(Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.HEXPROOF)).isFalse();
         assertThat(laterCreature.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }

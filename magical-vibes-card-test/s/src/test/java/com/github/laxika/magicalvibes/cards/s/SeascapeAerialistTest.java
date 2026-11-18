@@ -33,9 +33,9 @@ class SeascapeAerialistTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent enteringAlly = findPermanent(player1, "Seascape Aerialist");
-        assertThat(existingAlly.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(enteringAlly.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(nonAlly.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, existingAlly, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enteringAlly, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonAlly, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -49,8 +49,8 @@ class SeascapeAerialistTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent enteringAerialist = findPermanents(player1, "Seascape Aerialist").get(1);
-        assertThat(existingAerialist.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(enteringAerialist.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, existingAerialist, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, enteringAerialist, Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -60,7 +60,7 @@ class SeascapeAerialistTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(findPermanent(player1, "Seascape Aerialist").hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Seascape Aerialist"), Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -71,7 +71,7 @@ class SeascapeAerialistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(aerialist.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, aerialist, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -82,13 +82,13 @@ class SeascapeAerialistTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent aerialist = findPermanent(player1, "Seascape Aerialist");
-        assertThat(aerialist.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, aerialist, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(aerialist.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, aerialist, Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -102,7 +102,7 @@ class SeascapeAerialistTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(findPermanent(player1, "Seascape Aerialist").hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Seascape Aerialist"), Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -116,8 +116,8 @@ class SeascapeAerialistTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(aerialist.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(findPermanent(player2, "Stonework Puma").hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, aerialist, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player2, "Stonework Puma"), Keyword.FLYING)).isFalse();
     }
 
     @Test
@@ -128,16 +128,16 @@ class SeascapeAerialistTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(findPermanent(player1, "Seascape Aerialist").hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(opposingAlly.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Seascape Aerialist"), Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingAlly, Keyword.FLYING)).isFalse();
 
         harness.castFromHand(player1, new StoneworkPuma(), "{3}");
         resolveAllTriggers();
         Permanent laterAlly = findPermanent(player1, "Stonework Puma");
-        assertThat(laterAlly.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterAlly, Keyword.FLYING)).isFalse();
         harness.handleMayAbilityChosen(player1, false);
-        assertThat(laterAlly.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(findPermanent(player1, "Seascape Aerialist").hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, laterAlly, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Seascape Aerialist"), Keyword.FLYING)).isTrue();
     }
 
     @Test
@@ -157,7 +157,7 @@ class SeascapeAerialistTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(ally.hasKeyword(Keyword.FLYING)).isTrue();
-        assertThat(aerialist.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, aerialist, Keyword.FLYING)).isFalse();
     }
 }

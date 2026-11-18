@@ -29,7 +29,7 @@ class Pain101Test extends BaseCardTest {
 
         castOn(creature);
 
-        assertThat(creature.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
     }
 
     @Test
@@ -60,7 +60,7 @@ class Pain101Test extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(creature.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
         destroy(player2, creature);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -82,7 +82,7 @@ class Pain101Test extends BaseCardTest {
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getId().equals(creatureCard.getId()))
                 .findFirst().orElseThrow();
-        assertThat(returned.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.DEATHTOUCH)).isFalse();
 
         destroy(player2, returned);
         harness.passBothPriorities();

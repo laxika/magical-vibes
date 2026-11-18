@@ -32,7 +32,7 @@ class SanctuaryRaptorTest extends BaseCardTest {
 
         assertThat(raptor.getPowerModifier()).isEqualTo(2);
         assertThat(raptor.getToughnessModifier()).isZero();
-        assertThat(raptor.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, raptor, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
@@ -46,7 +46,7 @@ class SanctuaryRaptorTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(raptor.getPowerModifier()).isZero();
-        assertThat(raptor.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, raptor, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -65,7 +65,7 @@ class SanctuaryRaptorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(raptor.getPowerModifier()).isZero();
-        assertThat(raptor.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, raptor, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -88,7 +88,7 @@ class SanctuaryRaptorTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(thirdToken);
         assertThat(raptor.getPowerModifier()).isZero();
-        assertThat(raptor.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, raptor, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -106,7 +106,7 @@ class SanctuaryRaptorTest extends BaseCardTest {
         });
 
         assertThat(raptor.getPowerModifier()).isZero();
-        assertThat(raptor.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, raptor, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -123,7 +123,7 @@ class SanctuaryRaptorTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(raptor.getPowerModifier()).isZero();
-        assertThat(raptor.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, raptor, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -142,7 +142,7 @@ class SanctuaryRaptorTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(raptor.getPowerModifier()).isEqualTo(2);
-        assertThat(raptor.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, raptor, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     private Permanent addRaptor() {

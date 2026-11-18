@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -189,7 +190,7 @@ class BloodFeudTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
         harness.castSorcery(player1, 0, List.of(bear.getId(), elves.getId()));
 
-        bear.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, bear, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -208,7 +209,7 @@ class BloodFeudTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
         harness.castSorcery(player1, 0, List.of(bear.getId(), elves.getId()));
 
-        elves.getGrantedKeywords().add(Keyword.HEXPROOF);
+        PermanentGrants.keywordUntilEndOfTurn(gd, elves, Keyword.HEXPROOF);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
